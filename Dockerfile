@@ -22,6 +22,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
+# Install Node.js for asset building
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install -y nodejs
+
+# Install Node dependencies and build assets
+RUN npm install && npm run build
+
 # Create required storage directories
 RUN mkdir -p /var/www/html/storage/framework/sessions \
     /var/www/html/storage/framework/views \
