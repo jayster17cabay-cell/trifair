@@ -22,8 +22,15 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
+# Create required storage directories
+RUN mkdir -p /var/www/html/storage/framework/sessions \
+    /var/www/html/storage/framework/views \
+    /var/www/html/storage/framework/cache \
+    /var/www/html/storage/logs
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Point Apache to Laravel's public folder
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
