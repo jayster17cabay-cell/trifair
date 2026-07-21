@@ -1,0 +1,102 @@
+<mxfile host="app.diagrams.net" modified="2026-07-04T16:00:00.000Z">
+  <diagram id="superadmin" name="Superadmin Activity">
+    <mxGraphModel dx="1" dy="1" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- TITLE -->
+        <mxCell id="title" value="SUPERADMIN ACTIVITY DIAGRAM" style="text;html=1;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="0" y="10" width="1000" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- START -->
+        <mxCell id="start" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000;strokeColor=#000;" vertex="1" parent="1">
+          <mxGeometry x="490" y="60" width="20" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- LOGIN -->
+        <mxCell id="login" value="Login" style="rounded=1;whiteSpace=wrap;html=1;fontSize=15;fontStyle=1;fillColor=#E1BEE7;strokeColor=#7B1FA2;" vertex="1" parent="1">
+          <mxGeometry x="440" y="110" width="120" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- AUTH CHECK -->
+        <mxCell id="auth" value="Authenticated?" style="shape=rhombus;whiteSpace=wrap;html=1;fontSize=14;fillColor=#F3E5F5;strokeColor=#7B1FA2;" vertex="1" parent="1">
+          <mxGeometry x="435" y="200" width="130" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- DASHBOARD -->
+        <mxCell id="dash" value="Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fontStyle=1;fillColor=#BBDEFB;strokeColor=#1565C0;" vertex="1" parent="1">
+          <mxGeometry x="435" y="320" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- MAIN ACTIVITIES (simple list) -->
+        <mxCell id="admins" value="Manage Admins&#10;(Create / Delete)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#F3E5F5;strokeColor=#9C27B0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="470" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="drivers" value="Manage Drivers&#10;(Create / Edit / Delete / QR)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#E3F2FD;strokeColor=#1565C0;" vertex="1" parent="1">
+          <mxGeometry x="260" y="470" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="complaints" value="Review Complaints&#10;(View / Mark Reviewed)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#FFEBEE;strokeColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="460" y="470" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="reports" value="View Reports&#10;&amp; Activity Logs" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#E8F5E9;strokeColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="660" y="470" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="notifs" value="View Notifications&#10;(Mark Read)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#FFF8E1;strokeColor=#F57F17;" vertex="1" parent="1">
+          <mxGeometry x="860" y="470" width="120" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- LOGOUT -->
+        <mxCell id="logout" value="Logout" style="rounded=1;whiteSpace=wrap;html=1;fontSize=15;fontStyle=1;fillColor=#FFCDD2;strokeColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="440" y="600" width="120" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- END -->
+        <mxCell id="end" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000;strokeColor=#000;" vertex="1" parent="1">
+          <mxGeometry x="490" y="690" width="20" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ============ CONNECTORS ============ -->
+
+        <!-- Start → Login -->
+        <mxCell id="c0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#666;strokeWidth=2;" edge="1" parent="1" source="start" target="login" />
+
+        <!-- Login → Auth -->
+        <mxCell id="c1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#666;strokeWidth=2;" edge="1" parent="1" source="login" target="auth" />
+
+        <!-- Auth → Login (Fail) -->
+        <mxCell id="c2" value="Fail" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;entryX=0.5;entryY=1;strokeColor=#C62828;strokeWidth=2;fontSize=12;fontStyle=1;" edge="1" parent="1" source="auth" target="login">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="235" />
+              <mxPoint x="380" y="132" />
+              <mxPoint x="440" y="132" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Auth → Dashboard (Success) -->
+        <mxCell id="c3" value="Success" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#2E7D32;strokeWidth=2;fontSize=12;fontStyle=1;" edge="1" parent="1" source="auth" target="dash" />
+
+        <!-- Dashboard → Activities (fork-style) -->
+        <mxCell id="c4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#1565C0;strokeWidth=2;" edge="1" parent="1" source="dash" target="admins" />
+        <mxCell id="c5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#1565C0;strokeWidth=2;" edge="1" parent="1" source="dash" target="drivers" />
+        <mxCell id="c6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#1565C0;strokeWidth=2;" edge="1" parent="1" source="dash" target="complaints" />
+        <mxCell id="c7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#1565C0;strokeWidth=2;" edge="1" parent="1" source="dash" target="reports" />
+        <mxCell id="c8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#1565C0;strokeWidth=2;" edge="1" parent="1" source="dash" target="notifs" />
+
+        <!-- Activities → Logout -->
+        <mxCell id="c9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#666;strokeWidth=2;" edge="1" parent="1" source="dash" target="logout" />
+
+        <!-- Logout → End -->
+        <mxCell id="c10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#C62828;strokeWidth=2;" edge="1" parent="1" source="logout" target="end" />
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

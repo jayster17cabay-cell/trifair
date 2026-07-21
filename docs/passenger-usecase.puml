@@ -1,0 +1,76 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor Passenger as P
+actor Driver as D
+actor Admin as A
+actor Superadmin as SA
+
+rectangle "TriFair System" {
+  rectangle "Passenger Module" {
+    usecase "Scan QR Code" as UC1
+    usecase "View Rate Form\n(with Map)" as UC2
+    usecase "Select Trip\nLocations" as UC3
+    usecase "Submit Rating\n(3-5 Stars)" as UC4
+    usecase "Submit Complaint\n(1-2 Stars with Proofs)" as UC5
+    usecase "Upload Proof\nFiles" as UC6
+  }
+
+  rectangle "System Functions" {
+    usecase "Auto-Create\nRating Record" as UC7
+    usecase "Validate\nInput" as UC8
+    usecase "Check Duplicate\n(IP + Day)" as UC9
+    usecase "Save Proof\nFiles" as UC10
+    usecase "Notify Admin &\nSuperadmin" as UC11
+    usecase "Log Rating\nActivity" as UC12
+    usecase "Show Success\nMessage" as UC13
+  }
+
+  rectangle "Admin Functions" {
+    usecase "Review\nComplaint" as UC14
+    usecase "Mark as\nReviewed" as UC15
+    usecase "View All\nRatings" as UC16
+  }
+
+  rectangle "Driver Functions" {
+    usecase "Respond to\nRating" as UC17
+    usecase "View Received\nRatings" as UC18
+  }
+}
+
+P --> UC1
+P --> UC2
+P --> UC3
+P --> UC4
+P --> UC5
+P --> UC6
+
+UC1 --> UC7 : <<include>>
+UC7 --> UC2 : <<extend>>
+UC2 --> UC9 : <<include>>
+UC3 --> UC8 : <<include>>
+UC4 --> UC8 : <<include>>
+UC5 --> UC6 : <<include>>
+UC5 --> UC10 : <<include>>
+UC5 --> UC11 : <<include>>
+UC5 --> UC12 : <<include>>
+UC4 --> UC12 : <<include>>
+UC4 --> UC13 : <<include>>
+
+UC11 -.-> A : notifies
+UC11 -.-> SA : notifies
+
+A --> UC14
+A --> UC15
+A --> UC16
+SA --> UC14
+SA --> UC15
+SA --> UC16
+
+D --> UC17
+D --> UC18
+
+D --> UC1 : creates QR
+
+@enduml
