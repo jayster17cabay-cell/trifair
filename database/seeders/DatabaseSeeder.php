@@ -10,20 +10,24 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        User::create([
-            'name' => 'Super Admin',
-            'email' => 'superadmin@trifair.com',
-            'password' => Hash::make('admin123'),
-            'role' => 'superadmin',
-            'is_active' => true,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'superadmin@trifair.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('admin123'),
+                'role' => 'superadmin',
+                'is_active' => true,
+            ]
+        );
 
-        User::create([
-            'name' => 'Admin',
-            'email' => 'admin@trifair.com',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-            'is_active' => true,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@trifair.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
+                'is_active' => true,
+            ]
+        );
     }
 }

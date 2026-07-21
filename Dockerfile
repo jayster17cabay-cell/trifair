@@ -46,4 +46,4 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 EXPOSE 80
 
 # Run migrations and start Apache
-CMD php artisan config:cache && php artisan migrate --force && apache2-foreground
+CMD php artisan config:cache && php artisan migrate --force && php artisan db:seed --force && apache2-foreground
