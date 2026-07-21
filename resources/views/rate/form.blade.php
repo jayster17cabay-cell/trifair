@@ -398,7 +398,7 @@
                                 <div id="routeInfo" style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;"></div>
                             </div>
 
-                            <button type="button" class="btn btn-primary w-100" id="toStep2" disabled>
+                            <button type="button" class="btn btn-primary w-100" id="toStep2">
                                 <i class="bi bi-arrow-right me-1"></i> Continue to Rating
                             </button>
                         </div>
@@ -513,7 +513,12 @@
                 setMarker(latlng, 'start');
                 map.setView(latlng, 15);
                 firstFix = false;
-            }, function() {}, { enableHighAccuracy: true, timeout: 10000 });
+                checkStep1Complete();
+            }, function(error) {
+                console.log('GPS not available:', error.message);
+                document.getElementById('start_location').placeholder = 'Type your starting location';
+                checkStep1Complete();
+            }, { enableHighAccuracy: true, timeout: 10000 });
 
             // Live tracking: blue dot follows the passenger
             navigator.geolocation.watchPosition(function(pos) {
@@ -584,7 +589,11 @@
 
         function reverseGeocode(latlng, inputId) {
             const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&addressdetails=1`;
-            fetch(url)
+            fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                }
+            })
                 .then(r => r.json())
                 .then(data => {
                     if (data.display_name) {
@@ -592,7 +601,10 @@
                         checkStep1Complete();
                     }
                 })
-                .catch(() => {});
+                .catch(() => {
+                    document.getElementById(inputId).value = latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6);
+                    checkStep1Complete();
+                });
         }
 
         function updateRoute() {
@@ -633,10 +645,8 @@
         }
 
         function checkStep1Complete() {
-            const startVal = document.getElementById('start_location').value.trim();
-            const endVal = document.getElementById('end_location').value.trim();
             const btn = document.getElementById('toStep2');
-            btn.disabled = !(isStartSet && isEndSet && startVal && endVal);
+            btn.disabled = false;
         }
 
         // Geocode using Nominatim
