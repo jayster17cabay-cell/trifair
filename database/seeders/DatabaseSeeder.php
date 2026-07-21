@@ -35,12 +35,12 @@ class DatabaseSeeder extends Seeder
 
         $toda1 = Toda::firstOrCreate(
             ['name' => 'Brgy. San Antonio TODA'],
-            ['location' => 'Sampaloc, Manila']
+            ['area' => 'Sampaloc, Manila']
         );
 
         $toda2 = Toda::firstOrCreate(
             ['name' => 'Brgy. 456 TODA'],
-            ['location' => 'Tondo, Manila']
+            ['area' => 'Tondo, Manila']
         );
 
         $driver1User = User::firstOrCreate(
