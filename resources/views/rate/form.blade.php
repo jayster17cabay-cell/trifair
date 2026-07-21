@@ -490,70 +490,34 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize map centered on Philippines
-        const map = L.map('tripMap').setView([12.8797, 121.7740], 6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 18,
-        }).addTo(map);
+        var map = null;
+        var startMarker = null;
+        var endMarker = null;
+        var routeLine = null;
+        var isStartSet = false;
+        var isEndSet = false;
 
-        let startMarker = null;
-        let endMarker = null;
-        let routeLine = null;
-        let isStartSet = false;
-        let isEndSet = false;
-        let liveDot = null;
-        let firstFix = true;
-
-        // Auto-detect current location as starting point + live GPS tracking
-        if (navigator.geolocation) {
-            // First fix: set the start marker (boarding point)
-            navigator.geolocation.getCurrentPosition(function(pos) {
-                const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
-                setMarker(latlng, 'start');
-                map.setView(latlng, 15);
-                firstFix = false;
-                checkStep1Complete();
-            }, function(error) {
-                console.log('GPS not available:', error.message);
-                document.getElementById('start_location').placeholder = 'Type your starting location';
-                checkStep1Complete();
-            }, { enableHighAccuracy: true, timeout: 10000 });
-
-            // Live tracking: blue dot follows the passenger
-            navigator.geolocation.watchPosition(function(pos) {
-                const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
-                const accuracy = pos.coords.accuracy;
-                if (liveDot) {
-                    liveDot.setLatLng(latlng);
-                } else {
-                    liveDot = L.circleMarker(latlng, {
-                        radius: 8,
-                        color: '#3b82f6',
-                        fillColor: '#3b82f6',
-                        fillOpacity: 0.6,
-                        weight: 3,
-                    }).addTo(map);
-                    liveDot.bindTooltip('You are here', { direction: 'top' });
-                }
-            }, function() {}, { enableHighAccuracy: true, timeout: 5000, maximumAge: 3000 });
+        function checkStep1Complete() {
+            document.getElementById('toStep2').disabled = false;
         }
 
-        // Click on map to set markers
-        map.on('click', function(e) {
-            if (!isStartSet) {
-                setMarker(e.latlng, 'start');
-            } else if (!isEndSet) {
-                setMarker(e.latlng, 'end');
-            } else {
-                // Both set - reset and start over
-                resetMarkers();
-                setMarker(e.latlng, 'start');
-            }
-        });
+        function reverseGeocode(latlng, inputId) {
+            var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + latlng.lat + '&lon=' + latlng.lng + '&addressdetails=1';
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.display_name) {
+                        document.getElementById(inputId).value = data.display_name;
+                    }
+                })
+                .catch(function() {
+                    document.getElementById(inputId).value = latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6);
+                });
+        }
 
         function setMarker(latlng, type) {
-            const icon = L.divIcon({
+            if (!map) return;
+            var icon = L.divIcon({
                 html: type === 'start'
                     ? '<div style="background:#059669;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #a7f3d0;font-size:14px;font-weight:bold;">S</div>'
                     : '<div style="background:#dc2626;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fecaca;font-size:14px;font-weight:bold;">E</div>',
@@ -561,117 +525,57 @@
                 iconSize: [28, 28],
                 iconAnchor: [14, 14]
             });
-
-            const inputId = type === 'start' ? 'start_location' : 'end_location';
-
+            var inputId = type === 'start' ? 'start_location' : 'end_location';
             if (type === 'start') {
                 if (startMarker) map.removeLayer(startMarker);
-                startMarker = L.marker(latlng, { icon, draggable: true }).addTo(map);
+                startMarker = L.marker(latlng, { icon: icon, draggable: true }).addTo(map);
                 isStartSet = true;
-                startMarker.on('dragend', function() {
-                    reverseGeocode(this.getLatLng(), inputId);
-                    updateRoute();
-                });
             } else {
                 if (endMarker) map.removeLayer(endMarker);
-                endMarker = L.marker(latlng, { icon, draggable: true }).addTo(map);
+                endMarker = L.marker(latlng, { icon: icon, draggable: true }).addTo(map);
                 isEndSet = true;
-                endMarker.on('dragend', function() {
-                    reverseGeocode(this.getLatLng(), inputId);
-                    updateRoute();
-                });
             }
             reverseGeocode(latlng, inputId);
-            updateRoute();
             checkStep1Complete();
-            map.fitBounds([startMarker.getLatLng(), endMarker ? endMarker.getLatLng() : startMarker.getLatLng()].filter(Boolean), { padding: [40, 40] });
         }
 
-        function reverseGeocode(latlng, inputId) {
-            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&addressdetails=1`;
-            fetch(url, {
-                headers: {
-                    'Accept': 'application/json',
+        try {
+            map = L.map('tripMap').setView([12.8797, 121.7740], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 18,
+            }).addTo(map);
+
+            map.on('click', function(e) {
+                if (!isStartSet) {
+                    setMarker(e.latlng, 'start');
+                } else if (!isEndSet) {
+                    setMarker(e.latlng, 'end');
                 }
-            })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.display_name) {
-                        document.getElementById(inputId).value = data.display_name;
-                        checkStep1Complete();
-                    }
-                })
-                .catch(() => {
-                    document.getElementById(inputId).value = latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6);
+            });
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    var latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+                    setMarker(latlng, 'start');
+                    map.setView(latlng, 15);
+                }, function(error) {
+                    document.getElementById('start_location').placeholder = 'Type your starting location';
                     checkStep1Complete();
-                });
-        }
-
-        function updateRoute() {
-            if (routeLine) map.removeLayer(routeLine);
-            if (startMarker && endMarker) {
-                const start = startMarker.getLatLng();
-                const end = endMarker.getLatLng();
-                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?geometries=geojson&overview=full`;
-                fetch(osrmUrl)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-                            const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-                            routeLine = L.polyline(coords, { color: '#1e3a5f', weight: 5, opacity: 0.8 }).addTo(map);
-                            document.getElementById('tripSummary').classList.remove('d-none');
-                            const dist = (data.routes[0].distance / 1000).toFixed(1);
-                            const dur = Math.round(data.routes[0].duration / 60);
-                            document.getElementById('routeInfo').innerHTML = `<i class="bi bi-signpost-2"></i> ${dist} km &middot; <i class="bi bi-clock"></i> ${dur} min`;
-                        }
-                    })
-                    .catch(() => {
-                        routeLine = L.polyline([start, end], { color: '#1e3a5f', weight: 4, opacity: 0.7, dashArray: '10, 8' }).addTo(map);
-                        document.getElementById('tripSummary').classList.remove('d-none');
-                    });
+                }, { enableHighAccuracy: true, timeout: 10000 });
             }
-        }
-
-        function resetMarkers() {
-            if (startMarker) map.removeLayer(startMarker);
-            if (endMarker) map.removeLayer(endMarker);
-            if (routeLine) map.removeLayer(routeLine);
-            startMarker = null;
-            endMarker = null;
-            routeLine = null;
-            isStartSet = false;
-            isEndSet = false;
+        } catch(e) {
+            document.getElementById('tripMap').innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-map" style="font-size:2rem;"></i><br><small>Map not available. You can still type your locations.</small></div>';
             checkStep1Complete();
         }
 
-        function checkStep1Complete() {
-            const btn = document.getElementById('toStep2');
-            btn.disabled = false;
-        }
-
-        // Geocode using Nominatim
-        function geocodeLocation(query, type) {
-            if (!query || query.length < 3) return;
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-            fetch(url)
-                .then(r => r.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        const latlng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
-                        setMarker(latlng, type);
-                    }
-                })
-                .catch(() => {});
-        }
-
-        // Step navigation
+        // Step navigation - ALWAYS works
         document.getElementById('toStep2').addEventListener('click', function() {
             document.getElementById('step1').style.display = 'none';
             document.getElementById('step2').style.display = 'block';
             document.getElementById('step1-indicator').classList.remove('active');
             document.getElementById('step1-indicator').classList.add('done');
             document.getElementById('step2-indicator').classList.add('active');
-            setTimeout(() => map.invalidateSize(), 300);
         });
 
         document.getElementById('backToStep1').addEventListener('click', function() {
@@ -679,28 +583,22 @@
             document.getElementById('step1').style.display = 'block';
             document.getElementById('step2-indicator').classList.remove('active');
             document.getElementById('step1-indicator').classList.add('active');
-            setTimeout(() => map.invalidateSize(), 300);
         });
 
-        // Check inputs on keyup
-        document.getElementById('start_location').addEventListener('keyup', checkStep1Complete);
-        document.getElementById('end_location').addEventListener('keyup', checkStep1Complete);
+        // Star rating - ALWAYS works
+        var stars = document.querySelectorAll('.star-rating');
+        var ratingInput = document.getElementById('ratingValue');
+        var submitBtn = document.getElementById('submitBtn');
+        var reasonSection = document.getElementById('reasonSection');
+        var proofSection = document.getElementById('proofSection');
+        var contactSection = document.getElementById('contactSection');
 
-        // Star rating
-        const stars = document.querySelectorAll('.star-rating');
-        const ratingInput = document.getElementById('ratingValue');
-        const submitBtn = document.getElementById('submitBtn');
-        const reasonSection = document.getElementById('reasonSection');
-        const proofSection = document.getElementById('proofSection');
-        const contactSection = document.getElementById('contactSection');
-
-        stars.forEach(star => {
+        stars.forEach(function(star) {
             star.addEventListener('click', function() {
-                const value = parseInt(this.dataset.value);
+                var value = parseInt(this.dataset.value);
                 ratingInput.value = value;
                 submitBtn.disabled = false;
-
-                stars.forEach((s, i) => {
+                stars.forEach(function(s, i) {
                     if (i < value) {
                         s.classList.remove('bi-star');
                         s.classList.add('bi-star-fill');
@@ -711,7 +609,6 @@
                         s.classList.add('bi-star');
                     }
                 });
-
                 if (value <= 2) {
                     reasonSection.style.display = 'block';
                     proofSection.style.display = 'block';
@@ -726,10 +623,10 @@
 
         // File list
         document.getElementById('proofs').addEventListener('change', function() {
-            const fileList = document.getElementById('fileList');
+            var fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
-            Array.from(this.files).forEach(file => {
-                fileList.innerHTML += `<span class="badge bg-primary me-1">${file.name}</span> `;
+            Array.from(this.files).forEach(function(file) {
+                fileList.innerHTML += '<span class="badge bg-primary me-1">' + file.name + '</span> ';
             });
         });
     </script>
