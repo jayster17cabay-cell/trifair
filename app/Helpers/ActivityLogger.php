@@ -18,15 +18,19 @@ class ActivityLogger
     {
         $request = $request ?: request();
 
-        return ActivityLog::create([
-            'user_id' => Auth::id(),
-            'action' => $action,
-            'category' => $category,
-            'description' => $description,
-            'model_type' => $model ? get_class($model) : null,
-            'model_id' => $model ? $model->id : null,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ]);
+        try {
+            return ActivityLog::create([
+                'user_id' => Auth::id(),
+                'action' => $action,
+                'category' => $category,
+                'description' => $description,
+                'model_type' => $model ? get_class($model) : null,
+                'model_id' => $model ? $model->id : null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

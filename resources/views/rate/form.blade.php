@@ -586,6 +586,12 @@ document.querySelectorAll('.star-cell').forEach(function(cell) {
         document.getElementById('commentSection').style.display = 'block';
         document.getElementById('mapSection').style.display = 'block';
 
+        if (!mapLoaded) {
+            document.getElementById('mapWrapper').classList.add('open');
+            document.getElementById('mapChevron').style.transform = 'rotate(180deg)';
+            initMap();
+        }
+
         var cs = document.getElementById('complaintSection');
         cs.style.display = (selectedRating <= 2) ? 'block' : 'none';
 
