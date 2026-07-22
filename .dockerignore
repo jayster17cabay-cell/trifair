@@ -1,0 +1,15 @@
+node_modules
+public/build
+.git
+.env
+.env.backup
+.env.production
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/logs/*
+*.md
+.vscode
+.idea
+.fleet
+certs
+*.pem

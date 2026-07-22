@@ -19,6 +19,4 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-/certs
-*.pem
 /public/test.txt
