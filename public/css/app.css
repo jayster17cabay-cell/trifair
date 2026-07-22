@@ -1210,7 +1210,80 @@ h2 { font-size: 1.5rem; }
     background: var(--secondary-50);
 }
 
-/* Responsive */
+/* === PROFESSIONAL POLISH === */
+
+/* Page load animation */
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+main > * {
+    animation: fadeSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+main > *:nth-child(1) { animation-delay: 0s; }
+main > *:nth-child(2) { animation-delay: 0.05s; }
+main > *:nth-child(3) { animation-delay: 0.1s; }
+main > *:nth-child(4) { animation-delay: 0.15s; }
+main > *:nth-child(5) { animation-delay: 0.2s; }
+main > *:nth-child(6) { animation-delay: 0.25s; }
+
+/* Focus ring for accessibility */
+.btn:focus-visible,
+.nav-link:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+    outline: 2px solid var(--secondary);
+    outline-offset: 2px;
+}
+
+/* Better card interactions */
+.card {
+    border: 1px solid var(--gray-100);
+}
+.card-header {
+    font-weight: 700;
+}
+
+/* Stat card micro-animation on load */
+@keyframes statCount {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.stat-card .stat-value {
+    animation: statCount 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Welcome card glass accent */
+.welcome-card {
+    box-shadow: 0 4px 24px rgba(30, 58, 95, 0.15);
+}
+
+/* Quick action cards stagger */
+.quick-actions-grid .quick-action-card:nth-child(1) { animation: fadeSlideIn 0.3s ease both; animation-delay: 0.05s; }
+.quick-actions-grid .quick-action-card:nth-child(2) { animation: fadeSlideIn 0.3s ease both; animation-delay: 0.1s; }
+.quick-actions-grid .quick-action-card:nth-child(3) { animation: fadeSlideIn 0.3s ease both; animation-delay: 0.15s; }
+.quick-actions-grid .quick-action-card:nth-child(4) { animation: fadeSlideIn 0.3s ease both; animation-delay: 0.2s; }
+.quick-actions-grid .quick-action-card:nth-child(5) { animation: fadeSlideIn 0.3s ease both; animation-delay: 0.25s; }
+.quick-actions-grid .quick-action-card:nth-child(6) { animation: fadeSlideIn 0.3s ease both; animation-delay: 0.3s; }
+
+/* Smooth hover on table rows */
+.table tbody tr {
+    transition: background 0.15s ease;
+}
+
+/* Better alert dismiss */
+.alert-dismissible {
+    padding-right: 3rem;
+}
+
+/* Print-friendly */
+@media print {
+    .sidebar, .navbar, .btn { display: none !important; }
+    .main { margin: 0 !important; padding: 1rem !important; }
+    .card { break-inside: avoid; }
+}
+
+/* === Responsive === */
 @media (max-width: 991px) {
     .sidebar { min-height: auto; }
 }
