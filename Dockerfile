@@ -12,9 +12,12 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN cp .env.example .env \
-    && php artisan key:generate --force \
-    && composer install --no-dev --optimize-autoloader
+RUN cp .env.example .env
+
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+RUN php artisan key:generate --force \
+    && php artisan package:discover --ansi
 
 RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs \
     && touch storage/logs/laravel.log \
