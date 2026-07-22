@@ -12,7 +12,9 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader
+RUN cp .env.example .env \
+    && php artisan key:generate --force \
+    && composer install --no-dev --optimize-autoloader
 
 RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs \
     && touch storage/logs/laravel.log \
