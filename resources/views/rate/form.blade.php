@@ -4,632 +4,645 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>How's My Driving? - TriFair</title>
+    <title>Rate Driver - TriFair</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <style>
-        body { background: linear-gradient(145deg, var(--primary-dark) 0%, var(--primary) 40%, var(--primary-light) 70%, var(--primary) 100%); }
-        .rating-page {
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: linear-gradient(160deg, #1a2e4a 0%, #1e3a5f 50%, #243b5e 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .rate-container {
+            max-width: 480px;
+            margin: 0 auto;
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .rating-page::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at 30% 50%, rgba(245, 166, 35, 0.08) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        .rating-page::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--white), var(--secondary), var(--primary));
-        }
-        .rating-card {
-            border-radius: 20px;
-            border: none;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
-            overflow: hidden;
-            width: 100%;
-            max-width: 600px;
-            position: relative;
-        }
-        .rating-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
-            z-index: 1;
-        }
-        .driver-profile-section {
-            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
-            padding: 2.5rem 2rem 2rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .driver-profile-section::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: linear-gradient(180deg, transparent, white);
-        }
-        .driver-avatar-lg {
-            width: 90px;
-            height: 90px;
-            background: linear-gradient(145deg, var(--secondary) 0%, var(--secondary-dark) 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2.25rem;
-            box-shadow: 0 8px 30px rgba(245, 166, 35, 0.4);
-            margin: 0 auto 1rem;
-            border: 4px solid rgba(255,255,255,0.3);
-            position: relative;
-            z-index: 2;
-        }
-        .driver-name-display {
-            color: white;
-            font-weight: 900;
-            font-size: 1.4rem;
-            letter-spacing: -0.03em;
-            margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 2;
-        }
-        .how-driving-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 50px;
-            padding: 0.5rem 1.25rem;
-            color: var(--secondary);
-            font-weight: 800;
-            font-size: 0.85rem;
-            letter-spacing: 0.02em;
-            margin-top: 0.75rem;
-            position: relative;
-            z-index: 2;
-        }
-        .how-driving-badge i {
-            font-size: 1rem;
-            animation: pulse-glow 2s ease-in-out infinite;
-        }
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
-        }
-        .driver-info-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.75rem;
-            margin-top: -1rem;
-            padding: 0 1.5rem;
-            position: relative;
-            z-index: 3;
-        }
-        .driver-info-card {
-            background: white;
-            border-radius: 12px;
-            padding: 0.85rem 0.5rem;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            border: 1px solid var(--gray-100);
-        }
-        .driver-info-card .info-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 0.4rem;
-            font-size: 0.85rem;
-        }
-        .driver-info-card .info-label {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--gray-500);
-            font-weight: 600;
-            margin-bottom: 0.15rem;
-        }
-        .driver-info-card .info-value {
-            font-size: 0.8rem;
-            font-weight: 800;
-            color: var(--gray-800);
-        }
-        .rating-card .card-body {
-            padding: 1.5rem 1.5rem 2rem;
-        }
-        #tripMap {
-            height: 240px;
-            border-radius: 12px;
-            border: 2px solid var(--gray-200);
-            z-index: 0;
-        }
-        .location-input-group {
-            position: relative;
-        }
-        .location-input-group .location-icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 2;
-            font-size: 1rem;
-        }
-        .location-input-group .form-control {
-            padding-left: 40px;
-            border: 2px solid var(--gray-200);
-            border-radius: 10px;
-            font-size: 0.9rem;
-        }
-        .location-input-group .form-control:focus {
-            border-color: var(--secondary);
-            box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
-        }
-        .start-icon { color: var(--success); }
-        .end-icon { color: var(--danger); }
-        .trip-route-visual {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-        .trip-route-visual .route-line {
-            display: flex;
             flex-direction: column;
-            align-items: center;
-            width: 24px;
-            flex-shrink: 0;
-            padding-top: 4px;
         }
-        .trip-route-visual .route-line .dot {
-            width: 16px;
-            height: 16px;
+
+        .driver-header {
+            text-align: center;
+            padding: 2rem 1.5rem 1rem;
+            color: white;
+        }
+        .driver-avatar {
+            width: 72px;
+            height: 72px;
             border-radius: 50%;
-            flex-shrink: 0;
-            border: 3px solid;
+            background: linear-gradient(135deg, #f5a623, #e09400);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem;
+            font-size: 1.8rem;
+            color: white;
+            border: 3px solid rgba(255,255,255,0.25);
+            box-shadow: 0 4px 20px rgba(245,166,35,0.35);
         }
-        .trip-route-visual .route-line .dot.start { background: var(--success); border-color: var(--success-light); }
-        .trip-route-visual .route-line .dot.end { background: var(--danger); border-color: var(--danger-light); }
-        .trip-route-visual .route-line .connector {
-            width: 3px;
-            flex-grow: 1;
-            min-height: 32px;
-            background: linear-gradient(to bottom, var(--success), var(--danger));
-            border-radius: 2px;
+        .driver-name {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
         }
-        .star-rating {
-            font-size: 2.5rem;
-            cursor: pointer;
-            color: var(--gray-300);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .star-rating:hover,
-        .star-rating.active {
-            color: var(--secondary);
-            transform: scale(1.15);
-        }
-        .star-rating:hover ~ .star-rating {
-            color: var(--gray-300);
-            transform: scale(1);
-        }
-        .proof-section { display: none; }
-        .step-indicator {
+        .driver-meta {
             display: flex;
             justify-content: center;
-            gap: 8px;
+            gap: 1rem;
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .rate-body {
+            flex: 1;
+            background: white;
+            border-radius: 24px 24px 0 0;
+            padding: 1.5rem;
+            margin-top: 0.5rem;
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.2);
+        }
+
+        .question-text {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gray-700, #374151);
+            margin-bottom: 0.25rem;
+        }
+        .question-sub {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--gray-400, #9ca3af);
             margin-bottom: 1.5rem;
         }
-        .step-indicator .step {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--gray-200);
+
+        .star-row {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .star-btn {
+            width: 56px;
+            height: 56px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 16px;
+            font-size: 1.6rem;
+            color: #d1d5db;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .star-btn:active { transform: scale(0.9); }
+        .star-btn.selected {
+            background: linear-gradient(135deg, #f5a623, #e09400);
+            color: white;
+            box-shadow: 0 4px 16px rgba(245,166,35,0.4);
+            transform: scale(1.05);
+        }
+        .star-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 0.5rem;
+            margin-bottom: 1.75rem;
+        }
+        .star-labels span {
+            font-size: 0.65rem;
+            color: var(--gray-400, #9ca3af);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+        }
+
+        .emoji-feedback {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 1.25rem;
+            min-height: 2.5rem;
             transition: all 0.3s ease;
         }
-        .step-indicator .step.active { background: var(--secondary); width: 28px; border-radius: 5px; }
-        .step-indicator .step.done { background: var(--primary); }
-        .trip-summary-card {
-            background: linear-gradient(135deg, var(--success-50) 0%, var(--danger-50) 100%);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border: 1px solid var(--gray-200);
+
+        .section-divider {
+            border: none;
+            border-top: 1px solid #f0f0f0;
+            margin: 1.25rem 0;
         }
-        @media (max-width: 576px) {
-            .rating-page { padding: 1rem; }
-            .driver-avatar-lg { width: 70px; height: 70px; font-size: 1.75rem; }
-            .driver-info-cards { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding: 0 1rem; }
-            #tripMap { height: 180px; }
+
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--gray-500, #6b7280);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .location-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .location-field {
+            position: relative;
+        }
+        .location-field label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .location-field label .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-start { background: #059669; }
+        .dot-end { background: #dc2626; }
+        .location-field input {
+            width: 100%;
+            padding: 0.65rem 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .location-field input:focus {
+            border-color: #f5a623;
+        }
+        .location-field input::placeholder {
+            color: #c4c9d4;
+        }
+
+        .map-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.55rem;
+            background: #f9fafb;
+            border: 1px dashed #d1d5db;
+            border-radius: 12px;
+            color: var(--gray-500, #6b7280);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.75rem;
+        }
+        .map-toggle:hover { background: #f3f4f6; border-color: #f5a623; color: #f5a623; }
+
+        .map-wrapper {
+            display: none;
+            margin-bottom: 0.75rem;
+        }
+        .map-wrapper.show { display: block; }
+        #tripMap {
+            height: 200px;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+        }
+        .map-hint {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--gray-400, #9ca3af);
+            margin-top: 0.4rem;
+        }
+
+        .comment-box textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            resize: vertical;
+            min-height: 60px;
+            outline: none;
+            font-family: inherit;
+        }
+        .comment-box textarea:focus { border-color: #f5a623; }
+        .comment-box textarea::placeholder { color: #c4c9d4; }
+
+        .extra-fields {
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+        .extra-fields.show { display: block; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        .contact-field label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.3rem;
+            display: block;
+            color: var(--gray-500, #6b7280);
+        }
+        .contact-field input {
+            width: 100%;
+            padding: 0.65rem 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .contact-field input:focus { border-color: #f5a623; }
+        .contact-field input::placeholder { color: #c4c9d4; }
+
+        .proof-upload {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+        .proof-upload:hover { border-color: #f5a623; background: #fffbeb; }
+        .proof-upload input { display: none; }
+        .proof-upload .upload-icon { font-size: 1.5rem; color: #d1d5db; }
+        .proof-upload .upload-text { font-size: 0.8rem; color: var(--gray-500, #6b7280); margin-top: 0.25rem; }
+        .proof-upload .upload-hint { font-size: 0.65rem; color: var(--gray-400, #9ca3af); margin-top: 0.15rem; }
+        .file-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+        .file-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #eff6ff;
+            color: var(--primary, #1e3a5f);
+            padding: 0.25rem 0.5rem;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .file-tag .remove-file { cursor: pointer; opacity: 0.5; }
+
+        .submit-area {
+            margin-top: 1.5rem;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #f5a623, #e09400);
+            color: white;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(245,166,35,0.3);
+        }
+        .btn-submit:disabled {
+            background: #d1d5db;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        .btn-submit:not(:disabled):active { transform: scale(0.97); }
+
+        .success-view {
+            display: none;
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+        .success-view.show { display: block; }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #059669, #10b981);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.25rem;
+            font-size: 2.5rem;
+            color: white;
+            box-shadow: 0 8px 30px rgba(5,150,105,0.3);
+        }
+        .already-view {
+            display: none;
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+        .already-view.show { display: block; }
+
+        @media (max-width: 380px) {
+            .location-grid, .contact-grid { grid-template-columns: 1fr; }
+            .star-btn { width: 48px; height: 48px; font-size: 1.3rem; }
         }
     </style>
 </head>
 <body>
-    <div class="rating-page">
-        <div class="rating-card">
-            <div class="driver-profile-section">
-                <div class="driver-avatar-lg">
-                    <i class="bi bi-person-fill"></i>
-                </div>
-                <div class="driver-name-display">{{ $driver->user->name }}</div>
-                <div class="how-driving-badge">
-                    <i class="bi bi-star-fill"></i>
-                    How's My Driving?
-                </div>
+    <div class="rate-container">
+        <div class="driver-header">
+            <div class="driver-avatar">
+                <i class="bi bi-person-fill"></i>
             </div>
-            <div class="driver-info-cards mb-3">
-                <div class="driver-info-card">
-                    <div class="info-icon" style="background: var(--primary-50); color: var(--primary);">
-                        <i class="bi bi-upc-scan"></i>
-                    </div>
-                    <div class="info-label">Plate No.</div>
-                    <div class="info-value">{{ $driver->plate_number ?: 'N/A' }}</div>
-                </div>
-                <div class="driver-info-card">
-                    <div class="info-icon" style="background: var(--secondary-50); color: var(--secondary);">
-                        <i class="bi bi-bicycle"></i>
-                    </div>
-                    <div class="info-label">Body No.</div>
-                    <div class="info-value">{{ $driver->body_number ?: 'N/A' }}</div>
-                </div>
-                <div class="driver-info-card">
-                    <div class="info-icon" style="background: var(--success-50); color: var(--success);">
-                        <i class="bi bi-palette-fill"></i>
-                    </div>
-                    <div class="info-label">Color</div>
-                    <div class="info-value">{{ $driver->tricycle_color ?: 'N/A' }}</div>
-                </div>
+            <div class="driver-name">{{ $driver->user->name }}</div>
+            <div class="driver-meta">
+                @if($driver->plate_number)<span><i class="bi bi-upc-scan me-1"></i>{{ $driver->plate_number }}</span>@endif
+                @if($driver->body_number)<span><i class="bi bi-bicycle me-1"></i>{{ $driver->body_number }}</span>@endif
+                @if($driver->tricycle_color)<span><i class="bi bi-palette-fill me-1"></i>{{ $driver->tricycle_color }}</span>@endif
+            </div>
+        </div>
+
+        <div class="rate-body">
+            {{-- SUCCESS VIEW --}}
+            <div class="success-view" id="successView">
+                <div class="success-icon"><i class="bi bi-check-lg"></i></div>
+                <h4 style="font-weight: 800; color: var(--gray-800, #1f2937); margin-bottom: 0.5rem;">Salamat!</h4>
+                <p style="color: var(--gray-500, #6b7280); font-size: 0.9rem;">Your feedback helps us improve our service.</p>
+                <button type="button" class="btn-submit" onclick="location.reload()" style="margin-top: 1rem;">
+                    <i class="bi bi-arrow-repeat me-1"></i> Rate Another Trip
+                </button>
             </div>
 
-            <div class="card-body" style="padding: 1.25rem 1.5rem 2rem;">
-                @if (session('success'))
-                    <div class="alert alert-success text-center py-4">
-                        <i class="bi bi-check-circle-fill" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
-                        <h5 class="mb-2" style="color: var(--success);">Thank You!</h5>
-                        <p class="mb-0" style="font-size: 0.9rem;">{{ session('success') }}</p>
+            {{-- ALREADY RATED VIEW --}}
+            <div class="already-view" id="alreadyView">
+                <div class="success-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                    <i class="bi bi-info-lg"></i>
+                </div>
+                <h4 style="font-weight: 800; color: var(--gray-800, #1f2937); margin-bottom: 0.5rem;">Already Rated Today</h4>
+                <p style="color: var(--gray-500, #6b7280); font-size: 0.9rem;">
+                    You already gave
+                    <strong style="color: #f5a623;">{{ $existingRating->rating }} star{{ $existingRating->rating > 1 ? 's' : '' }}</strong>
+                    to <strong>{{ $driver->user->name }}</strong> today.
+                </p>
+                <p style="font-size: 0.75rem; color: var(--gray-400, #9ca3af);">You can only rate once per day.</p>
+                <button type="button" class="btn-submit" onclick="window.close()" style="margin-top: 0.5rem; background: #6b7280;">
+                    <i class="bi bi-x-lg me-1"></i> Close
+                </button>
+            </div>
+
+            {{-- RATING FORM --}}
+            <form id="ratingForm" action="{{ route('rate.submit', $driver->qr_code) }}" method="POST" enctype="multipart/form-data" style="{{ ($alreadyRated ?? false) ? 'display:none;' : '' }}">
+                @csrf
+
+                <div class="question-text">How was your trip?</div>
+                <div class="question-sub">Tap a star to rate</div>
+
+                <div class="star-row" id="starRow">
+                    <button type="button" class="star-btn" data-value="1"><i class="bi bi-star-fill"></i></button>
+                    <button type="button" class="star-btn" data-value="2"><i class="bi bi-star-fill"></i></button>
+                    <button type="button" class="star-btn" data-value="3"><i class="bi bi-star-fill"></i></button>
+                    <button type="button" class="star-btn" data-value="4"><i class="bi bi-star-fill"></i></button>
+                    <button type="button" class="star-btn" data-value="5"><i class="bi bi-star-fill"></i></button>
+                </div>
+                <div class="star-labels">
+                    <span>Poor</span>
+                    <span>Excellent</span>
+                </div>
+
+                <div class="emoji-feedback" id="emojiFeedback"></div>
+
+                <input type="hidden" name="rating" id="ratingValue" value="">
+
+                <hr class="section-divider">
+
+                <div class="section-title">
+                    <i class="bi bi-geo-alt"></i> Trip Location
+                    <span style="font-size: 0.65rem; font-weight: 400; color: var(--gray-400, #9ca3af); text-transform: none;">(optional)</span>
+                </div>
+
+                <div class="location-grid">
+                    <div class="location-field">
+                        <label><span class="dot dot-start"></span> From</label>
+                        <input type="text" name="start_location" id="start_location" placeholder="Starting point">
                     </div>
-                    <a href="{{ url()->current() }}" class="btn btn-yellow w-100 mt-2">
-                        <i class="bi bi-arrow-repeat me-1"></i> Rate Another Trip
-                    </a>
-                @elseif (isset($alreadyRated) && $alreadyRated)
-                    <div class="alert alert-info text-center py-4">
-                        <i class="bi bi-check-circle-fill" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
-                        <h5 class="mb-2" style="color: var(--primary);">Already Rated Today</h5>
-                        <p class="mb-0" style="font-size: 0.9rem; color: var(--gray-600);">
-                            You already gave
-                            <strong>
-                                @for ($i = 1; $i <= 5; $i++)
-                                    @if ($i <= $existingRating->rating)
-                                        <i class="bi bi-star-fill" style="color: var(--secondary);"></i>
-                                    @else
-                                        <i class="bi bi-star" style="color: var(--gray-300);"></i>
-                                    @endif
-                                @endfor
-                            </strong>
-                            to <strong>{{ $driver->user->name }}</strong> today.
-                        </p>
-                        <p style="font-size: 0.8rem; color: var(--gray-500); margin-bottom: 0;">
-                            You can only rate this driver once per day.
-                        </p>
+                    <div class="location-field">
+                        <label><span class="dot dot-end"></span> To</label>
+                        <input type="text" name="end_location" id="end_location" placeholder="Destination">
                     </div>
-                    <button type="button" class="btn btn-yellow w-100 mt-2" onclick="window.close();">
-                        <i class="bi bi-x-lg me-1"></i> Close
+                </div>
+
+                <div class="map-toggle" id="mapToggle" onclick="toggleMap()">
+                    <i class="bi bi-map"></i> Use map to set location
+                    <i class="bi bi-chevron-down" id="mapChevron"></i>
+                </div>
+
+                <div class="map-wrapper" id="mapWrapper">
+                    <div id="tripMap"></div>
+                    <div class="map-hint">Tap the map to set start (1st tap) and destination (2nd tap)</div>
+                </div>
+
+                <div class="section-title">
+                    <i class="bi bi-chat-dots"></i> Comment
+                    <span style="font-size: 0.65rem; font-weight: 400; color: var(--gray-400, #9ca3af); text-transform: none;">(optional)</span>
+                </div>
+                <div class="comment-box">
+                    <textarea name="reason" id="reason" placeholder="Share your experience (optional)..." rows="2"></textarea>
+                </div>
+
+                {{-- EXTRA FIELDS: only for low ratings (1-2 stars) --}}
+                <div class="extra-fields" id="extraFields">
+                    <hr class="section-divider">
+
+                    <div class="section-title" style="color: var(--danger, #dc2626);">
+                        <i class="bi bi-exclamation-triangle"></i> Complaint Details
+                    </div>
+
+                    <div class="contact-grid" style="margin-bottom: 0.75rem;">
+                        <div class="contact-field">
+                            <label>Your Name</label>
+                            <input type="text" name="passenger_name" placeholder="Juan Dela Cruz">
+                        </div>
+                        <div class="contact-field">
+                            <label>Contact No.</label>
+                            <input type="text" name="passenger_contact" placeholder="09171234567">
+                        </div>
+                    </div>
+                    <div style="font-size: 0.65rem; color: var(--gray-400, #9ca3af); margin-bottom: 0.75rem;">
+                        <i class="bi bi-info-circle me-1"></i> Admin may contact you to clarify your complaint.
+                    </div>
+
+                    <div class="section-title" style="font-size: 0.75rem;">
+                        <i class="bi bi-paperclip"></i> Upload Evidence
+                        <span style="font-size: 0.65rem; font-weight: 400; color: var(--gray-400, #9ca3af); text-transform: none;">(optional)</span>
+                    </div>
+                    <div class="proof-upload" id="proofUpload" onclick="document.getElementById('proofInput').click()">
+                        <div class="upload-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+                        <div class="upload-text">Tap to upload files</div>
+                        <div class="upload-hint">JPG, PNG, MP4, PDF (max 20MB each)</div>
+                        <input type="file" name="proofs[]" id="proofInput" multiple accept=".jpg,.jpeg,.png,.gif,.mp4,.avi,.mov,.pdf,.doc,.docx">
+                    </div>
+                    <div class="file-tags" id="fileTags"></div>
+                </div>
+
+                <div class="submit-area">
+                    <button type="submit" class="btn-submit" id="submitBtn" disabled>
+                        <i class="bi bi-send me-1"></i> Submit Rating
                     </button>
-                @else
-                    <form action="{{ route('rate.submit', $driver->qr_code) }}" method="POST" enctype="multipart/form-data" id="ratingForm">
-                        @csrf
-
-                        <!-- Step Progress -->
-                        <div class="step-indicator">
-                            <span class="step active" id="step1-indicator"></span>
-                            <span class="step" id="step2-indicator"></span>
-                        </div>
-
-                        <!-- Step 1: Trip Details -->
-                        <div id="step1">
-                            <div class="d-flex align-items-center gap-2 mb-3">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: var(--primary); color: white; font-size: 0.75rem; font-weight: 800;">1</div>
-                                <h6 class="mb-0" style="font-weight: 700; color: var(--gray-700);">Where did you ride?</h6>
-                            </div>
-
-                            <div class="trip-route-visual mb-3">
-                                <div class="route-line">
-                                    <div class="dot start"></div>
-                                    <div class="connector"></div>
-                                    <div class="dot end"></div>
-                                </div>
-                                <div class="flex-grow-1" style="min-width: 0;">
-                                    <div class="location-input-group mb-3">
-                                        <i class="bi bi-geo-alt-fill location-icon start-icon"></i>
-                                        <input type="text" class="form-control @error('start_location') is-invalid @enderror"
-                                               id="start_location" name="start_location"
-                                               value="{{ old('start_location') }}"
-                                               placeholder="e.g. SM City, Main Street"
-                                               onchange="geocodeLocation(this.value, 'start')">
-                                        @error('start_location') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                        <small class="text-muted" style="font-size: 0.7rem;">Starting point of your trip</small>
-                                    </div>
-                                    <div class="location-input-group">
-                                        <i class="bi bi-geo-alt-fill location-icon end-icon"></i>
-                                        <input type="text" class="form-control @error('end_location') is-invalid @enderror"
-                                               id="end_location" name="end_location"
-                                               value="{{ old('end_location') }}"
-                                               placeholder="e.g. Public Market, Plaza"
-                                               onchange="geocodeLocation(this.value, 'end')">
-                                        @error('end_location') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                        <small class="text-muted" style="font-size: 0.7rem;">Destination of your trip</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="tripMap" class="mb-3"></div>
-
-                            <div class="trip-summary-card d-none" id="tripSummary">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-check-circle-fill" style="color: var(--success);"></i>
-                                    <span style="font-size: 0.85rem; font-weight: 600;">Trip route confirmed</span>
-                                </div>
-                                <div id="routeInfo" style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;"></div>
-                            </div>
-
-                            <button type="button" class="btn btn-primary w-100" id="toStep2">
-                                <i class="bi bi-arrow-right me-1"></i> Continue to Rating
-                            </button>
-                        </div>
-
-                        <!-- Step 2: Rating -->
-                        <div id="step2" style="display:none;">
-                            <div class="d-flex align-items-center gap-2 mb-3">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: var(--secondary); color: white; font-size: 0.75rem; font-weight: 800;">2</div>
-                                <h6 class="mb-0" style="font-weight: 700; color: var(--gray-700);">How was your trip?</h6>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="form-label fw-bold text-center d-block" style="font-size: 0.95rem; color: var(--primary);">Rate your experience</label>
-                                <div class="d-flex justify-content-center gap-1" id="starContainer">
-                                    @for ($i = 1; $i <= 5; $i++)
-                                        <span class="star-rating bi bi-star" data-value="{{ $i }}"></span>
-                                    @endfor
-                                </div>
-                                <input type="hidden" name="rating" id="ratingValue" value="">
-                                @error('rating')
-                                    <div class="text-danger text-center mt-1" style="font-size: 0.85rem;">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3" id="reasonSection" style="display:none;">
-                                <label for="reason" class="form-label">What went wrong? (optional)</label>
-                                <textarea class="form-control @error('reason') is-invalid @enderror" id="reason" name="reason" rows="3" placeholder="Tell us about your experience..."></textarea>
-                                @error('reason') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="mb-3" id="contactSection" style="display:none;">
-                                <label for="passenger_name" class="form-label" style="font-weight: 700;">
-                                    <i class="bi bi-person-fill me-1" style="color: var(--primary);"></i> Your Name <span style="font-size: 0.7rem; color: var(--gray-400); font-weight: 400;">(optional)</span>
-                                </label>
-                                <input type="text" class="form-control @error('passenger_name') is-invalid @enderror"
-                                       id="passenger_name" name="passenger_name"
-                                       value="{{ old('passenger_name') }}"
-                                       placeholder="e.g. Juan Dela Cruz"
-                                       style="border-color: var(--gray-200); margin-bottom: 0.75rem;">
-                                @error('passenger_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
-
-                                <label for="passenger_contact" class="form-label" style="font-weight: 700;">
-                                    <i class="bi bi-telephone-fill me-1" style="color: var(--primary);"></i> Contact Number <span style="font-size: 0.7rem; color: var(--gray-400); font-weight: 400;">(optional)</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text" style="background: var(--gray-100); border-color: var(--gray-200);">
-                                        <i class="bi bi-phone" style="color: var(--gray-500);"></i>
-                                    </span>
-                                    <input type="text" class="form-control @error('passenger_contact') is-invalid @enderror"
-                                           id="passenger_contact" name="passenger_contact"
-                                           value="{{ old('passenger_contact') }}"
-                                           placeholder="e.g. 09171234567"
-                                           style="border-color: var(--gray-200);">
-                                </div>
-                                @error('passenger_contact') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                <small class="text-muted" style="font-size: 0.7rem;">
-                                    <i class="bi bi-info-circle me-1"></i> Admin or Superadmin may contact you to clarify your complaint.
-                                </small>
-                            </div>
-
-                            <div class="mb-4 proof-section" id="proofSection">
-                                <label for="proofs" class="form-label" style="color: var(--danger); font-weight: 700;">
-                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Upload Evidence (Required for low ratings)
-                                </label>
-                                <div class="proof-upload-area">
-                                    <input type="file" class="form-control border-0 p-0 @error('proofs') is-invalid @enderror @error('proofs.*') is-invalid @enderror"
-                                           id="proofs" name="proofs[]" multiple accept=".jpg,.jpeg,.png,.gif,.mp4,.avi,.mov,.pdf,.doc,.docx" style="background: transparent;">
-                                    <small class="text-muted d-block mt-2">Accepted: JPG, PNG, GIF, MP4, AVI, PDF, DOC (Max 20MB per file)</small>
-                                </div>
-                                <div id="fileList" class="mt-2 d-flex flex-wrap gap-1"></div>
-                                @error('proofs') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                                @error('proofs.*') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-outline-secondary w-50" id="backToStep1">
-                                    <i class="bi bi-arrow-left me-1"></i> Back
-                                </button>
-                                <button type="submit" class="btn btn-yellow w-50" id="submitBtn" disabled>
-                                    <i class="bi bi-send me-2"></i> Submit Rating
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                @endif
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    @if($alreadyRated ?? false)
+    <script>document.getElementById('alreadyView').classList.add('show');</script>
+    @endif
+
     <script>
+    (function() {
+        var selectedRating = 0;
+        var emojis = ['', '😞', '😕', '😐', '😊', '🤩'];
+        var labels = ['', 'Poor', 'Below Average', 'Okay', 'Good', 'Excellent'];
+
+        // Star rating
+        var starBtns = document.querySelectorAll('.star-btn');
+        var ratingInput = document.getElementById('ratingValue');
+        var submitBtn = document.getElementById('submitBtn');
+        var emojiEl = document.getElementById('emojiFeedback');
+        var extraFields = document.getElementById('extraFields');
+
+        starBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                selectedRating = parseInt(this.dataset.value);
+                ratingInput.value = selectedRating;
+                submitBtn.disabled = false;
+
+                starBtns.forEach(function(b, i) {
+                    if (i < selectedRating) {
+                        b.classList.add('selected');
+                    } else {
+                        b.classList.remove('selected');
+                    }
+                });
+
+                emojiEl.innerHTML = '<span style="animation: popIn 0.3s ease;">' + emojis[selectedRating] + '</span> <span style="font-size: 0.85rem; font-weight: 700; color: var(--gray-600, #4b5563);">' + labels[selectedRating] + '</span>';
+
+                if (selectedRating <= 2) {
+                    extraFields.classList.add('show');
+                } else {
+                    extraFields.classList.remove('show');
+                }
+            });
+        });
+
+        // Map
+        var mapLoaded = false;
         var map = null;
         var startMarker = null;
         var endMarker = null;
-        var routeLine = null;
-        var isStartSet = false;
-        var isEndSet = false;
 
-        function checkStep1Complete() {
-            document.getElementById('toStep2').disabled = false;
+        window.toggleMap = function() {
+            var wrapper = document.getElementById('mapWrapper');
+            var chevron = document.getElementById('mapChevron');
+            wrapper.classList.toggle('show');
+            chevron.style.transform = wrapper.classList.contains('show') ? 'rotate(180deg)' : '';
+
+            if (wrapper.classList.contains('show') && !mapLoaded) {
+                loadMap();
+            }
+            if (map) {
+                setTimeout(function() { map.invalidateSize(); }, 100);
+            }
+        };
+
+        function loadMap() {
+            try {
+                map = L.map('tripMap').setView([12.8797, 121.7740], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap',
+                    maxZoom: 18
+                }).addTo(map);
+
+                map.on('click', function(e) {
+                    if (!startMarker) {
+                        setMapMarker(e.latlng, 'start');
+                    } else if (!endMarker) {
+                        setMapMarker(e.latlng, 'end');
+                    }
+                });
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(pos) {
+                        map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+                    }, function() {}, { timeout: 5000 });
+                }
+
+                mapLoaded = true;
+            } catch(e) {
+                document.getElementById('tripMap').innerHTML = '<div style="text-align:center;padding:2rem;color:#9ca3af;"><i class="bi bi-map" style="font-size:1.5rem;"></i><br><small>Map unavailable</small></div>';
+            }
+        }
+
+        function setMapMarker(latlng, type) {
+            var color = type === 'start' ? '#059669' : '#dc2626';
+            var label = type === 'start' ? 'S' : 'E';
+            var icon = L.divIcon({
+                html: '<div style="background:' + color + ';color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-weight:800;font-size:13px;">' + label + '</div>',
+                className: '',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            if (type === 'start') {
+                if (startMarker) map.removeLayer(startMarker);
+                startMarker = L.marker(latlng, {icon: icon}).addTo(map);
+                reverseGeocode(latlng, 'start_location');
+            } else {
+                if (endMarker) map.removeLayer(endMarker);
+                endMarker = L.marker(latlng, {icon: icon}).addTo(map);
+                reverseGeocode(latlng, 'end_location');
+            }
         }
 
         function reverseGeocode(latlng, inputId) {
-            var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + latlng.lat + '&lon=' + latlng.lng + '&addressdetails=1';
-            fetch(url)
+            fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + latlng.lat + '&lon=' + latlng.lng)
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (data.display_name) {
-                        document.getElementById(inputId).value = data.display_name;
+                        var short = data.display_name.split(',').slice(0, 3).join(',');
+                        document.getElementById(inputId).value = short;
                     }
                 })
-                .catch(function() {
-                    document.getElementById(inputId).value = latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6);
-                });
+                .catch(function() {});
         }
 
-        function setMarker(latlng, type) {
-            if (!map) return;
-            var icon = L.divIcon({
-                html: type === 'start'
-                    ? '<div style="background:#059669;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #a7f3d0;font-size:14px;font-weight:bold;">S</div>'
-                    : '<div style="background:#dc2626;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fecaca;font-size:14px;font-weight:bold;">E</div>',
-                className: '',
-                iconSize: [28, 28],
-                iconAnchor: [14, 14]
-            });
-            var inputId = type === 'start' ? 'start_location' : 'end_location';
-            if (type === 'start') {
-                if (startMarker) map.removeLayer(startMarker);
-                startMarker = L.marker(latlng, { icon: icon, draggable: true }).addTo(map);
-                isStartSet = true;
-            } else {
-                if (endMarker) map.removeLayer(endMarker);
-                endMarker = L.marker(latlng, { icon: icon, draggable: true }).addTo(map);
-                isEndSet = true;
-            }
-            reverseGeocode(latlng, inputId);
-            checkStep1Complete();
-        }
-
-        try {
-            map = L.map('tripMap').setView([12.8797, 121.7740], 6);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors',
-                maxZoom: 18,
-            }).addTo(map);
-
-            map.on('click', function(e) {
-                if (!isStartSet) {
-                    setMarker(e.latlng, 'start');
-                } else if (!isEndSet) {
-                    setMarker(e.latlng, 'end');
-                }
-            });
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(pos) {
-                    var latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
-                    setMarker(latlng, 'start');
-                    map.setView(latlng, 15);
-                }, function(error) {
-                    document.getElementById('start_location').placeholder = 'Type your starting location';
-                    checkStep1Complete();
-                }, { enableHighAccuracy: true, timeout: 10000 });
-            }
-        } catch(e) {
-            document.getElementById('tripMap').innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-map" style="font-size:2rem;"></i><br><small>Map not available. You can still type your locations.</small></div>';
-            checkStep1Complete();
-        }
-
-        // Step navigation - ALWAYS works
-        document.getElementById('toStep2').addEventListener('click', function() {
-            document.getElementById('step1').style.display = 'none';
-            document.getElementById('step2').style.display = 'block';
-            document.getElementById('step1-indicator').classList.remove('active');
-            document.getElementById('step1-indicator').classList.add('done');
-            document.getElementById('step2-indicator').classList.add('active');
-        });
-
-        document.getElementById('backToStep1').addEventListener('click', function() {
-            document.getElementById('step2').style.display = 'none';
-            document.getElementById('step1').style.display = 'block';
-            document.getElementById('step2-indicator').classList.remove('active');
-            document.getElementById('step1-indicator').classList.add('active');
-        });
-
-        // Star rating - ALWAYS works
-        var stars = document.querySelectorAll('.star-rating');
-        var ratingInput = document.getElementById('ratingValue');
-        var submitBtn = document.getElementById('submitBtn');
-        var reasonSection = document.getElementById('reasonSection');
-        var proofSection = document.getElementById('proofSection');
-        var contactSection = document.getElementById('contactSection');
-
-        stars.forEach(function(star) {
-            star.addEventListener('click', function() {
-                var value = parseInt(this.dataset.value);
-                ratingInput.value = value;
-                submitBtn.disabled = false;
-                stars.forEach(function(s, i) {
-                    if (i < value) {
-                        s.classList.remove('bi-star');
-                        s.classList.add('bi-star-fill');
-                        s.classList.add('active');
-                    } else {
-                        s.classList.remove('bi-star-fill');
-                        s.classList.remove('active');
-                        s.classList.add('bi-star');
-                    }
-                });
-                if (value <= 2) {
-                    reasonSection.style.display = 'block';
-                    proofSection.style.display = 'block';
-                    contactSection.style.display = 'block';
-                } else {
-                    reasonSection.style.display = 'none';
-                    proofSection.style.display = 'none';
-                    contactSection.style.display = 'none';
-                }
+        // File upload
+        document.getElementById('proofInput').addEventListener('change', function() {
+            var tags = document.getElementById('fileTags');
+            tags.innerHTML = '';
+            Array.from(this.files).forEach(function(f, i) {
+                tags.innerHTML += '<span class="file-tag"><i class="bi bi-file-earmark"></i> ' + f.name + '</span>';
             });
         });
-
-        // File list
-        document.getElementById('proofs').addEventListener('change', function() {
-            var fileList = document.getElementById('fileList');
-            fileList.innerHTML = '';
-            Array.from(this.files).forEach(function(file) {
-                fileList.innerHTML += '<span class="badge bg-primary me-1">' + file.name + '</span> ';
-            });
-        });
+    })();
     </script>
+    <style>
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
