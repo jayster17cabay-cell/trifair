@@ -12,6 +12,38 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/debug-db', function () {
+    try {
+        $db = config('database.connections.mysql');
+        $pdo = new \PDO(
+            "mysql:host={$db['host']};port={$db['port']};dbname={$db['database']}",
+            $db['username'],
+            $db['password'],
+            $db['options']
+        );
+        return response()->json([
+            'status' => 'connected',
+            'host' => $db['host'],
+            'port' => $db['port'],
+            'database' => $db['database'],
+            'username' => $db['username'],
+            'debug' => config('app.debug'),
+            'password_set' => !empty($db['password']),
+            'ssl_options' => $db['options'],
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'host' => config('database.connections.mysql.host'),
+            'port' => config('database.connections.mysql.port'),
+            'database' => config('database.connections.mysql.database'),
+            'username' => config('database.connections.mysql.username'),
+            'debug' => config('app.debug'),
+        ]);
+    }
+});
+
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
