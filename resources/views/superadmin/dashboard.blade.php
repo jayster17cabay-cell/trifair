@@ -3,265 +3,195 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="welcome-card">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h3>Welcome back, {{ Auth::user()->name }}!</h3>
-            <p>Here's your complete TriFair system overview with real-time data.</p>
-        </div>
-        <div class="text-end" style="z-index: 1;">
-            <span class="badge" style="background: rgba(255,255,255,0.2); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem;">
-                <i class="bi bi-check-circle-fill me-1"></i> System Online
-            </span>
-        </div>
-    </div>
-</div>
-
 @if (isset($unreadCount) && $unreadCount > 0)
-    <div class="alert alert-warning alert-banner d-flex align-items-center justify-content-between shadow-sm" role="alert">
+    <div class="alert alert-warning alert-banner d-flex align-items-center justify-content-between" role="alert" style="margin-bottom: 1.25rem;">
         <div>
-            <i class="bi bi-bell-fill me-2 text-warning"></i>
-            <strong>You have {{ $unreadCount }} unread notification{{ $unreadCount > 1 ? 's' : '' }}!</strong>
-            <span class="ms-2" style="font-size: 0.9rem;">Check your latest alerts and updates.</span>
+            <i class="bi bi-bell-fill me-2"></i>
+            <strong>{{ $unreadCount }} unread notification{{ $unreadCount > 1 ? 's' : '' }}</strong>
         </div>
         <a href="{{ route('notifications.index') }}" class="btn btn-yellow btn-sm">
-            <i class="bi bi-eye me-1"></i> View Alerts
+            <i class="bi bi-eye me-1"></i> View
         </a>
     </div>
 @endif
 
-<div class="section-label">Quick Actions</div>
-<div class="quick-actions-grid mb-4">
-    <a href="{{ route('superadmin.drivers.create') }}" class="quick-action-card">
-        <div class="qa-icon" style="background: var(--primary-50); color: var(--primary);"><i class="bi bi-person-plus"></i></div>
-        <div><div class="qa-text">Add Driver</div><div class="qa-desc">Register a new driver</div></div>
-    </a>
-    <a href="{{ route('superadmin.admins') }}" class="quick-action-card">
-        <div class="qa-icon" style="background: var(--info-light); color: var(--info);"><i class="bi bi-shield"></i></div>
-        <div><div class="qa-text">Manage Admins</div><div class="qa-desc">Admin accounts</div></div>
-    </a>
-    <a href="{{ route('superadmin.todas') }}" class="quick-action-card">
-        <div class="qa-icon" style="background: var(--secondary-50); color: var(--secondary-dark);"><i class="bi bi-diagram-3"></i></div>
-        <div><div class="qa-text">Manage TODAs</div><div class="qa-desc">Tricycle organizations</div></div>
-    </a>
-    <a href="{{ route('superadmin.reports') }}" class="quick-action-card">
-        <div class="qa-icon" style="background: var(--success-50); color: var(--success);"><i class="bi bi-bar-chart"></i></div>
-        <div><div class="qa-text">View Reports</div><div class="qa-desc">Performance analytics</div></div>
-    </a>
-    <a href="{{ route('superadmin.complaints') }}" class="quick-action-card">
-        <div class="qa-icon" style="background: var(--danger-50); color: var(--danger);"><i class="bi bi-exclamation-triangle"></i></div>
-        <div><div class="qa-text">Complaints</div><div class="qa-desc">Review flagged trips</div></div>
-    </a>
-    <a href="{{ route('superadmin.activity-logs') }}" class="quick-action-card">
-        <div class="qa-icon" style="background: var(--gray-100); color: var(--gray-600);"><i class="bi bi-clock-history"></i></div>
-        <div><div class="qa-text">Activity Logs</div><div class="qa-desc">System history</div></div>
-    </a>
+<div class="dash-stats">
+    <div class="dash-stat-card" style="--accent: var(--primary); --accent-bg: var(--primary-50);">
+        <div class="dash-stat-icon"><i class="bi bi-people-fill"></i></div>
+        <div class="dash-stat-body">
+            <div class="dash-stat-num">{{ $totalDrivers }}</div>
+            <div class="dash-stat-text">Total Drivers</div>
+            <div class="dash-stat-sub">{{ $activeDrivers }} active</div>
+        </div>
+    </div>
+    <div class="dash-stat-card" style="--accent: var(--secondary-dark); --accent-bg: var(--secondary-50);">
+        <div class="dash-stat-icon"><i class="bi bi-star-fill"></i></div>
+        <div class="dash-stat-body">
+            <div class="dash-stat-num">{{ number_format($averageRating ?? 0, 1) }}</div>
+            <div class="dash-stat-text">Average Rating</div>
+            <div class="dash-stat-sub">{{ $totalRatings }} total</div>
+        </div>
+    </div>
+    <div class="dash-stat-card" style="--accent: var(--danger); --accent-bg: var(--danger-50);">
+        <div class="dash-stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <div class="dash-stat-body">
+            <div class="dash-stat-num">{{ $totalComplaints }}</div>
+            <div class="dash-stat-text">Complaints</div>
+            <div class="dash-stat-sub">Low ratings with proof</div>
+        </div>
+    </div>
+    <div class="dash-stat-card" style="--accent: var(--info); --accent-bg: var(--info-light);">
+        <div class="dash-stat-icon"><i class="bi bi-shield-fill-check"></i></div>
+        <div class="dash-stat-body">
+            <div class="dash-stat-num">{{ $totalAdmins }}</div>
+            <div class="dash-stat-text">Admins</div>
+            <div class="dash-stat-sub">Managing system</div>
+        </div>
+    </div>
 </div>
 
-<div class="section-label">System Stats</div>
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="stat-card stat-primary">
-            <div class="stat-icon"><i class="bi bi-people"></i></div>
-            <div class="stat-label">Total Drivers</div>
-            <div class="stat-value">{{ $totalDrivers }}</div>
-            <div class="stat-footer">{{ $activeDrivers }} currently active</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card stat-yellow">
-            <div class="stat-icon"><i class="bi bi-star"></i></div>
-            <div class="stat-label">Average Rating</div>
-            <div class="stat-value">{{ number_format($averageRating ?? 0, 1) }}</div>
-            <div class="stat-footer">From {{ $totalRatings }} total ratings</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card stat-danger">
-            <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
-            <div class="stat-label">Complaints</div>
-            <div class="stat-value">{{ $totalComplaints }}</div>
-            <div class="stat-footer">Low ratings with proof</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card stat-blue">
-            <div class="stat-icon"><i class="bi bi-shield-check"></i></div>
-            <div class="stat-label">System Admins</div>
-            <div class="stat-value">{{ $totalAdmins }}</div>
-            <div class="stat-footer">Managing the system</div>
-        </div>
-    </div>
+<div class="dash-section-label">Quick Actions</div>
+<div class="dash-quick-actions">
+    <a href="{{ route('superadmin.drivers.create') }}" class="dash-qa-item">
+        <i class="bi bi-person-plus"></i>
+        <span>Add Driver</span>
+    </a>
+    <a href="{{ route('superadmin.admins') }}" class="dash-qa-item">
+        <i class="bi bi-shield"></i>
+        <span>Admins</span>
+    </a>
+    <a href="{{ route('superadmin.todas') }}" class="dash-qa-item">
+        <i class="bi bi-diagram-3"></i>
+        <span>TODAs</span>
+    </a>
+    <a href="{{ route('superadmin.reports') }}" class="dash-qa-item">
+        <i class="bi bi-bar-chart"></i>
+        <span>Reports</span>
+    </a>
+    <a href="{{ route('superadmin.complaints') }}" class="dash-qa-item">
+        <i class="bi bi-flag"></i>
+        <span>Complaints</span>
+    </a>
+    <a href="{{ route('superadmin.activity-logs') }}" class="dash-qa-item">
+        <i class="bi bi-clock-history"></i>
+        <span>Logs</span>
+    </a>
 </div>
 
 @if ($totalTodas > 0)
-<div class="section-label">Drivers by TODA</div>
-<div class="card card-accent-blue mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-diagram-3 me-2" style="color: var(--primary);"></i>TODA Overview</span>
-        <a href="{{ route('superadmin.todas') }}" class="btn btn-sm btn-outline-primary">Manage TODAs</a>
-    </div>
-    <div class="card-body">
-        <div class="row g-3">
-            @foreach ($todaStats as $toda)
-                <div class="col-md-4 col-lg-3">
-                    <div class="p-3 rounded-3" style="background: var(--primary-50); border: 1px solid var(--primary-light);">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: var(--primary); color: white; font-size: 0.75rem; font-weight: 800; flex-shrink: 0;">
-                                <i class="bi bi-diagram-3"></i>
-                            </div>
-                            <strong style="font-size: 0.9rem; color: var(--primary);">{{ $toda->name }}</strong>
-                        </div>
-                        @if ($toda->area)
-                            <small class="text-muted d-block mb-2" style="font-size: 0.78rem;"><i class="bi bi-geo-alt me-1"></i>{{ $toda->area }}</small>
-                        @endif
-                        <div class="d-flex gap-3">
-                            <div>
-                                <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary);">{{ $toda->drivers_count }}</div>
-                                <small class="text-muted" style="font-size: 0.75rem;">Drivers</small>
-                            </div>
-                            <div>
-                                <div style="font-size: 1.3rem; font-weight: 800; color: var(--success);">{{ $toda->active_drivers_count }}</div>
-                                <small class="text-muted" style="font-size: 0.75rem;">Active</small>
-                            </div>
-                        </div>
-                    </div>
+<div class="dash-section-label">TODA Overview</div>
+<div class="dash-toda-grid mb-4">
+    @foreach ($todaStats as $toda)
+        <div class="dash-toda-card">
+            <div class="dash-toda-head">
+                <div class="dash-toda-icon"><i class="bi bi-diagram-3"></i></div>
+                <div>
+                    <strong>{{ $toda->name }}</strong>
+                    @if ($toda->area)
+                        <small><i class="bi bi-geo-alt"></i> {{ $toda->area }}</small>
+                    @endif
                 </div>
-            @endforeach
+            </div>
+            <div class="dash-toda-nums">
+                <div><span class="num">{{ $toda->drivers_count }}</span><span class="lbl">Drivers</span></div>
+                <div><span class="num" style="color: var(--success);">{{ $toda->active_drivers_count }}</span><span class="lbl">Active</span></div>
+            </div>
         </div>
-    </div>
+    @endforeach
 </div>
 @endif
 
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="section-label">Recent Complaints</div>
-        <div class="card card-accent-blue">
-            <div class="card-header">
-                <i class="bi bi-exclamation-triangle me-2" style="color: var(--warning);"></i>Flagged Ratings
-            </div>
-            <div class="card-body p-0">
-                @forelse ($recentComplaints as $rating)
-                    <div class="list-item-premium p-3 {{ !$loop->last ? 'border-bottom' : '' }}">
-                        <div class="d-flex align-items-start gap-2">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                                 style="width: 34px; height: 34px; background: var(--warning-light); color: var(--warning); font-weight: 800; font-size: 0.85rem;">
-                                {{ $rating->rating }}
-                            </div>
-                            <div class="flex-grow-1" style="min-width: 0;">
-                                <strong style="font-size: 0.85rem;">{{ $rating->driver->user->name ?? 'Unknown' }}</strong>
-                                <small class="text-muted d-block" style="font-size: 0.78rem;">{{ $rating->created_at->diffForHumans() }}</small>
-                                @if ($rating->start_location && $rating->end_location)
-                                    <div style="font-size: 0.72rem; color: var(--gray-600); margin-top: 1px;">
-                                        <i class="bi bi-geo-alt" style="color: var(--success);"></i>
-                                        <span>{{ $rating->start_location }}</span>
-                                        <i class="bi bi-arrow-right mx-1" style="font-size: 0.5rem;"></i>
-                                        <i class="bi bi-geo-alt" style="color: var(--danger);"></i>
-                                        <span>{{ $rating->end_location }}</span>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
+<div class="dash-two-col">
+    <div class="dash-col">
+        <div class="dash-section-label">Recent Complaints</div>
+        <div class="dash-card">
+            @forelse ($recentComplaints as $rating)
+                <div class="dash-list-item">
+                    <div class="dash-list-badge" style="background: var(--warning-light); color: var(--warning);">
+                        {{ $rating->rating }}
                     </div>
-                @empty
-                    <div class="text-center py-5">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: var(--primary-50);">
-                            <i class="bi bi-check-circle" style="font-size: 2rem; color: var(--primary);"></i>
-                        </div>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">No complaints. All good!</p>
+                    <div class="dash-list-body">
+                        <div class="dash-list-name">{{ $rating->driver->user->name ?? 'Unknown' }}</div>
+                        @if ($rating->start_location && $rating->end_location)
+                            <div class="dash-list-route">
+                                <i class="bi bi-geo-alt" style="color: var(--success);"></i> {{ $rating->start_location }}
+                                <i class="bi bi-arrow-right mx-1"></i>
+                                <i class="bi bi-geo-alt" style="color: var(--danger);"></i> {{ $rating->end_location }}
+                            </div>
+                        @endif
                     </div>
-                @endforelse
-                @if ($totalComplaints > 5)
-                    <a href="{{ route('superadmin.complaints') }}" class="d-block text-center py-3 text-decoration-none" style="color: var(--secondary-dark); font-size: 0.85rem; font-weight: 600; background: var(--secondary-50);">
-                        View all complaints <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
-                @endif
-            </div>
+                    <div class="dash-list-time">{{ $rating->created_at->diffForHumans() }}</div>
+                </div>
+            @empty
+                <div class="dash-empty">
+                    <i class="bi bi-check-circle"></i>
+                    <span>No complaints. All good!</span>
+                </div>
+            @endforelse
+            @if ($totalComplaints > 5)
+                <a href="{{ route('superadmin.complaints') }}" class="dash-view-all">View all complaints <i class="bi bi-arrow-right"></i></a>
+            @endif
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="section-label">Top Rated Drivers</div>
-        <div class="card card-accent-yellow">
-            <div class="card-header">
-                <i class="bi bi-trophy me-2" style="color: var(--secondary);"></i>Top Performers
-            </div>
-            <div class="card-body p-0">
-                @forelse ($topDrivers as $driver)
-                    <div class="d-flex align-items-center gap-3 px-4 py-3 {{ !$loop->last ? 'border-bottom' : '' }}">
-                        <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
-                             style="width: 38px; height: 38px; background: {{ $loop->index < 3 ? 'var(--secondary-light)' : 'var(--gray-100)' }}; color: {{ $loop->index < 3 ? 'var(--secondary-dark)' : 'var(--gray-500)' }}; font-weight: 900; font-size: 0.95rem;">
-                            {{ $loop->iteration }}
-                        </div>
-                        <div class="flex-grow-1">
-                            <div>
-                                <strong style="font-size: 0.88rem;">{{ $driver->user->name }}</strong>
-                                @if ($driver->toda)
-                                    <small class="d-block" style="font-size: 0.75rem; color: var(--gray-600);">{{ $driver->toda->name }}</small>
-                                @endif
-                            </div>
-                            <div class="d-flex gap-1 mt-1">
-                                @for ($i = 1; $i <= 5; $i++)
-                                    <i class="bi bi-star-fill" style="color: {{ $i <= round($driver->valid_ratings_avg_rating ?? 0) ? 'var(--secondary)' : 'var(--gray-200)' }}; font-size: 0.6rem;"></i>
-                                @endfor
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <div style="font-weight: 800; font-size: 1.1rem; color: var(--primary);">{{ number_format($driver->valid_ratings_avg_rating ?? 0, 1) }}</div>
-                            <small class="text-muted" style="font-size: 0.75rem;">{{ $driver->valid_ratings_count }} ratings</small>
+    <div class="dash-col">
+        <div class="dash-section-label">Top Rated Drivers</div>
+        <div class="dash-card">
+            @forelse ($topDrivers as $driver)
+                <div class="dash-list-item">
+                    <div class="dash-list-rank {{ $loop->index < 3 ? 'rank-top' : '' }}">
+                        {{ $loop->iteration }}
+                    </div>
+                    <div class="dash-list-body">
+                        <div class="dash-list-name">{{ $driver->user->name }}</div>
+                        @if ($driver->toda)
+                            <div class="dash-list-sub"><i class="bi bi-diagram-3"></i> {{ $driver->toda->name }}</div>
+                        @endif
+                    </div>
+                    <div class="dash-list-right">
+                        <div class="dash-list-score">{{ number_format($driver->valid_ratings_avg_rating ?? 0, 1) }}</div>
+                        <div class="dash-list-stars">
+                            @for ($i = 1; $i <= 5; $i++)
+                                <i class="bi bi-star-fill" style="color: {{ $i <= round($driver->valid_ratings_avg_rating ?? 0) ? 'var(--secondary)' : 'var(--gray-200) }}; font-size: 0.65rem;"></i>
+                            @endfor
                         </div>
                     </div>
-                @empty
-                    <div class="text-center py-4">
-                        <p class="text-muted mb-0">No ratings data yet.</p>
-                    </div>
-                @endforelse
-            </div>
+                </div>
+            @empty
+                <div class="dash-empty">
+                    <i class="bi bi-inbox"></i>
+                    <span>No ratings data yet.</span>
+                </div>
+            @endforelse
         </div>
     </div>
+</div>
 
-    <div class="col-md-4">
-        <div class="section-label">Recent Activity</div>
-        <div class="card card-accent-yellow">
-            <div class="card-header">
-                <i class="bi bi-clock-history me-2" style="color: var(--secondary);"></i>Latest Ratings
+<div class="dash-section-label">Recent Ratings</div>
+<div class="dash-card mb-4">
+    @forelse ($recentRatings as $rating)
+        <div class="dash-list-item">
+            <div class="dash-list-badge" style="background: {{ $rating->rating >= 4 ? 'var(--primary-50)' : ($rating->rating <= 2 ? 'var(--danger-50)' : 'var(--secondary-50)') }}; color: {{ $rating->rating >= 4 ? 'var(--primary)' : ($rating->rating <= 2 ? 'var(--danger)' : 'var(--secondary-dark)') }};">
+                {{ $rating->rating }}
             </div>
-            <div class="card-body p-0">
-                @forelse ($recentRatings as $rating)
-                    <div class="d-flex align-items-start gap-2 px-4 py-3 {{ !$loop->last ? 'border-bottom' : '' }}">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                             style="width: 34px; height: 34px;
-                                     background: {{ $rating->rating >= 4 ? 'var(--primary-50)' : ($rating->rating <= 2 ? 'var(--warning-light)' : 'var(--secondary-light)') }};
-                                    color: {{ $rating->rating >= 4 ? 'var(--primary)' : ($rating->rating <= 2 ? 'var(--warning)' : 'var(--secondary-dark)') }};
-                                    font-weight: 700; font-size: 0.85rem;">
-                            {{ $rating->rating }}
-                        </div>
-                        <div class="flex-grow-1" style="min-width: 0;">
-                            <strong style="font-size: 0.85rem;">{{ $rating->driver->user->name ?? 'Unknown' }}</strong>
-                            <div class="d-flex gap-1 mt-1">
-                                @for ($i = 1; $i <= 5; $i++)
-                                    <i class="bi bi-star-fill" style="color: {{ $i <= $rating->rating ? 'var(--secondary)' : 'var(--gray-200)' }}; font-size: 0.7rem;"></i>
-                                @endfor
-                            </div>
-                            @if ($rating->start_location && $rating->end_location)
-                                <div style="font-size: 0.72rem; color: var(--gray-600); margin-top: 1px;">
-                                    <i class="bi bi-geo-alt" style="color: var(--success);"></i>
-                                    <span>{{ $rating->start_location }}</span>
-                                    <i class="bi bi-arrow-right mx-1" style="font-size: 0.6rem;"></i>
-                                    <i class="bi bi-geo-alt" style="color: var(--danger);"></i>
-                                    <span>{{ $rating->end_location }}</span>
-                                </div>
-                            @endif
-                        </div>
-                        <small class="text-muted flex-shrink-0" style="font-size: 0.75rem;">{{ $rating->created_at->diffForHumans() }}</small>
-                    </div>
-                @empty
-                    <div class="text-center py-4">
-                        <p class="text-muted mb-0">No activity yet.</p>
-                    </div>
-                @endforelse
+            <div class="dash-list-body">
+                <div class="dash-list-name">{{ $rating->driver->user->name ?? 'Unknown' }}</div>
+                <div class="dash-list-stars" style="margin-top: 2px;">
+                    @for ($i = 1; $i <= 5; $i++)
+                        <i class="bi bi-star-fill" style="color: {{ $i <= $rating->rating ? 'var(--secondary)' : 'var(--gray-200)' }}; font-size: 0.65rem;"></i>
+                    @endfor
+                    @if ($rating->reason)
+                        <span style="font-size: 0.78rem; color: var(--gray-500); margin-left: 0.4rem; font-style: italic;">"{{ \Illuminate\Support\Str::limit($rating->reason, 50) }}"</span>
+                    @endif
+                </div>
             </div>
+            <div class="dash-list-time">{{ $rating->created_at->diffForHumans() }}</div>
         </div>
-    </div>
+    @empty
+        <div class="dash-empty">
+            <i class="bi bi-inbox"></i>
+            <span>No ratings yet.</span>
+        </div>
+    @endforelse
 </div>
 @endsection
