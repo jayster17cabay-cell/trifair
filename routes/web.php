@@ -12,15 +12,6 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/debug-rate', function () {
-    try {
-        $driver = \App\Models\Driver::with('user')->where('qr_code', 'WB2rxaPOZEfcA4RtcnKbGJZ14cu3LVjE')->where('status', 'active')->firstOrFail();
-        return view('rate.form', compact('driver'));
-    } catch (\Throwable $e) {
-        return response()->json(['error' => $e->getMessage(), 'file' => basename($e->getFile()) . ':' . $e->getLine()]);
-    }
-});
-
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
