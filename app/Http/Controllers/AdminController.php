@@ -36,18 +36,21 @@ class AdminController extends Controller
             ->get();
 
         $topDrivers = Driver::with('user')
-            ->withAvg('validRatings', 'rating')
-            ->withCount('validRatings')
+            ->select('drivers.*')
+            ->selectRaw('(select avg("ratings"."rating") from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_avg_rating')
+            ->selectRaw('(select count(*) from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_count')
+            ->groupBy('drivers.id')
             ->having('valid_ratings_count', '>', 0)
             ->orderByDesc('valid_ratings_avg_rating')
             ->take(5)
             ->get();
 
-        $todaStats = Toda::with('drivers')->withCount(['drivers', 'activeDrivers' => function ($q) {
-            $q->where('status', 'active');
-        }])->get();
+        $todaStats = Toda::with('drivers')
+            ->withCount('drivers')
+            ->get();
 
         foreach ($todaStats as $toda) {
+            $toda->active_drivers_count = $toda->drivers->where('status', 'active')->count();
             $toda->avg_rating = Rating::whereIn('driver_id', $toda->drivers->pluck('id'))
                 ->whereNotNull('start_location')
                 ->whereNotNull('end_location')
@@ -205,8 +208,10 @@ class AdminController extends Controller
             ->with(['validRatings' => function ($query) {
                 $query->latest()->take(5);
             }])
-            ->withAvg('validRatings', 'rating')
-            ->withCount('validRatings')
+            ->select('drivers.*')
+            ->selectRaw('(select avg("ratings"."rating") from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_avg_rating')
+            ->selectRaw('(select count(*) from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_count')
+            ->groupBy('drivers.id')
             ->orderByDesc('valid_ratings_count')
             ->get();
 
@@ -240,9 +245,12 @@ class AdminController extends Controller
     public function todas()
     {
         $todas = Toda::withCount('drivers')
-            ->withCount(['drivers' => function ($q) { $q->where('status', 'active'); }])
             ->latest()
             ->paginate(20);
+
+        foreach ($todas as $toda) {
+            $toda->active_drivers_count = $toda->drivers()->where('status', 'active')->count();
+        }
 
         return view('admin.todas.index', compact('todas'));
     }
