@@ -3,6 +3,7 @@ services:
     name: trifair
     runtime: docker
     plan: free
+    healthCheckPath: /login
     envVars:
       - key: APP_ENV
         value: production
@@ -28,3 +29,5 @@ services:
         value: sync
       - key: MYSQL_ATTR_SSL_VERIFY_SERVER_CERT
         value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
