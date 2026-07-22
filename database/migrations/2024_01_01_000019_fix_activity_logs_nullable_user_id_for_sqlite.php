@@ -29,7 +29,7 @@ return new class extends Migration
         });
 
         if (Schema::hasTable('activity_logs')) {
-            DB::statement('INSERT INTO activity_logs_fixed (id, action, description, model_type, model_id, ip_address, user_agent, category, created_at, updated_at) SELECT id, action, description, model_type, model_id, ip_address, user_agent, COALESCE(category, \'system\'), created_at, updated_at FROM activity_logs');
+            DB::statement('INSERT OR IGNORE INTO activity_logs_fixed (id, user_id, action, description, model_type, model_id, ip_address, user_agent, category, created_at, updated_at) SELECT id, user_id, action, description, model_type, model_id, ip_address, user_agent, COALESCE(category, \'system\'), created_at, updated_at FROM activity_logs');
             Schema::dropIfExists('activity_logs');
         }
 
