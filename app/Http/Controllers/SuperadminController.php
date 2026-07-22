@@ -120,6 +120,15 @@ class SuperadminController extends Controller
         return view('superadmin.complaints', compact('complaints'));
     }
 
+    public function ratings()
+    {
+        $ratings = Rating::valid()->with(['driver.user', 'proofs', 'response'])
+            ->latest()
+            ->paginate(15);
+
+        return view('superadmin.ratings', compact('ratings'));
+    }
+
     public function markReviewed(Rating $rating)
     {
         $rating->update(['is_reviewed' => true]);

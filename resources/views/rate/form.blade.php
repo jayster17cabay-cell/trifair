@@ -320,8 +320,13 @@
                 <h3>Already Rated Today</h3>
                 <p>You already gave <strong>{{ $driver->user->name }}</strong> a rating today.</p>
                 <div class="screen-stars">
+                    @php
+                        $er = $existingRating->rating;
+                        $esOn = 'var(--gold)';
+                        $esOff = 'var(--gray-200)';
+                    @endphp
                     @for($i = 1; $i <= 5; $i++)
-                        <i class="bi {{ $i <= $existingRating->rating ? 'bi-star-fill' : 'bi-star' }}" style="color: {{ $i <= $existingRating->rating ? 'var(--gold)' : 'var(--gray-200)' }};"></i>
+                        <i class="bi {{ $i <= $er ? 'bi-star-fill' : 'bi-star' }}" style="color: {{ $i <= $er ? $esOn : $esOff }};"></i>
                     @endfor
                 </div>
                 <p style="font-size: 0.8rem; color: var(--gray-400); margin-top: 0.5rem;">One rating per driver per day.</p>
@@ -344,11 +349,12 @@
                 </div>
                 <h3>Thank You!</h3>
                 <p>Your rating for <strong>{{ $driver->user->name }}</strong> has been recorded.</p>
-                <a href="{{ url()->current() }}" class="btn-action" style="background: var(--primary); color: white;">
-                    <i class="bi bi-arrow-repeat"></i> Rate Again
-                </a>
+                <p style="font-size: 0.8rem; color: var(--gray-400); margin-top: 0.5rem;">This page will close automatically...</p>
             </div>
         </div>
+        <script>
+            setTimeout(function() { window.close(); }, 2500);
+        </script>
 
     @else
         <div class="rating-section">

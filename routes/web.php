@@ -47,6 +47,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::delete('/admins/{user}', [SuperadminController::class, 'destroyAdmin'])->name('admins.destroy');
     Route::get('/complaints', [SuperadminController::class, 'complaints'])->name('complaints');
     Route::patch('/complaints/{rating}/review', [SuperadminController::class, 'markReviewed'])->name('complaints.review');
+    Route::get('/ratings', [SuperadminController::class, 'ratings'])->name('ratings');
     Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
     Route::get('/activity-logs', [SuperadminController::class, 'activityLogs'])->name('activity-logs');
     Route::get('/todas', [SuperadminController::class, 'todas'])->name('todas');
@@ -78,73 +79,6 @@ Route::get('/file-storage/{path}', function ($path) {
     }
     return response()->file($fullPath);
 })->where('path', '.*')->name('storage.serve');
-
-Route::get('/_diag', function () {
-    try {
-        $results = [];
-        $results[] = 'DB: ' . config('database.default');
-
-        $results[] = 'Users: ' . \App\Models\User::count();
-        $results[] = 'Drivers: ' . \App\Models\Driver::count();
-        $results[] = 'Ratings: ' . \App\Models\Rating::count();
-        $results[] = 'Valid Ratings: ' . \App\Models\Rating::valid()->count();
-        $results[] = 'Todas: ' . \App\Models\Toda::count();
-
-        $results[] = 'Notification check...';
-        $results[] = 'Notifications: ' . \App\Models\Notification::count();
-
-        $results[] = 'Top drivers query...';
-        $topDrivers = \App\Models\Driver::with('user')
-            ->select('drivers.*')
-            ->selectRaw('(select avg("ratings"."rating") from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_avg_rating')
-            ->selectRaw('(select count(*) from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_count')
-            ->groupBy('drivers.id')
-            ->having('valid_ratings_count', '>', 0)
-            ->orderByDesc('valid_ratings_avg_rating')
-            ->take(5)
-            ->get();
-        $results[] = 'Top drivers: ' . $topDrivers->count();
-
-        $results[] = 'Toda stats query...';
-        $todaStats = \App\Models\Toda::with('drivers')->withCount('drivers')->get();
-        $results[] = 'Toda stats: ' . $todaStats->count();
-
-        $results[] = 'Recent ratings query...';
-        $recentRatings = \App\Models\Rating::valid()->with(['driver.user', 'driver.toda'])->latest()->take(10)->get();
-        $results[] = 'Recent ratings: ' . $recentRatings->count();
-
-        $results[] = 'Recent complaints query...';
-        $recentComplaints = \App\Models\Rating::valid()->with(['driver.user', 'proofs'])->where('rating', '<=', 2)->latest()->take(5)->get();
-        $results[] = 'Recent complaints: ' . $recentComplaints->count();
-
-        $results[] = 'Admins count...';
-        $totalAdmins = \App\Models\User::where('role', 'admin')->count();
-        $results[] = 'Admins: ' . $totalAdmins;
-
-        $results[] = 'Active drivers...';
-        $activeDrivers = \App\Models\Driver::where('status', 'active')->count();
-        $results[] = 'Active: ' . $activeDrivers;
-
-        $results[] = '--- Now trying to render the view ---';
-        $totalDrivers = \App\Models\Driver::count();
-        $totalRatings = \App\Models\Rating::valid()->count();
-        $averageRating = \App\Models\Rating::valid()->avg('rating');
-        $totalComplaints = \App\Models\Rating::valid()->where('rating', '<=', 2)->count();
-        $totalTodas = \App\Models\Toda::count();
-
-        // Try rendering without layout
-        $view = view('superadmin.dashboard', compact(
-            'totalDrivers', 'activeDrivers', 'totalRatings', 'averageRating',
-            'totalAdmins', 'recentRatings', 'topDrivers', 'totalComplaints',
-            'recentComplaints', 'totalTodas', 'todaStats'
-        ))->render();
-        $results[] = 'View rendered! Length: ' . strlen($view);
-
-        return implode("\n", $results);
-    } catch (\Throwable $e) {
-        return 'ERROR: ' . $e->getMessage() . "\nFile: " . $e->getFile() . ':' . $e->getLine();
-    }
-});
 
 // Shared
 Route::get('/rate/{qrCode}', [RatingController::class, 'showRateForm'])->name('rate.driver');

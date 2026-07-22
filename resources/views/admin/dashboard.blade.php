@@ -138,6 +138,11 @@
         <div class="dash-section-label">Top Rated Drivers</div>
         <div class="dash-card">
             @forelse ($topDrivers as $driver)
+                @php
+                    $avg = $driver->valid_ratings_avg_rating ?? 0;
+                    $starColor = 'var(--secondary)';
+                    $starEmpty = 'var(--gray-200)';
+                @endphp
                 <div class="dash-list-item">
                     <div class="dash-list-rank {{ $loop->index < 3 ? 'rank-top' : '' }}">
                         {{ $loop->iteration }}
@@ -149,10 +154,10 @@
                         @endif
                     </div>
                     <div class="dash-list-right">
-                        <div class="dash-list-score">{{ number_format($driver->valid_ratings_avg_rating ?? 0, 1) }}</div>
+                        <div class="dash-list-score">{{ number_format($avg, 1) }}</div>
                         <div class="dash-list-stars">
                             @for ($i = 1; $i <= 5; $i++)
-                                <i class="bi bi-star-fill" style="color: {{ $i <= round($driver->valid_ratings_avg_rating ?? 0) ? 'var(--secondary)' : 'var(--gray-200)' }}; font-size: 0.65rem;"></i>
+                                <i class="bi bi-star-fill" style="color: {{ $i <= round($avg) ? $starColor : $starEmpty }}; font-size: 0.65rem;"></i>
                             @endfor
                         </div>
                     </div>
@@ -170,15 +175,23 @@
 <div class="dash-section-label">Recent Ratings</div>
 <div class="dash-card mb-4">
     @forelse ($recentRatings as $rating)
+        @php
+            $r = $rating->rating;
+            if ($r >= 4) { $bg = 'var(--primary-50)'; $fg = 'var(--primary)'; }
+            elseif ($r <= 2) { $bg = 'var(--danger-50)'; $fg = 'var(--danger)'; }
+            else { $bg = 'var(--secondary-50)'; $fg = 'var(--secondary-dark)'; }
+            $starOn = 'var(--secondary)';
+            $starOff = 'var(--gray-200)';
+        @endphp
         <div class="dash-list-item">
-            <div class="dash-list-badge" style="background: {{ $rating->rating >= 4 ? 'var(--primary-50)' : ($rating->rating <= 2 ? 'var(--danger-50)' : 'var(--secondary-50)') }}; color: {{ $rating->rating >= 4 ? 'var(--primary)' : ($rating->rating <= 2 ? 'var(--danger)' : 'var(--secondary-dark)') }};">
-                {{ $rating->rating }}
+            <div class="dash-list-badge" style="background: {{ $bg }}; color: {{ $fg }};">
+                {{ $r }}
             </div>
             <div class="dash-list-body">
                 <div class="dash-list-name">{{ $rating->driver->user->name ?? 'Unknown' }}</div>
                 <div class="dash-list-stars" style="margin-top: 2px;">
                     @for ($i = 1; $i <= 5; $i++)
-                        <i class="bi bi-star-fill" style="color: {{ $i <= $rating->rating ? 'var(--secondary)' : 'var(--gray-200)' }}; font-size: 0.65rem;"></i>
+                        <i class="bi bi-star-fill" style="color: {{ $i <= $r ? $starOn : $starOff }}; font-size: 0.65rem;"></i>
                     @endfor
                     @if ($rating->reason)
                         <span style="font-size: 0.78rem; color: var(--gray-500); margin-left: 0.4rem; font-style: italic;">"{{ \Illuminate\Support\Str::limit($rating->reason, 50) }}"</span>

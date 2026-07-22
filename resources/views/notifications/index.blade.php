@@ -21,13 +21,19 @@
 <div class="card">
     <div class="card-body p-0">
         @forelse ($notifications as $notification)
+            @php
+                $type = $notification->type;
+                if ($type === 'complaint') { $nbg = 'var(--warning-light)'; $nfg = 'var(--warning)'; $nicon = 'exclamation-triangle'; }
+                elseif ($type === 'new_rating') { $nbg = 'var(--secondary-light)'; $nfg = 'var(--secondary-dark)'; $nicon = 'star-fill'; }
+                else { $nbg = 'var(--info-light)'; $nfg = 'var(--info)'; $nicon = 'info-circle'; }
+            @endphp
             <div class="p-4 {{ !$loop->last ? 'border-bottom' : '' }} {{ !$notification->is_read ? 'bg-primary bg-opacity-10' : '' }}">
                 <div class="d-flex align-items-start gap-3">
                     <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                          style="width: 46px; height: 46px;
-                                 background: {{ $notification->type === 'complaint' ? 'var(--warning-light)' : ($notification->type === 'new_rating' ? 'var(--secondary-light)' : 'var(--info-light)') }};
-                                color: {{ $notification->type === 'complaint' ? 'var(--warning)' : ($notification->type === 'new_rating' ? 'var(--secondary-dark)' : 'var(--info)') }};">
-                        <i class="bi bi-{{ $notification->type === 'complaint' ? 'exclamation-triangle' : ($notification->type === 'new_rating' ? 'star-fill' : 'info-circle') }} fs-5"></i>
+                                 background: {{ $nbg }};
+                                color: {{ $nfg }};">
+                        <i class="bi bi-{{ $nicon }} fs-5"></i>
                     </div>
                     <div class="flex-grow-1" style="min-width: 0;">
                         <div class="d-flex justify-content-between align-items-start">

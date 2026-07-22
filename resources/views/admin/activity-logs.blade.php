@@ -54,8 +54,8 @@
                 <div class="d-flex align-items-start gap-3">
                     <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                          style="width: 38px; height: 38px;
-                                background: {{ $categoryBgs[$log->category] ?? 'var(--gray-100)' }};
-                                color: {{ $categoryColors[$log->category] ?? 'var(--gray-500)' }};
+                                background: {{ $categoryBgs[$log->category] ?? '#f7fafc' }};
+                                color: {{ $categoryColors[$log->category] ?? '#a0aec0' }};
                                 font-weight: 700; font-size: 0.85rem;">
                         @switch($log->action)
                             @case('login') <i class="bi bi-box-arrow-in-right"></i> @break

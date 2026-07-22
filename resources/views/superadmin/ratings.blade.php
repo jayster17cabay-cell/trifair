@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.superadmin')
 
 @section('title', 'All Ratings')
 
@@ -54,7 +54,7 @@
                             <td>
                                 <div class="d-flex gap-1">
                                     @for ($i = 1; $i <= 5; $i++)
-                                        @if ($i <= $rating->rating)
+                                        @if ($i <= $rr)
                                             <i class="bi bi-star-fill" style="color: var(--secondary); font-size: 0.85rem;"></i>
                                         @else
                                             <i class="bi bi-star" style="color: var(--gray-300); font-size: 0.85rem;"></i>
@@ -125,7 +125,7 @@
                                     <span class="badge bg-primary bg-opacity-10 text-primary">
                                         <i class="bi bi-check-circle me-1"></i> Reviewed
                                     </span>
-                                @elseif ($rating->rating <= 2)
+                                @elseif ($rr <= 2)
                                     <span class="badge bg-warning bg-opacity-10 text-warning">
                                         <i class="bi bi-clock me-1"></i> Pending
                                     </span>
@@ -137,8 +137,8 @@
                             </td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
-                                    @if (!$rating->is_reviewed && $rating->rating <= 2)
-                                        <form action="{{ route('admin.ratings.review', $rating) }}" method="POST" class="d-inline">
+                                    @if (!$rating->is_reviewed && $rr <= 2)
+                                        <form action="{{ route('superadmin.complaints.review', $rating) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" class="btn btn-sm btn-warning" title="Mark as Reviewed">

@@ -80,9 +80,15 @@
                                             <i class="bi bi-clock-history me-1"></i> Recent Trips
                                         </div>
                                         @foreach ($driver->validRatings as $rating)
+                                            @php
+                                                $rr = $rating->rating;
+                                                if ($rr >= 4) { $rbg = 'var(--primary-50)'; $rcg = 'var(--primary)'; }
+                                                elseif ($rr <= 2) { $rbg = 'var(--warning-light)'; $rcg = 'var(--warning)'; }
+                                                else { $rbg = 'var(--secondary-light)'; $rcg = 'var(--secondary-dark)'; }
+                                            @endphp
                                             <div class="d-flex align-items-start gap-2 mb-2 pb-2 {{ !$loop->last ? 'border-bottom' : '' }}" style="border-color: var(--gray-200) !important;">
                                                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                                                     style="width: 30px; height: 30px; background: {{ $rating->rating >= 4 ? 'var(--primary-50)' : ($rating->rating <= 2 ? 'var(--warning-light)' : 'var(--secondary-light)') }}; color: {{ $rating->rating >= 4 ? 'var(--primary)' : ($rating->rating <= 2 ? 'var(--warning)' : 'var(--secondary-dark)') }}; font-weight: 700; font-size: 0.75rem;">
+                                                     style="width: 30px; height: 30px; background: {{ $rbg }}; color: {{ $rcg }}; font-weight: 700; font-size: 0.75rem;">
                                                     {{ $rating->rating }}
                                                 </div>
                                                 <div class="flex-grow-1" style="min-width: 0;">

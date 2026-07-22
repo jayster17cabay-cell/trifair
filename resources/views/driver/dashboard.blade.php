@@ -12,8 +12,13 @@
         <div class="dash-driver-score">
             <div class="dash-driver-score-num">{{ number_format($averageRating ?? 0, 1) }}</div>
             <div class="dash-driver-score-stars">
+                @php
+                    $avg = $averageRating ?? 0;
+                    $starOn = 'var(--secondary)';
+                    $starOff = 'rgba(255,255,255,0.3)';
+                @endphp
                 @for ($i = 1; $i <= 5; $i++)
-                    <i class="bi bi-star-fill" style="color: {{ $i <= round($averageRating ?? 0) ? 'var(--secondary)' : 'rgba(255,255,255,0.3)' }};"></i>
+                    <i class="bi bi-star-fill" style="color: {{ $i <= round($avg) ? $starOn : $starOff }};"></i>
                 @endfor
             </div>
             <div class="dash-driver-score-label">avg rating</div>
@@ -104,6 +109,10 @@
 <div class="dash-section-label">Recent Feedback</div>
 <div class="dash-card mb-4">
     @forelse ($recentRatings as $rating)
+        @php
+            $srOn = 'var(--secondary)';
+            $srOff = 'var(--gray-200)';
+        @endphp
         <div class="dash-list-item">
             <div class="dash-list-badge" style="background: var(--secondary-50); color: var(--secondary-dark);">
                 {{ $rating->rating }}
@@ -111,7 +120,7 @@
             <div class="dash-list-body">
                 <div class="dash-list-stars">
                     @for ($i = 1; $i <= 5; $i++)
-                        <i class="bi bi-star-fill" style="color: {{ $i <= $rating->rating ? 'var(--secondary)' : 'var(--gray-200)' }}; font-size: 0.7rem;"></i>
+                        <i class="bi bi-star-fill" style="color: {{ $i <= $rating->rating ? $srOn : $srOff }}; font-size: 0.7rem;"></i>
                     @endfor
                 </div>
                 @if ($rating->reason)

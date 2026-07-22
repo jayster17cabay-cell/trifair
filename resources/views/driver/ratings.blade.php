@@ -25,7 +25,13 @@
         @forelse ($ratings as $rating)
             <div class="p-4 {{ !$loop->last ? 'border-bottom' : '' }}">
                 <div class="d-flex align-items-start gap-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 46px; height: 46px; background: {{ $rating->rating >= 4 ? 'var(--primary-50)' : ($rating->rating <= 2 ? 'var(--warning-light)' : 'var(--secondary-light)') }}; color: {{ $rating->rating >= 4 ? 'var(--primary)' : ($rating->rating <= 2 ? 'var(--warning)' : 'var(--secondary-dark)') }}; font-weight: 800; font-size: 1.1rem;">
+                    @php
+                        $r = $rating->rating;
+                        if ($r >= 4) { $cbg = 'var(--primary-50)'; $cfg = 'var(--primary)'; }
+                        elseif ($r <= 2) { $cbg = 'var(--warning-light)'; $cfg = 'var(--warning)'; }
+                        else { $cbg = 'var(--secondary-light)'; $cfg = 'var(--secondary-dark)'; }
+                    @endphp
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 46px; height: 46px; background: {{ $cbg }}; color: {{ $cfg }}; font-weight: 800; font-size: 1.1rem;">
                         {{ $rating->rating }}
                     </div>
                     <div class="flex-grow-1" style="min-width: 0;">
