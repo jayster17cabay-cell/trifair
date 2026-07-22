@@ -55,7 +55,7 @@
                                         @php $avg = $driver->valid_ratings_avg_rating ?? 0; @endphp
                                         @for ($i = 1; $i <= 5; $i++)
                                             @if ($i <= round($avg))
-                                                <i class="bi bi-star-fill" style="color: #f5a623; font-size: 0.8rem;"></i>
+                                                <i class="bi bi-star-fill" style="color: var(--secondary); font-size: 0.8rem;"></i>
                                             @else
                                                 <i class="bi bi-star" style="color: var(--gray-300); font-size: 0.8rem;"></i>
                                             @endif
@@ -89,15 +89,15 @@
                                                     @if ($rating->start_location && $rating->end_location)
                                                         <div class="trip-route-visual" style="display: flex; align-items: flex-start; gap: 6px;">
                                                             <div style="display: flex; flex-direction: column; align-items: center; width: 14px; flex-shrink: 0; padding-top: 2px;">
-                                                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #059669; flex-shrink: 0;"></div>
-                                                                <div style="width: 2px; flex-grow: 1; min-height: 20px; background: linear-gradient(to bottom, #059669, #dc2626); border-radius: 1px;"></div>
-                                                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #dc2626; flex-shrink: 0;"></div>
+                                                                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex-shrink: 0;"></div>
+                                                                <div style="width: 2px; flex-grow: 1; min-height: 20px; background: linear-gradient(to bottom, var(--success), var(--danger)); border-radius: 1px;"></div>
+                                                                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--danger); flex-shrink: 0;"></div>
                                                             </div>
                                                             <div style="font-size: 0.75rem; min-width: 0;">
-                                                                <div style="color: #059669; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">
+                                                                <div style="color: var(--success); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">
                                                                     <i class="bi bi-geo-alt-fill me-1" style="font-size: 0.6rem;"></i> {{ $rating->start_location }}
                                                                 </div>
-                                                                <div style="color: #dc2626; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">
+                                                                <div style="color: var(--danger); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">
                                                                     <i class="bi bi-geo-alt-fill me-1" style="font-size: 0.6rem;"></i> {{ $rating->end_location }}
                                                                 </div>
                                                             </div>

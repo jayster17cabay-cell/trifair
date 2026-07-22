@@ -172,9 +172,9 @@
                                 </div>
                                 @if ($rating->start_location && $rating->end_location)
                                     <div style="font-size: 0.7rem; color: var(--gray-500); margin-top: 2px;">
-                                        <i class="bi bi-geo-alt" style="color: #059669;"></i> {{ $rating->start_location }}
+                                        <i class="bi bi-geo-alt" style="color: var(--success);"></i> {{ $rating->start_location }}
                                         <i class="bi bi-arrow-right mx-1" style="font-size: 0.6rem;"></i>
-                                        <i class="bi bi-geo-alt" style="color: #dc2626;"></i> {{ $rating->end_location }}
+                                        <i class="bi bi-geo-alt" style="color: var(--danger);"></i> {{ $rating->end_location }}
                                     </div>
                                 @endif
                                 @if ($rating->reason)
@@ -218,7 +218,7 @@
                             </div>
                             <div class="d-flex gap-1 mt-1">
                                 @for ($i = 1; $i <= 5; $i++)
-                                    <i class="bi bi-star-fill" style="color: {{ $i <= round($driver->valid_ratings_avg_rating ?? 0) ? '#f5a623' : 'var(--gray-200)' }}; font-size: 0.65rem;"></i>
+                                    <i class="bi bi-star-fill" style="color: {{ $i <= round($driver->valid_ratings_avg_rating ?? 0) ? 'var(--secondary)' : 'var(--gray-200)' }}; font-size: 0.65rem;"></i>
                                 @endfor
                             </div>
                         </div>
@@ -260,7 +260,7 @@
                             <div class="d-flex gap-1 mt-1">
                                 @for ($i = 1; $i <= 5; $i++)
                                     @if ($i <= $rating->rating)
-                                        <i class="bi bi-star-fill" style="color: #f5a623; font-size: 0.65rem;"></i>
+                                        <i class="bi bi-star-fill" style="color: var(--secondary); font-size: 0.65rem;"></i>
                                     @else
                                         <i class="bi bi-star" style="color: var(--gray-200); font-size: 0.65rem;"></i>
                                     @endif
@@ -268,10 +268,10 @@
                             </div>
                             @if ($rating->start_location && $rating->end_location)
                                 <div style="font-size: 0.65rem; color: var(--gray-500); margin-top: 2px;">
-                                    <i class="bi bi-geo-alt" style="color: #059669;"></i>
+                                    <i class="bi bi-geo-alt" style="color: var(--success);"></i>
                                     <span class="text-truncate d-inline-block" style="max-width: 100px; vertical-align: bottom;">{{ $rating->start_location }}</span>
                                     <i class="bi bi-arrow-right mx-1" style="font-size: 0.55rem;"></i>
-                                    <i class="bi bi-geo-alt" style="color: #dc2626;"></i>
+                                    <i class="bi bi-geo-alt" style="color: var(--danger);"></i>
                                     <span class="text-truncate d-inline-block" style="max-width: 100px; vertical-align: bottom;">{{ $rating->end_location }}</span>
                                 </div>
                             @endif

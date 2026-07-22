@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <style>
-        body { background: linear-gradient(145deg, #0f2b4a 0%, #1e3a5f 40%, #2a4a7a 70%, #1e3a5f 100%); }
+        body { background: linear-gradient(145deg, var(--primary-dark) 0%, var(--primary) 40%, var(--primary-light) 70%, var(--primary) 100%); }
         .rating-page {
             min-height: 100vh;
             display: flex;
@@ -37,7 +37,7 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #1e3a5f, #f5a623, #ffffff, #f5a623, #1e3a5f);
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--white), var(--secondary), var(--primary));
         }
         .rating-card {
             border-radius: 20px;
@@ -55,11 +55,11 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #1e3a5f, #f5a623, #1e3a5f);
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
             z-index: 1;
         }
         .driver-profile-section {
-            background: linear-gradient(180deg, #1e3a5f 0%, #2a4a7a 100%);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
             padding: 2.5rem 2rem 2rem;
             text-align: center;
             position: relative;
@@ -77,7 +77,7 @@
         .driver-avatar-lg {
             width: 90px;
             height: 90px;
-            background: linear-gradient(145deg, #f5a623 0%, #e09412 100%);
+            background: linear-gradient(145deg, var(--secondary) 0%, var(--secondary-dark) 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -108,7 +108,7 @@
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 50px;
             padding: 0.5rem 1.25rem;
-            color: #f5a623;
+            color: var(--secondary);
             font-weight: 800;
             font-size: 0.85rem;
             letter-spacing: 0.02em;
@@ -194,8 +194,8 @@
             border-color: var(--secondary);
             box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
         }
-        .start-icon { color: #059669; }
-        .end-icon { color: #dc2626; }
+        .start-icon { color: var(--success); }
+        .end-icon { color: var(--danger); }
         .trip-route-visual {
             display: flex;
             align-items: flex-start;
@@ -216,13 +216,13 @@
             flex-shrink: 0;
             border: 3px solid;
         }
-        .trip-route-visual .route-line .dot.start { background: #059669; border-color: #a7f3d0; }
-        .trip-route-visual .route-line .dot.end { background: #dc2626; border-color: #fecaca; }
+        .trip-route-visual .route-line .dot.start { background: var(--success); border-color: var(--success-light); }
+        .trip-route-visual .route-line .dot.end { background: var(--danger); border-color: var(--danger-light); }
         .trip-route-visual .route-line .connector {
             width: 3px;
             flex-grow: 1;
             min-height: 32px;
-            background: linear-gradient(to bottom, #059669, #dc2626);
+            background: linear-gradient(to bottom, var(--success), var(--danger));
             border-radius: 2px;
         }
         .star-rating {
@@ -233,7 +233,7 @@
         }
         .star-rating:hover,
         .star-rating.active {
-            color: #f5a623;
+            color: var(--secondary);
             transform: scale(1.15);
         }
         .star-rating:hover ~ .star-rating {
@@ -257,7 +257,7 @@
         .step-indicator .step.active { background: var(--secondary); width: 28px; border-radius: 5px; }
         .step-indicator .step.done { background: var(--primary); }
         .trip-summary-card {
-            background: linear-gradient(135deg, #f0fdf4 0%, #fef2f2 100%);
+            background: linear-gradient(135deg, var(--success-50) 0%, var(--danger-50) 100%);
             border-radius: 12px;
             padding: 1rem 1.25rem;
             border: 1px solid var(--gray-200);
@@ -311,7 +311,7 @@
                 @if (session('success'))
                     <div class="alert alert-success text-center py-4">
                         <i class="bi bi-check-circle-fill" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
-                        <h5 class="mb-2" style="color: #065f46;">Thank You!</h5>
+                        <h5 class="mb-2" style="color: var(--success);">Thank You!</h5>
                         <p class="mb-0" style="font-size: 0.9rem;">{{ session('success') }}</p>
                     </div>
                     <a href="{{ url()->current() }}" class="btn btn-yellow w-100 mt-2">
@@ -320,13 +320,13 @@
                 @elseif (isset($alreadyRated) && $alreadyRated)
                     <div class="alert alert-info text-center py-4">
                         <i class="bi bi-check-circle-fill" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
-                        <h5 class="mb-2" style="color: #1e40af;">Already Rated Today</h5>
+                        <h5 class="mb-2" style="color: var(--primary);">Already Rated Today</h5>
                         <p class="mb-0" style="font-size: 0.9rem; color: var(--gray-600);">
                             You already gave
                             <strong>
                                 @for ($i = 1; $i <= 5; $i++)
                                     @if ($i <= $existingRating->rating)
-                                        <i class="bi bi-star-fill" style="color: #f5a623;"></i>
+                                        <i class="bi bi-star-fill" style="color: var(--secondary);"></i>
                                     @else
                                         <i class="bi bi-star" style="color: var(--gray-300);"></i>
                                     @endif
@@ -392,7 +392,7 @@
 
                             <div class="trip-summary-card d-none" id="tripSummary">
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-check-circle-fill" style="color: #059669;"></i>
+                                    <i class="bi bi-check-circle-fill" style="color: var(--success);"></i>
                                     <span style="font-size: 0.85rem; font-weight: 600;">Trip route confirmed</span>
                                 </div>
                                 <div id="routeInfo" style="font-size: 0.75rem; color: var(--gray-500); margin-top: 2px;"></div>

@@ -1,17 +1,15 @@
 services:
   - type: web
     name: trifair
-    runtime: php
+    runtime: docker
     plan: free
-    buildCommand: ./render-build.sh
-    startCommand: php artisan serve --host 0.0.0.0 --port $PORT
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: "false"
       - key: APP_URL
-        sync: false
+        value: https://trifair.onrender.com
       - key: APP_KEY
         generateValue: true
       - key: DB_CONNECTION
@@ -22,3 +20,9 @@ services:
         value: "true"
       - key: SESSION_SAME_SITE
         value: none
+      - key: CACHE_DRIVER
+        value: file
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: QUEUE_CONNECTION
+        value: sync

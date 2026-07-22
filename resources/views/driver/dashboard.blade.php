@@ -10,7 +10,7 @@
             <p>Welcome back, {{ Auth::user()->name }}! Here's your performance overview.</p>
         </div>
         <div class="text-end">
-            <div style="font-size: 2.5rem; font-weight: 900; line-height: 1; color: #f5a623;">{{ number_format($averageRating ?? 0, 1) }}</div>
+            <div style="font-size: 2.5rem; font-weight: 900; line-height: 1; color: var(--secondary);">{{ number_format($averageRating ?? 0, 1) }}</div>
             <small style="opacity: 0.7;">average rating</small>
         </div>
     </div>
@@ -75,7 +75,7 @@
                         $percent = $totalRatings > 0 ? ($count / $totalRatings) * 100 : 0;
                     @endphp
                     <div class="rating-bar">
-                        <span class="label">{{ $star }} <i class="bi bi-star-fill" style="font-size: 0.6rem; color: #f5a623;"></i></span>
+                        <span class="label">{{ $star }} <i class="bi bi-star-fill" style="font-size: 0.6rem; color: var(--secondary);"></i></span>
                         <div class="progress">
                             <div class="progress-bar" role="progressbar" style="width: {{ $percent }}%;"></div>
                         </div>
@@ -106,7 +106,7 @@
                                 <div>
                                     @for ($i = 1; $i <= 5; $i++)
                                         @if ($i <= $rating->rating)
-                                            <i class="bi bi-star-fill" style="color: #f5a623; font-size: 0.85rem;"></i>
+                                            <i class="bi bi-star-fill" style="color: var(--secondary); font-size: 0.85rem;"></i>
                                         @else
                                             <i class="bi bi-star text-muted" style="font-size: 0.85rem;"></i>
                                         @endif

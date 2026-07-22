@@ -33,7 +33,7 @@
                             <div class="d-flex gap-1">
                                 @for ($i = 1; $i <= 5; $i++)
                                     @if ($i <= $rating->rating)
-                                        <i class="bi bi-star-fill" style="color: #f5a623; font-size: 1rem;"></i>
+                                        <i class="bi bi-star-fill" style="color: var(--secondary); font-size: 1rem;"></i>
                                     @else
                                         <i class="bi bi-star" style="color: var(--gray-300); font-size: 1rem;"></i>
                                     @endif
@@ -45,9 +45,9 @@
                         @if ($rating->start_location && $rating->end_location)
                             <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded" style="background: var(--gray-50);">
                                 <div class="d-flex flex-column align-items-center" style="width: 16px;">
-                                    <i class="bi bi-circle-fill" style="color: #059669; font-size: 0.5rem;"></i>
+                                    <i class="bi bi-circle-fill" style="color: var(--success); font-size: 0.5rem;"></i>
                                     <div style="width: 2px; height: 16px; background: var(--gray-300);"></div>
-                                    <i class="bi bi-geo-alt-fill" style="color: #dc2626; font-size: 0.6rem;"></i>
+                                    <i class="bi bi-geo-alt-fill" style="color: var(--danger); font-size: 0.6rem;"></i>
                                 </div>
                                 <div style="font-size: 0.8rem;">
                                     <div style="color: var(--gray-600);">{{ $rating->start_location }}</div>

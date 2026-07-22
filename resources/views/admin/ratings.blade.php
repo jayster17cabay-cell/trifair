@@ -49,7 +49,7 @@
                                 <div class="d-flex gap-1">
                                     @for ($i = 1; $i <= 5; $i++)
                                         @if ($i <= $rating->rating)
-                                            <i class="bi bi-star-fill" style="color: #f5a623; font-size: 0.85rem;"></i>
+                                            <i class="bi bi-star-fill" style="color: var(--secondary); font-size: 0.85rem;"></i>
                                         @else
                                             <i class="bi bi-star" style="color: var(--gray-300); font-size: 0.85rem;"></i>
                                         @endif
@@ -59,14 +59,14 @@
                             <td style="font-size: 0.8rem; max-width: 180px;">
                                 @if ($rating->start_location && $rating->end_location)
                                     <div class="d-flex align-items-center gap-1">
-                                        <i class="bi bi-geo-alt-fill" style="color: #059669; font-size: 0.65rem;"></i>
+                                        <i class="bi bi-geo-alt-fill" style="color: var(--success); font-size: 0.65rem;"></i>
                                         <span class="text-truncate d-inline-block" style="max-width: 160px;">{{ $rating->start_location }}</span>
                                     </div>
                                     <div class="d-flex align-items-center gap-1 mt-1">
                                         <i class="bi bi-arrow-down" style="color: var(--gray-400); font-size: 0.6rem; margin-left: 0.15rem;"></i>
                                     </div>
                                     <div class="d-flex align-items-center gap-1">
-                                        <i class="bi bi-geo-alt-fill" style="color: #dc2626; font-size: 0.65rem;"></i>
+                                        <i class="bi bi-geo-alt-fill" style="color: var(--danger); font-size: 0.65rem;"></i>
                                         <span class="text-truncate d-inline-block" style="max-width: 160px;">{{ $rating->end_location }}</span>
                                     </div>
                                 @else

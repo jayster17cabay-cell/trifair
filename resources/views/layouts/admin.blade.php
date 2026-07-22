@@ -10,10 +10,10 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #0f2b4a 0%, #1e3a5f 50%, #2a4a7a 100%);">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);">
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
-                <i class="bi bi-shield-check me-2" style="color: #f5a623;"></i> TriFair <span style="color: #f5a623;">Admin</span>
+                <i class="bi bi-shield-check me-2" style="color: var(--secondary);"></i> TriFair <span style="color: var(--secondary);">Admin</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -33,10 +33,10 @@
                     <li class="nav-item d-flex align-items-center">
                         <div class="text-end me-3">
                             <small class="d-block" style="font-size: 0.65rem; color: rgba(255,255,255,0.5); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Welcome back</small>
-                            <span style="font-weight: 700; font-size: 0.9rem; color: #f5a623;">{{ Auth::user()->name }}</span>
+                            <span style="font-weight: 700; font-size: 0.9rem; color: var(--secondary);">{{ Auth::user()->name }}</span>
                         </div>
-                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: #f5a623;">
-                            <span style="color: #1e3a5f; font-weight: 900; font-size: 0.95rem;">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: var(--secondary);">
+                            <span style="color: var(--primary); font-weight: 900; font-size: 0.95rem;">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
                         </div>
                     </li>
                     <li class="nav-item ms-2">
