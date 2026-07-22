@@ -31,6 +31,41 @@ Route::get('/debug-config', function () {
     ]);
 });
 
+Route::get('/debug-dashboard', function () {
+    try {
+        $results = [];
+
+        $results['totalDrivers'] = \App\Models\Driver::count();
+        $results['activeDrivers'] = \App\Models\Driver::where('status', 'active')->count();
+        $results['totalRatings'] = \App\Models\Rating::valid()->count();
+        $results['averageRating'] = \App\Models\Rating::valid()->avg('rating');
+        $results['totalAdmins'] = \App\Models\User::where('role', 'admin')->count();
+        $results['totalComplaints'] = \App\Models\Rating::valid()->where('rating', '<=', 2)->count();
+        $results['totalTodas'] = \App\Models\Toda::count();
+
+        $results['topDrivers'] = \App\Models\Driver::with('user')
+            ->withAvg('validRatings', 'rating')
+            ->withCount('validRatings')
+            ->having('valid_ratings_count', '>', 0)
+            ->orderByDesc('valid_ratings_avg_rating')
+            ->take(5)
+            ->get()
+            ->toArray();
+
+        $results['todaStats'] = \App\Models\Toda::with('drivers')->withCount(['drivers', 'activeDrivers' => function ($q) {
+            $q->where('status', 'active');
+        }])->get()
+            ->toArray();
+
+        return response()->json($results);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'file' => basename($e->getFile()) . ':' . $e->getLine(),
+        ]);
+    }
+});
+
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
