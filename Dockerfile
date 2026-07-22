@@ -1,12 +1,3 @@
-FROM node:20-slim AS frontend
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install
-COPY vite.config.js ./
-COPY resources/ ./resources/
-COPY public/css/ ./public/css/
-RUN npm run build
-
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
@@ -23,7 +14,6 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 COPY . .
-COPY --from=frontend /app/public/build/ ./public/build/
 
 RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs \
     && chown -R www-data:www-data storage bootstrap/cache \
