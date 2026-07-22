@@ -8,13 +8,15 @@ services:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: "true"
+        value: "false"
       - key: APP_URL
         value: https://trifair.onrender.com
       - key: APP_KEY
         generateValue: true
       - key: DB_CONNECTION
-        value: mysql
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/www/html/database/database.sqlite
       - key: SESSION_DRIVER
         value: cookie
       - key: SESSION_SECURE_COOKIE
@@ -27,7 +29,5 @@ services:
         value: local
       - key: QUEUE_CONNECTION
         value: sync
-      - key: MYSQL_ATTR_SSL_VERIFY_SERVER_CERT
-        value: "false"
       - key: LOG_CHANNEL
         value: stderr

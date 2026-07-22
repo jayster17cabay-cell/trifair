@@ -9,8 +9,8 @@ return new class extends Migration
     public function up()
     {
         Schema::table('ratings', function (Blueprint $table) {
-            $table->string('start_location')->nullable()->after('passenger_ip');
-            $table->string('end_location')->nullable()->after('start_location');
+            $table->string('start_location')->nullable();
+            $table->string('end_location')->nullable();
         });
     }
 

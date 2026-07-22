@@ -9,9 +9,9 @@ return new class extends Migration
     public function up()
     {
         Schema::table('drivers', function (Blueprint $table) {
-            $table->string('plate_number')->nullable()->after('contact_number');
-            $table->string('body_number')->nullable()->after('plate_number');
-            $table->string('tricycle_color')->nullable()->after('body_number');
+            $table->string('plate_number')->nullable();
+            $table->string('body_number')->nullable();
+            $table->string('tricycle_color')->nullable();
         });
     }
 

@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('activity_logs', function (Blueprint $table) {
-            $table->string('category')->default('system')->after('action');
+            $table->string('category')->default('system');
         });
     }
 

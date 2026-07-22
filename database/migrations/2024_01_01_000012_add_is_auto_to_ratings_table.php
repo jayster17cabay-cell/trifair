@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('ratings', function (Blueprint $table) {
-            $table->boolean('is_auto')->default(false)->after('is_reviewed');
+            $table->boolean('is_auto')->default(false);
         });
     }
 

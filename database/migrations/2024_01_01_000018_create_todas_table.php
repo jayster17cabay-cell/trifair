@@ -18,7 +18,7 @@ return new class extends Migration
         });
 
         Schema::table('drivers', function (Blueprint $table) {
-            $table->foreignId('toda_id')->nullable()->after('user_id')->constrained()->nullOnDelete();
+            $table->foreignId('toda_id')->nullable()->constrained()->nullOnDelete();
         });
     }
 
