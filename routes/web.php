@@ -79,6 +79,46 @@ Route::get('/file-storage/{path}', function ($path) {
     return response()->file($fullPath);
 })->where('path', '.*')->name('storage.serve');
 
+Route::get('/_diag', function () {
+    try {
+        $results = [];
+        $results[] = 'DB: ' . config('database.default');
+
+        $results[] = 'Users: ' . \App\Models\User::count();
+        $results[] = 'Drivers: ' . \App\Models\Driver::count();
+        $results[] = 'Ratings: ' . \App\Models\Rating::count();
+        $results[] = 'Valid Ratings: ' . \App\Models\Rating::valid()->count();
+        $results[] = 'Todas: ' . \App\Models\Toda::count();
+
+        $results[] = 'Notification check...';
+        $results[] = 'Notifications: ' . \App\Models\Notification::count();
+
+        $results[] = 'Top drivers query...';
+        $topDrivers = \App\Models\Driver::with('user')
+            ->select('drivers.*')
+            ->selectRaw('(select avg("ratings"."rating") from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_avg_rating')
+            ->selectRaw('(select count(*) from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_count')
+            ->groupBy('drivers.id')
+            ->having('valid_ratings_count', '>', 0)
+            ->orderByDesc('valid_ratings_avg_rating')
+            ->take(5)
+            ->get();
+        $results[] = 'Top drivers: ' . $topDrivers->count();
+
+        $results[] = 'Toda stats query...';
+        $todaStats = \App\Models\Toda::with('drivers')->withCount('drivers')->get();
+        $results[] = 'Toda stats: ' . $todaStats->count();
+
+        $results[] = 'Recent ratings query...';
+        $recentRatings = \App\Models\Rating::valid()->with(['driver.user', 'driver.toda'])->latest()->take(10)->get();
+        $results[] = 'Recent ratings: ' . $recentRatings->count();
+
+        return implode("\n", $results);
+    } catch (\Throwable $e) {
+        return 'ERROR: ' . $e->getMessage() . "\n" . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString();
+    }
+});
+
 // Shared
 Route::get('/rate/{qrCode}', [RatingController::class, 'showRateForm'])->name('rate.driver');
 Route::post('/rate/{qrCode}', [RatingController::class, 'submitRating'])->name('rate.submit');
