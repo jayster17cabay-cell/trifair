@@ -27,7 +27,9 @@ class NotificationController extends Controller
         $notification->update(['is_read' => true]);
 
         if ($notification->type === 'complaint' && $notification->rating_id) {
-            return redirect()->route('admin.ratings', ['highlight' => $notification->rating_id]);
+            $user = Auth::user();
+            $route = $user->isSuperadmin() ? 'superadmin.complaints' : 'admin.ratings';
+            return redirect()->route($route);
         }
 
         return back();

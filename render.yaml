@@ -26,3 +26,5 @@ services:
         value: local
       - key: QUEUE_CONNECTION
         value: sync
+      - key: MYSQL_ATTR_SSL_VERIFY_SERVER_CERT
+        value: "false"
