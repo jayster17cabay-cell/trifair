@@ -70,7 +70,7 @@
             <div class="card-body text-center">
                 @if($driver && $driver->qr_code)
                     <div class="qr-display-card mb-3">
-                        <div style="font-size: 0.75rem; color: var(--gray-400); margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Scan to Rate</div>
+                        <div style="font-size: 0.8rem; color: var(--gray-500); margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Scan to Rate</div>
                         <div style="background: white; display: inline-block; padding: 1rem; border-radius: 12px; border: 2px solid var(--gray-100);">
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode(route('rate.driver', $driver->qr_code)) }}" alt="QR Code" style="width: 200px; height: 200px;">
                         </div>
@@ -89,7 +89,7 @@
                     <div class="qr-display-card">
                         <i class="bi bi-qr-code" style="font-size: 3rem; color: var(--gray-300);"></i>
                         <p class="mt-2 text-muted" style="font-size: 0.85rem;">No QR code assigned yet.</p>
-                        <small style="font-size: 0.75rem; color: var(--gray-400);">Contact your admin to get one.</small>
+                        <small style="font-size: 0.8rem; color: var(--gray-500);">Contact your admin to get one.</small>
                     </div>
                 @endif
             </div>
@@ -110,7 +110,7 @@
                         $percent = $totalRatings > 0 ? ($count / $totalRatings) * 100 : 0;
                     @endphp
                     <div class="rating-bar">
-                        <span class="label">{{ $star }} <i class="bi bi-star-fill" style="font-size: 0.6rem; color: var(--secondary);"></i></span>
+                        <span class="label">{{ $star }} <i class="bi bi-star-fill" style="font-size: 0.75rem; color: var(--secondary);"></i></span>
                         <div class="progress">
                             <div class="progress-bar" role="progressbar" style="width: {{ $percent }}%;"></div>
                         </div>
@@ -157,10 +157,10 @@
                         <p class="mb-0 mt-1" style="font-size: 0.85rem; color: var(--gray-600);">{{ $rating->reason }}</p>
                     @endif
                     @if ($rating->start_location && $rating->end_location)
-                        <div style="font-size: 0.65rem; color: var(--gray-500); margin-top: 2px;">
+                        <div style="font-size: 0.75rem; color: var(--gray-600); margin-top: 2px;">
                             <i class="bi bi-geo-alt" style="color: var(--success);"></i>
                             <span>{{ $rating->start_location }}</span>
-                            <i class="bi bi-arrow-right mx-1" style="font-size: 0.55rem;"></i>
+                            <i class="bi bi-arrow-right mx-1" style="font-size: 0.65rem;"></i>
                             <i class="bi bi-geo-alt" style="color: var(--danger);"></i>
                             <span>{{ $rating->end_location }}</span>
                         </div>

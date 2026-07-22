@@ -34,17 +34,17 @@
                             <div>
                                 <strong style="font-size: 0.95rem;">{{ $notification->title }}</strong>
                                 @if (!$notification->is_read)
-                                    <span class="badge bg-primary ms-2" style="font-size: 0.6rem;">NEW</span>
+                                    <span class="badge bg-primary ms-2" style="font-size: 0.68rem;">NEW</span>
                                 @endif
                             </div>
                             <small class="text-muted" style="font-size: 0.75rem; white-space: nowrap;">{{ $notification->created_at->diffForHumans() }}</small>
                         </div>
                         <p class="mb-2 mt-1" style="font-size: 0.85rem; color: var(--gray-600);">{{ $notification->message }}</p>
                         @if ($notification->rating && $notification->rating->driver)
-                            <div style="font-size: 0.75rem; color: var(--gray-500); margin-bottom: 0.5rem;">
+                            <div style="font-size: 0.82rem; color: var(--gray-600); margin-bottom: 0.5rem;">
                                 <i class="bi bi-person me-1"></i>Driver: <strong>{{ $notification->rating->driver->user->name ?? 'Unknown' }}</strong>
                                 @if ($notification->rating->start_location && $notification->rating->end_location)
-                                    <span class="ms-2"><i class="bi bi-geo-alt me-1" style="color: var(--success);"></i>{{ $notification->rating->start_location }} <i class="bi bi-arrow-right mx-1" style="font-size: 0.55rem;"></i> {{ $notification->rating->end_location }}</span>
+                                    <span class="ms-2"><i class="bi bi-geo-alt me-1" style="color: var(--success);"></i>{{ $notification->rating->start_location }} <i class="bi bi-arrow-right mx-1" style="font-size: 0.65rem;"></i> {{ $notification->rating->end_location }}</span>
                                 @endif
                             </div>
                         @endif

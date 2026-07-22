@@ -107,8 +107,8 @@
             display: flex;
             justify-content: center;
             gap: 0.75rem;
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.75);
             position: relative;
             z-index: 1;
         }
@@ -128,8 +128,8 @@
             border: 1px solid rgba(255,255,255,0.12);
             padding: 0.3rem 0.7rem;
             border-radius: 20px;
-            font-size: 0.65rem;
-            color: rgba(255,255,255,0.7);
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.8);
             font-weight: 600;
             margin-bottom: 1rem;
             position: relative;
@@ -159,7 +159,7 @@
 
         .star-prompt { text-align: center; margin-bottom: 1.5rem; }
         .star-prompt h2 { font-size: 1.2rem; font-weight: 800; color: var(--gray-800); letter-spacing: -0.02em; margin-bottom: 0.25rem; }
-        .star-prompt p { font-size: 0.82rem; color: var(--gray-400); }
+        .star-prompt p { font-size: 0.88rem; color: var(--gray-500); }
 
         .star-grid {
             display: flex;
@@ -206,7 +206,7 @@
         }
 
         .star-labels { display: flex; justify-content: space-between; padding: 0 0.25rem; margin-bottom: 1.5rem; }
-        .star-labels span { font-size: 0.65rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; }
+        .star-labels span { font-size: 0.72rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; }
 
         .feedback-row { text-align: center; min-height: 3rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
         .feedback-emoji { font-size: 2.25rem; animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
@@ -215,7 +215,7 @@
         .form-divider { border: none; border-top: 1px solid var(--gray-100); margin: 1rem 0; }
 
         .field-group { margin-bottom: 0.85rem; }
-        .field-group label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-500); margin-bottom: 0.4rem; }
+        .field-group label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600); margin-bottom: 0.4rem; }
         .field-group label .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
         .field-input {
@@ -271,8 +271,8 @@
             display: flex;
             align-items: flex-start;
             gap: 0.4rem;
-            font-size: 0.72rem;
-            color: var(--gray-500);
+            font-size: 0.78rem;
+            color: var(--gray-600);
             margin-top: 0.75rem;
             padding: 0.6rem;
             background: white;
@@ -292,7 +292,7 @@
         .upload-zone:active { background: var(--gray-50); border-color: var(--gold); }
         .upload-zone .upload-icon { font-size: 1.5rem; color: var(--gray-300); margin-bottom: 0.4rem; }
         .upload-zone .upload-text { font-size: 0.8rem; color: var(--gray-600); font-weight: 500; }
-        .upload-zone .upload-hint { font-size: 0.65rem; color: var(--gray-400); margin-top: 0.15rem; }
+        .upload-zone .upload-hint { font-size: 0.72rem; color: var(--gray-500); margin-top: 0.15rem; }
 
         .file-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
         .file-chip { display: inline-flex; align-items: center; gap: 0.3rem; background: white; color: var(--primary); padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--gray-200); }
@@ -323,7 +323,7 @@
         }
         .map-wrapper.open { display: block; }
         #rateMap { height: 220px; width: 100%; }
-        .map-hint { text-align: center; font-size: 0.7rem; color: var(--gray-400); padding: 0.5rem; background: var(--gray-50); }
+        .map-hint { text-align: center; font-size: 0.78rem; color: var(--gray-500); padding: 0.5rem; background: var(--gray-50); }
 
         .btn-submit {
             width: 100%;
@@ -441,7 +441,7 @@
                             <i class="bi {{ $i <= $existingRating->rating ? 'bi-star-fill' : 'bi-star' }}"></i>
                         @endfor
                     </div>
-                    <p style="font-size: 0.75rem; color: var(--gray-400);">You can only rate once per day per driver.</p>
+                    <p style="font-size: 0.82rem; color: var(--gray-500);">You can only rate once per day per driver.</p>
                     <button type="button" onclick="window.close()" class="btn-done" style="margin-top: 0.5rem; background: var(--gray-200); color: var(--gray-600);">
                         <i class="bi bi-x-lg"></i> Close
                     </button>

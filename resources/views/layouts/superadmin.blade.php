@@ -32,7 +32,7 @@
                     </li>
                     <li class="nav-item d-flex align-items-center">
                         <div class="text-end me-3">
-                            <small class="d-block" style="font-size: 0.65rem; color: rgba(255,255,255,0.5); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Welcome back</small>
+                            <small class="d-block" style="font-size: 0.7rem; color: rgba(255,255,255,0.6); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Welcome back</small>
                             <span style="font-weight: 700; font-size: 0.9rem; color: var(--secondary);">{{ Auth::user()->name }}</span>
                         </div>
                         <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: var(--secondary);">
