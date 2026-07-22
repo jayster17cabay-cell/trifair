@@ -20,7 +20,6 @@ RUN mkdir -p database storage/framework/sessions storage/framework/views storage
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 RUN php artisan key:generate --force \
-    && php artisan config:cache \
     && php artisan package:discover --ansi
 
 RUN chown -R www-data:www-data storage bootstrap/cache database \
@@ -30,4 +29,4 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 
 EXPOSE 80
 
-CMD ["/bin/bash", "-c", "php artisan migrate --force && php artisan db:seed --force; exec apache2-foreground"]
+CMD ["/bin/bash", "-c", "php artisan config:cache && php artisan migrate --force && php artisan db:seed --force; exec apache2-foreground"]
