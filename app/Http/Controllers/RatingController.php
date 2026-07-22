@@ -85,15 +85,23 @@ class RatingController extends Controller
             }
         }
 
-        if ($rating->rating <= 2) {
-            $admins = User::whereIn('role', ['admin', 'superadmin'])->get();
-            foreach ($admins as $admin) {
+        $admins = User::whereIn('role', ['admin', 'superadmin'])->get();
+        foreach ($admins as $admin) {
+            if ($rating->rating <= 2) {
                 Notification::create([
                     'user_id' => $admin->id,
                     'rating_id' => $rating->id,
                     'type' => 'complaint',
                     'title' => 'New Complaint Report',
                     'message' => "Driver {$driver->user->name} received a {$rating->rating}-star rating with proof attached. Contact: {$rating->passenger_contact}",
+                ]);
+            } else {
+                Notification::create([
+                    'user_id' => $admin->id,
+                    'rating_id' => $rating->id,
+                    'type' => 'new_rating',
+                    'title' => 'New Rating Received',
+                    'message' => "Driver {$driver->user->name} received a {$rating->rating}-star rating from a passenger.",
                 ]);
             }
         }
