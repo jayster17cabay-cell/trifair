@@ -106,6 +106,17 @@ class RatingController extends Controller
             }
         }
 
-        return back()->with('success', 'Thank you for your feedback!');
+        return redirect()->route('rate.submitted', $driver->qr_code);
+    }
+
+    public function showSubmitted($qrCode)
+    {
+        $driver = Driver::with('user')
+            ->where('qr_code', $qrCode)
+            ->firstOrFail();
+
+        return response()->view('rate.submitted', compact('driver'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 }

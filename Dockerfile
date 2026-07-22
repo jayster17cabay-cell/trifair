@@ -22,6 +22,13 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts
 RUN php artisan key:generate --force \
     && php artisan package:discover --ansi
 
+RUN echo "upload_max_filesize=20M" > /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size=25M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_file_uploads=10" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_execution_time=300" >> /usr/local/etc/php/conf.d/uploads.ini
+
+RUN php artisan storage:link || true
+
 RUN chown -R www-data:www-data storage bootstrap/cache database \
     && chmod -R 775 storage bootstrap/cache database
 

@@ -83,3 +83,4 @@ Route::get('/file-storage/{path}', function ($path) {
 // Shared
 Route::get('/rate/{qrCode}', [RatingController::class, 'showRateForm'])->name('rate.driver');
 Route::post('/rate/{qrCode}', [RatingController::class, 'submitRating'])->name('rate.submit');
+Route::get('/rate/{qrCode}/submitted', [RatingController::class, 'showSubmitted'])->name('rate.submitted');

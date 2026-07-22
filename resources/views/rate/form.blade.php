@@ -336,26 +336,6 @@
             </div>
         </div>
 
-    @elseif(session('success'))
-        <div class="rating-section">
-            <div class="screen-center">
-                <div class="screen-icon" style="background: linear-gradient(135deg, var(--green), var(--green-dark)); box-shadow: 0 8px 30px rgba(16,185,129,0.3);">
-                    <i class="bi bi-check-lg"></i>
-                </div>
-                <div class="screen-stars">
-                    @for($i = 1; $i <= 5; $i++)
-                        <i class="bi bi-star-fill" style="color: var(--gold);"></i>
-                    @endfor
-                </div>
-                <h3>Thank You!</h3>
-                <p>Your rating for <strong>{{ $driver->user->name }}</strong> has been recorded.</p>
-                <p style="font-size: 0.8rem; color: var(--gray-400); margin-top: 0.5rem;">This page will close automatically...</p>
-            </div>
-        </div>
-        <script>
-            setTimeout(function() { window.close(); }, 2500);
-        </script>
-
     @else
         <div class="rating-section">
             <h3>Rate Your Trip</h3>
