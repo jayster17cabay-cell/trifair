@@ -18,17 +18,22 @@ class NotificationController extends Controller
         return view('notifications.index', compact('notifications'));
     }
 
-    public function markAsRead($id)
+    public function markAsRead(Notification $notification)
     {
-        $notification = Notification::where('id', $id)
-            ->where('user_id', Auth::id())
-            ->firstOrFail();
+        if ($notification->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $notification->update(['is_read' => true]);
 
         $user = Auth::user();
         if ($notification->type === 'complaint') {
             $route = $user->isSuperadmin() ? 'superadmin.complaints' : 'admin.ratings';
+            return redirect()->route($route);
+        }
+
+        if ($notification->rating_id) {
+            $route = $user->isSuperadmin() ? 'superadmin.ratings' : 'admin.ratings';
             return redirect()->route($route);
         }
 

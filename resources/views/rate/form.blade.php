@@ -361,51 +361,55 @@
             <h3>Rate Your Trip</h3>
             <p class="subtitle">How was your ride with {{ $driver->user->name }}?</p>
 
-            <form action="{{ route('rate.submit', $driver->qr_code) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('rate.submit', $driver->qr_code) }}" method="POST" enctype="multipart/form-data" id="rateForm">
                 @csrf
 
-                <div class="stars-row" id="starGrid">
-                    <button type="button" class="star-btn" data-value="1"><i class="bi bi-star-fill"></i></button>
-                    <button type="button" class="star-btn" data-value="2"><i class="bi bi-star-fill"></i></button>
-                    <button type="button" class="star-btn" data-value="3"><i class="bi bi-star-fill"></i></button>
-                    <button type="button" class="star-btn" data-value="4"><i class="bi bi-star-fill"></i></button>
-                    <button type="button" class="star-btn" data-value="5"><i class="bi bi-star-fill"></i></button>
-                </div>
-                <div class="star-labels-row">
-                    <span>Poor</span>
-                    <span>Okay</span>
-                    <span>Great</span>
-                </div>
                 <input type="hidden" name="rating" id="ratingValue" value="">
-                <div class="feedback-msg" id="feedbackMsg"></div>
 
-                <div class="extra-fields" id="extraFields">
+                <div class="trip-route-section" id="tripRouteSection">
                     <hr class="divider">
-
-                    <div class="field-label"><i class="bi bi-chat-dots" style="color: var(--primary);"></i> Comment <span style="font-weight:400; color: var(--gray-400);">(optional)</span></div>
-                    <textarea name="reason" class="field-textarea" rows="2" placeholder="Tell us about your experience..."></textarea>
-
-                    <div style="margin-top: 1rem;">
-                        <div class="field-label"><i class="bi bi-map" style="color: var(--primary);"></i> Trip Route <span style="font-weight:400; color: var(--gray-400);">(optional)</span></div>
-                        <div class="location-grid">
-                            <div>
-                                <div class="field-label" style="font-size:0.72rem;"><span class="dot" style="background: var(--green);"></span> From</div>
-                                <input type="text" name="start_location" id="start_location" class="field-input" placeholder="Starting point">
-                            </div>
-                            <div>
-                                <div class="field-label" style="font-size:0.72rem;"><span class="dot" style="background: var(--red);"></span> To</div>
-                                <input type="text" name="end_location" id="end_location" class="field-input" placeholder="Destination">
-                            </div>
+                    <div class="field-label"><i class="bi bi-map" style="color: var(--primary);"></i> Trip Route <span style="font-weight:400; color: var(--gray-400);">(optional)</span></div>
+                    <div class="location-grid">
+                        <div>
+                            <div class="field-label" style="font-size:0.72rem;"><span class="dot" style="background: var(--green);"></span> From</div>
+                            <input type="text" name="start_location" id="start_location" class="field-input" placeholder="Starting point">
                         </div>
-                        <div class="map-toggle" id="mapToggle">
-                            <i class="bi bi-pin-map"></i> Use map to set location
-                            <i class="bi bi-chevron-down" id="mapChevron" style="transition: transform 0.25s;"></i>
-                        </div>
-                        <div class="map-box" id="mapBox">
-                            <div id="rateMap"></div>
-                            <div class="map-hint">Tap to set start (1st) and destination (2nd)</div>
+                        <div>
+                            <div class="field-label" style="font-size:0.72rem;"><span class="dot" style="background: var(--red);"></span> To</div>
+                            <input type="text" name="end_location" id="end_location" class="field-input" placeholder="Destination">
                         </div>
                     </div>
+                    <div class="map-toggle" id="mapToggle">
+                        <i class="bi bi-pin-map"></i> Use map to set location
+                        <i class="bi bi-chevron-down" id="mapChevron" style="transition: transform 0.25s;"></i>
+                    </div>
+                    <div class="map-box" id="mapBox">
+                        <div id="rateMap"></div>
+                        <div class="map-hint">Tap to set start (1st) and destination (2nd)</div>
+                    </div>
+                </div>
+
+                <div class="star-section" id="starSection">
+                    <hr class="divider">
+                    <div class="field-label"><i class="bi bi-star" style="color: var(--gold);"></i> How was your ride?</div>
+                    <div class="stars-row" id="starGrid">
+                        <button type="button" class="star-btn" data-value="1"><i class="bi bi-star-fill"></i></button>
+                        <button type="button" class="star-btn" data-value="2"><i class="bi bi-star-fill"></i></button>
+                        <button type="button" class="star-btn" data-value="3"><i class="bi bi-star-fill"></i></button>
+                        <button type="button" class="star-btn" data-value="4"><i class="bi bi-star-fill"></i></button>
+                        <button type="button" class="star-btn" data-value="5"><i class="bi bi-star-fill"></i></button>
+                    </div>
+                    <div class="star-labels-row">
+                        <span>Poor</span>
+                        <span>Okay</span>
+                        <span>Great</span>
+                    </div>
+                    <div class="feedback-msg" id="feedbackMsg"></div>
+                </div>
+
+                <div class="extra-fields" id="extraFields">
+                    <div class="field-label"><i class="bi bi-chat-dots" style="color: var(--primary);"></i> Comment <span style="font-weight:400; color: var(--gray-400);">(optional)</span></div>
+                    <textarea name="reason" class="field-textarea" rows="2" placeholder="Tell us about your experience..."></textarea>
 
                     <div class="complaint-box" id="complaintBox">
                         <div class="complaint-title">
@@ -435,9 +439,10 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-submit">
+                    <button type="submit" class="btn-submit" id="submitBtn" disabled>
                         <i class="bi bi-send-fill"></i> Submit Rating
                     </button>
+                    <p style="text-align:center; font-size: 0.72rem; color: var(--gray-400); margin-top: 0.5rem;" id="submitHint">Tap a star above to rate</p>
                 </div>
             </form>
         </div>
@@ -465,6 +470,8 @@ document.querySelectorAll('.star-btn').forEach(function(btn) {
             '<span class="emoji">' + emojis[selectedRating] + '</span> ' + labels[selectedRating];
 
         document.getElementById('extraFields').classList.add('show');
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitHint').style.display = 'none';
 
         var cb = document.getElementById('complaintBox');
         if (selectedRating <= 2) { cb.classList.add('show'); } else { cb.classList.remove('show'); }
