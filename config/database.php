@@ -11,6 +11,8 @@ if (env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') !== null) {
         env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT'),
         FILTER_VALIDATE_BOOLEAN
     );
+} else {
+    $mysqlSslOptions[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
 }
 
 return [
@@ -30,11 +32,11 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
+            'host' => env('DB_HOST', 'mysql-3281bc51-jayster17cabay-f9cf.g.aivencloud.com'),
+            'port' => env('DB_PORT', '19440'),
+            'database' => env('DB_DATABASE', 'defaultdb'),
+            'username' => env('DB_USERNAME', 'avnadmin'),
+            'password' => env('DB_PASSWORD', base64_decode('QVZOU19rZjB0Q1RhRDhxS0xfaDY4cGpX')),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
