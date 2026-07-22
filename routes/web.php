@@ -113,9 +113,36 @@ Route::get('/_diag', function () {
         $recentRatings = \App\Models\Rating::valid()->with(['driver.user', 'driver.toda'])->latest()->take(10)->get();
         $results[] = 'Recent ratings: ' . $recentRatings->count();
 
+        $results[] = 'Recent complaints query...';
+        $recentComplaints = \App\Models\Rating::valid()->with(['driver.user', 'proofs'])->where('rating', '<=', 2)->latest()->take(5)->get();
+        $results[] = 'Recent complaints: ' . $recentComplaints->count();
+
+        $results[] = 'Admins count...';
+        $totalAdmins = \App\Models\User::where('role', 'admin')->count();
+        $results[] = 'Admins: ' . $totalAdmins;
+
+        $results[] = 'Active drivers...';
+        $activeDrivers = \App\Models\Driver::where('status', 'active')->count();
+        $results[] = 'Active: ' . $activeDrivers;
+
+        $results[] = '--- Now trying to render the view ---';
+        $totalDrivers = \App\Models\Driver::count();
+        $totalRatings = \App\Models\Rating::valid()->count();
+        $averageRating = \App\Models\Rating::valid()->avg('rating');
+        $totalComplaints = \App\Models\Rating::valid()->where('rating', '<=', 2)->count();
+        $totalTodas = \App\Models\Toda::count();
+
+        // Try rendering without layout
+        $view = view('superadmin.dashboard', compact(
+            'totalDrivers', 'activeDrivers', 'totalRatings', 'averageRating',
+            'totalAdmins', 'recentRatings', 'topDrivers', 'totalComplaints',
+            'recentComplaints', 'totalTodas', 'todaStats'
+        ))->render();
+        $results[] = 'View rendered! Length: ' . strlen($view);
+
         return implode("\n", $results);
     } catch (\Throwable $e) {
-        return 'ERROR: ' . $e->getMessage() . "\n" . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString();
+        return 'ERROR: ' . $e->getMessage() . "\nFile: " . $e->getFile() . ':' . $e->getLine();
     }
 });
 
