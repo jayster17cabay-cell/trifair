@@ -6,8 +6,8 @@
 <div class="welcome-card">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h3>Selamat datang, {{ Auth::user()->name }}!</h3>
-            <p>System overview ng TriFair. Dito mo makikita lahat ng data sa real-time.</p>
+            <h3>Welcome back, {{ Auth::user()->name }}!</h3>
+            <p>Here's your complete TriFair system overview with real-time data.</p>
         </div>
         <div class="text-end" style="z-index: 1;">
             <span class="badge" style="background: rgba(255,255,255,0.2); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem;">
@@ -22,7 +22,7 @@
         <div>
             <i class="bi bi-bell-fill me-2 text-warning"></i>
             <strong>You have {{ $unreadCount }} unread notification{{ $unreadCount > 1 ? 's' : '' }}!</strong>
-            <span class="ms-2" style="font-size: 0.9rem;">May bago kang alerts na kailangan i-check.</span>
+            <span class="ms-2" style="font-size: 0.9rem;">Check your latest alerts and updates.</span>
         </div>
         <a href="{{ route('notifications.index') }}" class="btn btn-yellow btn-sm">
             <i class="bi bi-eye me-1"></i> View Alerts
@@ -34,7 +34,7 @@
 <div class="quick-actions-grid mb-4">
     <a href="{{ route('superadmin.drivers.create') }}" class="quick-action-card">
         <div class="qa-icon" style="background: var(--primary-50); color: var(--primary);"><i class="bi bi-person-plus"></i></div>
-        <div><div class="qa-text">Add Driver</div><div class="qa-desc">Bagong tricycle driver</div></div>
+        <div><div class="qa-text">Add Driver</div><div class="qa-desc">Register a new driver</div></div>
     </a>
     <a href="{{ route('superadmin.admins') }}" class="quick-action-card">
         <div class="qa-icon" style="background: var(--info-light); color: var(--info);"><i class="bi bi-shield"></i></div>
@@ -73,7 +73,7 @@
             <div class="stat-icon"><i class="bi bi-star"></i></div>
             <div class="stat-label">Average Rating</div>
             <div class="stat-value">{{ number_format($averageRating ?? 0, 1) }}</div>
-            <div class="stat-footer">from {{ $totalRatings }} total ratings</div>
+            <div class="stat-footer">From {{ $totalRatings }} total ratings</div>
         </div>
     </div>
     <div class="col-md-3">
@@ -154,10 +154,10 @@
                                 @if ($rating->start_location && $rating->end_location)
                                     <div style="font-size: 0.6rem; color: var(--gray-500); margin-top: 1px;">
                                         <i class="bi bi-geo-alt" style="color: var(--success);"></i>
-                                        <span class="text-truncate d-inline-block" style="max-width: 80px; vertical-align: bottom;">{{ $rating->start_location }}</span>
+                                        <span>{{ $rating->start_location }}</span>
                                         <i class="bi bi-arrow-right mx-1" style="font-size: 0.5rem;"></i>
                                         <i class="bi bi-geo-alt" style="color: var(--danger);"></i>
-                                        <span class="text-truncate d-inline-block" style="max-width: 80px; vertical-align: bottom;">{{ $rating->end_location }}</span>
+                                        <span>{{ $rating->end_location }}</span>
                                     </div>
                                 @endif
                             </div>
@@ -168,7 +168,7 @@
                         <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: var(--primary-50);">
                             <i class="bi bi-check-circle" style="font-size: 2rem; color: var(--primary);"></i>
                         </div>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">Walang complaints. All good!</p>
+                        <p class="text-muted mb-0" style="font-size: 0.85rem;">No complaints. All good!</p>
                     </div>
                 @endforelse
                 @if ($totalComplaints > 5)
@@ -246,10 +246,10 @@
                             @if ($rating->start_location && $rating->end_location)
                                 <div style="font-size: 0.6rem; color: var(--gray-500); margin-top: 1px;">
                                     <i class="bi bi-geo-alt" style="color: var(--success);"></i>
-                                    <span class="text-truncate d-inline-block" style="max-width: 80px; vertical-align: bottom;">{{ $rating->start_location }}</span>
+                                    <span>{{ $rating->start_location }}</span>
                                     <i class="bi bi-arrow-right mx-1" style="font-size: 0.5rem;"></i>
                                     <i class="bi bi-geo-alt" style="color: var(--danger);"></i>
-                                    <span class="text-truncate d-inline-block" style="max-width: 80px; vertical-align: bottom;">{{ $rating->end_location }}</span>
+                                    <span>{{ $rating->end_location }}</span>
                                 </div>
                             @endif
                         </div>

@@ -6,8 +6,8 @@
 <div class="welcome-card">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h3>Selamat datang, {{ Auth::user()->name }}!</h3>
-            <p>Admin dashboard ng TriFair. I-manage mo ang mga drivers, ratings, at complaints dito.</p>
+            <h3>Welcome back, {{ Auth::user()->name }}!</h3>
+            <p>Manage drivers, ratings, and complaints from your admin dashboard.</p>
         </div>
         <div class="text-end" style="z-index: 1;">
             <span class="badge" style="background: rgba(255,255,255,0.2); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem;">
@@ -22,7 +22,7 @@
         <div>
             <i class="bi bi-bell-fill me-2 text-warning"></i>
             <strong>You have {{ $unreadCount }} unread notification{{ $unreadCount > 1 ? 's' : '' }}!</strong>
-            <span class="ms-2" style="font-size: 0.9rem;">May bago kang alerts na kailangan i-check.</span>
+            <span class="ms-2" style="font-size: 0.9rem;">Check your latest alerts and updates.</span>
         </div>
         <a href="{{ route('notifications.index') }}" class="btn btn-yellow btn-sm">
             <i class="bi bi-eye me-1"></i> View Alerts
@@ -34,19 +34,19 @@
 <div class="quick-actions-grid mb-4">
     <a href="{{ route('admin.drivers.create') }}" class="quick-action-card">
         <div class="qa-icon" style="background: var(--primary-50); color: var(--primary);"><i class="bi bi-person-plus"></i></div>
-        <div><div class="qa-text">Add Driver</div><div class="qa-desc">Register bagong driver</div></div>
+        <div><div class="qa-text">Add Driver</div><div class="qa-desc">Register a new driver</div></div>
     </a>
     <a href="{{ route('admin.drivers') }}" class="quick-action-card">
         <div class="qa-icon" style="background: var(--info-light); color: var(--info);"><i class="bi bi-people"></i></div>
-        <div><div class="qa-text">Manage Drivers</div><div class="qa-desc">View lahat ng drivers</div></div>
+        <div><div class="qa-text">Manage Drivers</div><div class="qa-desc">View all drivers</div></div>
     </a>
     <a href="{{ route('admin.ratings') }}" class="quick-action-card">
         <div class="qa-icon" style="background: var(--secondary-50); color: var(--secondary-dark);"><i class="bi bi-star"></i></div>
-        <div><div class="qa-text">View Ratings</div><div class="qa-desc">Lahat ng feedback</div></div>
+        <div><div class="qa-text">View Ratings</div><div class="qa-desc">All passenger feedback</div></div>
     </a>
     <a href="{{ route('admin.reports') }}" class="quick-action-card">
         <div class="qa-icon" style="background: var(--success-50); color: var(--success);"><i class="bi bi-bar-chart"></i></div>
-        <div><div class="qa-text">Reports</div><div class="qa-desc">Performance data</div></div>
+        <div><div class="qa-text">Reports</div><div class="qa-desc">Performance analytics</div></div>
     </a>
     <a href="{{ route('admin.todas') }}" class="quick-action-card">
         <div class="qa-icon" style="background: var(--danger-50); color: var(--danger);"><i class="bi bi-diagram-3"></i></div>
@@ -62,44 +62,31 @@
 <div class="row g-4 mb-4">
     <div class="col-md-3">
         <div class="stat-card stat-primary">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="stat-icon"><i class="bi bi-people"></i></div>
-                <span class="badge bg-white bg-opacity-25 text-white rounded-pill" style="font-size: 0.65rem;">{{ $activeDrivers }}/{{ $totalDrivers }} active</span>
-            </div>
+            <div class="stat-icon"><i class="bi bi-people"></i></div>
             <div class="stat-label">Total Drivers</div>
             <div class="stat-value">{{ $totalDrivers }}</div>
-            <div class="stat-footer">Registered tricycle drivers</div>
+            <div class="stat-footer">{{ $activeDrivers }} currently active</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card stat-yellow">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="stat-icon"><i class="bi bi-star"></i></div>
-                <div class="text-end">
-                    <div style="font-size: 1.5rem; font-weight: 800; line-height: 1;">{{ number_format($averageRating ?? 0, 1) }}</div>
-                </div>
-            </div>
+            <div class="stat-icon"><i class="bi bi-star"></i></div>
             <div class="stat-label">Average Rating</div>
-            <div class="stat-value">{{ $totalRatings }}</div>
-            <div class="stat-footer">Total ratings received</div>
+            <div class="stat-value">{{ number_format($averageRating ?? 0, 1) }}</div>
+            <div class="stat-footer">From {{ $totalRatings }} total ratings</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card stat-danger">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
-                <span class="badge bg-white bg-opacity-25 rounded-pill" style="font-size: 0.65rem;">{{ $pendingReview }} pending</span>
-            </div>
+            <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
             <div class="stat-label">Complaints</div>
             <div class="stat-value">{{ $totalComplaints }}</div>
-            <div class="stat-footer">Low ratings (1-2) reported</div>
+            <div class="stat-footer">{{ $pendingReview }} pending review</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card stat-blue">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
-            </div>
+            <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
             <div class="stat-label">Performance</div>
             <div class="stat-value">{{ $totalDrivers > 0 ? round(($activeDrivers / $totalDrivers) * 100) : 0 }}%</div>
             <div class="stat-footer">Active driver rate</div>
@@ -148,7 +135,7 @@
 
 <div class="row g-4">
     <div class="col-md-8">
-        <div class="section-label">Complaints / Flagged Ratings</div>
+        <div class="section-label">Complaints</div>
         <div class="card card-accent-blue">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-exclamation-triangle me-2" style="color: var(--warning);"></i>Recent Complaints</span>
@@ -185,7 +172,7 @@
                         <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: var(--primary-50);">
                             <i class="bi bi-check-circle" style="font-size: 2rem; color: var(--primary);"></i>
                         </div>
-                        <p class="text-muted mb-0" style="font-size: 0.9rem;">No complaints! All drivers are doing great.</p>
+                        <p class="text-muted mb-0" style="font-size: 0.9rem;">No complaints. All drivers are doing great!</p>
                     </div>
                 @endforelse
             </div>
@@ -268,10 +255,10 @@
                             @if ($rating->start_location && $rating->end_location)
                                 <div style="font-size: 0.65rem; color: var(--gray-500); margin-top: 2px;">
                                     <i class="bi bi-geo-alt" style="color: var(--success);"></i>
-                                    <span class="text-truncate d-inline-block" style="max-width: 100px; vertical-align: bottom;">{{ $rating->start_location }}</span>
+                                    <span>{{ $rating->start_location }}</span>
                                     <i class="bi bi-arrow-right mx-1" style="font-size: 0.55rem;"></i>
                                     <i class="bi bi-geo-alt" style="color: var(--danger);"></i>
-                                    <span class="text-truncate d-inline-block" style="max-width: 100px; vertical-align: bottom;">{{ $rating->end_location }}</span>
+                                    <span>{{ $rating->end_location }}</span>
                                 </div>
                             @endif
                         </div>

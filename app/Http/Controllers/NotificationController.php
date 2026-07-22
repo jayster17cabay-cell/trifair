@@ -26,13 +26,17 @@ class NotificationController extends Controller
 
         $notification->update(['is_read' => true]);
 
-        if ($notification->type === 'complaint' && $notification->rating_id) {
-            $user = Auth::user();
+        $user = Auth::user();
+        if ($notification->type === 'complaint') {
             $route = $user->isSuperadmin() ? 'superadmin.complaints' : 'admin.ratings';
             return redirect()->route($route);
         }
 
-        return back();
+        if ($user->isSuperadmin()) {
+            return redirect()->route('superadmin.dashboard');
+        }
+
+        return redirect()->route('admin.dashboard');
     }
 
     public function markAllAsRead()

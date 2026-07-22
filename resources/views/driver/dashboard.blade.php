@@ -6,7 +6,7 @@
 <div class="driver-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h2>Kumusta, {{ Auth::user()->name }}!</h2>
+            <h2>Welcome, {{ Auth::user()->name }}!</h2>
             <p>Here's your performance overview and QR code for passenger ratings.</p>
         </div>
         <div class="text-end">
@@ -18,7 +18,7 @@
 
 <div class="hint-bar">
     <i class="bi bi-lightbulb"></i>
-    <span>I-share ang QR code mo sa passengers para makapag-rate sila ng trip nila. I-print or i-display lang sa tricycle mo!</span>
+    <span>Share your QR code with passengers so they can rate their trip. Print it or display it inside your tricycle!</span>
 </div>
 
 <div class="row g-4 mb-4">
@@ -83,7 +83,7 @@
                     </div>
                     <div class="hint-bar" style="text-align: left; justify-content: center;">
                         <i class="bi bi-printer"></i>
-                        <span>I-print ang QR code na ito at i-display sa loob ng tricycle mo.</span>
+                        <span>Print this QR code and display it inside your tricycle.</span>
                     </div>
                 @else
                     <div class="qr-display-card">

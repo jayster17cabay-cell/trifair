@@ -619,8 +619,12 @@ function initMap() {
         });
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(p) {
-                map.setView([p.coords.latitude, p.coords.longitude], 15);
-            }, function() {}, { timeout: 5000 });
+                var latlng = L.latLng(p.coords.latitude, p.coords.longitude);
+                map.setView(latlng, 15);
+                if (!startMarker) {
+                    setMarker(latlng, 'start');
+                }
+            }, function() {}, { timeout: 5000, enableHighAccuracy: true });
         }
         mapLoaded = true;
     } catch(e) {
