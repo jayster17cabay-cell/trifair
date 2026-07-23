@@ -34,7 +34,7 @@ class SuperadminController extends Controller
             ->selectRaw('(select avg("ratings"."rating") from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_avg_rating')
             ->selectRaw('(select count(*) from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) as valid_ratings_count')
             ->groupBy('drivers.id')
-            ->having('valid_ratings_count', '>', 0)
+            ->havingRaw('(select count(*) from "ratings" where "drivers"."id" = "ratings"."driver_id" and "start_location" is not null and "end_location" is not null) > 0')
             ->orderByDesc('valid_ratings_avg_rating')
             ->take(5)
             ->get();
