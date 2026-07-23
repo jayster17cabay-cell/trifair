@@ -23,6 +23,8 @@ services:
         value: postgres
       - key: DB_USERNAME
         value: postgres
+      - key: DB_PASSWORD
+        value: "TriFair2026!StrongPass"
       - key: SESSION_DRIVER
         value: cookie
       - key: SESSION_SECURE_COOKIE

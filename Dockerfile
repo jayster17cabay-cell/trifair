@@ -1,3 +1,4 @@
+# v3 - force rebuild for Supabase
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
@@ -36,4 +37,4 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 
 EXPOSE 80
 
-CMD ["/bin/bash", "-c", "php artisan config:clear && php artisan config:cache && php artisan view:clear && php artisan migrate --force && php artisan db:seed --force; exec apache2-foreground"]
+CMD ["/bin/bash", "-c", "sed -i \"s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|\" /var/www/html/.env && php artisan config:clear && php artisan config:cache && php artisan view:clear && php artisan migrate --force && php artisan db:seed --force; exec apache2-foreground"]
