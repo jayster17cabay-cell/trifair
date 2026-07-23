@@ -8,7 +8,7 @@ services:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: "false"
+        value: "true"
       - key: APP_URL
         value: https://trifair.onrender.com
       - key: APP_KEY
@@ -23,8 +23,6 @@ services:
         value: postgres
       - key: DB_USERNAME
         value: postgres
-      - key: DB_PASSWORD
-        value: ""
       - key: SESSION_DRIVER
         value: cookie
       - key: SESSION_SECURE_COOKIE
