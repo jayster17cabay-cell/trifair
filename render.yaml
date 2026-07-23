@@ -15,14 +15,6 @@ services:
         generateValue: true
       - key: DB_CONNECTION
         value: pgsql
-      - key: DB_HOST
-        value: aws-0-ap-southeast-1.pooler.supabase.com
-      - key: DB_PORT
-        value: "6543"
-      - key: DB_DATABASE
-        value: postgres
-      - key: DB_USERNAME
-        value: postgres.lkmmudpfcxbykwdpsqvy
       - key: SESSION_DRIVER
         value: cookie
       - key: SESSION_SECURE_COOKIE
