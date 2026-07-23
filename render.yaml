@@ -14,17 +14,9 @@ services:
       - key: APP_KEY
         generateValue: true
       - key: DB_CONNECTION
-        value: pgsql
-      - key: DB_HOST
-        syncWithDBHost: trifair-db
-      - key: DB_PORT
-        value: "5432"
+        value: sqlite
       - key: DB_DATABASE
-        value: postgres
-      - key: DB_USERNAME
-        syncWithDBHost: trifair-db
-      - key: DB_PASSWORD
-        syncWithDBPassword: trifair-db
+        value: /var/www/html/database/database.sqlite
       - key: SESSION_DRIVER
         value: cookie
       - key: SESSION_SECURE_COOKIE
@@ -39,8 +31,3 @@ services:
         value: sync
       - key: LOG_CHANNEL
         value: stderr
-  - type: pgsql
-    name: trifair-db
-    plan: free
-    databaseName: trifair
-    ipAllowList: []
