@@ -36,4 +36,4 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 
 EXPOSE 80
 
-CMD ["/bin/bash", "-c", "export DB_CONNECTION=sqlite DB_DATABASE=/var/www/html/database/database.sqlite && unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD && php artisan config:clear && php artisan config:cache && php artisan view:clear && php artisan migrate --force && php artisan db:seed --force; exec apache2-foreground"]
+CMD ["/bin/bash", "-c", "php artisan config:clear && php artisan config:cache && php artisan view:clear && php artisan migrate --force && php artisan db:seed --force; exec apache2-foreground"]

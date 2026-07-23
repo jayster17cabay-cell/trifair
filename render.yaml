@@ -14,9 +14,17 @@ services:
       - key: APP_KEY
         generateValue: true
       - key: DB_CONNECTION
-        value: sqlite
+        value: pgsql
+      - key: DB_HOST
+        value: db.lkmmudpfcxbykwdpsqvy.supabase.co
+      - key: DB_PORT
+        value: "5432"
       - key: DB_DATABASE
-        value: /var/www/html/database/database.sqlite
+        value: postgres
+      - key: DB_USERNAME
+        value: postgres
+      - key: DB_PASSWORD
+        value: ""
       - key: SESSION_DRIVER
         value: cookie
       - key: SESSION_SECURE_COOKIE
