@@ -84,3 +84,25 @@ Route::get('/file-storage/{path}', function ($path) {
 Route::get('/rate/{qrCode}', [RatingController::class, 'showRateForm'])->name('rate.driver');
 Route::post('/rate/{qrCode}', [RatingController::class, 'submitRating'])->name('rate.submit');
 Route::get('/rate/{qrCode}/submitted', [RatingController::class, 'showSubmitted'])->name('rate.submitted');
+
+Route::get('/_dbcheck', function () {
+    $info = [
+        'db_connection' => config('database.default'),
+        'db_host' => config('database.connections.pgsql.host'),
+        'db_port' => config('database.connections.pgsql.port'),
+        'db_database' => config('database.connections.pgsql.database'),
+        'db_username' => config('database.connections.pgsql.username'),
+        'db_password_set' => !empty(config('database.connections.pgsql.password')),
+        'db_password_length' => strlen(config('database.connections.pgsql.password') ?? ''),
+        'sslmode' => config('database.connections.pgsql.sslmode') ?? 'not set',
+    ];
+    try {
+        DB::connection()->getPdo();
+        $info['status'] = 'connected';
+        $info['driver'] = DB::connection()->getDriverName();
+    } catch (\Exception $e) {
+        $info['status'] = 'failed';
+        $info['error'] = $e->getMessage();
+    }
+    return response()->json($info, 200, [], JSON_PRETTY_PRINT);
+})->middleware('web');
