@@ -1,8 +1,8 @@
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
-    libpng-dev libonig-dev libxml2-dev libzip-dev libsqlite3-dev zip unzip \
-    && docker-php-ext-install pdo pdo_mysql pdo_sqlite mbstring exif pcntl bcmath gd zip \
+    libpng-dev libonig-dev libxml2-dev libzip-dev libsqlite3-dev libpq-dev zip unzip \
+    && docker-php-ext-install pdo pdo_mysql pdo_sqlite pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
@@ -36,4 +36,4 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 
 EXPOSE 80
 
-CMD ["/bin/bash", "-c", "export DB_CONNECTION=sqlite DB_DATABASE=/var/www/html/database/database.sqlite && unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD && php artisan config:clear && php artisan config:cache && php artisan view:clear && php artisan migrate --force && php artisan db:seed --force; exec apache2-foreground"]
+CMD ["/bin/bash", "-c", "php artisan config:clear && php artisan config:cache && php artisan view:clear && php artisan migrate --force && php artisan db:seed --force; exec apache2-foreground"]

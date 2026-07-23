@@ -8,17 +8,27 @@ return new class extends Migration
 {
     public function up()
     {
-        if (config('database.default') === 'sqlite') {
+        $driver = config('database.default');
+        if ($driver === 'sqlite') {
             return;
         }
-        DB::statement('ALTER TABLE activity_logs MODIFY user_id BIGINT(20) UNSIGNED NULL');
+        if ($driver === 'pgsql') {
+            DB::statement('ALTER TABLE activity_logs ALTER COLUMN user_id DROP NOT NULL');
+        } else {
+            DB::statement('ALTER TABLE activity_logs MODIFY user_id BIGINT(20) UNSIGNED NULL');
+        }
     }
 
     public function down()
     {
-        if (config('database.default') === 'sqlite') {
+        $driver = config('database.default');
+        if ($driver === 'sqlite') {
             return;
         }
-        DB::statement('ALTER TABLE activity_logs MODIFY user_id BIGINT(20) UNSIGNED NOT NULL');
+        if ($driver === 'pgsql') {
+            DB::statement('ALTER TABLE activity_logs ALTER COLUMN user_id SET NOT NULL');
+        } else {
+            DB::statement('ALTER TABLE activity_logs MODIFY user_id BIGINT(20) UNSIGNED NOT NULL');
+        }
     }
 };
