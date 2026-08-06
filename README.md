@@ -153,6 +153,36 @@ generated randomly and printed to the console — nothing hardcoded in the repo.
    </VirtualHost>
    ```
 
+## Production Operations
+
+### Database backups (Supabase / PostgreSQL free tier)
+
+The free tier does **not** provide automated backups, so schedule a manual
+`pg_dump`. Use the same connection details as `PGSQL_HOST`/`PGSQL_PORT` in the
+Render env vars (the pooler connection):
+
+```bash
+pg_dump --host="$PGSQL_HOST" --port="$PGSQL_PORT" \
+  --username="$PGSQL_USERNAME" --dbname="$PGSQL_DATABASE" \
+  --no-owner --no-privileges --format=custom > trifair-$(date +%F).dump
+```
+
+Restore locally or on a new database with `pg_restore`. Keep at least one
+off-site copy (e.g. a private GitHub repo or object storage). Verify the dump
+restores into a scratch database at least once.
+
+### Monitoring & logs
+
+- **Render service logs** (`LOG_CHANNEL=stderr`) stream to the Render dashboard
+  under *Logs*. Watch for `production.ERROR` lines from the Laravel logger.
+- **Health check**: Render polls `/login` (see `render.yaml`); a non-200
+  response marks the service degraded.
+- **Error tracking**: no external APM on the free tier. If you later want one,
+  Sentry's free plan accepts a single DSN via the `SENTRY_LARAVEL_DSN` env var.
+- **Deploys**: CI runs on every push to `main`. A deploy hook (`RENDER_DEPLOY_HOOK_URL`
+  secret in GitHub Actions) can gate deploys on green tests; without it, Render
+  deploys on its own GitHub polling.
+
 ## Project Structure
 
 ```
