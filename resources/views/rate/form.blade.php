@@ -893,6 +893,28 @@ var OFFROUTE_METERS = 50;
 var lastFromAccuracy = Infinity;
 var lastFromGeocodeTime = 0;
 
+var mapLastInteracted = 0;
+function markMapInteraction() { mapLastInteracted = Date.now(); }
+
+function followMarker(latlng) {
+    if (!map || !latlng) return;
+    if (!map.__followBound) {
+        map.__followBound = true;
+        map.on('dragstart', markMapInteraction);
+        map.on('zoomstart', markMapInteraction);
+        map.on('touchstart', markMapInteraction);
+    }
+    if (Date.now() - mapLastInteracted < 8000) return;
+    var size = map.getSize();
+    var inner = L.latLngBounds(
+        map.containerPointToLatLng(L.point(size.x * 0.25, size.y * 0.3)),
+        map.containerPointToLatLng(L.point(size.x * 0.75, size.y * 0.7))
+    );
+    if (!inner.contains(latlng)) {
+        map.panTo(latlng, { animate: true, duration: 0.4 });
+    }
+}
+
 function startTracking() {
     if (!navigator.geolocation) return;
     trackingWatchId = navigator.geolocation.watchPosition(function(p) {
@@ -903,6 +925,7 @@ function startTracking() {
 
         if (startMarker) {
             startMarker.setLatLng(latlng);
+            followMarker(latlng);
         }
 
         if (lastFromAccuracy === Infinity || now - lastFromGeocodeTime > 2500 || acc < lastFromAccuracy) {

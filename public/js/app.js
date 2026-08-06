@@ -11,7 +11,8 @@
     function initAlerts() {
         document.querySelectorAll('[data-tw-dismiss]').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                var el = document.querySelector(btn.getAttribute('data-tw-dismiss')) || btn.closest('.tw-alert');
+                var sel = btn.getAttribute('data-tw-dismiss');
+                var el = (sel ? document.querySelector(sel) : null) || btn.closest('.tw-alert');
                 if (el) {
                     el.remove();
                 }
