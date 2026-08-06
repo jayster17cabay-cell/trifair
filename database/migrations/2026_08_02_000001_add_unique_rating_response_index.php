@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AddUniqueRatingResponseIndex extends Migration
 {
@@ -12,25 +14,19 @@ class AddUniqueRatingResponseIndex extends Migration
      */
     public function up()
     {
-        $driver = DB::getDriverName();
+        // Portable dedupe: keep the earliest row per rating_id (works on
+        // pgsql, mysql, and sqlite — avoids DELETE ... USING / joins).
+        DB::statement('DELETE FROM operator_responses WHERE id NOT IN (SELECT MIN(id) FROM operator_responses GROUP BY rating_id)');
 
-        if ($driver === 'mysql') {
-            DB::statement('DELETE r1 FROM operator_responses r1 INNER JOIN operator_responses r2 WHERE r1.id > r2.id AND r1.rating_id = r2.rating_id');
-            DB::statement('ALTER TABLE operator_responses ADD UNIQUE INDEX operator_responses_rating_id_unique (rating_id)');
-        } else {
-            DB::statement('DELETE FROM operator_responses a USING operator_responses b WHERE a.id > b.id AND a.rating_id = b.rating_id');
-            DB::statement('CREATE UNIQUE INDEX operator_responses_rating_id_unique ON operator_responses (rating_id)');
-        }
+        Schema::table('operator_responses', function (Blueprint $table) {
+            $table->unique('rating_id');
+        });
     }
 
     public function down()
     {
-        $driver = DB::getDriverName();
-
-        if ($driver === 'mysql') {
-            DB::statement('ALTER TABLE operator_responses DROP INDEX operator_responses_rating_id_unique');
-        } else {
-            DB::statement('DROP INDEX IF EXISTS operator_responses_rating_id_unique');
-        }
+        Schema::table('operator_responses', function (Blueprint $table) {
+            $table->dropUnique(['rating_id']);
+        });
     }
 }

@@ -21,6 +21,8 @@ return new class extends Migration
             DB::statement('ALTER TABLE ratings DROP FOREIGN KEY ratings_driver_id_foreign');
             DB::statement('ALTER TABLE ratings CHANGE driver_id operator_id BIGINT UNSIGNED NOT NULL');
             DB::statement('ALTER TABLE ratings ADD CONSTRAINT ratings_operator_id_foreign FOREIGN KEY (operator_id) REFERENCES operators(id) ON DELETE CASCADE');
+        } elseif ($db === 'sqlite') {
+            DB::statement('ALTER TABLE ratings RENAME COLUMN driver_id TO operator_id');
         }
     }
 
@@ -36,6 +38,8 @@ return new class extends Migration
             DB::statement('ALTER TABLE ratings DROP FOREIGN KEY ratings_operator_id_foreign');
             DB::statement('ALTER TABLE ratings CHANGE operator_id driver_id BIGINT UNSIGNED NOT NULL');
             DB::statement('ALTER TABLE ratings ADD CONSTRAINT ratings_driver_id_foreign FOREIGN KEY (driver_id) REFERENCES operators(id) ON DELETE CASCADE');
+        } elseif ($db === 'sqlite') {
+            DB::statement('ALTER TABLE ratings RENAME COLUMN operator_id TO driver_id');
         }
 
         Schema::rename('operator_responses', 'driver_responses');

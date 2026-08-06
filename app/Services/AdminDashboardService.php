@@ -103,7 +103,7 @@ class AdminDashboardService
         }
         $data['ratingDistribution'] = $distribution;
 
-        $data['topOperators'] = Operator::with('user')
+        $data['topOperators'] = Operator::with('user', 'toda')
             ->leftJoin(
                 DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true group by operator_id) as vr'),
                 'vr.operator_id',
