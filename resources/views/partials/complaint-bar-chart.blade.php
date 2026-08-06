@@ -8,8 +8,19 @@
         @endif
     </div>
     @if ($totalComplaints > 0)
-        <div class="relative h-52 p-3 sm:p-4">
-            <canvas id="complaintChart"></canvas>
+        @php $complaintMax = $complaintStats->max('total'); @endphp
+        <div id="complaintChartBody" class="max-h-[248px] space-y-2 overflow-y-auto p-4">
+            @foreach ($complaintStats->where('total', '>', 0) as $c)
+                <div>
+                    <div class="mb-1 flex items-center justify-between gap-2 text-[11px]">
+                        <span class="truncate font-semibold text-slate-600">{{ $c->complaint_type }}</span>
+                        <span class="shrink-0 font-bold text-slate-900">{{ $c->total }}</span>
+                    </div>
+                    <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                        <div class="h-full rounded-full" style="width: {{ $complaintMax ? round(($c->total / $complaintMax) * 100) : 0 }}%; background: linear-gradient(90deg, #2e7dd1, #0f2a4a);"></div>
+                    </div>
+                </div>
+            @endforeach
         </div>
     @else
         <div class="flex flex-col items-center justify-center py-8 text-center">
@@ -19,84 +30,3 @@
         </div>
     @endif
 </div>
-
-<script>
-function initComplaintChart() {
-    var canvas = document.getElementById('complaintChart');
-    var stats = @json($complaintStats);
-    stats = stats.filter(function (s) { return s.total > 0; });
-    var ctx = canvas.getContext('2d');
-    window.complaintChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: stats.map(function(s) { return s.complaint_type; }),
-            datasets: [{
-                data: stats.map(function(s) { return s.total; }),
-                backgroundColor: function (context) {
-                    var area = context.chart.chartArea;
-                    if (!area) return '#2e7dd1';
-                    var g = ctx.createLinearGradient(area.left, 0, area.right, 0);
-                    g.addColorStop(0, '#2e7dd1');
-                    g.addColorStop(1, '#0f2a4a');
-                    return g;
-                },
-                borderRadius: 5,
-                maxBarThickness: 15,
-                hoverBackgroundColor: '#2563a8'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            animation: { duration: 400 },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    padding: 10,
-                    cornerRadius: 8,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            return ' ' + context.parsed.x + ' complaint' + (context.parsed.x !== 1 ? 's' : '');
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(226,232,240,0.6)' },
-                    ticks: { precision: 0, font: { size: 10 } }
-                },
-                y: {
-                    grid: { display: false },
-                    ticks: {
-                        autoSkip: false,
-                        font: { size: 10, weight: 600 },
-                        callback: function (value) {
-                            var label = this.getLabelForValue(value);
-                            return label.length > 22 ? label.slice(0, 22) + '\u2026' : label;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-(function () {
-    function tryInit() {
-        if (window.Chart && !window.complaintChart && document.getElementById('complaintChart')) {
-            initComplaintChart();
-        } else if (!window.Chart) {
-            setTimeout(tryInit, 200);
-        }
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', tryInit);
-    } else {
-        tryInit();
-    }
-})();
-</script>

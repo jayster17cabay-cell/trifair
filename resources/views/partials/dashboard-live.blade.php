@@ -19,8 +19,8 @@
         var dtEl = document.querySelector('[data-live-clock="datetime"]');
         if (dtEl) {
             var t = fmt12(now.getHours());
-            dtEl.textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear()
-                + ', ' + t.h + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds()) + ' ' + t.ampm;
+            dtEl.textContent = days[now.getDay()].slice(0, 3) + ', ' + months[now.getMonth()].slice(0, 3) + ' ' + now.getDate()
+                + ', ' + now.getFullYear() + ' · ' + t.h + ':' + pad(now.getMinutes()) + ' ' + t.ampm;
         }
     }
     updateClock();
@@ -53,30 +53,57 @@
     }
 
     function updateComplaintChart(stats) {
-        if (!stats || !window.complaintChart) return;
+        if (!stats) return;
         var filtered = stats.filter(function (s) { return s.total > 0; });
-        window.complaintChart.data.labels = filtered.map(function (s) { return s.complaint_type; });
-        window.complaintChart.data.datasets[0].data = filtered.map(function (s) { return s.total; });
-        window.complaintChart.update();
-        var body = document.getElementById('complaintModalBody');
-        if (!body) return;
+        var body = document.getElementById('complaintChartBody');
+        if (body) {
+            var max = 0;
+            for (var i = 0; i < filtered.length; i++) max = Math.max(max, filtered[i].total);
+            var html = '';
+            for (var i = 0; i < filtered.length; i++) {
+                var s = filtered[i];
+                var pct = max > 0 ? Math.round((s.total / max) * 100) : 0;
+                html += '<div>' +
+                    '<div class="mb-1 flex items-center justify-between gap-2 text-[11px]">' +
+                    '<span class="truncate font-semibold text-slate-600">' + escHtml(s.complaint_type) + '</span>' +
+                    '<span class="shrink-0 font-bold text-slate-900">' + s.total + '</span></div>' +
+                    '<div class="h-2.5 overflow-hidden rounded-full bg-slate-100">' +
+                    '<div class="h-full rounded-full" style="width:' + pct + '%;background:linear-gradient(90deg,#2e7dd1,#0f2a4a);"></div></div>' +
+                    '</div>';
+            }
+            body.innerHTML = html;
+        }
+        var modal = document.getElementById('complaintModalBody');
+        if (!modal) return;
         var sum = stats.reduce(function (a, s) { return a + s.total; }, 0);
-        var html = '';
+        var mhtml = '';
         for (var i = 0; i < filtered.length; i++) {
             var s = filtered[i];
             var pct = sum > 0 ? Math.round((s.total / sum) * 100) : 0;
-            html += '<div class="mb-3">' +
+            mhtml += '<div class="mb-3">' +
                 '<div class="mb-1 flex items-center justify-between text-sm text-slate-700"><span>' + escHtml(s.complaint_type) + '</span><strong>' + s.total + '</strong></div>' +
                 '<div class="h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-blue-600" style="width:' + pct + '%;"></div></div>' +
                 '</div>';
         }
-        body.innerHTML = html;
+        modal.innerHTML = mhtml;
     }
 
     function updateRatingChart(dist) {
-        if (!dist || !window.ratingChart) return;
-        window.ratingChart.data.datasets[0].data = [1, 2, 3, 4, 5].map(function (i) { return dist[i] || 0; });
-        window.ratingChart.update();
+        if (!dist) return;
+        var body = document.getElementById('ratingChartBody');
+        if (!body) return;
+        var counts = [1, 2, 3, 4, 5].map(function (i) { return dist[i] || 0; });
+        var max = 0;
+        for (var i = 0; i < counts.length; i++) max = Math.max(max, counts[i]);
+        var html = '';
+        for (var i = 0; i < counts.length; i++) {
+            var pct = max > 0 ? Math.round((counts[i] / max) * 100) : 0;
+            html += '<div class="flex h-full flex-1 flex-col items-center justify-end">' +
+                '<span class="mb-1 text-[11px] font-bold text-slate-700">' + counts[i] + '</span>' +
+                '<div class="w-full rounded-t-md" style="height:' + Math.max(pct, 2) + '%;background:linear-gradient(180deg,#2e7dd1,#0f2a4a);"></div>' +
+                '</div>';
+        }
+        body.innerHTML = html;
     }
 
     function setVisibility(id, show) {

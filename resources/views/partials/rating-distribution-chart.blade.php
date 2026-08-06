@@ -5,8 +5,23 @@
     </div>
     @php $distTotal = array_sum($ratingDistribution); @endphp
     @if ($distTotal > 0)
-        <div class="relative h-52 p-3 sm:p-4">
-            <canvas id="ratingChart"></canvas>
+        @php $distMax = max(array_values($ratingDistribution)); @endphp
+        <div id="ratingChartBody" class="flex h-44 items-end gap-3 px-4 pt-4">
+            @for ($star = 1; $star <= 5; $star++)
+                @php
+                    $count = $ratingDistribution[$star] ?? 0;
+                    $pct = $distMax > 0 ? round(($count / $distMax) * 100) : 0;
+                @endphp
+                <div class="flex h-full flex-1 flex-col items-center justify-end">
+                    <span class="mb-1 text-[11px] font-bold text-slate-700">{{ $count }}</span>
+                    <div class="w-full rounded-t-md" style="height: {{ max($pct, 2) }}%; background: linear-gradient(180deg, #2e7dd1, #0f2a4a);"></div>
+                </div>
+            @endfor
+        </div>
+        <div class="flex gap-3 px-4 pb-4">
+            @for ($star = 1; $star <= 5; $star++)
+                <div class="flex-1 text-center text-[10px] font-semibold text-slate-500">{{ $star }} Star</div>
+            @endfor
         </div>
     @else
         <div class="flex flex-col items-center justify-center py-8 text-center">
@@ -16,75 +31,3 @@
         </div>
     @endif
 </div>
-
-<script>
-function initRatingChart() {
-    var canvas = document.getElementById('ratingChart');
-    var dist = @json($ratingDistribution);
-    var ctx = canvas.getContext('2d');
-    window.ratingChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: [1, 2, 3, 4, 5].map(function(i) { return i + ' Star'; }),
-            datasets: [{
-                data: [1, 2, 3, 4, 5].map(function(i) { return dist[i] || 0; }),
-                backgroundColor: function (context) {
-                    var area = context.chart.chartArea;
-                    if (!area) return '#2e7dd1';
-                    var g = ctx.createLinearGradient(0, area.bottom, 0, area.top);
-                    g.addColorStop(0, '#2e7dd1');
-                    g.addColorStop(1, '#0f2a4a');
-                    return g;
-                },
-                borderRadius: 5,
-                maxBarThickness: 40,
-                hoverBackgroundColor: '#2563a8'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 400 },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    padding: 10,
-                    cornerRadius: 8,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            return ' ' + context.parsed.y + ' rating' + (context.parsed.y !== 1 ? 's' : '');
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { size: 10 } }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(226,232,240,0.6)' },
-                    ticks: { precision: 0, font: { size: 10 } }
-                }
-            }
-        }
-    });
-}
-(function () {
-    function tryInit() {
-        if (window.Chart && !window.ratingChart && document.getElementById('ratingChart')) {
-            initRatingChart();
-        } else if (!window.Chart) {
-            setTimeout(tryInit, 200);
-        }
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', tryInit);
-    } else {
-        tryInit();
-    }
-})();
-</script>
