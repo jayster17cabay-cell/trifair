@@ -15,20 +15,22 @@ A web application for rating tricycle drivers. Passengers scan a QR code on the 
 
 - **Passenger** (anonymous) - Scans QR code, rates driver
 - **Driver** - Views ratings, responds to feedback
-- **Admin** - Manages drivers, reviews complaints
-- **Superadmin** - Full system access
+- **TFRB Officer** - Manages drivers, reviews complaints, oversees TODAs
+- **Superadmin** - Full system control, manages officers and drivers
 
 ## Tech Stack
 
 - **Backend**: Laravel 8.80 (PHP 8.0.2+)
-- **Database**: MySQL 5.7+
-- **Frontend**: Bootstrap 5.1.3, Leaflet.js, Blade templates
+- **Database**: PostgreSQL (production), SQLite in-memory (tests)
+- **Frontend**: Tailwind CSS 3, Leaflet.js, Blade templates
 - **Build Tool**: Vite 4
+- **CI**: GitHub Actions (lint, view compile, feature tests)
+- **Hosting**: Render (free tier)
 
 ## Requirements
 
-- PHP 8.0.2+ (extensions: pdo_mysql, mbstring, openssl, tokenizer, xml, ctype, json, bcmath)
-- MySQL 5.7+ or 8.0+
+- PHP 8.0.2+ (extensions: pdo_pgsql, mbstring, openssl, tokenizer, xml, ctype, json, bcmath)
+- PostgreSQL 12+
 - Composer
 - Node.js + npm (for asset compilation)
 - Apache with `mod_rewrite` enabled
@@ -61,7 +63,7 @@ A web application for rating tricycle drivers. Passengers scan a QR code on the 
    php artisan key:generate
    ```
 
-6. Create database `trifair_db` in MySQL, then run migrations:
+6. Create database `trifair_db` in PostgreSQL, then run migrations:
    ```bash
    php artisan migrate
    ```
@@ -86,16 +88,17 @@ A web application for rating tricycle drivers. Passengers scan a QR code on the 
     php artisan serve
     ```
 
-## Default Login Credentials
+## Default Accounts
 
-After running `php artisan db:seed`:
+After running `php artisan db:seed`, three accounts are created. Passwords come from
+`.env` (`SUPERADMIN_PASSWORD`, `TFRB_OFFICER_PASSWORD`, `OPERATOR_PASSWORD`) or are
+generated randomly and printed to the console — nothing hardcoded in the repo.
 
-| Role | Email | Password |
-|------|-------|----------|
-| Superadmin | superadmin@trifair.com | admin123 |
-| Admin | admin@trifair.com | admin123 |
-
-**Important**: Change these passwords before production deployment!
+| Role | Email |
+|------|-------|
+| Superadmin | superadmin@trifair.com |
+| TFRB Officer | tfrbofficer@trifair.com |
+| Operator | jayster@trifair.com |
 
 ## Production Deployment
 
@@ -104,6 +107,9 @@ After running `php artisan db:seed`:
    APP_ENV=production
    APP_DEBUG=false
    APP_URL=https://your-domain.com
+   DB_CONNECTION=pgsql
+   DB_DATABASE=your-db
+   DB_USERNAME=your-user
    DB_PASSWORD=your-secure-password
    ```
 
