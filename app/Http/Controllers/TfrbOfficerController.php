@@ -32,7 +32,7 @@ class TfrbOfficerController extends Controller
         $data = app(AdminQueryService::class)->operatorsData($request);
         $operators = $data['operators'];
         if ($request->ajax()) {
-            $html = view('tfrb-officer.operators._table', compact('operators'))->render();
+            $html = view('partials.admin.operators-table', ['operators' => $operators, 'routePrefix' => 'tfrb-officer'])->render();
             $pagination = $operators->links()->render();
             return response()->json(compact('html', 'pagination'));
         }
@@ -107,7 +107,7 @@ class TfrbOfficerController extends Controller
         $data = app(AdminQueryService::class)->reportTripsData($operator);
 
         return response()->json([
-            'html' => view('partials.report-trips-tfrb', $data)->render(),
+            'html' => view('partials.report-trips', $data)->render(),
         ]);
     }
 

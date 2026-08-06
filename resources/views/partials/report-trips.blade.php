@@ -1,3 +1,5 @@
+{{-- Shared AJAX trip-history for the reports page. Requires: $operator, $totalTrips --}}
+
 @if ($operator->validRatings && $operator->validRatings->count() > 0)
     <div class="mb-3 flex flex-wrap items-center gap-2 text-[0.7rem] font-bold uppercase tracking-wider text-slate-500">
         <i class="bi bi-clock-history"></i> All Trips

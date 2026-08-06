@@ -1,51 +1,57 @@
 <tbody>
     @forelse ($operators as $operator)
+        @php
+            $avatarColors = ['#1e3a5f','#2563eb','#7c3aed','#0891b2','#059669','#d97706','#dc2626'];
+            $avBg = $avatarColors[$loop->index % count($avatarColors)];
+        @endphp
         <tr class="tw-tr-hover">
             <td class="tw-td text-slate-500">{{ $loop->iteration + ($operators->currentPage() - 1) * $operators->perPage() }}</td>
             <td class="tw-td">
                 <div class="flex items-center gap-2.5">
-                    <div class="tw-avatar tw-avatar-sm bg-amber-50 text-amber-700">{{ strtoupper(substr($operator->user->name, 0, 1)) }}</div>
-                    <strong class="text-sm">{{ $operator->user->name }}</strong>
+                    <div class="tw-avatar tw-avatar-sm text-white" style="background: {{ $avBg }};">{{ strtoupper(substr($operator->user->name, 0, 1)) }}</div>
+                    <div class="min-w-0">
+                        <div class="truncate text-sm font-bold text-slate-800">{{ $operator->user->name }}</div>
+                        <div class="truncate text-xs text-slate-500">{{ $operator->user->email }}</div>
+                    </div>
                 </div>
             </td>
             <td class="tw-td">
                 @if ($operator->toda)
                     <span class="tw-badge tw-badge-navy"><i class="bi bi-diagram-3"></i>{{ $operator->toda->name }}</span>
                 @else
-                    <span class="text-xs text-slate-400">Unassigned</span>
+                    <span class="tw-badge tw-badge-gray">Unassigned</span>
                 @endif
             </td>
-            <td class="tw-td text-sm text-slate-500">{{ $operator->user->email }}</td>
-            <td class="tw-td text-sm font-semibold">{{ $operator->plate_number ?? 'N/A' }}</td>
-            <td class="tw-td text-sm">{{ $operator->body_number ?? 'N/A' }}</td>
-            <td class="tw-td text-sm">{{ $operator->contact_number ?? 'N/A' }}</td>
+            <td class="tw-td text-sm text-slate-500">{{ $operator->contact_number ?? '—' }}</td>
+            <td class="tw-td text-sm font-semibold">{{ $operator->plate_number ?? '—' }}</td>
+            <td class="tw-td text-sm">{{ $operator->body_number ?? '—' }}</td>
             <td class="tw-td">
                 @if ($operator->status === 'active')
-                    <span class="tw-badge tw-badge-navy"><i class="bi bi-check-circle"></i>Active</span>
+                    <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i>Active</span>
                 @elseif ($operator->status === 'pending')
                     <span class="tw-badge tw-badge-amber"><i class="bi bi-hourglass-split"></i>Pending</span>
                 @elseif ($operator->status === 'rejected')
-                    <span class="tw-badge tw-badge-red"><i class="bi bi-x-circle"></i>Rejected</span>
+                    <span class="tw-badge tw-badge-red"><i class="bi bi-x-circle-fill"></i>Rejected</span>
                 @else
-                    <span class="tw-badge tw-badge-gray"><i class="bi bi-pause-circle"></i>Inactive</span>
+                    <span class="tw-badge tw-badge-amber"><i class="bi bi-pause-circle-fill"></i>Inactive</span>
                 @endif
             </td>
             <td class="tw-td text-center">
-                <a href="{{ route('superadmin.operators.qrcode', $operator) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="View QR Code">
+                <a href="{{ route($routePrefix . '.operators.qrcode', $operator) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="View QR Code">
                     <i class="bi bi-qr-code"></i>
                 </a>
             </td>
             <td class="tw-td text-right">
                 <div class="inline-flex gap-1.5">
                     @if (request('status') === 'pending')
-                        <form action="{{ route('superadmin.operators.approve', $operator) }}" method="POST">
+                        <form action="{{ route($routePrefix . '.operators.approve', $operator) }}" method="POST">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="tw-btn tw-btn-sm tw-btn-success" title="Approve" onclick="return confirm(@js('Approve ' . $operator->user->name . '?'))">
                                 <i class="bi bi-check-lg"></i>Approve
                             </button>
                         </form>
-                        <form action="{{ route('superadmin.operators.reject', $operator) }}" method="POST">
+                        <form action="{{ route($routePrefix . '.operators.reject', $operator) }}" method="POST">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline text-red-600" title="Reject" onclick="return confirm(@js('Reject and delete ' . $operator->user->name . '?'))">
@@ -53,10 +59,10 @@
                             </button>
                         </form>
                     @else
-                        <a href="{{ route('superadmin.operators.edit', $operator) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Edit">
+                        <a href="{{ route($routePrefix . '.operators.edit', $operator) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <form action="{{ route('superadmin.operators.destroy', $operator) }}" method="POST" onsubmit="return confirm('Delete this operator? This action cannot be undone.')">
+                        <form action="{{ route($routePrefix . '.operators.destroy', $operator) }}" method="POST" onsubmit="return confirm('Delete this operator? This action cannot be undone.')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline text-red-600" title="Delete">
@@ -69,9 +75,9 @@
         </tr>
     @empty
         <tr>
-            <td colspan="10" class="px-4 py-10 text-center">
+            <td colspan="9" class="px-4 py-10 text-center">
                 <div class="tw-empty">
-                    <div class="tw-empty-icon"><i class="bi bi-inbox"></i></div>
+                    <div class="tw-empty-icon"><i class="bi bi-people"></i></div>
                     <p class="text-sm text-slate-500">No operators found.</p>
                 </div>
             </td>

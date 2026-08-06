@@ -117,7 +117,7 @@ class SuperadminController extends Controller
         $data = app(AdminQueryService::class)->reportTripsData($operator);
 
         return response()->json([
-            'html' => view('partials.report-trips-superadmin', $data)->render(),
+            'html' => view('partials.report-trips', $data)->render(),
         ]);
     }
 
@@ -136,7 +136,7 @@ class SuperadminController extends Controller
         $data = app(AdminQueryService::class)->operatorsData($request);
         $operators = $data['operators'];
         if ($request->ajax()) {
-            $html = view('superadmin.operators._table', compact('operators'))->render();
+            $html = view('partials.admin.operators-table', ['operators' => $operators, 'routePrefix' => 'superadmin'])->render();
             $pagination = $operators->links()->render();
             return response()->json(compact('html', 'pagination'));
         }
