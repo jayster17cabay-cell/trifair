@@ -16,8 +16,10 @@ class CheckRole
 
         $userRole = Auth::user()->role;
 
-        // Superadmin can access everything
-        if ($userRole === 'superadmin') {
+        // Superadmin can access admin/officer routes, but NOT operator routes:
+        // a superadmin has no operator profile and entering those pages used to
+        // cause a 500 error (Auth::user()->operator was null).
+        if ($userRole === 'superadmin' && !in_array('operator', $roles, true)) {
             return $next($request);
         }
 

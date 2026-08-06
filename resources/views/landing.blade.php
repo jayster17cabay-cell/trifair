@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/tailwind.css') . '?v=' . filemtime(public_path('css/tailwind.css')) }}">
 </head>
 <body class="overflow-x-hidden bg-white font-sans text-slate-800 antialiased">
 
@@ -22,7 +22,7 @@
         <div class="flex items-center gap-1">
             <a href="#features" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white md:block">Features</a>
             <a href="#how" class="hidden rounded-lg px-4 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white md:block">How It Works</a>
-            <a href="{{ route('login') }}" class="ml-2 rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-white shadow-goldlift transition hover:bg-gold-dark">Log In</a>
+            <a href="{{ route('login') }}" class="ml-2 rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-slate-900 shadow-goldlift transition hover:bg-gold-dark">Log In</a>
         </div>
     </div>
 </nav>

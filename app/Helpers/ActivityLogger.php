@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
 class ActivityLogger
@@ -30,6 +31,10 @@ class ActivityLogger
                 'user_agent' => $request->userAgent(),
             ]);
         } catch (\Exception $e) {
+            Log::error('Failed to write activity log', [
+                'action' => $action,
+                'error' => $e->getMessage(),
+            ]);
             return null;
         }
     }

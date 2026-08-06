@@ -44,9 +44,10 @@ class RegisterController extends Controller
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'phone' => $data['contact_number'],
-            'role' => 'operator',
-            'is_active' => true,
         ]);
+
+        // role/is_active are intentionally NOT mass-assignable (see User model)
+        $user->forceFill(['role' => 'operator', 'is_active' => true])->save();
 
         Operator::create([
             'user_id' => $user->id,

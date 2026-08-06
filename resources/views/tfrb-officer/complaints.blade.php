@@ -189,7 +189,7 @@
                     <form action="{{ route('tfrb-officer.complaints.review', $rating) }}" method="POST">
                         @csrf
                         @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm bg-gradient-to-r from-gold to-amber-600 text-white hover:from-gold-dark hover:to-amber-700">
+                        <button type="submit" class="tw-btn tw-btn-sm bg-gradient-to-r from-gold to-amber-600 text-slate-900 hover:from-gold-dark hover:to-amber-700">
                             <i class="bi bi-check-lg"></i>Mark Reviewed
                         </button>
                     </form>

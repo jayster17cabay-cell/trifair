@@ -8,11 +8,14 @@ use Illuminate\Http\Request;
 class TrustProxies extends Middleware
 {
     /**
-     * The trusted proxies for this application.
+     * No proxies are trusted by default. Configure specific proxy IPs/CIDRs
+     * via the TRUSTED_PROXIES env var (see config/trustedproxy.php). Trusting
+     * "*" is intentionally avoided because it allows any client to spoof their
+     * IP through X-Forwarded-For.
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies = '*';
+    protected $proxies = null;
 
     /**
      * The headers that should be used to detect proxies.
@@ -25,6 +28,21 @@ class TrustProxies extends Middleware
         Request::HEADER_X_FORWARDED_PORT |
         Request::HEADER_X_FORWARDED_PROTO |
         Request::HEADER_X_FORWARDED_AWS_ELB;
+
+    /**
+     * Resolve the trusted proxies from configuration so the value is available
+     * even when config is cached (env() would otherwise return null).
+     */
+    protected function proxies()
+    {
+        $value = config('trustedproxy.proxies', null);
+
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+
+        return ($value === '' || $value === null) ? null : $value;
+    }
 
     /**
      * Guard against an empty REMOTE_ADDR (CLI, misconfigured web servers,

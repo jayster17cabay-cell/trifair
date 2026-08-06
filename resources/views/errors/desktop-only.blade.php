@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/tailwind.css') . '?v=' . filemtime(public_path('css/tailwind.css')) }}">
 </head>
 <body class="flex min-h-screen min-h-dvh items-center justify-center bg-slate-50 p-8">
     <div class="w-full max-w-[360px] rounded-3xl bg-white p-10 text-center shadow-soft">

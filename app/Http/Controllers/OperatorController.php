@@ -16,18 +16,32 @@ class OperatorController extends Controller
     public function dashboard()
     {
         $operator = Auth::user()->operator;
-        $averageRating = $operator->ratings()->isValid()->avg('rating');
-        $totalRatings = $operator->ratings()->isValid()->count();
-        $recentRatings = $operator->ratings()->isValid()
+        $base = $operator->ratings()->isValid();
+
+        $agg = (clone $base)
+            ->selectRaw('COUNT(*) as total_ratings, AVG(rating) as avg_rating')
+            ->selectRaw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as r1')
+            ->selectRaw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as r2')
+            ->selectRaw('SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as r3')
+            ->selectRaw('SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as r4')
+            ->selectRaw('SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as r5')
+            ->first();
+
+        $totalRatings = (int) ($agg->total_ratings ?? 0);
+        $averageRating = $agg->avg_rating;
+        $ratingCounts = [
+            1 => (int) ($agg->r1 ?? 0),
+            2 => (int) ($agg->r2 ?? 0),
+            3 => (int) ($agg->r3 ?? 0),
+            4 => (int) ($agg->r4 ?? 0),
+            5 => (int) ($agg->r5 ?? 0),
+        ];
+
+        $recentRatings = (clone $base)
             ->with('proofs', 'response')
             ->latest()
             ->take(5)
             ->get();
-
-        $ratingCounts = [];
-        for ($i = 1; $i <= 5; $i++) {
-            $ratingCounts[$i] = $operator->ratings()->isValid()->where('rating', $i)->count();
-        }
 
         if (request()->wantsJson()) {
             return response()->json([

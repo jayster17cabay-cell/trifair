@@ -54,14 +54,16 @@
 
     function updateComplaintChart(stats) {
         if (!stats) return;
-        var filtered = stats.filter(function (s) { return s.total > 0; });
+        // Stats arrive already padded to all complaint types (zeros included),
+        // so every type is always visible — a single-type dataset shows the
+        // full axis instead of collapsing to one bar.
         var body = document.getElementById('complaintChartBody');
         if (body) {
             var max = 0;
-            for (var i = 0; i < filtered.length; i++) max = Math.max(max, filtered[i].total);
+            for (var i = 0; i < stats.length; i++) max = Math.max(max, stats[i].total);
             var html = '';
-            for (var i = 0; i < filtered.length; i++) {
-                var s = filtered[i];
+            for (var i = 0; i < stats.length; i++) {
+                var s = stats[i];
                 var pct = max > 0 ? Math.round((s.total / max) * 100) : 0;
                 html += '<div>' +
                     '<div class="mb-1 flex items-center justify-between gap-2 text-[11px]">' +
@@ -77,8 +79,8 @@
         if (!modal) return;
         var sum = stats.reduce(function (a, s) { return a + s.total; }, 0);
         var mhtml = '';
-        for (var i = 0; i < filtered.length; i++) {
-            var s = filtered[i];
+        for (var i = 0; i < stats.length; i++) {
+            var s = stats[i];
             var pct = sum > 0 ? Math.round((s.total / sum) * 100) : 0;
             mhtml += '<div class="mb-3">' +
                 '<div class="mb-1 flex items-center justify-between text-sm text-slate-700"><span>' + escHtml(s.complaint_type) + '</span><strong>' + s.total + '</strong></div>' +

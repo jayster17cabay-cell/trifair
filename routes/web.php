@@ -100,7 +100,7 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator
         if ($operator && $operator->status === 'active') {
             return redirect()->route('operator.dashboard');
         }
-        return view('operator.pending');
+        return view('operator.pending', ['operator' => $operator]);
     })->name('pending');
 
     Route::middleware(['verified', 'operator.active'])->group(function () {
@@ -112,8 +112,9 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator
     });
 });
 
-// Notification routes (accessible by TFRB Officer & Superadmin)
-Route::middleware(['auth'])->group(function () {
+// Notification routes (TFRB Officer & Superadmin only — operators have no
+// notification UI, and the global invalid-count badge is sensitive)
+Route::middleware(['auth', 'role:superadmin,tfrb_officer'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');

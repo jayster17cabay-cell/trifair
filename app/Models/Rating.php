@@ -97,6 +97,25 @@ class Rating extends Model
         return implode(', ', array_slice($parts, 0, 5));
     }
 
+    /**
+     * Single source of truth for whether a rating is valid. A rating is valid
+     * only when BOTH route locations are present AND, for low ratings (1-2),
+     * at least one proof file is attached. Previously this rule was implemented
+     * differently in submitRating(), restoreRating() and the reindex migration,
+     * which caused ratings to flip between valid and invalid depending on the
+     * code path that evaluated them.
+     */
+    public function evaluateValidity(): bool
+    {
+        $hasLocation = $this->start_location && $this->end_location;
+        $needsProof = (int) $this->rating <= 2;
+        $hasProofs = $this->relationLoaded('proofs')
+            ? $this->proofs->count() > 0
+            : $this->proofs()->exists();
+
+        return $hasLocation && (!$needsProof || $hasProofs);
+    }
+
     public function getInvalidReasonAttribute()
     {
         $reasons = [];

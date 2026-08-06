@@ -468,11 +468,11 @@
                     <div class="field-label"><i class="bi bi-map" style="color: var(--primary);"></i> Trip Route <span style="font-weight:400; color: var(--gray-500);">(optional)</span></div>
                     <div class="location-grid">
                         <div>
-                            <div class="field-label" style="font-size:0.72rem;"><span class="dot" style="background: var(--green);"></span> From</div>
+                            <label class="field-label" style="font-size:0.72rem;" for="start_location"><span class="dot" style="background: var(--green);"></span> From</label>
                             <input type="text" name="start_location" id="start_location" class="field-input" placeholder="Auto-detecting..." readonly>
                         </div>
                         <div class="to-container">
-                            <div class="field-label" style="font-size:0.72rem;"><span class="dot" style="background: var(--danger);"></span> To</div>
+                            <label class="field-label" style="font-size:0.72rem;" for="end_location"><span class="dot" style="background: var(--danger);"></span> To</label>
                             <input type="text" name="end_location" id="end_location" class="field-input" placeholder="Type destination..." autocomplete="off">
                             <div id="searchResults"></div>
                         </div>
@@ -495,12 +495,12 @@
                 <div class="star-section" id="starSection" style="display:none;">
                     <hr class="divider">
                     <div class="field-label"><i class="bi bi-star" style="color: var(--gold);"></i> How was your ride?</div>
-                    <div class="stars-row" id="starGrid">
-                        <button type="button" class="star-btn" data-value="1"><i class="bi bi-star-fill"></i></button>
-                        <button type="button" class="star-btn" data-value="2"><i class="bi bi-star-fill"></i></button>
-                        <button type="button" class="star-btn" data-value="3"><i class="bi bi-star-fill"></i></button>
-                        <button type="button" class="star-btn" data-value="4"><i class="bi bi-star-fill"></i></button>
-                        <button type="button" class="star-btn" data-value="5"><i class="bi bi-star-fill"></i></button>
+                    <div class="stars-row" id="starGrid" role="radiogroup" aria-label="Rate your ride from 1 to 5 stars">
+                        <button type="button" class="star-btn" data-value="1" role="radio" aria-label="Rate 1 star" aria-pressed="false"><i class="bi bi-star-fill"></i></button>
+                        <button type="button" class="star-btn" data-value="2" role="radio" aria-label="Rate 2 stars" aria-pressed="false"><i class="bi bi-star-fill"></i></button>
+                        <button type="button" class="star-btn" data-value="3" role="radio" aria-label="Rate 3 stars" aria-pressed="false"><i class="bi bi-star-fill"></i></button>
+                        <button type="button" class="star-btn" data-value="4" role="radio" aria-label="Rate 4 stars" aria-pressed="false"><i class="bi bi-star-fill"></i></button>
+                        <button type="button" class="star-btn" data-value="5" role="radio" aria-label="Rate 5 stars" aria-pressed="false"><i class="bi bi-star-fill"></i></button>
                     </div>
                     <div class="star-labels-row">
                         <span>Poor</span>
@@ -517,6 +517,7 @@
                             Report a Problem
                         </div>
                         <div class="field-label" style="margin-top: 0.75rem;"><i class="bi bi-list-check" style="color: var(--danger);"></i> What happened?</div>
+                        <label for="complaintType" class="sr-only">Complaint type</label>
                         <select name="complaint_type" id="complaintType" class="field-input" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--gray-200); border-radius: 10px; font-size: 0.85rem; background: white;">
                             <option value="">Select complaint type...</option>
                             @foreach (\App\Models\Rating::COMPLAINT_TYPES as $complaintOption)
@@ -524,16 +525,17 @@
                             @endforeach
                         </select>
                         <div class="others-box" id="othersBox" style="display: none;">
-                            <textarea name="complaint_details" class="field-textarea" rows="2" placeholder="Please describe your complaint..." style="margin-top: 0.5rem;"></textarea>
+                            <label for="complaintDetails" class="sr-only">Describe your complaint</label>
+                            <textarea name="complaint_details" id="complaintDetails" class="field-textarea" rows="2" placeholder="Please describe your complaint..." style="margin-top: 0.5rem;"></textarea>
                         </div>
                         <div class="location-grid">
                             <div>
-                                <div class="field-label">Your Name</div>
-                                <input type="text" name="passenger_name" class="field-input" placeholder="Juan Dela Cruz">
+                                <label class="field-label" for="passenger_name">Your Name</label>
+                                <input type="text" name="passenger_name" id="passenger_name" class="field-input" placeholder="Juan Dela Cruz">
                             </div>
                             <div>
-                                <div class="field-label">Contact No.</div>
-                                <input type="tel" name="passenger_contact" class="field-input" placeholder="09171234567" inputmode="numeric">
+                                <label class="field-label" for="passenger_contact">Contact No.</label>
+                                <input type="tel" name="passenger_contact" id="passenger_contact" class="field-input" placeholder="09171234567" inputmode="numeric">
                             </div>
                         </div>
                         <div class="upload-area" id="uploadZone">
@@ -686,8 +688,13 @@ document.querySelectorAll('.star-btn').forEach(function(btn) {
         document.getElementById('ratingValue').value = selectedRating;
 
         document.querySelectorAll('.star-btn').forEach(function(b, i) {
-            if (i < selectedRating) { b.classList.add('selected'); }
-            else { b.classList.remove('selected'); }
+            if (i < selectedRating) {
+                b.classList.add('selected');
+                b.setAttribute('aria-pressed', 'true');
+            } else {
+                b.classList.remove('selected');
+                b.setAttribute('aria-pressed', 'false');
+            }
         });
 
         document.getElementById('feedbackMsg').innerHTML =
@@ -756,7 +763,7 @@ function forwardGeocode(query) {
                 searchResults.style.display = 'none';
                 var ll = L.latLng(parseFloat(this.getAttribute('data-lat')), parseFloat(this.getAttribute('data-lon')));
                 if (!serviceBounds.contains(ll)) {
-                    alert('Destination is too far from Solano. Only nearby towns (~15 km) are accepted.');
+                    updateLocStatus('Destination is too far from Solano. Only nearby towns (~15 km) are accepted.', false);
                     return;
                 }
                 endLatLng = ll;
@@ -1296,11 +1303,6 @@ function showRouteError(msg) {
     var d = document.getElementById('routeDbg');
     if (d) { d.style.display = 'block'; d.textContent = 'Route error: ' + msg; }
 }
-
-window.onerror = function(msg, src, line) {
-    var d = document.getElementById('routeDbg');
-    if (d) { d.style.display = 'block'; d.textContent = 'JS error: ' + msg + ' (line ' + line + ')'; }
-};
 
 function reverseGeocode(latlng, inputId) {
     fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + latlng.lat + '&lon=' + latlng.lng + '&zoom=18&addressdetails=1')

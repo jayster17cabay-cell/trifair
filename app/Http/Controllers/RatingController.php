@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -37,16 +38,21 @@ class RatingController extends Controller
      * The cookie layer makes the guard robust against IP spoofing/rotation
      * that the wildcard proxy trust setting on Render would otherwise allow.
      */
-    private function existingRatingFor(Operator $operator, string $ip, string $clientId): ?Rating
+    private function existingRatingFor(Operator $operator, string $ip, string $clientId, bool $lock = false): ?Rating
     {
-        return Rating::where('operator_id', $operator->id)
-            ->whereDate('created_at', Carbon::today())
+        $query = Rating::where('operator_id', $operator->id)
+            ->whereDate('created_at', Carbon::now('Asia/Manila')->toDateString())
             ->where(function ($q) use ($ip, $clientId) {
                 $q->where('passenger_ip', $ip)
                     ->orWhere('client_id', $clientId);
             })
-            ->orderBy('id')
-            ->first();
+            ->orderBy('id');
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
     }
 
     public function showRateForm(Request $request, $qrCode)
@@ -100,84 +106,97 @@ class RatingController extends Controller
 
         $data = $request->validate($rules);
 
-        $rating = Rating::create([
-            'operator_id' => $operator->id,
-            'rating' => $data['rating'],
-            'complaint_type' => $data['complaint_type'] ?? null,
-            'complaint_details' => $data['complaint_details'] ?? null,
-            'reason' => $data['reason'] ?? null,
-            'start_location' => Rating::normalizeAddress($data['start_location'] ?? null),
-            'end_location' => Rating::normalizeAddress($data['end_location'] ?? null),
-            'passenger_contact' => $data['passenger_contact'] ?? null,
-            'passenger_name' => $data['passenger_name'] ?? null,
-            'passenger_ip' => $request->ip(),
-            'client_id' => $clientId,
-            'is_auto' => false,
-        ]);
+        $rating = DB::transaction(function () use ($request, $operator, $clientId, $data) {
+            // Re-check inside the transaction (with a row lock) so two
+            // simultaneous submissions cannot both pass the dedup check.
+            $existing = $this->existingRatingFor($operator, (string) $request->ip(), $clientId, true);
 
-        ActivityLogger::log('submit_rating', "Rating #{$rating->id} submitted (" . ($rating->rating <= 2 ? 'complaint' : $rating->rating . '-star') . ") for operator {$operator->user->name}", $rating, 'review');
+            if ($existing) {
+                return null;
+            }
 
-        if ($request->hasFile('proofs')) {
-            foreach ($request->file('proofs') as $file) {
-                if (!$file || !$file->isValid()) continue;
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $remotePath = $operator->qr_code . '/' . $filename;
+            $rating = Rating::create([
+                'operator_id' => $operator->id,
+                'rating' => $data['rating'],
+                'complaint_type' => $data['complaint_type'] ?? null,
+                'complaint_details' => $data['complaint_details'] ?? null,
+                'reason' => $data['reason'] ?? null,
+                'start_location' => Rating::normalizeAddress($data['start_location'] ?? null),
+                'end_location' => Rating::normalizeAddress($data['end_location'] ?? null),
+                'passenger_contact' => $data['passenger_contact'] ?? null,
+                'passenger_name' => $data['passenger_name'] ?? null,
+                'passenger_ip' => $request->ip(),
+                'client_id' => $clientId,
+                'is_auto' => false,
+            ]);
 
-                $saved = false;
-                if (class_exists(\App\Helpers\SupabaseStorage::class)) {
-                    $result = \App\Helpers\SupabaseStorage::upload($file, $remotePath);
-                    if ($result) {
-                        $saved = true;
-                        $path = $remotePath;
+            ActivityLogger::log('submit_rating', "Rating #{$rating->id} submitted (" . ($rating->rating <= 2 ? 'complaint' : $rating->rating . '-star') . ") for operator {$operator->user->name}", $rating, 'review');
+
+            if ($request->hasFile('proofs')) {
+                foreach ($request->file('proofs') as $file) {
+                    if (!$file || !$file->isValid()) continue;
+                    $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $remotePath = $operator->qr_code . '/' . $filename;
+
+                    $saved = false;
+                    if (class_exists(\App\Helpers\SupabaseStorage::class)) {
+                        $result = \App\Helpers\SupabaseStorage::upload($file, $remotePath);
+                        if ($result) {
+                            $saved = true;
+                            $path = $remotePath;
+                        }
+                    }
+
+                    if (!$saved) {
+                        $dir = 'proofs/' . $operator->qr_code;
+                        $file->storeAs($dir, $filename, 'public');
+                        $path = $dir . '/' . $filename;
+                    }
+
+                    RatingProof::create([
+                        'rating_id' => $rating->id,
+                        'file_path' => $path,
+                        'file_type' => $file->getMimeType(),
+                        'original_name' => $file->getClientOriginalName(),
+                    ]);
+                }
+            }
+
+            // Same validity rule as Rating::evaluateValidity() — both locations
+            // required, plus proof for low ratings.
+            $rating->update(['is_valid' => $rating->evaluateValidity()]);
+
+            if ($rating->is_valid) {
+                $officers = User::whereIn('role', ['tfrb_officer', 'superadmin'])->get();
+                foreach ($officers as $officer) {
+                    if ($rating->rating <= 2) {
+                        Notification::create([
+                            'user_id' => $officer->id,
+                            'rating_id' => $rating->id,
+                            'type' => 'complaint',
+                            'title' => 'New Complaint Report',
+                            'message' => "Operator {$operator->user->name} received a {$rating->rating}-star rating (" . ($rating->complaint_type ?? 'no type') . "). Contact: {$rating->passenger_contact}",
+                        ]);
+                    } else {
+                        Notification::create([
+                            'user_id' => $officer->id,
+                            'rating_id' => $rating->id,
+                            'type' => 'new_rating',
+                            'title' => 'New Rating Received',
+                            'message' => "Operator {$operator->user->name} received a {$rating->rating}-star rating from a passenger.",
+                        ]);
                     }
                 }
-
-                if (!$saved) {
-                    $dir = 'proofs/' . $operator->qr_code;
-                    $file->storeAs($dir, $filename, 'public');
-                    $path = $dir . '/' . $filename;
-                }
-
-                RatingProof::create([
-                    'rating_id' => $rating->id,
-                    'file_path' => $path,
-                    'file_type' => $file->getMimeType(),
-                    'original_name' => $file->getClientOriginalName(),
-                ]);
             }
-        }
 
-        $hasProofs = $rating->proofs()->exists();
-        $hasLocation = $data['start_location'] || $data['end_location'];
-        $needsProof = $data['rating'] <= 2;
+            return $rating;
+        });
 
-        $isInvalid = !$hasLocation || ($needsProof && !$hasProofs);
-
-        if ($isInvalid) {
-            $rating->update(['is_valid' => false]);
-        }
-
-        if (!$isInvalid) {
-            $officers = User::whereIn('role', ['tfrb_officer', 'superadmin'])->get();
-            foreach ($officers as $officer) {
-                if ($rating->rating <= 2) {
-                    Notification::create([
-                        'user_id' => $officer->id,
-                        'rating_id' => $rating->id,
-                        'type' => 'complaint',
-                        'title' => 'New Complaint Report',
-                        'message' => "Operator {$operator->user->name} received a {$rating->rating}-star rating (" . ($rating->complaint_type ?? 'no type') . "). Contact: {$rating->passenger_contact}",
-                    ]);
-                } else {
-                    Notification::create([
-                        'user_id' => $officer->id,
-                        'rating_id' => $rating->id,
-                        'type' => 'new_rating',
-                        'title' => 'New Rating Received',
-                        'message' => "Operator {$operator->user->name} received a {$rating->rating}-star rating from a passenger.",
-                    ]);
-                }
-            }
+        if ($rating === null) {
+            // Concurrent duplicate slipped past the earlier (non-transactional)
+            // check — treat it the same as a regular duplicate submission.
+            return redirect()->route('rate.submitted', $operator->qr_code)
+                ->with('alreadyRated', true);
         }
 
         app(\App\Services\AdminDashboardService::class)->flush();

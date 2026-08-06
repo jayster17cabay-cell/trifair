@@ -13,25 +13,39 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        User::firstOrCreate(
+        // Credentials are env-driven (or randomly generated) so no hardcoded
+        // password ever ships in the codebase. Seeded accounts are printed to
+        // the console once so they can still be used in local development.
+        $mk = function (string $envKey) {
+            $password = env($envKey);
+            if ($password === null || $password === '') {
+                $password = Str::random(16);
+                $this->command->info("  !! No {$envKey} set — generated password: {$password}");
+            }
+            return $password;
+        };
+
+        $superadminPassword = $mk('SEED_SUPERADMIN_PASSWORD');
+
+        $superadmin = User::firstOrCreate(
             ['email' => 'superadmin@trifair.com'],
             [
                 'name' => 'Super Admin',
-                'password' => Hash::make('admin123'),
-                'role' => 'superadmin',
-                'is_active' => true,
+                'password' => Hash::make($superadminPassword),
             ]
         );
+        $superadmin->forceFill(['role' => 'superadmin', 'is_active' => true])->save();
 
-        User::firstOrCreate(
+        $officerPassword = $mk('SEED_OFFICER_PASSWORD');
+
+        $officer = User::firstOrCreate(
             ['email' => 'tfrbofficer@trifair.com'],
             [
                 'name' => 'TFRB Officer',
-                'password' => Hash::make('tfrbofficer123'),
-                'role' => 'tfrb_officer',
-                'is_active' => true,
+                'password' => Hash::make($officerPassword),
             ]
         );
+        $officer->forceFill(['role' => 'tfrb_officer', 'is_active' => true])->save();
 
         $toda1 = Toda::firstOrCreate(
             ['name' => 'Brgy. San Antonio TODA'],
@@ -43,16 +57,17 @@ class DatabaseSeeder extends Seeder
             ['area' => 'Tondo, Manila']
         );
 
+        $operatorPassword = $mk('SEED_OPERATOR_PASSWORD');
+
         $driver1User = User::firstOrCreate(
             ['email' => 'jayster@trifair.com'],
             [
                 'name' => 'Jayster Cabay',
-                'password' => Hash::make('operator123'),
-                'role' => 'operator',
+                'password' => Hash::make($operatorPassword),
                 'phone' => '09171234567',
-                'is_active' => true,
             ]
         );
+        $driver1User->forceFill(['role' => 'operator', 'is_active' => true])->save();
 
         Operator::firstOrCreate(
             ['user_id' => $driver1User->id],
@@ -73,12 +88,11 @@ class DatabaseSeeder extends Seeder
             ['email' => 'marcos@trifair.com'],
             [
                 'name' => 'Marcos Reyes',
-                'password' => Hash::make('operator123'),
-                'role' => 'operator',
+                'password' => Hash::make($operatorPassword),
                 'phone' => '09181234567',
-                'is_active' => true,
             ]
         );
+        $driver2User->forceFill(['role' => 'operator', 'is_active' => true])->save();
 
         Operator::firstOrCreate(
             ['user_id' => $driver2User->id],
@@ -99,12 +113,11 @@ class DatabaseSeeder extends Seeder
             ['email' => 'pedro@trifair.com'],
             [
                 'name' => 'Pedro Santos',
-                'password' => Hash::make('operator123'),
-                'role' => 'operator',
+                'password' => Hash::make($operatorPassword),
                 'phone' => '09191234567',
-                'is_active' => true,
             ]
         );
+        $driver3User->forceFill(['role' => 'operator', 'is_active' => true])->save();
 
         Operator::firstOrCreate(
             ['user_id' => $driver3User->id],

@@ -122,6 +122,9 @@
     .tw-card-accent {
         @apply border-t-[6px] border-t-gold;
     }
+    .tw-card-accent-gold {
+        @apply border-t-[6px] border-t-gold;
+    }
     .tw-card-accent-navy {
         @apply border-t-[6px] border-t-navy-600;
     }

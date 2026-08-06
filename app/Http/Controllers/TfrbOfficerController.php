@@ -89,10 +89,11 @@ class TfrbOfficerController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => 'operator',
             'phone' => $data['phone'] ?? null,
-            'is_active' => true,
         ]);
+
+        // role/is_active are intentionally NOT mass-assignable (see User model)
+        $user->forceFill(['role' => 'operator', 'is_active' => true])->save();
 
         $qrCode = Str::random(32);
 
@@ -194,7 +195,7 @@ class TfrbOfficerController extends Controller
     {
         $operator->load('user');
         $operator->update(['status' => 'active']);
-        $operator->user->update(['is_active' => true]);
+        $operator->user->forceFill(['is_active' => true])->save();
 
         ActivityLogger::log('approve_operator', "Approved operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
 
@@ -396,16 +397,11 @@ class TfrbOfficerController extends Controller
 
     public function restoreRating(Rating $rating)
     {
-        $hasLocation = $rating->start_location && $rating->end_location;
-        $needsProof = $rating->rating <= 2;
-        $hasProofs = $rating->proofs()->exists();
-        $isValid = $hasLocation && (!$needsProof || $hasProofs);
-
-        $rating->update(['is_valid' => $isValid]);
+        $rating->update(['is_valid' => $rating->evaluateValidity()]);
 
         ActivityLogger::log('restore_rating', "Restored rating #{$rating->id} as valid (operator: {$rating->operator->user->name})", $rating, 'review');
 
-        $message = $isValid
+        $message = $rating->is_valid
             ? "Rating restored as valid. It will count towards the operator's average again."
             : 'Rating still missing required data (route location and/or proof for low ratings) and remains invalid.';
 

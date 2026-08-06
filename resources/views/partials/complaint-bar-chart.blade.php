@@ -10,7 +10,7 @@
     @if ($totalComplaints > 0)
         @php $complaintMax = $complaintStats->max('total'); @endphp
         <div id="complaintChartBody" class="max-h-[248px] space-y-2 overflow-y-auto p-4">
-            @foreach ($complaintStats->where('total', '>', 0) as $c)
+            @foreach ($complaintStats as $c)
                 <div>
                     <div class="mb-1 flex items-center justify-between gap-2 text-[11px]">
                         <span class="truncate font-semibold text-slate-600">{{ $c->complaint_type }}</span>

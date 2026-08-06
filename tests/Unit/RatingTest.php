@@ -66,4 +66,31 @@ class RatingTest extends TestCase
 
         $this->assertEquals(5, $padded->first()->total);
     }
+
+    public function test_evaluate_validity_requires_both_locations()
+    {
+        $rating = new Rating(['rating' => 5, 'start_location' => 'A', 'end_location' => null]);
+        $rating->setRelation('proofs', collect());
+
+        $this->assertFalse($rating->evaluateValidity());
+    }
+
+    public function test_evaluate_validity_high_rating_without_proof_is_valid()
+    {
+        $rating = new Rating(['rating' => 5, 'start_location' => 'A', 'end_location' => 'B']);
+        $rating->setRelation('proofs', collect());
+
+        $this->assertTrue($rating->evaluateValidity());
+    }
+
+    public function test_evaluate_validity_low_rating_requires_proof()
+    {
+        $rating = new Rating(['rating' => 2, 'start_location' => 'A', 'end_location' => 'B']);
+        $rating->setRelation('proofs', collect());
+
+        $this->assertFalse($rating->evaluateValidity());
+
+        $rating->setRelation('proofs', collect([(object) ['id' => 1]]));
+        $this->assertTrue($rating->evaluateValidity());
+    }
 }

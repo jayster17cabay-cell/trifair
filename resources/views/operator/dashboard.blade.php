@@ -3,17 +3,6 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
-    <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        <span class="relative flex h-2.5 w-2.5">
-            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-        </span>
-        <span id="admLiveState">Live</span>
-    </div>
-    <div class="text-sm font-medium text-slate-500" data-live-clock="datetime"></div>
-</div>
-
 <div class="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-navy-700 via-navy-600 to-navy-500 p-6 text-white shadow-soft sm:p-8">
     <div class="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(245,166,35,0.18)_0%,transparent_70%)]"></div>
     <div class="relative z-10 flex flex-wrap items-center justify-between gap-6">
