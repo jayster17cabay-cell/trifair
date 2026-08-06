@@ -22,14 +22,22 @@ document.addEventListener('DOMContentLoaded', function() {
     var dist = @json($ratingDistribution);
     var canvas = document.getElementById('ratingChart');
     if (canvas && window.Chart) {
-        window.ratingChart = new Chart(canvas.getContext('2d'), {
+        var ctx = canvas.getContext('2d');
+        window.ratingChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: [1, 2, 3, 4, 5].map(function(i) { return i + ' Star'; }),
                 datasets: [{
                     data: [1, 2, 3, 4, 5].map(function(i) { return dist[i] || 0; }),
-                    backgroundColor: ['#dc2626', '#f97316', '#eab308', '#84cc16', '#059669'],
-                    borderRadius: 8,
+                    backgroundColor: function (context) {
+                        var area = context.chart.chartArea;
+                        if (!area) return '#2e7dd1';
+                        var g = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+                        g.addColorStop(0, '#2e7dd1');
+                        g.addColorStop(1, '#0f2a4a');
+                        return g;
+                    },
+                    borderRadius: 6,
                     maxBarThickness: 46
                 }]
             },
@@ -53,6 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 scales: {
                     x: { grid: { display: false } },
                     y: {
+                        beginAtZero: true,
                         grid: { color: 'rgba(226,232,240,0.6)' },
                         ticks: { precision: 0 }
                     }

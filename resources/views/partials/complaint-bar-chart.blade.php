@@ -1,6 +1,6 @@
 <div class="tw-card">
     <div class="tw-card-pad flex items-center justify-between border-b border-slate-100">
-        <h3 class="tw-card-title"><i class="bi bi-flag-fill mr-1 text-red-600"></i> Complaints by Type</h3>
+        <h3 class="tw-card-title"><i class="bi bi-flag-fill mr-1 text-gold"></i> Complaints by Type</h3>
         @if ($totalComplaints > 0)
             <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost" onclick="showComplaintModal()">
                 Details <i class="bi bi-chevron-right"></i>
@@ -23,18 +23,26 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var stats = @json($complaintStats);
+    stats = stats.filter(function (s) { return s.total > 0; });
     var canvas = document.getElementById('complaintChart');
     if (canvas && window.Chart) {
-        var palette = ['#dc2626', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#ec4899'];
-        window.complaintChart = new Chart(canvas.getContext('2d'), {
+        var ctx = canvas.getContext('2d');
+        window.complaintChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: stats.map(function(s) { return s.complaint_type; }),
                 datasets: [{
                     data: stats.map(function(s) { return s.total; }),
-                    backgroundColor: palette,
-                    borderRadius: 8,
-                    maxBarThickness: 26
+                    backgroundColor: function (context) {
+                        var area = context.chart.chartArea;
+                        if (!area) return '#2e7dd1';
+                        var g = ctx.createLinearGradient(area.left, 0, area.right, 0);
+                        g.addColorStop(0, '#2e7dd1');
+                        g.addColorStop(1, '#0f2a4a');
+                        return g;
+                    },
+                    borderRadius: 6,
+                    maxBarThickness: 22
                 }]
             },
             options: {
@@ -57,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 scales: {
                     x: {
+                        beginAtZero: true,
                         grid: { color: 'rgba(226,232,240,0.6)' },
                         ticks: { precision: 0 }
                     },

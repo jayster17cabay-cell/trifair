@@ -13,13 +13,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
-    <nav class="tw-topbar border-b-2 border-emerald-500">
+    <nav class="tw-topbar border-b-2 border-gold">
         <div class="flex items-center gap-3">
             <button id="sidebarToggle" type="button" class="tw-topbar-icon-btn lg:hidden" aria-label="Toggle menu">
                 <i class="bi bi-list text-2xl"></i>
             </button>
             <a class="tw-topbar-brand" href="{{ route('tfrb-officer.dashboard') }}">
-                <i class="bi bi-shield-check text-xl text-emerald-400"></i>
+                <i class="bi bi-shield-check text-xl text-gold"></i>
                 <span>TriFair <span class="text-gold">TFRB Officer</span></span>
             </a>
         </div>
@@ -35,7 +35,7 @@
                     <small class="block text-[11px] font-medium uppercase tracking-wider text-slate-400">Welcome back</small>
                     <strong class="text-sm font-bold text-gold">{{ Auth::user()->name }}</strong>
                 </div>
-                <div class="tw-avatar tw-avatar-md bg-emerald-500 text-white">
+                <div class="tw-avatar tw-avatar-md bg-gold text-navy-800">
                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                 </div>
             </div>
@@ -75,7 +75,7 @@
                     </button>
                 </div>
                 <div class="tw-sidebar-heading mb-0">Logged in as</div>
-                <span class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-400">
+                <span class="inline-flex items-center gap-1.5 rounded-lg border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-bold text-gold">
                     <i class="bi bi-shield-check"></i> TFRB Officer
                 </span>
             </div>
@@ -95,7 +95,7 @@
                 <a class="tw-sidebar-link {{ request()->routeIs('tfrb-officer.operators') ? 'active' : '' }}" href="{{ route('tfrb-officer.operators') }}">
                     <i class="bi bi-people w-5 text-center"></i> Operators
                 </a>
-                <a class="tw-sidebar-link {{ request()->query('status') === 'pending' ? 'active bg-emerald-500/10 !text-emerald-400' : '' }}" href="{{ route('tfrb-officer.operators', ['status' => 'pending']) }}">
+                <a class="tw-sidebar-link {{ request()->query('status') === 'pending' ? 'active bg-gold/10 !text-gold' : '' }}" href="{{ route('tfrb-officer.operators', ['status' => 'pending']) }}">
                     <i class="bi bi-hourglass-split w-5 text-center"></i> Pending Approvals
                 </a>
                 <a class="tw-sidebar-link {{ request()->routeIs('tfrb-officer.ratings') ? 'active' : '' }}" href="{{ route('tfrb-officer.ratings') }}">

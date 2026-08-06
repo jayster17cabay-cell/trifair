@@ -54,19 +54,20 @@
 
     function updateComplaintChart(stats) {
         if (!stats || !window.complaintChart) return;
-        window.complaintChart.data.labels = stats.map(function (s) { return s.complaint_type; });
-        window.complaintChart.data.datasets[0].data = stats.map(function (s) { return s.total; });
+        var filtered = stats.filter(function (s) { return s.total > 0; });
+        window.complaintChart.data.labels = filtered.map(function (s) { return s.complaint_type; });
+        window.complaintChart.data.datasets[0].data = filtered.map(function (s) { return s.total; });
         window.complaintChart.update();
         var body = document.getElementById('complaintModalBody');
         if (!body) return;
         var sum = stats.reduce(function (a, s) { return a + s.total; }, 0);
         var html = '';
-        for (var i = 0; i < stats.length; i++) {
-            var s = stats[i];
+        for (var i = 0; i < filtered.length; i++) {
+            var s = filtered[i];
             var pct = sum > 0 ? Math.round((s.total / sum) * 100) : 0;
             html += '<div class="mb-3">' +
                 '<div class="mb-1 flex items-center justify-between text-sm text-slate-700"><span>' + escHtml(s.complaint_type) + '</span><strong>' + s.total + '</strong></div>' +
-                '<div class="h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-navy-600" style="width:' + pct + '%;"></div></div>' +
+                '<div class="h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-blue-600" style="width:' + pct + '%;"></div></div>' +
                 '</div>';
         }
         body.innerHTML = html;

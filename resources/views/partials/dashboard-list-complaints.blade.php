@@ -1,21 +1,27 @@
 @forelse ($recentComplaints as $rating)
     @php
-        $initial = strtoupper(substr($rating->operator->user->name ?? 'U', 0, 1));
-        $colors = ['#dc2626','#ea580c','#d97706','#b45309','#9333ea'];
-        $bg = $colors[$loop->index % count($colors)];
+        $name = $rating->operator->user->name ?? 'Unknown';
+        $initial = strtoupper(substr($name, 0, 1));
+        $urgent = in_array($rating->complaint_type, ['Smoking While Driving', 'Passenger Harassment']);
     @endphp
     <div class="flex items-start gap-3 border-b border-slate-100 px-4 py-3">
-        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold text-white" style="background: {{ $bg }};">{{ $initial }}</div>
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold text-white" style="background: linear-gradient(135deg, #2E7DD1, #2563A8);">{{ $initial }}</div>
         <div class="min-w-0 flex-1">
-            <div class="text-sm font-semibold text-slate-800">{{ $rating->operator->user->name ?? 'Unknown' }}</div>
+            <div class="text-sm font-semibold text-slate-800">{{ \Illuminate\Support\Str::title($name) }}</div>
             @if ($rating->complaint_type)
-                <div class="mt-0.5 flex items-center gap-1 text-xs text-red-600"><i class="bi bi-exclamation-triangle"></i> {{ $rating->complaint_type }}</div>
+                <div class="mt-0.5">
+                    @if ($urgent)
+                        <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600"><i class="bi bi-exclamation-triangle-fill"></i>{{ $rating->complaint_type }}</span>
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-full bg-gold-50 px-2 py-0.5 text-xs font-semibold text-gold-800"><i class="bi bi-flag-fill"></i>{{ $rating->complaint_type }}</span>
+                    @endif
+                </div>
             @endif
             @if ($rating->start_location && $rating->end_location)
                 <div class="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-slate-500">
-                    <i class="bi bi-geo-alt text-emerald-600"></i> {{ $rating->start_location }}
+                    <i class="bi bi-geo-alt text-blue-600"></i> {{ $rating->start_location }}
                     <i class="bi bi-arrow-right mx-1 text-slate-300"></i>
-                    <i class="bi bi-geo-alt text-red-600"></i> {{ $rating->end_location }}
+                    <i class="bi bi-geo-alt text-blue-600"></i> {{ $rating->end_location }}
                 </div>
             @endif
             @if ($rating->reason)
@@ -23,7 +29,7 @@
             @endif
         </div>
         <div class="shrink-0">
-            <span class="tw-badge tw-badge-red">{{ $rating->rating }}</span>
+            <span class="tw-badge tw-badge-gold">{{ $rating->rating }}</span>
         </div>
     </div>
 @empty

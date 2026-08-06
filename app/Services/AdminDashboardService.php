@@ -73,8 +73,13 @@ class AdminDashboardService
         $data['recentComplaints'] = Rating::isValid()->with(['operator.user', 'proofs'])
             ->where('rating', '<=', 2)
             ->latest()
+            ->take(20)
+            ->get()
+            ->unique(function ($r) {
+                return $r->operator_id . '|' . ($r->complaint_type ?? 'none');
+            })
             ->take(5)
-            ->get();
+            ->values();
 
         $data['complaintStats'] = Rating::paddedComplaintStats(
             Rating::isValid()

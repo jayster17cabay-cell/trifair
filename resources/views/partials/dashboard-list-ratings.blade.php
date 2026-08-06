@@ -1,17 +1,13 @@
 @forelse ($recentRatings as $rating)
     @php
         $r = $rating->rating;
-        $initial = strtoupper(substr($rating->operator->user->name ?? 'U', 0, 1));
-        if ($r >= 4) { $badgeBg = '#ecfdf5'; $badgeFg = '#059669'; }
-        elseif ($r <= 2) { $badgeBg = '#fef2f2'; $badgeFg = '#dc2626'; }
-        else { $badgeBg = '#fffbeb'; $badgeFg = '#d97706'; }
-        $avatarColors = ['#1e3a5f','#2563eb','#7c3aed','#0891b2','#059669','#d97706','#dc2626'];
-        $avBg = $avatarColors[$loop->index % count($avatarColors)];
+        $name = $rating->operator->user->name ?? 'Unknown';
+        $initial = strtoupper(substr($name, 0, 1));
     @endphp
     <div class="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
-        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold text-white" style="background: {{ $avBg }};">{{ $initial }}</div>
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold text-white" style="background: linear-gradient(135deg, #2E7DD1, #2563A8);">{{ $initial }}</div>
         <div class="min-w-0 flex-1">
-            <div class="text-sm font-semibold text-slate-800">{{ $rating->operator->user->name ?? 'Unknown' }}</div>
+            <div class="text-sm font-semibold text-slate-800">{{ \Illuminate\Support\Str::title($name) }}</div>
             <div class="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-slate-500">
                 <span class="flex gap-0.5">
                     @for ($i = 1; $i <= 5; $i++)
@@ -25,7 +21,7 @@
         </div>
         <div class="hidden shrink-0 text-xs text-slate-400 sm:block">{{ $rating->created_at->diffForHumans() }}</div>
         <div class="shrink-0">
-            <span class="tw-badge" style="background: {{ $badgeBg }}; color: {{ $badgeFg }};">{{ $r }}</span>
+            <span class="tw-badge tw-badge-blue">{{ $r }}</span>
         </div>
     </div>
 @empty

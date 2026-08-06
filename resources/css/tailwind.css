@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-    --primary: #1e3a5f;
-    --primary-dark: #0f2b4a;
-    --primary-light: #2a4a7a;
-    --primary-50: #eff6ff;
-    --secondary: #f5a623;
-    --secondary-dark: #d48b0a;
-    --secondary-50: #fef3c7;
+    --primary: #0f2a4a;
+    --primary-dark: #0a1d33;
+    --primary-light: #2e7dd1;
+    --primary-50: #e6f1fb;
+    --secondary: #f5b800;
+    --secondary-dark: #e0a800;
+    --secondary-50: #faeeda;
     --success: #059669;
     --success-50: #ecfdf5;
     --danger: #dc2626;
@@ -76,7 +76,7 @@
 
     /* ---------- Buttons ---------- */
     .tw-btn {
-        @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-4 py-2 text-sm font-semibold transition-all duration-150 select-none;
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150 select-none;
     }
     .tw-btn:disabled {
         @apply cursor-not-allowed opacity-50;
@@ -111,7 +111,7 @@
 
     /* ---------- Cards ---------- */
     .tw-card {
-        @apply rounded-2xl border border-slate-100 bg-white shadow-sm;
+        @apply rounded-xl border border-slate-100 bg-white shadow-sm;
     }
     .tw-card-pad {
         @apply p-5 sm:p-6;
@@ -134,13 +134,13 @@
         @apply mb-1.5 block text-sm font-semibold text-slate-700;
     }
     .tw-input, .tw-select, .tw-textarea {
-        @apply w-full rounded-[10px] border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 transition focus:border-navy-600 focus:outline-none focus:ring-4 focus:ring-navy-600/10;
+        @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 transition focus:border-navy-600 focus:outline-none focus:ring-4 focus:ring-navy-600/10;
     }
     .tw-input.is-invalid, .tw-select.is-invalid, .tw-textarea.is-invalid {
         @apply border-red-400 focus:border-red-500 focus:ring-red-500/10;
     }
     .tw-input-group {
-        @apply flex items-stretch overflow-hidden rounded-[10px] border border-slate-200 bg-white transition focus-within:border-navy-600 focus-within:ring-4 focus-within:ring-navy-600/10;
+        @apply flex items-stretch overflow-hidden rounded-lg border border-slate-200 bg-white transition focus-within:border-navy-600 focus-within:ring-4 focus-within:ring-navy-600/10;
     }
     .tw-input-group .tw-input {
         @apply border-0 bg-transparent px-3.5 focus:ring-0;
@@ -163,13 +163,15 @@
     .tw-badge-red { @apply bg-red-50 text-red-600; }
     .tw-badge-amber { @apply bg-amber-50 text-amber-700; }
     .tw-badge-navy { @apply bg-blue-50 text-navy-600; }
+    .tw-badge-blue { @apply bg-blue-50 text-blue-600; }
+    .tw-badge-gold { @apply bg-gold-50 text-gold-800; }
     .tw-badge-gray { @apply bg-slate-100 text-slate-600; }
     .tw-badge-sky { @apply bg-sky-50 text-sky-700; }
     .tw-badge-violet { @apply bg-violet-50 text-violet-700; }
 
     /* ---------- Tables ---------- */
     .tw-table-wrap {
-        @apply overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm;
+        @apply overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm;
     }
     .tw-table {
         @apply w-full text-left text-sm;
@@ -186,7 +188,7 @@
 
     /* ---------- Alerts ---------- */
     .tw-alert {
-        @apply mb-4 flex items-start gap-3 rounded-2xl border p-4 text-sm;
+        @apply mb-4 flex items-start gap-3 rounded-xl border p-4 text-sm;
     }
     .tw-alert-success { @apply border-emerald-200 bg-emerald-50 text-emerald-700; }
     .tw-alert-danger { @apply border-red-200 bg-red-50 text-red-600; }
@@ -198,7 +200,7 @@
 
     /* ---------- Dropdowns ---------- */
     .tw-dropdown {
-        @apply invisible absolute z-50 min-w-[220px] translate-y-1 rounded-2xl border border-slate-100 bg-white p-2 opacity-0 shadow-soft transition-all duration-150;
+        @apply invisible absolute z-50 min-w-[220px] translate-y-1 rounded-xl border border-slate-100 bg-white p-2 opacity-0 shadow-soft transition-all duration-150;
     }
     .tw-dropdown.open {
         @apply visible translate-y-0 opacity-100;
@@ -260,7 +262,7 @@
 
     /* ---------- Stat cards ---------- */
     .tw-stat {
-        @apply rounded-2xl border border-slate-100 bg-white p-5 shadow-sm;
+        @apply rounded-xl border border-slate-100 bg-white p-5 shadow-sm;
     }
     .tw-stat-icon {
         @apply mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl text-lg;
@@ -286,7 +288,7 @@
     /* ---------- Auth ---------- */
     .tw-auth-shell {
         @apply relative flex min-h-screen items-center justify-center overflow-hidden bg-navy-700 px-4 py-10;
-        background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245, 166, 35, 0.25), transparent), linear-gradient(160deg, #0f2b4a 0%, #1e3a5f 55%, #060e1a 100%);
+        background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245, 184, 0, 0.25), transparent), linear-gradient(160deg, #0f2a4a 0%, #1a3a5c 55%, #060e1a 100%);
     }
     .tw-auth-card {
         @apply relative w-full max-w-md rounded-3xl bg-white p-7 shadow-soft sm:p-9;
@@ -337,7 +339,7 @@
 
     /* ---------- Empty state ---------- */
     .tw-empty {
-        @apply rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center;
+        @apply rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center;
     }
     .tw-empty-icon {
         @apply mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-400;
@@ -348,7 +350,7 @@
         @apply fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm;
     }
     .tw-modal {
-        @apply w-full max-w-lg rounded-2xl bg-white shadow-soft;
+        @apply w-full max-w-lg rounded-xl bg-white shadow-soft;
     }
     .tw-modal-head {
         @apply flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-4;
