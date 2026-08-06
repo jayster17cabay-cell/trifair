@@ -10,7 +10,6 @@
             <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
         </span>
         <h1 class="text-base font-extrabold tracking-tight text-slate-900">Dashboard</h1>
-        <span id="admLiveState" class="text-sm font-semibold text-slate-700">Live</span>
     </div>
 </div>
 

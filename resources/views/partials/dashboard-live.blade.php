@@ -138,13 +138,8 @@
                     var t = document.getElementById('unreadCountText');
                     if (t) t.textContent = data.unreadCount + ' unread notification' + (data.unreadCount !== 1 ? 's' : '');
                 }
-                var state = document.getElementById('admLiveState');
-                if (state) { state.style.color = 'var(--success)'; state.textContent = 'Live'; }
             })
-            .catch(function () {
-                var state = document.getElementById('admLiveState');
-                if (state) { state.style.color = 'var(--danger)'; state.textContent = 'Offline'; }
-            });
+            .catch(function () {});
     }
 
     setTimeout(poll, 1500);
