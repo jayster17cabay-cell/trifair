@@ -1,0 +1,110 @@
+@extends('layouts.tfrb-officer')
+
+@section('title', 'Activity Logs')
+
+@section('content')
+<div class="tw-page-head">
+    <div>
+        <h1 class="tw-page-title"><i class="bi bi-clock-history mr-2 text-amber-500"></i>Activity Logs</h1>
+        <p class="tw-page-sub">Audit trail of all system actions</p>
+    </div>
+</div>
+
+@php
+    $categories = [
+        '' => 'All',
+        'auth' => 'Logins',
+        'operator' => 'Operators',
+        'tfrb_officer' => 'TFRB Officers',
+        'review' => 'Reviews',
+    ];
+    $categoryColors = [
+        'auth' => 'text-blue-600',
+        'operator' => 'text-amber-600',
+        'tfrb_officer' => 'text-emerald-600',
+        'review' => 'text-emerald-600',
+        'system' => 'text-slate-500',
+    ];
+    $categoryBgs = [
+        'auth' => 'bg-blue-50',
+        'operator' => 'bg-amber-50',
+        'tfrb_officer' => 'bg-emerald-50',
+        'review' => 'bg-emerald-50',
+        'system' => 'bg-slate-100',
+    ];
+@endphp
+
+<div class="mb-4 flex flex-wrap gap-2">
+    @foreach ($categories as $key => $label)
+        <a href="{{ $key ? route('tfrb-officer.activity-logs', ['category' => $key]) : route('tfrb-officer.activity-logs') }}"
+           class="tw-btn tw-btn-sm rounded-full {{ ($category ?: '') === $key ? 'tw-btn-navy' : 'tw-btn-outline' }}">
+            {{ $label }}
+        </a>
+    @endforeach
+</div>
+
+<div class="tw-table-wrap">
+    <div class="overflow-x-auto">
+        <table class="tw-table">
+            <thead>
+                <tr>
+                    <th class="tw-th w-12"></th>
+                    <th class="tw-th">User</th>
+                    <th class="tw-th">Description</th>
+                    <th class="tw-th">Action</th>
+                    <th class="tw-th">IP Address</th>
+                    <th class="tw-th text-right">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($logs as $log)
+                    @php
+                        $col = $categoryColors[$log->category] ?? 'text-slate-500';
+                        $bg = $categoryBgs[$log->category] ?? 'bg-slate-100';
+                    @endphp
+                    <tr class="tw-tr-hover">
+                        <td class="tw-td text-center">
+                            <div class="tw-avatar tw-avatar-sm {{ $bg }} {{ $col }} inline-flex text-sm">
+                                @switch($log->action)
+                                    @case('login') <i class="bi bi-box-arrow-in-right"></i> @break
+                                    @case('logout') <i class="bi bi-box-arrow-right"></i> @break
+                                    @case('create_operator') <i class="bi bi-person-plus"></i> @break
+                                    @case('update_operator') <i class="bi bi-pencil"></i> @break
+                                    @case('delete_operator') <i class="bi bi-person-x"></i> @break
+                                    @case('mark_reviewed') <i class="bi bi-check-circle"></i> @break
+                                    @case('submit_rating') <i class="bi bi-star"></i> @break
+                                    @case('operator_respond') <i class="bi bi-chat-dots"></i> @break
+                                    @default <i class="bi bi-circle"></i>
+                                @endswitch
+                            </div>
+                        </td>
+                        <td class="tw-td"><span class="text-sm font-bold">{{ $log->user->name ?? 'Unknown' }}</span></td>
+                        <td class="tw-td max-w-[300px] text-sm text-slate-500">{{ $log->description }}</td>
+                        <td class="tw-td">
+                            <span class="tw-badge {{ $bg }} {{ $col }}"><i class="bi bi-tag"></i>{{ str_replace('_', ' ', ucfirst($log->action)) }}</span>
+                        </td>
+                        <td class="tw-td text-xs text-slate-500">{{ $log->ip_address ?? '—' }}</td>
+                        <td class="tw-td text-right text-xs whitespace-nowrap text-slate-500" title="{{ $log->created_at->format('M d, Y h:i A') }}">
+                            {{ $log->created_at->diffForHumans() }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-4 py-10 text-center">
+                            <div class="tw-empty">
+                                <div class="tw-empty-icon"><i class="bi bi-clock-history"></i></div>
+                                <p class="text-sm text-slate-500">No activity logs found.</p>
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    @if ($logs->hasPages())
+        <div class="border-t border-slate-100 px-4 py-3">
+            {{ $logs->withQueryString()->links('pagination::tailwind') }}
+        </div>
+    @endif
+</div>
+@endsection

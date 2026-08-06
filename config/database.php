@@ -1,0 +1,109 @@
+<?php
+
+use Illuminate\Support\Str;
+
+$mysqlSslOptions = [];
+if (env('MYSQL_ATTR_SSL_CA') && file_exists(env('MYSQL_ATTR_SSL_CA'))) {
+    $mysqlSslOptions[PDO::MYSQL_ATTR_SSL_CA] = env('MYSQL_ATTR_SSL_CA');
+}
+if (env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') !== null) {
+    $mysqlSslOptions[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = filter_var(
+        env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT'),
+        FILTER_VALIDATE_BOOLEAN
+    );
+}
+
+return [
+
+    'default' => env('DB_CONNECTION', 'pgsql'),
+
+    'connections' => [
+
+        'sqlite' => [
+            'driver' => 'sqlite',
+            'url' => env('DATABASE_URL'),
+            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+        ],
+
+        'mysql' => [
+            'driver' => 'mysql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? $mysqlSslOptions : [],
+        ],
+
+        'pgsql' => [
+            'driver' => 'pgsql',
+            'host' => env('PGSQL_HOST', env('DB_HOST', 'aws-0-ap-southeast-1.pooler.supabase.com')),
+            'port' => env('PGSQL_PORT', env('DB_PORT', '6543')),
+            'database' => env('PGSQL_DATABASE', env('DB_DATABASE', 'postgres')),
+            'username' => env('PGSQL_USERNAME', env('DB_USERNAME', 'postgres.lkmmudpfcxbykwdpsqvy')),
+            'password' => env('PGSQL_PASSWORD', env('DB_PASSWORD', '')),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('PGSQL_SSLMODE', 'require'),
+            'options' => extension_loaded('pdo_pgsql') ? [] : [],
+        ],
+
+        'sqlsrv' => [
+            'driver' => 'sqlsrv',
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', 'localhost'),
+            'port' => env('DB_PORT', '1433'),
+            'database' => env('DB_DATABASE', 'forge'),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+        ],
+
+    ],
+
+    'migrations' => 'migrations',
+
+    'redis' => [
+
+        'client' => env('REDIS_CLIENT', 'phpredis'),
+
+        'options' => [
+            'cluster' => env('REDIS_CLUSTER', 'redis'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+        ],
+
+        'default' => [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_DB', '0'),
+        ],
+
+        'cache' => [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_CACHE_DB', '1'),
+        ],
+
+    ],
+
+];

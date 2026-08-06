@@ -1,0 +1,59 @@
+services:
+  - type: web
+    name: trifair
+    runtime: docker
+    plan: free
+    healthCheckPath: /login
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        value: https://trifair.onrender.com
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: PGSQL_HOST
+        value: aws-0-ap-southeast-1.pooler.supabase.com
+      - key: PGSQL_PORT
+        value: "6543"
+      - key: PGSQL_DATABASE
+        value: postgres
+      - key: PGSQL_USERNAME
+        value: postgres.lkmmudpfcxbykwdpsqvy
+      - key: PGSQL_PASSWORD
+        sync: false
+      - key: SUPABASE_URL
+        value: https://lkmmudpfcxbykwdpsqvy.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: proofs
+      - key: CLEANUP_TOKEN
+        sync: false
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_SAME_SITE
+        value: lax
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_DRIVER
+        value: file
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: MAIL_MAILER
+        value: mailjet
+      - key: MAILJET_API_KEY
+        sync: false
+      - key: MAILJET_SECRET_KEY
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        value: jayster17cabay@gmail.com
+      - key: MAIL_FROM_NAME
+        value: TriFair
