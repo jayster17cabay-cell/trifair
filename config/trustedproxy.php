@@ -7,13 +7,11 @@ return [
     | Trusted Proxies
     |--------------------------------------------------------------------------
     |
-    | Comma-separated IPs / CIDRs that sit in front of the app (e.g. a load
-    | balancer). When empty, no proxy is trusted: X-Forwarded-* headers are
-    | ignored and the immediate peer address is treated as the real client IP.
-    |
-    | Do NOT set this to '*' on production: it lets any client forge their IP
-    | via the X-Forwarded-For header, which defeats per-IP rate limiting and
-    | the rating dedup guard (passenger_ip). See .env.example.
+    | Behind a reverse proxy (Render), set TRUSTED_PROXIES=* so Laravel trusts
+    | the IMMEDIATE caller (Render's proxy) and honors X-Forwarded-Proto/For.
+    | Laravel's "*" only trusts the calling IP — not arbitrary clients — and the
+    | rating dedup guard is additionally keyed on a signed cookie, so it stays
+    | robust against spoofed X-Forwarded-For.
     |
     */
 

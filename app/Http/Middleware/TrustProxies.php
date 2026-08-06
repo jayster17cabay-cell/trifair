@@ -8,14 +8,15 @@ use Illuminate\Http\Request;
 class TrustProxies extends Middleware
 {
     /**
-     * No proxies are trusted by default. Configure specific proxy IPs/CIDRs
-     * via the TRUSTED_PROXIES env var (see config/trustedproxy.php). Trusting
-     * "*" is intentionally avoided because it allows any client to spoof their
-     * IP through X-Forwarded-For.
+     * Trust the immediate proxy (Render). Laravel's "*" here does not trust
+     * arbitrary clients — setTrustedProxyIpAddressesToTheCallingIp() trusts only
+     * the REMOTE_ADDR that connected, which on Render is always the edge proxy.
+     * This makes X-Forwarded-Proto/For visible so URL generation and signed
+     * URLs use the real https scheme and client IP.
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies = null;
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.

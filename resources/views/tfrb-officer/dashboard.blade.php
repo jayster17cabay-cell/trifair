@@ -32,21 +32,6 @@
     </div>
 </div>
 
-@if ($pendingReview > 0)
-<div id="pendingReviewBanner" class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-gradient-to-br from-red-50 to-rose-50 p-3">
-    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-600 text-white">
-        <i class="bi bi-exclamation-triangle-fill"></i>
-    </div>
-    <div class="min-w-0 flex-1">
-        <strong id="pendingReviewText" class="text-sm text-red-800">{{ $pendingReview }} complaint{{ $pendingReview > 1 ? 's' : '' }} pending review</strong>
-        <div class="text-sm text-red-700/80">Low-rated trips waiting for your action</div>
-    </div>
-    <a href="{{ route('tfrb-officer.ratings') }}" class="tw-btn tw-btn-sm bg-red-600 text-white hover:bg-red-700">
-        Review Now <i class="bi bi-arrow-right"></i>
-    </a>
-</div>
-@endif
-
 <div class="mb-3 grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
     <a href="{{ route('tfrb-officer.operators') }}" class="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-base text-blue-600"><i class="bi bi-people"></i></div>
