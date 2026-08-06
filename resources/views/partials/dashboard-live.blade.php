@@ -52,7 +52,7 @@
         }
     }
 
-    function updateDonut(stats) {
+    function updateComplaintChart(stats) {
         if (!stats || !window.complaintChart) return;
         window.complaintChart.data.labels = stats.map(function (s) { return s.complaint_type; });
         window.complaintChart.data.datasets[0].data = stats.map(function (s) { return s.total; });
@@ -72,6 +72,12 @@
         body.innerHTML = html;
     }
 
+    function updateRatingChart(dist) {
+        if (!dist || !window.ratingChart) return;
+        window.ratingChart.data.datasets[0].data = [1, 2, 3, 4, 5].map(function (i) { return dist[i] || 0; });
+        window.ratingChart.update();
+    }
+
     function setVisibility(id, show) {
         var el = document.getElementById(id);
         if (el) el.style.display = show ? '' : 'none';
@@ -86,7 +92,8 @@
                     else if (key === 'topHtml') setList('top', data.topHtml);
                     else if (key === 'ratingsHtml') setList('ratings', data.ratingsHtml);
                     else if (key === 'breakdownHtml') setList('breakdown', data.breakdownHtml);
-                    else if (key === 'complaintStats') updateDonut(data.complaintStats);
+                    else if (key === 'complaintStats') updateComplaintChart(data.complaintStats);
+                    else if (key === 'ratingDistribution') updateRatingChart(data.ratingDistribution);
                     else if (key === 'averageRating') { setStat(key, data[key]); updateAvgStars(data.averageRating); }
                     else setStat(key, data[key]);
                 });

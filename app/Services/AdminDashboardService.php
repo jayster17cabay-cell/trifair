@@ -86,6 +86,18 @@ class AdminDashboardService
                 ->get()
         );
 
+        $distribution = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
+        foreach (
+            Rating::isValid()
+                ->whereBetween('rating', [1, 5])
+                ->select('rating', DB::raw('count(*) as total'))
+                ->groupBy('rating')
+                ->get() as $row
+        ) {
+            $distribution[(int) $row->rating] = (int) $row->total;
+        }
+        $data['ratingDistribution'] = $distribution;
+
         $data['topOperators'] = Operator::with('user')
             ->leftJoin(
                 DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true group by operator_id) as vr'),
@@ -129,15 +141,18 @@ class AdminDashboardService
     {
         return [
             'totalOperators' => $stats['totalOperators'],
+            'activeOperators' => $stats['activeOperators'],
             'totalRatings' => $stats['totalRatings'],
             'averageRating' => round((float) $stats['averageRating'], 1),
             'totalComplaints' => $stats['totalComplaints'],
             'totalOfficers' => $stats['totalOfficers'] ?? null,
+            'totalTodas' => $stats['totalTodas'],
             'pendingReview' => $stats['pendingReview'] ?? null,
             'unreadCount' => Notification::forUser(Auth::id())->unread()->count(),
             'complaintStats' => $stats['complaintStats']->map(function ($c) {
                 return ['complaint_type' => $c->complaint_type, 'total' => (int) $c->total];
             }),
+            'ratingDistribution' => $stats['ratingDistribution'],
             'complaintsHtml' => view('partials.dashboard-list-complaints', ['recentComplaints' => $stats['recentComplaints']])->render(),
             'topHtml' => view('partials.dashboard-list-top', ['topOperators' => $stats['topOperators']])->render(),
             'ratingsHtml' => view('partials.dashboard-list-ratings', ['recentRatings' => $stats['recentRatings']])->render(),
