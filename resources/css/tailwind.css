@@ -384,25 +384,6 @@
     }
 
     /* ---------- Auth ---------- */
-    .tw-auth-shell {
-        @apply relative flex min-h-screen items-center justify-center overflow-hidden bg-navy-700 px-4 py-10;
-        background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245, 184, 0, 0.25), transparent), linear-gradient(160deg, #0f2a4a 0%, #1a3a5c 55%, #060e1a 100%);
-    }
-    .tw-auth-card {
-        @apply relative w-full max-w-md rounded-3xl bg-white p-7 shadow-soft sm:p-9;
-    }
-    .tw-auth-icon {
-        @apply mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gold text-2xl text-navy-800 shadow-goldlift;
-    }
-    .tw-auth-title {
-        @apply text-center text-2xl font-extrabold tracking-tight text-navy-700;
-    }
-    .tw-auth-sub {
-        @apply mt-1.5 text-center text-sm text-slate-500;
-    }
-    .tw-auth-foot {
-        @apply mt-6 border-t border-slate-100 pt-4 text-center;
-    }
     .tw-auth-field {
         @apply mb-4;
     }

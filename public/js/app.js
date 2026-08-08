@@ -6,7 +6,20 @@
         initSidebar();
         initModalTriggers();
         initDropdowns();
+        initPasswordToggles();
     });
+
+    function initPasswordToggles() {
+        document.querySelectorAll('[data-pw-toggle]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = document.querySelector(btn.getAttribute('data-pw-toggle'));
+                if (!input) return;
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        });
+    }
 
     function initAlerts() {
         document.querySelectorAll('[data-tw-dismiss]').forEach(function (btn) {
