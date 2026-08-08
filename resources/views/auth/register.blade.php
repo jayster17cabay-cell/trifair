@@ -149,6 +149,5 @@
                     Already have an account?
                     <a href="{{ route('login') }}" class="font-semibold text-navy-600 transition hover:text-navy-700 hover:underline">Log In</a>
                 </div>
-            </div>
 @include('auth.partials.auth-shell-close')
 @endsection

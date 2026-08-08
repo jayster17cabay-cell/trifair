@@ -44,6 +44,5 @@
                         </button>
                     </form>
                 </div>
-            </div>
 @include('auth.partials.auth-shell-close')
 @endsection

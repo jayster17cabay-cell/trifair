@@ -69,6 +69,5 @@
                         <i class="bi bi-arrow-left mr-1"></i> Back to Login
                     </a>
                 </div>
-            </div>
 @include('auth.partials.auth-shell-close')
 @endsection

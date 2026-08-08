@@ -10,12 +10,11 @@
     <div class="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(46,125,209,0.18)_0%,transparent_65%)]"></div>
 
     <div class="relative z-10 w-full {{ $authWidth }}">
-        <div class="mb-6 flex flex-col items-center text-center">
-            <a href="/" class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gold text-2xl text-navy-800 shadow-goldlift">
-                <i class="bi bi-bicycle"></i>
-            </a>
-            <span class="text-2xl font-black tracking-tight text-white">Tri<span class="text-gold">Fair</span></span>
-            <p class="mt-1 text-xs font-medium uppercase tracking-widest text-white/40">Bayan ng Solano</p>
-        </div>
-
         <div class="rounded-3xl border border-slate-100 bg-white p-7 shadow-[0_24px_60px_rgba(0,0,0,0.35)] sm:p-9">
+            <div class="mb-6 flex flex-col items-center text-center">
+                <span class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gold text-2xl text-navy-800 shadow-goldlift">
+                    <i class="bi bi-bicycle"></i>
+                </span>
+                <span class="text-2xl font-black tracking-tight text-navy-700">Tri<span class="text-gold">Fair</span></span>
+                <p class="mt-1 text-xs font-medium uppercase tracking-widest text-slate-400">Bayan ng Solano</p>
+            </div>

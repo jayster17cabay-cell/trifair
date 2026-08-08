@@ -68,6 +68,5 @@
                     Don't have an account?
                     <a href="{{ route('register') }}" class="font-semibold text-navy-600 transition hover:text-navy-700 hover:underline">Sign Up</a>
                 </div>
-            </div>
 @include('auth.partials.auth-shell-close')
 @endsection
