@@ -486,22 +486,13 @@
         @apply font-semibold text-navy-600 transition hover:text-navy-700 hover:underline;
     }
 
-    /* ---------- Auth split screen ---------- */
-    .tw-auth-split {
-        @apply flex min-h-screen flex-col lg:flex-row;
-    }
-    .tw-auth-brand {
-        @apply relative hidden flex-1 flex-col justify-center overflow-hidden px-10 py-16 text-white xl:px-16 lg:flex;
+    /* ---------- Auth shell (centered card on navy gradient) ---------- */
+    .tw-auth-shell {
+        @apply relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-10 sm:px-8;
         background-image:
             radial-gradient(ellipse 90% 55% at 12% -8%, rgba(245, 184, 0, 0.2), transparent),
             radial-gradient(ellipse 70% 45% at 105% 115%, rgba(245, 184, 0, 0.1), transparent),
             linear-gradient(165deg, #060e1a 0%, #0f2a4a 55%, #1a3a5c 100%);
-    }
-    .tw-auth-form-panel {
-        @apply relative flex flex-1 flex-col justify-center px-5 py-10 sm:px-8;
-        background-image:
-            radial-gradient(ellipse 80% 40% at 100% 0%, rgba(245, 184, 0, 0.06), transparent),
-            linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     }
     .lp-bg-grid {
         background-image:

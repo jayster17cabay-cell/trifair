@@ -3,15 +3,7 @@
 @section('title', 'Account Pending Approval')
 
 @section('content')
-<div class="tw-auth-split">
-    @include('auth.partials.brand-panel')
-
-    {{-- Form panel --}}
-    <div class="tw-auth-form-panel">
-        <div class="mx-auto w-full max-w-md">
-            @include('auth.partials.mobile-brand')
-
-            <div class="rounded-3xl border border-slate-100 bg-white p-7 shadow-[0_24px_60px_rgba(15,42,74,0.14)] sm:p-9">
+@include('auth.partials.auth-shell-open')
                 <div class="mb-6">
                     <div class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-gold-dark">
                         <i class="bi bi-clock-history"></i> Under Review
@@ -53,13 +45,5 @@
                     </form>
                 </div>
             </div>
-
-            <p class="mt-6 text-center text-sm">
-                <a href="/" class="text-slate-400 transition hover:text-slate-600">
-                    <i class="bi bi-arrow-left mr-1"></i> Back to Home
-                </a>
-            </p>
-        </div>
-    </div>
-</div>
+@include('auth.partials.auth-shell-close')
 @endsection

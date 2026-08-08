@@ -3,15 +3,7 @@
 @section('title', 'Reset Password')
 
 @section('content')
-<div class="tw-auth-split">
-    @include('auth.partials.brand-panel')
-
-    {{-- Form panel --}}
-    <div class="tw-auth-form-panel">
-        <div class="mx-auto w-full max-w-md">
-            @include('auth.partials.mobile-brand')
-
-            <div class="rounded-3xl border border-slate-100 bg-white p-7 shadow-[0_24px_60px_rgba(15,42,74,0.14)] sm:p-9">
+@include('auth.partials.auth-shell-open')
                 <div class="mb-6">
                     <div class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-gold-dark">
                         <i class="bi bi-shield-lock"></i> Account Security
@@ -78,7 +70,5 @@
                     </a>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+@include('auth.partials.auth-shell-close')
 @endsection
