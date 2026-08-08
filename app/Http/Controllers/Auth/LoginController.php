@@ -63,6 +63,14 @@ class LoginController extends Controller
                         'email' => 'Your account is incomplete. Please contact support.',
                     ])->onlyInput('email');
                 }
+                if ($operator->isArchived()) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return back()->withErrors([
+                        'email' => 'Your account has been archived. Please contact support.',
+                    ])->onlyInput('email');
+                }
                 if ($operator->status === 'pending') {
                     return redirect()->route('operator.pending');
                 }

@@ -302,4 +302,52 @@ class FeatureImprovementsTest extends TestCase
 
         $this->assertNull($operator->fresh()->archived_at);
     }
+
+    public function test_archived_operator_rate_form_is_404()
+    {
+        $operator = $this->makeOperator();
+        $operator->update(['archived_at' => now()]);
+
+        $this->get('/rate/' . $operator->qr_code)->assertNotFound();
+    }
+
+    public function test_archived_operator_cannot_receive_rating_submissions()
+    {
+        $operator = $this->makeOperator();
+        $operator->update(['archived_at' => now()]);
+
+        $this->post('/rate/' . $operator->qr_code, [
+            'rating' => 5,
+            'start_location' => 'Novaliches, Quezon City',
+            'end_location' => 'SM Fairview, Quezon City',
+        ])->assertNotFound();
+
+        $this->assertSame(0, Rating::count());
+    }
+
+    public function test_archived_operator_cannot_login()
+    {
+        $operator = $this->makeOperator();
+        $operator->update(['archived_at' => now()]);
+
+        $this->post('/login', [
+            'email' => $operator->user->email,
+            'password' => 'password123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_archived_operator_logged_in_is_blocked_from_dashboard()
+    {
+        $operator = $this->makeOperator();
+        $operator->update(['archived_at' => now()]);
+
+        $this->actingAs($operator->user)
+            ->get('/operator/dashboard')
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
 }

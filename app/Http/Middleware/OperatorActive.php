@@ -21,6 +21,14 @@ class OperatorActive
                     'email' => 'Your account is incomplete. Please contact support.',
                 ]);
             }
+            if ($operator->isArchived()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Your account has been archived. Please contact support.',
+                ]);
+            }
             if ($operator->status === 'pending') {
                 return redirect()->route('operator.pending');
             }

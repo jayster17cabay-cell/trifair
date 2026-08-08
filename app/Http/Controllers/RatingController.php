@@ -60,6 +60,7 @@ class RatingController extends Controller
         $operator = Operator::with('user', 'toda')
             ->where('qr_code', $qrCode)
             ->where('status', 'active')
+            ->notArchived()
             ->firstOrFail();
 
         $clientId = $this->getOrCreateClientId($request);
@@ -77,6 +78,7 @@ class RatingController extends Controller
     {
         $operator = Operator::where('qr_code', $qrCode)
             ->where('status', 'active')
+            ->notArchived()
             ->firstOrFail();
 
         $clientId = $this->getOrCreateClientId($request);
