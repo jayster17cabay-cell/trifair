@@ -145,6 +145,22 @@ class AdminTest extends TestCase
         }
     }
 
+    public function test_superadmin_dashboard_kpi_links_are_not_double_escaped()
+    {
+        $admin = $this->makeUser('superadmin');
+        $this->makeOperator();
+        $this->makeUser('tfrb_officer');
+
+        $response = $this->actingAs($admin)->get('/superadmin/dashboard');
+
+        $response->assertOk();
+        $response->assertDontSee('href=&quot;', false);
+        foreach (['operators', 'ratings', 'complaints', 'todas', 'officers'] as $section) {
+            $response->assertSee('/superadmin/' . $section . '"', false);
+        }
+        $response->assertSee('data-live="totalOperators"', false);
+    }
+
     public function test_superadmin_can_store_operator()
     {
         $admin = $this->makeUser('superadmin');
