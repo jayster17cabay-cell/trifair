@@ -36,7 +36,7 @@
     @else
         <div class="flex flex-col items-center justify-center py-8 text-center">
             <div class="tw-empty-icon"><i class="bi bi-flag"></i></div>
-            <p class="text-sm text-gray-400">No complaints recorded</p>
+            <p class="text-sm font-bold text-slate-700">No complaints recorded</p>
         </div>
     @endif
 </div>

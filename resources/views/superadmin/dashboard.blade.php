@@ -12,13 +12,13 @@
 ])
 
 <div class="mb-3 grid grid-cols-2 gap-2.5 md:grid-cols-4 xl:grid-cols-7">
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators'), 'icon' => 'bi-people', 'iconClass' => 'bg-blue-50 text-blue-600', 'value' => $totalOperators, 'label' => 'Operators', 'live' => 'totalOperators']])
-    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-person-check', 'iconClass' => 'bg-blue-50 text-blue-600', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.ratings'), 'icon' => 'bi-star', 'iconClass' => 'bg-blue-50 text-blue-600', 'value' => $totalRatings, 'label' => 'Ratings', 'live' => 'totalRatings']])
-    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-award', 'iconClass' => 'bg-blue-50 text-blue-600', 'value' => number_format($averageRating ?? 0, 1), 'label' => 'Avg Rating', 'live' => 'averageRating']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.complaints'), 'icon' => 'bi-flag', 'iconClass' => 'bg-gold-50 text-gold-800', 'value' => $totalComplaints, 'label' => 'Complaints', 'live' => 'totalComplaints']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.todas'), 'icon' => 'bi-diagram-3', 'iconClass' => 'bg-blue-50 text-blue-600', 'value' => $totalTodas, 'label' => 'TODA', 'live' => 'totalTodas']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.officers'), 'icon' => 'bi-shield', 'iconClass' => 'bg-blue-50 text-blue-600', 'value' => $totalOfficers, 'label' => 'Officers', 'live' => 'totalOfficers']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators'), 'icon' => 'bi-people', 'value' => $totalOperators, 'label' => 'Operators', 'live' => 'totalOperators']])
+    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.ratings'), 'icon' => 'bi-star', 'value' => $totalRatings, 'label' => 'Ratings', 'live' => 'totalRatings']])
+    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-award', 'value' => number_format($averageRating ?? 0, 1), 'label' => 'Avg Rating', 'live' => 'averageRating']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.complaints'), 'icon' => 'bi-flag', 'value' => $totalComplaints, 'label' => 'Complaints', 'live' => 'totalComplaints']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.todas'), 'icon' => 'bi-diagram-3', 'value' => $totalTodas, 'label' => 'TODA', 'live' => 'totalTodas']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.officers'), 'icon' => 'bi-shield', 'value' => $totalOfficers, 'label' => 'Officers', 'live' => 'totalOfficers']])
 </div>
 
 @include('partials.complaint-breakdown-modal')
