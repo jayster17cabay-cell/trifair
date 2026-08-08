@@ -9,7 +9,7 @@
 
 <div class="mb-6 max-w-md">
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-red-50 text-red-600"><i class="bi bi-x-circle"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-x-circle"></i></div>
         <div class="tw-stat-num text-red-600">{{ $ratings->total() }}</div>
         <div class="tw-stat-label">Total Invalid</div>
     </div>

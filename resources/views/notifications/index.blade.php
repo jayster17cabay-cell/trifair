@@ -21,38 +21,25 @@
 @php
     $invalidRoute = Auth::user()->isSuperadmin() ? 'superadmin.invalid-ratings' : 'tfrb-officer.invalid-ratings';
     $invalidActive = request()->routeIs('*.invalid-ratings');
+    $tabs = [
+        ['key' => 'all', 'label' => 'All', 'icon' => 'bi-bell', 'count' => $counts['all']],
+        ['key' => 'unread', 'label' => 'Unread', 'icon' => 'bi-envelope-dash', 'count' => $counts['unread']],
+        ['key' => 'complaint', 'label' => 'Complaints', 'icon' => 'bi-exclamation-triangle', 'count' => $counts['complaint']],
+        ['key' => 'new_rating', 'label' => 'New Ratings', 'icon' => 'bi-star-fill', 'count' => $counts['new_rating']],
+        ['key' => 'operator_response', 'label' => 'Responses', 'icon' => 'bi-reply-fill', 'count' => $counts['operator_response']],
+    ];
 @endphp
 
 <div class="mb-5 flex flex-wrap items-center gap-2">
-    <a href="{{ route('notifications.index', ['type' => 'all']) }}"
-       class="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-bold transition {{ $type === 'all' ? 'border-transparent bg-navy-600 text-white shadow-lg shadow-navy-600/20' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-600 hover:text-navy-600' }}">
-        <i class="bi bi-bell"></i> All
-        <span class="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold {{ $type === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $counts['all'] }}</span>
-    </a>
-    <a href="{{ route('notifications.index', ['type' => 'unread']) }}"
-       class="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-bold transition {{ $type === 'unread' ? 'border-transparent bg-navy-600 text-white shadow-lg shadow-navy-600/20' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-600 hover:text-navy-600' }}">
-        <i class="bi bi-envelope-dash"></i> Unread
-        <span class="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold {{ $type === 'unread' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $counts['unread'] }}</span>
-    </a>
-    <a href="{{ route('notifications.index', ['type' => 'complaint']) }}"
-       class="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-bold transition {{ $type === 'complaint' ? 'border-transparent bg-navy-600 text-white shadow-lg shadow-navy-600/20' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-600 hover:text-navy-600' }}">
-        <i class="bi bi-exclamation-triangle"></i> Complaints
-        <span class="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold {{ $type === 'complaint' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $counts['complaint'] }}</span>
-    </a>
-    <a href="{{ route('notifications.index', ['type' => 'new_rating']) }}"
-       class="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-bold transition {{ $type === 'new_rating' ? 'border-transparent bg-navy-600 text-white shadow-lg shadow-navy-600/20' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-600 hover:text-navy-600' }}">
-        <i class="bi bi-star-fill"></i> New Ratings
-        <span class="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold {{ $type === 'new_rating' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $counts['new_rating'] }}</span>
-    </a>
-    <a href="{{ route('notifications.index', ['type' => 'operator_response']) }}"
-       class="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-bold transition {{ $type === 'operator_response' ? 'border-transparent bg-navy-600 text-white shadow-lg shadow-navy-600/20' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-600 hover:text-navy-600' }}">
-        <i class="bi bi-reply-fill"></i> Responses
-        <span class="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold {{ $type === 'operator_response' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $counts['operator_response'] }}</span>
-    </a>
-    <a href="{{ route($invalidRoute) }}"
-       class="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-bold transition {{ $invalidActive ? 'border-transparent bg-navy-600 text-white shadow-lg shadow-navy-600/20' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-600 hover:text-navy-600' }}">
+    @foreach ($tabs as $tab)
+        <a href="{{ route('notifications.index', ['type' => $tab['key']]) }}" class="{{ $type === $tab['key'] ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+            <i class="bi {{ $tab['icon'] }}"></i> {{ $tab['label'] }}
+            <span class="tw-badge {{ $type === $tab['key'] ? 'tw-badge-gold' : 'tw-badge-gray' }} ml-0.5">{{ $tab['count'] }}</span>
+        </a>
+    @endforeach
+    <a href="{{ route($invalidRoute) }}" class="{{ $invalidActive ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-x-circle"></i> Invalid
-        <span class="rounded-md px-1.5 py-0.5 text-[11px] font-extrabold {{ $invalidActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $invalidCount }}</span>
+        <span class="tw-badge {{ $invalidActive ? 'tw-badge-gold' : 'tw-badge-gray' }} ml-0.5">{{ $invalidCount }}</span>
     </a>
 </div>
 

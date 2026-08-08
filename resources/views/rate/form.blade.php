@@ -47,18 +47,18 @@
         .page-header { animation: pageIn 0.45s ease both; }
         .header-datetime {
             text-align: center;
-            padding: 0.25rem 0 0.5rem;
+            padding: 0.15rem 0 0.3rem;
         }
         .header-time {
-            font-size: 1.9rem; font-weight: 800; letter-spacing: 0.01em;
+            font-size: 1.15rem; font-weight: 700; letter-spacing: 0.01em;
             color: white; line-height: 1.1;
-            display: inline-flex; align-items: center; gap: 0.55rem;
-        }
-        .header-time i { font-size: 1.3rem; color: var(--gold); }
-        .header-date {
-            font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.75);
-            margin-top: 0.3rem;
             display: inline-flex; align-items: center; gap: 0.4rem;
+        }
+        .header-time i { font-size: 0.95rem; color: var(--gold); }
+        .header-date {
+            font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.7);
+            margin-top: 0.15rem;
+            display: inline-flex; align-items: center; gap: 0.3rem;
         }
         .header-date i { color: var(--gold); }
 
@@ -100,6 +100,10 @@
         .rating-section .subtitle {
             text-align: center; font-size: 0.85rem; color: var(--gray-500);
             margin-bottom: 1.5rem;
+        }
+        .rating-section .operator-name {
+            text-align: center; font-size: 0.95rem; font-weight: 800;
+            color: var(--gray-800); margin-bottom: 1.5rem;
         }
 
         .stars-row {
@@ -186,7 +190,7 @@
             position: relative;
         }
         .map-box.open { display: block; }
-        #rateMap { height: 62vh; min-height: 420px; max-height: 560px; width: 100%; }
+        #rateMap { height: 70vh; min-height: 480px; max-height: 640px; width: 100%; }
         .map-hint {
             text-align: center; font-size: 0.75rem; color: var(--gray-500);
             padding: 0.5rem; background: var(--gray-50);
@@ -386,7 +390,7 @@
         @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
 
         @media (max-width: 480px) {
-            #rateMap { height: 58vh; min-height: 400px; max-height: 500px; }
+            #rateMap { height: 66vh; min-height: 460px; max-height: 600px; }
             .map-hint { font-size: 0.72rem; padding: 0.45rem; }
             .route-info { flex-wrap: wrap; row-gap: 0.15rem; }
         }
@@ -456,7 +460,8 @@
     @else
         <div class="rating-section">
             <h3>Rate Your Trip</h3>
-            <p class="subtitle">How was your ride with {{ $operator->user->name }}?</p>
+            <p class="subtitle" style="font-weight: 800; color: var(--gray-700); margin-bottom: 0.25rem;">How's my ride?</p>
+            <div class="operator-name">{{ $operator->user->name }}</div>
 
             <form action="{{ route('rate.submit', $operator->qr_code) }}" method="POST" enctype="multipart/form-data" id="rateForm">
                 @csrf
@@ -465,7 +470,7 @@
 
                 <div class="trip-route-section" id="tripRouteSection">
                     <hr class="divider">
-                    <div class="field-label"><i class="bi bi-map" style="color: var(--primary);"></i> Trip Route <span style="font-weight:400; color: var(--gray-500);">(optional)</span></div>
+                    <div class="field-label"><i class="bi bi-map" style="color: var(--primary);"></i> Trip Route</div>
                     <div class="location-grid">
                         <div>
                             <label class="field-label" style="font-size:0.72rem;" for="start_location"><span class="dot" style="background: var(--green);"></span> From</label>

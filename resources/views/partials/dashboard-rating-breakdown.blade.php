@@ -5,7 +5,7 @@
             $percent = $totalRatings > 0 ? ($count / $totalRatings) * 100 : 0;
         @endphp
         <div class="mb-3 flex items-center gap-3">
-            <span class="w-8 shrink-0 text-sm font-semibold text-slate-600">{{ $star }} <i class="bi bi-star-fill" style="font-size: 0.65rem; color: var(--secondary);"></i></span>
+            <span class="w-8 shrink-0 text-sm font-semibold text-slate-600">{{ $star }} <i class="bi bi-star-fill text-amber-400" style="font-size: 0.65rem;"></i></span>
             <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div class="h-full rounded-full bg-gradient-to-r from-gold to-gold-dark" role="progressbar" style="width: {{ $percent }}%;"></div>
             </div>

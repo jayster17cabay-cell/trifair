@@ -9,35 +9,35 @@
 
 <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-amber-50 text-amber-600"><i class="bi bi-exclamation-circle"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-amber"><i class="bi bi-exclamation-circle"></i></div>
         <div class="tw-stat-num">{{ $complaints->total() }}</div>
         <div class="tw-stat-label">Total</div>
     </div>
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-red-50 text-red-600"><i class="bi bi-clock-history"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-clock-history"></i></div>
         <div class="tw-stat-num">{{ $pendingCount }}</div>
         <div class="tw-stat-label">Pending</div>
     </div>
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-emerald-50 text-emerald-600"><i class="bi bi-check-circle"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-check-circle"></i></div>
         <div class="tw-stat-num">{{ $reviewedCount }}</div>
         <div class="tw-stat-label">Reviewed</div>
     </div>
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-violet-50 text-violet-600"><i class="bi bi-paperclip"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-paperclip"></i></div>
         <div class="tw-stat-num">{{ $complaints->sum(fn($r) => $r->proofs->count()) }}</div>
         <div class="tw-stat-label">Proofs</div>
     </div>
 </div>
 
 <div class="mb-5 flex flex-wrap gap-2">
-    <a href="{{ route($routePrefix . '.complaints', ['filter' => 'pending']) }}" class="{{ $filter === 'pending' ? 'tw-btn tw-btn-sm tw-btn-navy' : 'tw-btn tw-btn-sm tw-btn-outline' }}">
+    <a href="{{ route($routePrefix . '.complaints', ['filter' => 'pending']) }}" class="{{ $filter === 'pending' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-clock-history"></i> Pending <span class="tw-badge tw-badge-amber ml-1">{{ $pendingCount }}</span>
     </a>
-    <a href="{{ route($routePrefix . '.complaints', ['filter' => 'reviewed']) }}" class="{{ $filter === 'reviewed' ? 'tw-btn tw-btn-sm tw-btn-navy' : 'tw-btn tw-btn-sm tw-btn-outline' }}">
+    <a href="{{ route($routePrefix . '.complaints', ['filter' => 'reviewed']) }}" class="{{ $filter === 'reviewed' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-check-circle"></i> Reviewed <span class="tw-badge tw-badge-green ml-1">{{ $reviewedCount }}</span>
     </a>
-    <a href="{{ route($routePrefix . '.complaints', ['filter' => 'all']) }}" class="{{ $filter === 'all' ? 'tw-btn tw-btn-sm tw-btn-navy' : 'tw-btn tw-btn-sm tw-btn-outline' }}">
+    <a href="{{ route($routePrefix . '.complaints', ['filter' => 'all']) }}" class="{{ $filter === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-list-ul"></i> All <span class="tw-badge tw-badge-gray ml-1">{{ $totalCount }}</span>
     </a>
 </div>
@@ -48,7 +48,7 @@
     if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for review. Keep it up!'; }
     elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints you mark as reviewed will appear here.'; }
 
-    $avatarColors = ['#dc2626','#ea580c','#d97706','#b45309','#9333ea'];
+    $avatarColors = ['bg-red-600','bg-orange-600','bg-amber-600','bg-amber-800','bg-purple-600'];
 @endphp
 
 @forelse ($complaints as $rating)
@@ -56,7 +56,7 @@
     <div class="tw-card mb-3">
         <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
             <div class="flex min-w-0 items-center gap-3">
-                <div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl text-[0.95rem] font-extrabold text-white" style="background: {{ $avBg }};">
+                <div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl text-[0.95rem] font-extrabold text-white {{ $avBg }}">
                     {{ strtoupper(substr($rating->operator->user->name ?? 'U', 0, 1)) }}
                 </div>
                 <div class="min-w-0">
@@ -70,7 +70,7 @@
             <div class="flex shrink-0 items-center gap-3">
                 <div class="flex gap-0.5">
                     @for($i = 1; $i <= 5; $i++)
-                        <i class="bi {{ $i <= $rating->rating ? 'bi-star-fill' : 'bi-star' }}" style="color: {{ $i <= $rating->rating ? '#f59e0b' : '#e5e7eb' }};"></i>
+                        <i class="bi {{ $i <= $rating->rating ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-200' }}"></i>
                     @endfor
                 </div>
                 @if ($rating->is_reviewed)
@@ -186,7 +186,7 @@
                     <form action="{{ route($routePrefix . '.complaints.review', $rating) }}" method="POST">
                         @csrf
                         @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm bg-gradient-to-r from-gold to-amber-600 text-slate-900 hover:from-gold-dark hover:to-amber-700">
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold">
                             <i class="bi bi-check-lg"></i>Mark Reviewed
                         </button>
                     </form>
@@ -195,7 +195,7 @@
                 <form action="{{ route($routePrefix . '.complaints.destroy', $rating) }}" method="POST" onsubmit="return confirm('Delete this complaint?')">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline text-red-600" title="Delete complaint">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Delete complaint">
                         <i class="bi bi-trash"></i>
                     </button>
                 </form>

@@ -15,22 +15,22 @@
         $proofsR = $ratings->getCollection()->sum(fn($r) => $r->proofs->count());
     @endphp
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-blue-50 text-navy-600"><i class="bi bi-star"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-star"></i></div>
         <div class="tw-stat-num">{{ $totalR }}</div>
         <div class="tw-stat-label">Total</div>
     </div>
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-emerald-50 text-emerald-600"><i class="bi bi-hand-thumbs-up"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-hand-thumbs-up"></i></div>
         <div class="tw-stat-num">{{ $goodR }}</div>
         <div class="tw-stat-label">Good</div>
     </div>
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-red-50 text-red-600"><i class="bi bi-exclamation-circle"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-exclamation-circle"></i></div>
         <div class="tw-stat-num">{{ $pendingR }}</div>
         <div class="tw-stat-label">Pending</div>
     </div>
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-violet-50 text-violet-600"><i class="bi bi-paperclip"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-paperclip"></i></div>
         <div class="tw-stat-num">{{ $proofsR }}</div>
         <div class="tw-stat-label">Proofs</div>
     </div>
@@ -39,14 +39,14 @@
 @forelse ($ratings as $rating)
     @php
         $rr = $rating->rating;
-        if ($rr >= 4) { $avBg = '#059669'; }
-        elseif ($rr <= 2) { $avBg = '#dc2626'; }
-        else { $avBg = '#d97706'; }
+        if ($rr >= 4) { $avClass = 'bg-emerald-600'; }
+        elseif ($rr <= 2) { $avClass = 'bg-red-600'; }
+        else { $avClass = 'bg-amber-600'; }
     @endphp
     <div class="tw-card mb-3 {{ $rr <= 2 && !$rating->is_reviewed ? 'border-l-4 !border-l-amber-500' : '' }}">
         <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
             <div class="flex min-w-0 items-center gap-3">
-                <div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl text-[0.95rem] font-extrabold text-white" style="background: {{ $avBg }};">
+                <div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl text-[0.95rem] font-extrabold text-white {{ $avClass }}">
                     {{ strtoupper(substr($rating->operator->user->name ?? 'U', 0, 1)) }}
                 </div>
                 <div class="min-w-0">
@@ -60,7 +60,7 @@
             <div class="flex shrink-0 items-center gap-3">
                 <div class="flex gap-0.5">
                     @for($i = 1; $i <= 5; $i++)
-                        <i class="bi {{ $i <= $rr ? 'bi-star-fill' : 'bi-star' }}" style="color: {{ $i <= $rr ? '#f59e0b' : '#e5e7eb' }};"></i>
+                        <i class="bi {{ $i <= $rr ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-200' }}"></i>
                     @endfor
                 </div>
                 @if ($rating->is_reviewed)
@@ -176,7 +176,7 @@
                     <form action="{{ route($reviewRouteName, $rating) }}" method="POST">
                         @csrf
                         @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm bg-gradient-to-r from-gold to-amber-600 text-slate-900 hover:from-gold-dark hover:to-amber-700">
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold">
                             <i class="bi bi-check-lg"></i>Mark Reviewed
                         </button>
                     </form>

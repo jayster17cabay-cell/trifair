@@ -62,7 +62,7 @@
                                     <form action="{{ route($routePrefix . '.todas.destroy', $toda) }}" method="POST" onsubmit="return confirm('Delete this TODA? Drivers must be reassigned first.')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline text-red-600" title="Delete">
+                                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Delete">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>

@@ -101,17 +101,24 @@
             btn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 var menu = document.getElementById(btn.getAttribute('data-tw-dropdown'));
-                if (menu) {
-                    menu.classList.toggle('hidden');
+                if (!menu) return;
+                var wasOpen = menu.classList.contains('open');
+                closeAllDropdowns();
+                if (!wasOpen) {
+                    menu.classList.add('open');
                 }
             });
         });
         document.addEventListener('click', function (e) {
             if (!e.target.closest('[data-tw-dropdown]')) {
-                document.querySelectorAll('[data-tw-dropdown-menu]').forEach(function (menu) {
-                    menu.classList.add('hidden');
-                });
+                closeAllDropdowns();
             }
+        });
+    }
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('[data-tw-dropdown-menu]').forEach(function (menu) {
+            menu.classList.remove('open');
         });
     }
 })();

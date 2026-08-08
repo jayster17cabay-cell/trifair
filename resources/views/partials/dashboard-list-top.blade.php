@@ -2,15 +2,15 @@
     @php
         $avg = $operator->valid_ratings_avg_rating ?? 0;
         $name = $operator->user->name ?? 'Unknown';
-        $rankStyles = [
-            1 => ['linear-gradient(135deg, #F5B800, #E0A800)', '#fff'],
-            2 => ['linear-gradient(135deg, #2E7DD1, #2563A8)', '#fff'],
-            3 => ['linear-gradient(135deg, #B5D4F4, #E6F1FB)', '#0F2A4A'],
+        $rankClasses = [
+            1 => 'bg-gradient-to-br from-gold to-gold-dark text-white',
+            2 => 'bg-gradient-to-br from-navy-500 to-blue-600 text-white',
+            3 => 'bg-gradient-to-br from-blue-200 to-blue-50 text-navy-800',
         ];
-        $rank = $rankStyles[$loop->iteration] ?? ['#E6F1FB', '#64748B'];
+        $rank = $rankClasses[$loop->iteration] ?? 'bg-blue-50 text-slate-500';
     @endphp
     <div class="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
-        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-black" style="background: {{ $rank[0] }}; color: {{ $rank[1] }};">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-black {{ $rank }}">
             {{ $loop->iteration }}
         </div>
         <div class="min-w-0 flex-1">
@@ -20,10 +20,10 @@
             @endif
         </div>
         <div class="shrink-0 text-right">
-            <div class="text-sm font-black" style="color: var(--secondary-dark);">{{ number_format($avg, 1) }}</div>
+            <div class="text-sm font-black text-gold-700">{{ number_format($avg, 1) }}</div>
             <div class="flex gap-0.5">
                 @for ($i = 1; $i <= 5; $i++)
-                    <i class="bi bi-star-fill text-xs" style="color: {{ $i <= round($avg) ? 'var(--secondary)' : 'var(--gray-200)' }};"></i>
+                    <i class="bi bi-star-fill text-xs {{ $i <= round($avg) ? 'text-amber-400' : 'text-slate-200' }}"></i>
                 @endfor
             </div>
         </div>

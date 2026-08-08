@@ -17,7 +17,7 @@
                         <span class="shrink-0 font-bold text-slate-900">{{ $c->total }}</span>
                     </div>
                     <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
-                        <div class="h-full rounded-full" style="width: {{ $complaintMax ? round(($c->total / $complaintMax) * 100) : 0 }}%; background: linear-gradient(90deg, #2e7dd1, #0f2a4a);"></div>
+                        <div class="h-full rounded-full bg-gradient-to-r from-navy-500 to-navy-700" style="width: {{ $complaintMax ? round(($c->total / $complaintMax) * 100) : 0 }}%;"></div>
                     </div>
                 </div>
             @endforeach

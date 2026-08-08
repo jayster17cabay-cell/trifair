@@ -34,7 +34,7 @@
 <div class="mb-4 flex flex-wrap gap-2">
     @foreach ($categories as $key => $label)
         <a href="{{ $key ? route($routePrefix . '.activity-logs', ['category' => $key]) : route($routePrefix . '.activity-logs') }}"
-           class="tw-btn tw-btn-sm rounded-full {{ ($category ?: '') === $key ? 'tw-btn-navy' : 'tw-btn-outline' }}">
+           class="{{ ($category ?: '') === $key ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
             {{ $label }}
         </a>
     @endforeach

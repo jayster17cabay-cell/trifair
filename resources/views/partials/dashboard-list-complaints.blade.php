@@ -5,7 +5,7 @@
         $urgent = in_array($rating->complaint_type, ['Smoking While Driving', 'Passenger Harassment']);
     @endphp
     <div class="flex items-start gap-3 border-b border-slate-100 px-4 py-3">
-        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold text-white" style="background: linear-gradient(135deg, #2E7DD1, #2563A8);">{{ $initial }}</div>
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-navy-500 to-blue-600 text-sm font-extrabold text-white">{{ $initial }}</div>
         <div class="min-w-0 flex-1">
             <div class="text-sm font-semibold text-slate-800">{{ \Illuminate\Support\Str::title($name) }}</div>
             @if ($rating->complaint_type)

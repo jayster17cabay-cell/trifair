@@ -30,12 +30,12 @@
 
 <div class="mb-6 grid max-w-md grid-cols-2 gap-3">
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-blue-50 text-navy-600"><i class="bi bi-people"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-people"></i></div>
         <div class="tw-stat-num">{{ $operators->total() }}</div>
         <div class="tw-stat-label">Total</div>
     </div>
     <div class="tw-stat">
-        <div class="tw-stat-icon bg-emerald-50 text-emerald-600"><i class="bi bi-check-circle"></i></div>
+        <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-check-circle"></i></div>
         <div class="tw-stat-num">{{ $operators->filter(function($d){ return $d->status === 'active'; })->count() }}</div>
         <div class="tw-stat-label">Active</div>
     </div>
@@ -44,12 +44,12 @@
 <div class="mb-4 max-w-md">
     <div class="tw-input-group">
         <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
-        <input type="text" id="searchInput" class="tw-input" placeholder="Search operators..." value="{{ $search ?? '' }}" oninput="liveSearch(this.value)">
-        <button type="button" class="shrink-0 bg-navy-600 px-4 text-white transition hover:bg-navy-700" onclick="liveSearch(document.getElementById('searchInput').value)">
+        <input type="text" id="searchInput" class="tw-input" placeholder="Search operators..." value="{{ $search ?? '' }}" oninput="liveSearch(this.value)" aria-label="Search operators">
+        <button type="button" class="shrink-0 bg-navy-600 px-4 text-white transition hover:bg-navy-700" onclick="liveSearch(document.getElementById('searchInput').value)" aria-label="Search">
             <i class="bi bi-search"></i>
         </button>
         @if ($search)
-            <a href="{{ route($routePrefix . '.operators') }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700">
+            <a href="{{ route($routePrefix . '.operators') }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700" aria-label="Clear search">
                 <i class="bi bi-x-lg"></i>
             </a>
         @endif

@@ -14,7 +14,7 @@
                 @endphp
                 <div class="flex h-full flex-1 flex-col items-center justify-end">
                     <span class="mb-1 text-[11px] font-bold text-slate-700">{{ $count }}</span>
-                    <div class="w-full rounded-t-md" style="height: {{ max($pct, 2) }}%; background: linear-gradient(180deg, #2e7dd1, #0f2a4a);"></div>
+                    <div class="w-full rounded-t-md bg-gradient-to-t from-navy-700 to-navy-500" style="height: {{ max($pct, 2) }}%;"></div>
                 </div>
             @endfor
         </div>

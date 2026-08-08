@@ -16,13 +16,9 @@
             <div class="text-center">
                 <div class="text-3xl font-black text-gold" data-live="averageRating">{{ number_format($averageRating ?? 0, 1) }}</div>
                 <div class="mt-1 text-sm" data-live-stars="averageRating">
-                    @php
-                        $avg = $averageRating ?? 0;
-                        $starOn = 'var(--secondary)';
-                        $starOff = 'rgba(255,255,255,0.3)';
-                    @endphp
+                    @php $avg = $averageRating ?? 0; @endphp
                     @for ($i = 1; $i <= 5; $i++)
-                        <i class="bi bi-star-fill" style="color: {{ $i <= round($avg) ? $starOn : $starOff }};"></i>
+                        <i class="bi bi-star-fill {{ $i <= round($avg) ? 'text-gold' : 'text-white/30' }}"></i>
                     @endfor
                 </div>
                 <div class="mt-1 text-[11px] font-medium uppercase tracking-wider text-slate-300">Avg Rating</div>

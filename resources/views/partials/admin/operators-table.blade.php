@@ -1,14 +1,14 @@
 <tbody>
     @forelse ($operators as $operator)
         @php
-            $avatarColors = ['#1e3a5f','#2563eb','#7c3aed','#0891b2','#059669','#d97706','#dc2626'];
+            $avatarColors = ['bg-navy-700','bg-blue-600','bg-purple-600','bg-cyan-600','bg-emerald-600','bg-amber-600','bg-red-600'];
             $avBg = $avatarColors[$loop->index % count($avatarColors)];
         @endphp
         <tr class="tw-tr-hover">
             <td class="tw-td text-slate-500">{{ $loop->iteration + ($operators->currentPage() - 1) * $operators->perPage() }}</td>
             <td class="tw-td">
                 <div class="flex items-center gap-2.5">
-                    <div class="tw-avatar tw-avatar-sm text-white" style="background: {{ $avBg }};">{{ strtoupper(substr($operator->user->name, 0, 1)) }}</div>
+                    <div class="tw-avatar tw-avatar-sm {{ $avBg }}">{{ strtoupper(substr($operator->user->name, 0, 1)) }}</div>
                     <div class="min-w-0">
                         <div class="truncate text-sm font-bold text-slate-800">{{ $operator->user->name }}</div>
                         <div class="truncate text-xs text-slate-500">{{ $operator->user->email }}</div>

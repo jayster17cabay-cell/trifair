@@ -23,7 +23,7 @@
 @if($ratings->count() > 0)
 <div class="tw-alert tw-alert-navy mb-4">
     <i class="bi bi-info-circle-fill mt-0.5"></i>
-    <span class="text-sm text-slate-600">Low ratings (1-2 stars) allow you to respond and explain your side.</span>
+    <span class="text-sm">Low ratings (1-2 stars) allow you to respond and explain your side.</span>
 </div>
 @endif
 
@@ -34,22 +34,18 @@
                 <div class="flex items-start gap-3">
                     @php
                         $r = $rating->rating;
-                        if ($r >= 4) { $cbg = 'var(--primary-50)'; $cfg = 'var(--primary)'; }
-                        elseif ($r <= 2) { $cbg = 'var(--warning)'; $cfg = '#fff'; }
-                        else { $cbg = 'var(--secondary-50)'; $cfg = 'var(--secondary-dark)'; }
+                        if ($r >= 4) { $cClass = 'bg-blue-50 text-navy-700'; }
+                        elseif ($r <= 2) { $cClass = 'bg-amber-600 text-white'; }
+                        else { $cClass = 'bg-gold-50 text-gold-700'; }
                     @endphp
-                    <div class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full text-lg font-extrabold" style="background: {{ $cbg }}; color: {{ $cfg }};">
+                    <div class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full text-lg font-extrabold {{ $cClass }}">
                         {{ $rating->rating }}
                     </div>
                     <div class="min-w-0 flex-1">
                         <div class="mb-1 flex flex-wrap items-center justify-between gap-1">
                             <div class="flex gap-0.5">
                                 @for ($i = 1; $i <= 5; $i++)
-                                    @if ($i <= $rating->rating)
-                                        <i class="bi bi-star-fill text-base" style="color: var(--secondary);"></i>
-                                    @else
-                                        <i class="bi bi-star text-base" style="color: var(--gray-300);"></i>
-                                    @endif
+                                    <i class="bi {{ $i <= $rating->rating ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-300' }} text-base"></i>
                                 @endfor
                             </div>
                             <small class="text-xs text-slate-400">{{ $rating->created_at->format('M d, Y h:i A') }}</small>
