@@ -233,7 +233,6 @@
                 <div class="flex items-center gap-2 text-sm font-bold text-navy-700"><i class="bi bi-pin-map-fill text-gold"></i> Municipal Hall, Solano</div>
                 <div class="mt-0.5 text-xs text-slate-500">16.5152° N, 121.1823° E</div>
             </div>
-            <div class="absolute bottom-3 right-4 rounded-full bg-navy-900/55 px-3 py-1 text-[0.65rem] font-medium text-white/90 backdrop-blur">Photo: Elmer B. Domingo — CC BY-SA 4.0</div>
         </div>
     </div>
 </section>
