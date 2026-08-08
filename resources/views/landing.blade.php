@@ -228,7 +228,7 @@
             <p class="mx-auto max-w-[540px] text-[0.95rem] leading-relaxed text-slate-500">TriFair is run in partnership with the local TODA associations and the Municipal Transport Regulation Board.</p>
         </div>
         <div class="anim relative overflow-hidden rounded-3xl border border-slate-100 shadow-soft">
-            <img src="{{ asset('images/solano-municipal-hall.jpg') }}" alt="Solano Municipal Hall, Nueva Vizcaya" class="h-[320px] w-full object-cover md:h-[420px]" loading="lazy">
+            <img src="{{ asset('images/solano-municipal-hall.jpg') }}" alt="Solano Municipal Hall, Nueva Vizcaya" class="h-[400px] w-full object-cover md:h-[520px]" loading="lazy">
             <div class="pointer-events-none absolute left-4 top-4 rounded-2xl border border-white/60 bg-white/90 px-4 py-3 shadow-lg backdrop-blur">
                 <div class="flex items-center gap-2 text-sm font-bold text-navy-700"><i class="bi bi-pin-map-fill text-gold"></i> Municipal Hall, Solano</div>
                 <div class="mt-0.5 text-xs text-slate-500">16.5152° N, 121.1823° E</div>
