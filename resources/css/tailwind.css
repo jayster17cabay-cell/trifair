@@ -504,4 +504,43 @@
     .tw-link-soft {
         @apply font-semibold text-navy-600 transition hover:text-navy-700 hover:underline;
     }
+
+    /* ---------- Auth split screen ---------- */
+    .tw-auth-split {
+        @apply flex min-h-screen flex-col lg:flex-row;
+    }
+    .tw-auth-brand {
+        @apply relative hidden flex-1 flex-col justify-center overflow-hidden px-10 py-16 text-white xl:px-16 lg:flex;
+        background-image:
+            radial-gradient(ellipse 90% 55% at 12% -8%, rgba(245, 184, 0, 0.2), transparent),
+            radial-gradient(ellipse 70% 45% at 105% 115%, rgba(245, 184, 0, 0.1), transparent),
+            linear-gradient(165deg, #060e1a 0%, #0f2a4a 55%, #1a3a5c 100%);
+    }
+    .tw-auth-form-panel {
+        @apply relative flex flex-1 flex-col justify-center px-5 py-10 sm:px-8;
+        background-image:
+            radial-gradient(ellipse 80% 40% at 100% 0%, rgba(245, 184, 0, 0.06), transparent),
+            linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+    .lp-bg-grid {
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 46px 46px;
+    }
+
+    /* ---------- Landing page refinements ---------- */
+    .lp-link {
+        @apply rounded-lg px-4 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white;
+    }
+    .lp-mobile-menu {
+        @apply fixed inset-x-0 top-0 z-[900] -translate-y-full bg-navy-900/95 px-6 pb-8 pt-24 transition-transform duration-300 lg:hidden;
+        backdrop-filter: blur(14px);
+    }
+    .lp-mobile-menu.open {
+        @apply translate-y-0;
+    }
+    .lp-hero-ring {
+        @apply pointer-events-none absolute rounded-full border border-gold/15;
+    }
 }
