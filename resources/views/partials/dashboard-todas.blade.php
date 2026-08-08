@@ -12,7 +12,7 @@
             $todaActive = $toda->active_operators_count ?? 0;
             $todaPct = $todaTotal > 0 ? round(($todaActive / $todaTotal) * 100) : 0;
         @endphp
-        <button type="button" onclick="showTodaMembers({{ $toda->id }}, @js($toda->name))" class="tw-card flex cursor-pointer items-center gap-2.5 p-3 text-left transition hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-soft">
+        <button type="button" onclick="showTodaMembers({{ $toda->id }}, @js($toda->name))" class="tw-card flex cursor-pointer items-center gap-2.5 p-3 text-left transition-transform duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md">
             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-base text-blue-600">
                 <i class="bi bi-diagram-3"></i>
             </div>

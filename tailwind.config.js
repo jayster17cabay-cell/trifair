@@ -40,6 +40,14 @@ module.exports = {
                     dark: '#e0a800',
                     light: '#faeeda',
                 },
+                'nv-green': {
+                    DEFAULT: '#1B7A3D',
+                    light: '#E6F4EA',
+                },
+                'nv-red': {
+                    DEFAULT: '#C8102E',
+                    light: '#FDECEC',
+                },
             },
             fontFamily: {
                 sans: ['Inter', 'Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],

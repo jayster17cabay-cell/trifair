@@ -1,4 +1,4 @@
-<div class="tw-card">
+<div class="tw-card transition-shadow duration-200 hover:shadow-md">
     <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
         <h3 class="tw-card-title text-sm"><i class="bi bi-bar-chart-fill mr-1 text-gold"></i> Ratings Distribution</h3>
         <p class="text-[11px] text-slate-400">Per star level</p>

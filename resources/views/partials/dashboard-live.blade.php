@@ -54,16 +54,20 @@
 
     function updateComplaintChart(stats) {
         if (!stats) return;
-        // Stats arrive already padded to all complaint types (zeros included),
-        // so every type is always visible — a single-type dataset shows the
-        // full axis instead of collapsing to one bar.
+        window.__lastComplaintStats = stats;
+        // Zero-count categories are hidden by default (data-level filter so
+        // hidden rows leave no empty scroll space). The "Show all categories"
+        // toggle flips window.showAllComplaintTypes to render the full list.
+        var visible = window.showAllComplaintTypes === true
+            ? stats
+            : stats.filter(function (s) { return s.total > 0; });
         var body = document.getElementById('complaintChartBody');
         if (body) {
             var max = 0;
-            for (var i = 0; i < stats.length; i++) max = Math.max(max, stats[i].total);
+            for (var i = 0; i < visible.length; i++) max = Math.max(max, visible[i].total);
             var html = '';
-            for (var i = 0; i < stats.length; i++) {
-                var s = stats[i];
+            for (var i = 0; i < visible.length; i++) {
+                var s = visible[i];
                 var pct = max > 0 ? Math.round((s.total / max) * 100) : 0;
                 html += '<div>' +
                     '<div class="mb-1 flex items-center justify-between gap-2 text-[11px]">' +
@@ -89,6 +93,10 @@
         }
         modal.innerHTML = mhtml;
     }
+
+    window.__rerenderComplaints = function () {
+        if (window.__lastComplaintStats) updateComplaintChart(window.__lastComplaintStats);
+    };
 
     function updateRatingChart(dist) {
         if (!dist) return;
