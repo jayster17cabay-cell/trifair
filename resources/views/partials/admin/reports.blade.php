@@ -5,6 +5,9 @@
         <h1 class="tw-page-title"><i class="bi bi-bar-chart-line mr-2 text-violet-600"></i>Operator Performance</h1>
         <p class="tw-page-sub">Analytics and performance overview of all operators</p>
     </div>
+    <a href="{{ route($routePrefix . '.reports.export') }}" class="tw-btn tw-btn-sm tw-btn-outline">
+        <i class="bi bi-download"></i>Export CSV
+    </a>
 </div>
 
 <div class="tw-table-wrap">

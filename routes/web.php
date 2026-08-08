@@ -1,8 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\TfrbOfficerController;
 use App\Http\Controllers\SuperadminController;
 use App\Http\Controllers\OperatorController;
@@ -21,6 +23,11 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
+
+Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->middleware('guest')->name('password.request');
+Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware(['guest', 'throttle:6,1'])->name('password.email');
+Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->middleware('guest')->name('password.reset');
+Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->middleware(['guest', 'throttle:6,1'])->name('password.update');
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');
@@ -59,6 +66,15 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::patch('/ratings/{rating}/restore', [TfrbOfficerController::class, 'restoreRating'])->name('ratings.restore');
     Route::patch('/operators/{operator}/approve', [TfrbOfficerController::class, 'approveOperator'])->name('operators.approve');
     Route::patch('/operators/{operator}/reject', [TfrbOfficerController::class, 'rejectOperator'])->name('operators.reject');
+    Route::patch('/operators/{operator}/archive', [TfrbOfficerController::class, 'archiveOperator'])->name('operators.archive');
+    Route::patch('/operators/{operator}/restore', [TfrbOfficerController::class, 'restoreOperator'])->name('operators.restore');
+    Route::get('/operators/export', [TfrbOfficerController::class, 'exportOperators'])->name('operators.export');
+    Route::get('/reports/export', [TfrbOfficerController::class, 'exportReports'])->name('reports.export');
+    Route::get('/ratings/export', [TfrbOfficerController::class, 'exportRatings'])->name('ratings.export');
+    Route::get('/complaints/export', [TfrbOfficerController::class, 'exportComplaints'])->name('complaints.export');
+    Route::get('/activity-logs/export', [TfrbOfficerController::class, 'exportActivityLogs'])->name('activity-logs.export');
+    Route::get('/settings', [TfrbOfficerController::class, 'showSettings'])->name('settings');
+    Route::put('/settings/password', [TfrbOfficerController::class, 'updatePassword'])->name('settings.password');
 });
 
 Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')->name('superadmin.')->group(function () {
@@ -92,6 +108,15 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::patch('/ratings/{rating}/restore', [SuperadminController::class, 'restoreRating'])->name('ratings.restore');
     Route::patch('/operators/{operator}/approve', [SuperadminController::class, 'approveOperator'])->name('operators.approve');
     Route::patch('/operators/{operator}/reject', [SuperadminController::class, 'rejectOperator'])->name('operators.reject');
+    Route::patch('/operators/{operator}/archive', [SuperadminController::class, 'archiveOperator'])->name('operators.archive');
+    Route::patch('/operators/{operator}/restore', [SuperadminController::class, 'restoreOperator'])->name('operators.restore');
+    Route::get('/operators/export', [SuperadminController::class, 'exportOperators'])->name('operators.export');
+    Route::get('/reports/export', [SuperadminController::class, 'exportReports'])->name('reports.export');
+    Route::get('/ratings/export', [SuperadminController::class, 'exportRatings'])->name('ratings.export');
+    Route::get('/complaints/export', [SuperadminController::class, 'exportComplaints'])->name('complaints.export');
+    Route::get('/activity-logs/export', [SuperadminController::class, 'exportActivityLogs'])->name('activity-logs.export');
+    Route::get('/settings', [SuperadminController::class, 'showSettings'])->name('settings');
+    Route::put('/settings/password', [SuperadminController::class, 'updatePassword'])->name('settings.password');
 });
 
 Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator.')->group(function () {
@@ -107,6 +132,7 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator
         Route::get('/dashboard', [OperatorController::class, 'dashboard'])->name('dashboard');
         Route::get('/ratings', [OperatorController::class, 'ratings'])->name('ratings');
         Route::post('/ratings/{rating}/respond', [OperatorController::class, 'respond'])->name('ratings.respond');
+        Route::get('/profile', [OperatorController::class, 'profile'])->name('profile');
         Route::get('/settings', [OperatorController::class, 'showSettings'])->name('settings');
         Route::put('/settings/password', [OperatorController::class, 'updatePassword'])->name('settings.password');
     });

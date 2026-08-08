@@ -26,7 +26,9 @@
             <td class="tw-td text-sm font-semibold">{{ $operator->plate_number ?? '—' }}</td>
             <td class="tw-td text-sm">{{ $operator->body_number ?? '—' }}</td>
             <td class="tw-td">
-                @if ($operator->status === 'active')
+                @if ($operator->isArchived())
+                    <span class="tw-badge tw-badge-gray"><i class="bi bi-archive-fill"></i>Archived</span>
+                @elseif ($operator->status === 'active')
                     <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i>Active</span>
                 @elseif ($operator->status === 'pending')
                     <span class="tw-badge tw-badge-amber"><i class="bi bi-hourglass-split"></i>Pending</span>
@@ -58,10 +60,25 @@
                                 <i class="bi bi-x-lg"></i>Reject
                             </button>
                         </form>
+                    @elseif (request('status') === 'archived')
+                        <form action="{{ route($routePrefix . '.operators.restore', $operator) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-btn tw-btn-sm tw-btn-success" title="Restore" onclick="return confirm(@js('Restore ' . $operator->user->name . '?'))">
+                                <i class="bi bi-arrow-counterclockwise"></i>Restore
+                            </button>
+                        </form>
                     @else
                         <a href="{{ route($routePrefix . '.operators.edit', $operator) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        <form action="{{ route($routePrefix . '.operators.archive', $operator) }}" method="POST" onsubmit="return confirm('Archive this operator? They will be hidden from active lists but keep their rating history.')">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Archive">
+                                <i class="bi bi-archive"></i>
+                            </button>
+                        </form>
                         <form action="{{ route($routePrefix . '.operators.destroy', $operator) }}" method="POST" onsubmit="return confirm('Delete this operator? This action cannot be undone.')">
                             @csrf
                             @method('DELETE')

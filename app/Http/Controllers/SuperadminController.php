@@ -9,6 +9,7 @@ use App\Models\Toda;
 use App\Helpers\ActivityLogger;
 use App\Services\AdminDashboardService;
 use App\Services\AdminQueryService;
+use App\Services\ExportService;
 use App\Services\OperatorAdminService;
 use App\Services\RatingAdminService;
 use Illuminate\Http\Request;
@@ -84,6 +85,32 @@ class SuperadminController extends Controller
         ActivityLogger::log('delete_tfrb_officer', "Deleted TFRB Officer {$officerName}", null, 'tfrb_officer');
 
         return back()->with('success', 'TFRB Officer removed successfully.');
+    }
+
+    public function showSettings()
+    {
+        return view('superadmin.settings');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $data = $request->validate([
+            'current_password' => 'required|current_password',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = Auth::user();
+        $user->password = Hash::make($data['new_password']);
+        $user->save();
+
+        ActivityLogger::log(
+            'update_password',
+            "Updated own password",
+            $user,
+            'tfrb_officer'
+        );
+
+        return back()->with('success', 'Password updated successfully.');
     }
 
     public function complaints(Request $request)
@@ -179,6 +206,51 @@ class SuperadminController extends Controller
     public function rejectOperator(Operator $operator)
     {
         return app(OperatorAdminService::class)->reject($operator, 'superadmin.operators');
+    }
+
+    public function archiveOperator(Operator $operator)
+    {
+        return app(OperatorAdminService::class)->archive($operator, 'superadmin.operators');
+    }
+
+    public function restoreOperator(Operator $operator)
+    {
+        return app(OperatorAdminService::class)->restore($operator, 'superadmin.operators');
+    }
+
+    public function exportOperators(Request $request)
+    {
+        $operators = app(AdminQueryService::class)->operatorsForExport($request);
+
+        return app(ExportService::class)->operatorsCsv($operators);
+    }
+
+    public function exportRatings()
+    {
+        $ratings = app(AdminQueryService::class)->ratingsForExport();
+
+        return app(ExportService::class)->ratingsCsv($ratings);
+    }
+
+    public function exportComplaints(Request $request)
+    {
+        $complaints = app(AdminQueryService::class)->complaintsForExport($request);
+
+        return app(ExportService::class)->complaintsCsv($complaints);
+    }
+
+    public function exportReports()
+    {
+        $reports = app(AdminQueryService::class)->reportsForExport();
+
+        return app(ExportService::class)->reportsCsv($reports);
+    }
+
+    public function exportActivityLogs(Request $request)
+    {
+        $logs = app(AdminQueryService::class)->activityLogsForExport($request);
+
+        return app(ExportService::class)->activityLogsCsv($logs);
     }
 
     public function showQrCode(Operator $operator)

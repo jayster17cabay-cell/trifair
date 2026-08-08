@@ -1,31 +1,46 @@
 {{-- Shared operators index page body. Requires: $routePrefix, $operators, $search, $status --}}
 
+@php $currentStatus = request('status'); @endphp
+
 <div class="tw-page-head">
     <div>
         <h1 class="tw-page-title">
-            @if (request('status') === 'pending')
+            @if ($currentStatus === 'pending')
                 <i class="bi bi-hourglass-split mr-2 text-amber-500"></i>Pending Approvals
+            @elseif ($currentStatus === 'archived')
+                <i class="bi bi-archive mr-2 text-slate-500"></i>Archived Operators
             @else
                 <i class="bi bi-people mr-2 text-navy-600"></i>Operators
             @endif
         </h1>
         <p class="tw-page-sub">
-            @if (request('status') === 'pending')
+            @if ($currentStatus === 'pending')
                 Review and approve new operator registrations
+            @elseif ($currentStatus === 'archived')
+                Archived operators are hidden from active lists but keep their rating history
             @else
                 Manage all registered tricycle operators
             @endif
         </p>
     </div>
-    @if (request('status') === 'pending')
-        <a href="{{ route($routePrefix . '.operators') }}" class="tw-btn tw-btn-sm tw-btn-outline">
-            <i class="bi bi-arrow-left"></i>Back to All Operators
+    <div class="flex items-center gap-2">
+        <a href="{{ route($routePrefix . '.operators.export', ['search' => $search ?? null, 'status' => $currentStatus ?? null]) }}" class="tw-btn tw-btn-sm tw-btn-outline">
+            <i class="bi bi-download"></i>Export CSV
         </a>
-    @else
-        <a href="{{ route($routePrefix . '.operators.create') }}" class="tw-btn tw-btn-success">
-            <i class="bi bi-person-plus"></i>Add Operator
-        </a>
-    @endif
+        @if ($currentStatus === 'pending')
+            <a href="{{ route($routePrefix . '.operators') }}" class="tw-btn tw-btn-sm tw-btn-outline">
+                <i class="bi bi-arrow-left"></i>Back to All Operators
+            </a>
+        @elseif ($currentStatus === 'archived')
+            <a href="{{ route($routePrefix . '.operators') }}" class="tw-btn tw-btn-sm tw-btn-outline">
+                <i class="bi bi-arrow-left"></i>Back to Operators
+            </a>
+        @else
+            <a href="{{ route($routePrefix . '.operators.create') }}" class="tw-btn tw-btn-success">
+                <i class="bi bi-person-plus"></i>Add Operator
+            </a>
+        @endif
+    </div>
 </div>
 
 <div class="mb-6 grid max-w-md grid-cols-2 gap-3">
@@ -39,6 +54,17 @@
         <div class="tw-stat-num">{{ $operators->filter(function($d){ return $d->status === 'active'; })->count() }}</div>
         <div class="tw-stat-label">Active</div>
     </div>
+</div>
+
+<div class="mb-4 flex flex-wrap gap-2">
+    <a href="{{ route($routePrefix . '.operators') }}" class="{{ !$status ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+        <i class="bi bi-people"></i> All
+    </a>
+    @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'pending' => 'Pending', 'rejected' => 'Rejected', 'archived' => 'Archived'] as $key => $label)
+        <a href="{{ route($routePrefix . '.operators', ['status' => $key]) }}" class="{{ $status === $key ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+            {{ $label }}
+        </a>
+    @endforeach
 </div>
 
 <div class="mb-4 max-w-md">

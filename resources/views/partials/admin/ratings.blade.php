@@ -5,6 +5,9 @@
         <h1 class="tw-page-title"><i class="bi bi-star-half mr-2 text-gold"></i>Ratings & Feedback</h1>
         <p class="tw-page-sub">Review all passenger feedback and complaints</p>
     </div>
+    <a href="{{ route($routePrefix . '.ratings.export') }}" class="tw-btn tw-btn-sm tw-btn-outline">
+        <i class="bi bi-download"></i>Export CSV
+    </a>
 </div>
 
 <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

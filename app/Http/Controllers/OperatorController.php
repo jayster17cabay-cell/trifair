@@ -114,6 +114,19 @@ class OperatorController extends Controller
         return back()->with('success', 'Your response has been submitted.');
     }
 
+    public function profile()
+    {
+        $operator = Auth::user()->operator->load('user', 'toda');
+        $stats = [
+            'totalRatings' => $operator->ratings()->isValid()->count(),
+            'averageRating' => $operator->ratings()->isValid()->avg('rating'),
+            'totalComplaints' => $operator->ratings()->isValid()->where('rating', '<=', 2)->count(),
+            'responseRate' => $operator->ratings()->isValid()->whereHas('response')->count(),
+        ];
+
+        return view('operator.profile', compact('operator', 'stats'));
+    }
+
     public function showSettings()
     {
         $operator = Auth::user()->operator;

@@ -61,22 +61,33 @@ class AdminQueryService
                 'operators.id'
             )
             ->whereNotIn('operators.status', ['pending', 'rejected'])
+            ->whereNull('operators.archived_at')
             ->select('operators.*', 'vr.valid_ratings_avg_rating', 'vr.valid_ratings_count')
             ->orderByDesc('valid_ratings_count')
             ->paginate(25)
             ->withQueryString();
     }
 
-    public function operatorsData(Request $request): array
+    /**
+     * Shared base query for the operators list, honoring search + status
+     * filters. Status may also be "archived" to browse archived operators.
+     */
+    public function operatorsBaseQuery(Request $request)
     {
         $search = $request->query('search');
         $status = $request->query('status');
+
         $query = Operator::with('user', 'toda');
-        if ($status && in_array($status, ['active', 'inactive', 'pending', 'rejected'])) {
-            $query->where('status', $status);
+
+        if ($status === 'archived') {
+            $query->archived();
+        } elseif ($status && in_array($status, ['active', 'inactive', 'pending', 'rejected'])) {
+            $query->notArchived()->where('status', $status);
         } else {
-            $query->whereIn('status', ['active', 'inactive']);
+            $status = null;
+            $query->notArchived();
         }
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('user', function ($u) use ($search) {
@@ -84,9 +95,109 @@ class AdminQueryService
                 })->orWhere('body_number', 'like', "%{$search}%");
             });
         }
-        $operators = $query->latest()->paginate(10);
 
-        return compact('operators', 'search', 'status');
+        return $query;
+    }
+
+    public function operatorsData(Request $request): array
+    {
+        $operators = $this->operatorsBaseQuery($request)->latest()->paginate(10);
+
+        $search = $request->query('search');
+        $status = $request->query('status');
+        $archivedCount = Operator::archived()->count();
+
+        return compact('operators', 'search', 'status', 'archivedCount');
+    }
+
+    public function operatorsForExport(Request $request)
+    {
+        return $this->operatorsBaseQuery($request)->latest()->get();
+    }
+
+    public function ratingsForExport(): \Illuminate\Support\Collection
+    {
+        return Rating::isValid()->with(['operator.user', 'response'])
+            ->latest()
+            ->get()
+            ->map(function ($rating) {
+                return [
+                    'id' => $rating->id,
+                    'trip' => $rating->trip_id ?? '—',
+                    'operator' => $rating->operator->user->name ?? 'Unknown',
+                    'rating' => $rating->rating,
+                    'comment' => $rating->comment ?? '',
+                    'date' => $rating->created_at?->format('Y-m-d H:i'),
+                ];
+            });
+    }
+
+    public function complaintsForExport(Request $request): \Illuminate\Support\Collection
+    {
+        $filter = $request->query('filter', 'pending');
+        $base = Rating::isValid()->where('rating', '<=', 2);
+        if ($filter === 'reviewed') {
+            $base->where('is_reviewed', true);
+        } elseif ($filter !== 'all') {
+            $base->where('is_reviewed', false);
+        }
+
+        return $base->with(['operator.user', 'response'])
+            ->latest()
+            ->get()
+            ->map(function ($complaint) {
+                return [
+                    'id' => $complaint->id,
+                    'trip' => $complaint->trip_id ?? '—',
+                    'operator' => $complaint->operator->user->name ?? 'Unknown',
+                    'rating' => $complaint->rating,
+                    'complaint' => $complaint->comment ?? '',
+                    'status' => $complaint->is_reviewed ? 'Reviewed' : 'Pending',
+                    'date' => $complaint->created_at?->format('Y-m-d H:i'),
+                ];
+            });
+    }
+
+    public function reportsForExport(): \Illuminate\Support\Collection
+    {
+        return Operator::with('user', 'toda')
+            ->withCount('validRatings')
+            ->whereNotIn('status', ['pending', 'rejected'])
+            ->whereNull('archived_at')
+            ->get()
+            ->map(function ($operator) {
+                return [
+                    'name' => $operator->user->name ?? 'Unknown',
+                    'toda' => $operator->toda?->name ?? 'Unassigned',
+                    'body_number' => $operator->body_number ?? '—',
+                    'plate_number' => $operator->plate_number ?? '—',
+                    'total_trips' => $operator->valid_ratings_count,
+                    'avg_rating' => number_format((float) $operator->validRatings()->avg('rating'), 2),
+                    'status' => ucfirst($operator->status),
+                ];
+            });
+    }
+
+    public function activityLogsForExport(Request $request): \Illuminate\Support\Collection
+    {
+        $category = $request->query('category');
+        $query = ActivityLog::with('user');
+        if ($category && in_array($category, ['auth', 'tfrb_officer', 'operator', 'review', 'system'])) {
+            $query->where('category', $category);
+        }
+
+        return $query->latestFirst()
+            ->limit(5000)
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'date' => $log->created_at?->format('Y-m-d H:i'),
+                    'user' => $log->user->name ?? 'System',
+                    'action' => $log->action,
+                    'category' => $log->category,
+                    'description' => $log->description ?? '',
+                ];
+            });
     }
 
     public function invalidRatingsData(): LengthAwarePaginator
@@ -115,9 +226,11 @@ class AdminQueryService
     public function todasData(): LengthAwarePaginator
     {
         return Toda::withCount([
-            'operators',
+            'operators' => function ($query) {
+                $query->whereNull('archived_at');
+            },
             'operators as active_operators_count' => function ($query) {
-                $query->where('status', 'active');
+                $query->where('status', 'active')->whereNull('archived_at');
             },
         ])->latest()->paginate(20);
     }

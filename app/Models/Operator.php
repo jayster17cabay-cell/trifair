@@ -21,7 +21,27 @@ class Operator extends Model
         'plate_number',
         'body_number',
         'tricycle_color',
+        'archived_at',
     ];
+
+    protected $casts = [
+        'archived_at' => 'datetime',
+    ];
+
+    public function scopeArchived($query)
+    {
+        return $query->whereNotNull('archived_at');
+    }
+
+    public function scopeNotArchived($query)
+    {
+        return $query->whereNull('archived_at');
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archived_at !== null;
+    }
 
     public function user()
     {

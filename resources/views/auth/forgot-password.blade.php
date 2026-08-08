@@ -1,15 +1,15 @@
 @extends('layouts.app')
 
-@section('title', 'Login')
+@section('title', 'Forgot Password')
 
 @section('content')
 <div class="tw-auth-shell">
     <div class="tw-auth-card">
         <div class="tw-auth-icon">
-            <i class="bi bi-shield-check"></i>
+            <i class="bi bi-shield-lock"></i>
         </div>
-        <h4 class="tw-auth-title">Welcome to TriFair</h4>
-        <p class="tw-auth-sub">Log in to manage your account</p>
+        <h4 class="tw-auth-title">Forgot Password</h4>
+        <p class="tw-auth-sub">Enter your email and we'll send you a reset link</p>
 
         @if (session('status'))
             <div class="tw-alert tw-alert-success mt-4">
@@ -25,7 +25,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}" class="mt-6">
+        <form method="POST" action="{{ route('password.email') }}" class="mt-6">
             @csrf
 
             <div class="tw-auth-field">
@@ -39,34 +39,15 @@
                 @enderror
             </div>
 
-            <div class="tw-auth-field">
-                <div class="mb-1 flex items-center justify-between">
-                    <label for="password" class="tw-label mb-0">Password</label>
-                    <a href="{{ route('password.request') }}" class="text-xs font-semibold text-navy-600 hover:underline">Forgot Password?</a>
-                </div>
-                <div class="tw-input-group">
-                    <span class="tw-input-group-icon"><i class="bi bi-lock"></i></span>
-                    <input id="password" type="password" class="tw-input @error('password') is-invalid @enderror" name="password" required placeholder="Enter your password">
-                </div>
-                @error('password')
-                    <span class="tw-error-text" role="alert">{{ $message }}</span>
-                @enderror
-            </div>
-
-            <label class="mb-5 flex cursor-pointer items-center gap-2 text-sm text-slate-500">
-                <input type="checkbox" class="tw-check" id="remember" name="remember">
-                Remember Me
-            </label>
-
             <button type="submit" class="tw-btn tw-btn-gold w-full tw-btn-lg">
-                <i class="bi bi-box-arrow-in-right"></i> Log In
+                <i class="bi bi-envelope-arrow-up"></i> Send Reset Link
             </button>
         </form>
 
         <div class="tw-auth-foot">
             <p class="mb-2 text-sm text-slate-500">
-                Don't have an account?
-                <a href="{{ route('register') }}" class="font-semibold text-navy-600 hover:underline">Sign Up</a>
+                Remembered your password?
+                <a href="{{ route('login') }}" class="font-semibold text-navy-600 hover:underline">Log In</a>
             </p>
             <p class="mb-0 text-sm">
                 <a href="/" class="text-slate-400 hover:text-slate-600">

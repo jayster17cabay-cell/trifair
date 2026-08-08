@@ -5,6 +5,9 @@
         <h1 class="tw-page-title"><i class="bi bi-clock-history mr-2 text-amber-500"></i>Activity Logs</h1>
         <p class="tw-page-sub">Audit trail of all system actions</p>
     </div>
+    <a href="{{ route($routePrefix . '.activity-logs.export', ['category' => $category]) }}" class="tw-btn tw-btn-sm tw-btn-outline">
+        <i class="bi bi-download"></i>Export CSV
+    </a>
 </div>
 
 @php

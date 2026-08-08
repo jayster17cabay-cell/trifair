@@ -141,6 +141,34 @@ class OperatorAdminService
             ->with('success', 'Operator deleted successfully.');
     }
 
+    public function archive(Operator $operator, string $redirectRoute): RedirectResponse
+    {
+        if ($operator->isArchived()) {
+            return redirect()->back()->with('error', 'Operator is already archived.');
+        }
+
+        $operator->update(['archived_at' => now()]);
+
+        ActivityLogger::log('archive_operator', "Archived operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
+
+        return redirect()->route($redirectRoute)
+            ->with('success', "Operator {$operator->user->name} archived successfully.");
+    }
+
+    public function restore(Operator $operator, string $redirectRoute): RedirectResponse
+    {
+        if (!$operator->isArchived()) {
+            return redirect()->back()->with('error', 'Operator is not archived.');
+        }
+
+        $operator->update(['archived_at' => null]);
+
+        ActivityLogger::log('restore_operator', "Restored operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
+
+        return redirect()->route($redirectRoute, ['status' => 'archived'])
+            ->with('success', "Operator {$operator->user->name} restored successfully.");
+    }
+
     public function approve(Operator $operator, string $redirectRoute): RedirectResponse
     {
         $operator->load('user');

@@ -11,6 +11,7 @@
                 'links' => [
                     ['label' => 'Dashboard', 'icon' => 'bi-speedometer2', 'route' => 'operator.dashboard', 'match' => 'operator.dashboard'],
                     ['label' => 'My Ratings', 'icon' => 'bi-star', 'route' => 'operator.ratings', 'match' => 'operator.ratings'],
+                    ['label' => 'My Profile', 'icon' => 'bi-person-badge', 'route' => 'operator.profile', 'match' => 'operator.profile'],
                 ],
             ],
             [

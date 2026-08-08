@@ -40,6 +40,7 @@
             [
                 'label' => 'Account',
                 'links' => [
+                    ['label' => 'Settings', 'icon' => 'bi-gear', 'route' => 'superadmin.settings', 'match' => 'superadmin.settings'],
                     ['label' => 'Logout', 'icon' => 'bi-box-arrow-right', 'logout' => true, 'inMenu' => false],
                 ],
             ],

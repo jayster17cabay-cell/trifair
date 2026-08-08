@@ -44,7 +44,13 @@
 </div>
 @endif
 
-<div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+<div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <a href="{{ route('operator.profile') }}" class="tw-card group flex flex-col items-center gap-2.5 p-4 text-center transition hover:-translate-y-0.5 hover:shadow-soft">
+        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-navy-600/10 text-lg text-navy-600 transition group-hover:scale-105">
+            <i class="bi bi-person-badge-fill"></i>
+        </div>
+        <span class="text-sm font-semibold text-slate-700">My Profile</span>
+    </a>
     <a href="{{ route('operator.ratings') }}" class="tw-card group flex flex-col items-center gap-2.5 p-4 text-center transition hover:-translate-y-0.5 hover:shadow-soft">
         <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gold/10 text-lg text-gold-dark transition group-hover:scale-105">
             <i class="bi bi-star-fill"></i>

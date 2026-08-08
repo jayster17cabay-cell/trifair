@@ -49,8 +49,8 @@ class AdminDashboardService
         $recentLimit = $options['recentLimit'] ?? 5;
 
         $data = [
-            'totalOperators' => Operator::count(),
-            'activeOperators' => Operator::where('status', 'active')->count(),
+            'totalOperators' => Operator::notArchived()->count(),
+            'activeOperators' => Operator::notArchived()->where('status', 'active')->count(),
             'totalRatings' => Rating::isValid()->count(),
             'averageRating' => Rating::isValid()->avg('rating'),
             'totalComplaints' => Rating::isValid()->where('rating', '<=', 2)->count(),
@@ -104,6 +104,7 @@ class AdminDashboardService
         $data['ratingDistribution'] = $distribution;
 
         $data['topOperators'] = Operator::with('user', 'toda')
+            ->whereNull('operators.archived_at')
             ->leftJoin(
                 DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true group by operator_id) as vr'),
                 'vr.operator_id',
@@ -117,9 +118,11 @@ class AdminDashboardService
             ->get();
 
         $todaStats = Toda::withCount([
-            'operators',
+            'operators' => function ($query) {
+                $query->whereNull('archived_at');
+            },
             'operators as active_operators_count' => function ($query) {
-                $query->where('status', 'active');
+                $query->where('status', 'active')->whereNull('archived_at');
             },
         ])->get();
 

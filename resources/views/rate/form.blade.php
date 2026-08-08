@@ -686,6 +686,8 @@ function inSolano(latlng) {
 var searchTimeout = null;
 var endLatLng = null;
 var tripAccepted = false;
+var routeReqSeq = 0;
+var reverseSeq = { start_location: 0, end_location: 0 };
 
 document.querySelectorAll('.star-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
@@ -771,8 +773,7 @@ function forwardGeocode(query) {
                     updateLocStatus('Destination is too far from Solano. Only nearby towns (~15 km) are accepted.', false);
                     return;
                 }
-                endLatLng = ll;
-                setEndMarker(ll);
+                applyDestination(ll);
             });
             searchResults.appendChild(div);
         });
@@ -817,8 +818,7 @@ function initMap() {
 
         map.on('click', function(e) {
             if (!serviceBounds.contains(e.latlng)) return;
-            endLatLng = e.latlng;
-            setEndMarker(e.latlng);
+            applyDestination(e.latlng);
             reverseGeocode(e.latlng, 'end_location');
         });
 
@@ -1022,6 +1022,20 @@ function setStartMarker(latlng) {
     startMarker = L.marker(latlng, {icon: icon, zIndexOffset: 1000}).addTo(map);
 }
 
+function applyDestination(latlng) {
+    reverseSeq.end_location++;
+    endLatLng = latlng;
+    lastRerouteLatLng = null;
+    lastRerouteTime = 0;
+    deviationCooldown = false;
+    deviationDismissed = false;
+    var ov = document.getElementById('devOverlay');
+    var dw = document.getElementById('devWarning');
+    if (ov) ov.classList.remove('show');
+    if (dw) dw.classList.remove('show');
+    setEndMarker(latlng);
+}
+
 function setEndMarker(latlng) {
     if (!startMarker) return;
     var icon = L.divIcon({
@@ -1202,9 +1216,13 @@ function drawRoute(fitView, skipTripCheck) {
     tripAccepted = true;
     clearRouteLayers();
 
+    var seq = ++routeReqSeq;
+
     fetchRoute(start, end).then(function(data) {
+        if (seq !== routeReqSeq) return;
         renderRoute(data, fitView !== false);
     }).catch(function(err) {
+        if (seq !== routeReqSeq) return;
         drawApproximateRoute(start, end);
         showRouteError(err && err.message ? err.message : 'unknown');
     });
@@ -1310,9 +1328,11 @@ function showRouteError(msg) {
 }
 
 function reverseGeocode(latlng, inputId) {
+    var seq = ++reverseSeq[inputId];
     fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + latlng.lat + '&lon=' + latlng.lng + '&zoom=18&addressdetails=1')
         .then(function(r) { return r.json(); })
         .then(function(d) {
+            if (seq !== reverseSeq[inputId]) return;
             if (d.display_name) {
                 document.getElementById(inputId).value = trimAddress(d.display_name);
             }

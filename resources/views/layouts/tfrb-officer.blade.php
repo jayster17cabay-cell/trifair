@@ -34,6 +34,7 @@
             [
                 'label' => 'Account',
                 'links' => [
+                    ['label' => 'Settings', 'icon' => 'bi-gear', 'route' => 'tfrb-officer.settings', 'match' => 'tfrb-officer.settings'],
                     ['label' => 'Logout', 'icon' => 'bi-box-arrow-right', 'logout' => true, 'inMenu' => false],
                 ],
             ],
