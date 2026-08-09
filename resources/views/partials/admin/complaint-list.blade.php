@@ -59,11 +59,11 @@
                 <input type="checkbox" class="tw-check" data-complaint-select-all>
                 Select all
             </label>
-            <form id="bulkReviewForm" action="{{ route($routePrefix . '.complaints.bulkReview') }}" method="POST">
+            <form id="complaintBulkReviewForm" action="{{ route($routePrefix . '.complaints.bulkReview') }}" method="POST">
                 @csrf
-                <input type="hidden" name="ids" id="bulkReviewIds">
-                <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" data-bulk-review disabled>
-                    <i class="bi bi-check2-all"></i>Mark Reviewed <span data-bulk-count>0</span>
+                <input type="hidden" name="ids" id="complaintBulkReviewIds">
+                <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" data-complaint-bulk-review disabled>
+                    <i class="bi bi-check2-all"></i>Mark Reviewed <span data-complaint-bulk-count>0</span>
                 </button>
             </form>
         </div>

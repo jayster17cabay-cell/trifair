@@ -49,6 +49,27 @@ class Rating extends Model
         'others' => 'warning',
     ];
 
+    /**
+     * Star rating -> card left-border color used to color-code rating cards
+     * by severity (1-star danger, 2-3 warning, 4-5 good). Adjust the values
+     * here to change the colors without touching the views.
+     */
+    public const RATING_BORDER = [
+        1 => 'border-l-red-500',
+        2 => 'border-l-amber-400',
+        3 => 'border-l-amber-400',
+        4 => 'border-l-emerald-500',
+        5 => 'border-l-emerald-500',
+    ];
+
+    /**
+     * Map a star rating to its severity border utility class.
+     */
+    public static function ratingBorderClass(int $stars): string
+    {
+        return self::RATING_BORDER[$stars] ?? 'border-l-slate-300';
+    }
+
     protected $fillable = [
         'operator_id',
         'rating',

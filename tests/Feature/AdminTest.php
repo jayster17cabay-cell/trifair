@@ -355,9 +355,72 @@ class AdminTest extends TestCase
         $res->assertSee('data-complaint-toggle', false);
         $res->assertSee('data-complaint-check', false);
         $res->assertSee('data-complaint-select-all', false);
-        $res->assertSee('data-bulk-review', false);
-        $res->assertSee('bulkReviewForm', false);
+        $res->assertSee('data-complaint-bulk-review', false);
+        $res->assertSee('complaintBulkReviewForm', false);
         $res->assertSee('border-l-4', false);
+    }
+
+    public function test_ratings_page_renders_collapsible_list()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $this->makeValidRating($operator, 5);
+        $this->makeValidRating($operator, 1);
+
+        $res = $this->actingAs($admin)->get('/superadmin/ratings');
+
+        $res->assertOk();
+        $res->assertSee('data-rating-card', false);
+        $res->assertSee('data-rating-toggle', false);
+        $res->assertSee('data-rating-check', false);
+        $res->assertSee('data-rating-select-all', false);
+        $res->assertSee('data-rating-bulk-review', false);
+        $res->assertSee('ratingBulkReviewForm', false);
+        $res->assertSee('border-l-4', false);
+        $res->assertSee('border-l-red-500', false);
+        $res->assertSee('border-l-emerald-500', false);
+    }
+
+    public function test_superadmin_can_bulk_review_ratings()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $a = $this->makeValidRating($operator, 4);
+        $b = $this->makeValidRating($operator, 5);
+
+        $this->actingAs($admin)->post('/superadmin/ratings/bulk-review', [
+            'ids' => json_encode([$a->id, $b->id]),
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->assertTrue((bool) $a->fresh()->is_reviewed);
+        $this->assertTrue((bool) $b->fresh()->is_reviewed);
+    }
+
+    public function test_officer_can_bulk_review_ratings()
+    {
+        $officer = $this->makeUser('tfrb_officer');
+        $operator = $this->makeOperator();
+        $a = $this->makeValidRating($operator, 4);
+        $b = $this->makeValidRating($operator, 5);
+
+        $this->actingAs($officer)->post('/tfrb-officer/ratings/bulk-review', [
+            'ids' => json_encode([$a->id, $b->id]),
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->assertTrue((bool) $a->fresh()->is_reviewed);
+        $this->assertTrue((bool) $b->fresh()->is_reviewed);
+    }
+
+    public function test_ratings_bulk_review_without_ids_errors()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $rating = $this->makeValidRating($operator, 5);
+
+        $this->actingAs($admin)->post('/superadmin/ratings/bulk-review', ['ids' => json_encode([])])
+            ->assertRedirect()->assertSessionHas('error');
+
+        $this->assertFalse((bool) $rating->fresh()->is_reviewed);
     }
 
     public function test_bulk_review_without_ids_errors()

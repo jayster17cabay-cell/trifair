@@ -193,6 +193,11 @@ class TfrbOfficerController extends Controller
         return app(RatingAdminService::class)->markReviewed($rating);
     }
 
+    public function ratingsBulkReview(Request $request)
+    {
+        return app(RatingAdminService::class)->ratingsBulkReview($request);
+    }
+
     public function complaints(Request $request)
     {
         $data = app(AdminQueryService::class)->complaintsData($request);

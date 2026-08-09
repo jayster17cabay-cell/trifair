@@ -7,7 +7,7 @@
         initModalTriggers();
         initDropdowns();
         initPasswordToggles();
-        initComplaintCards();
+        initCollapsibleCardLists();
         initNotificationCards();
         initNotificationLive();
         initOperatorModals();
@@ -86,14 +86,23 @@
         }
     }
 
-    function initComplaintCards() {
-        var headers = document.querySelectorAll('[data-complaint-toggle]');
+    function initCollapsibleCardLists() {
+        initCollapsibleCardList('complaint');
+        initCollapsibleCardList('rating');
+    }
+
+    function initCollapsibleCardList(prefix) {
+        var attr = function (name) {
+            return '[data-' + prefix + '-' + name + ']';
+        };
+
+        var headers = document.querySelectorAll(attr('toggle'));
         headers.forEach(function (header) {
             function toggle() {
-                var card = header.closest('[data-complaint-card]');
+                var card = header.closest(attr('card'));
                 if (!card) return;
-                var details = card.querySelector('[data-complaint-details]');
-                var chevron = header.querySelector('[data-complaint-chevron]');
+                var details = card.querySelector(attr('details'));
+                var chevron = header.querySelector(attr('chevron'));
                 var collapsed = details.classList.toggle('hidden');
                 if (chevron) {
                     chevron.classList.toggle('rotate-180', collapsed);
@@ -101,7 +110,7 @@
                 header.setAttribute('aria-expanded', String(!collapsed));
             }
             header.addEventListener('click', function (e) {
-                if (e.target.closest('[data-complaint-check]')) return;
+                if (e.target.closest(attr('check'))) return;
                 toggle();
             });
             header.addEventListener('keydown', function (e) {
@@ -112,16 +121,16 @@
             });
         });
 
-        var checkboxes = document.querySelectorAll('[data-complaint-check]');
-        var selectAll = document.querySelector('[data-complaint-select-all]');
-        var bulkForm = document.getElementById('bulkReviewForm');
-        var bulkIds = document.getElementById('bulkReviewIds');
-        var bulkBtn = document.querySelector('[data-bulk-review]');
-        var bulkCount = document.querySelector('[data-bulk-count]');
+        var checkboxes = document.querySelectorAll(attr('check'));
+        var selectAll = document.querySelector(attr('select-all'));
+        var bulkForm = document.getElementById(prefix + 'BulkReviewForm');
+        var bulkIds = document.getElementById(prefix + 'BulkReviewIds');
+        var bulkBtn = document.querySelector('[data-' + prefix + '-bulk-review]');
+        var bulkCount = document.querySelector('[data-' + prefix + '-bulk-count]');
 
         function updateBulk() {
-            var checked = document.querySelectorAll('[data-complaint-check]:checked');
-            var total = document.querySelectorAll('[data-complaint-check]').length;
+            var checked = document.querySelectorAll(attr('check') + ':checked');
+            var total = document.querySelectorAll(attr('check')).length;
             var count = checked.length;
             if (selectAll) {
                 selectAll.checked = count > 0 && count === total;
@@ -148,7 +157,7 @@
         }
         if (bulkForm && bulkIds) {
             bulkForm.addEventListener('submit', function (e) {
-                var checked = document.querySelectorAll('[data-complaint-check]:checked');
+                var checked = document.querySelectorAll(attr('check') + ':checked');
                 if (checked.length === 0) {
                     e.preventDefault();
                     return;

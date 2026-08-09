@@ -5,6 +5,12 @@ module.exports = {
         './resources/js/**/*.js',
         './public/js/**/*.js',
     ],
+    safelist: [
+        'border-l-red-500',
+        'border-l-amber-400',
+        'border-l-emerald-500',
+        'border-l-slate-300',
+    ],
     theme: {
         extend: {
             colors: {
