@@ -223,28 +223,34 @@ class AdminQueryService
         return compact('logs', 'category');
     }
 
-    public function todasData(): LengthAwarePaginator
+    public function todasData(?string $search = null): array
     {
-        return Toda::withCount([
+        $todas = Toda::withCount([
             'operators' => function ($query) {
                 $query->whereNull('archived_at');
             },
             'operators as active_operators_count' => function ($query) {
                 $query->where('status', 'active')->whereNull('archived_at');
             },
-        ])->latest()->paginate(20);
+        ])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('area', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(10);
+
+        return compact('todas', 'search');
     }
 
-    public function todaMembersData(Toda $toda): array
+    public function todaMembersData(Toda $toda): \Illuminate\Database\Eloquent\Collection
     {
-        return $toda->operators()->with('user')->get()->map(function ($operator) {
-            return [
-                'name' => $operator->user->name ?? 'Unknown',
-                'body_number' => $operator->body_number,
-                'plate_number' => $operator->plate_number,
-                'status' => $operator->status,
-            ];
-        })->all();
+        return $toda->operators()
+            ->with('user')
+            ->whereNull('archived_at')
+            ->get();
     }
 
     /**

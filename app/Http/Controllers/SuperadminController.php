@@ -175,10 +175,12 @@ class SuperadminController extends Controller
         return view('superadmin.operators.index', $data);
     }
 
-    public function createOperator()
+    public function createOperator(Request $request)
     {
         $todas = Toda::orderBy('name')->get();
-        return view('superadmin.operators.create', compact('todas'));
+        $selectedToda = $request->query('toda_id');
+
+        return view('superadmin.operators.create', compact('todas', 'selectedToda'));
     }
 
     public function storeOperator(Request $request)
@@ -271,11 +273,22 @@ class SuperadminController extends Controller
         return view('superadmin.activity-logs', $data);
     }
 
-    public function todas()
+    public function todas(Request $request)
     {
-        $todas = app(AdminQueryService::class)->todasData();
+        $data = app(AdminQueryService::class)->todasData($request->query('search'));
+        $todas = $data['todas'];
 
-        return view('superadmin.todas.index', compact('todas'));
+        if ($request->ajax()) {
+            $html = view('partials.admin.toda-members-table', [
+                'todas' => $todas,
+                'routePrefix' => 'superadmin',
+                'showManage' => true,
+            ])->render();
+
+            return response()->json(['html' => $html, 'pagination' => $todas->links('pagination::tailwind')->render()]);
+        }
+
+        return view('superadmin.todas.index', $data);
     }
 
     public function createToda()
@@ -339,8 +352,12 @@ class SuperadminController extends Controller
     public function todaMembers(Toda $toda)
     {
         $members = app(AdminQueryService::class)->todaMembersData($toda);
+        $html = view('partials.toda-member-list', [
+            'members' => $members,
+            'routePrefix' => 'superadmin',
+        ])->render();
 
-        return response()->json(['members' => $members]);
+        return response()->json(['html' => $html, 'count' => $members->count()]);
     }
 
     public function invalidRatings()

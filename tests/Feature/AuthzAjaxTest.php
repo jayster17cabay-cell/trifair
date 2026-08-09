@@ -176,7 +176,8 @@ class AuthzAjaxTest extends TestCase
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
             ->get('/superadmin/toda/' . $toda->id . '/members')
             ->assertOk()
-            ->assertJsonPath('members.0.name', $operator->user->name);
+            ->assertJsonPath('count', 1)
+            ->assertSee($operator->user->name);
     }
 
     public function test_officer_toda_members_ajax_returns_members()
@@ -189,6 +190,7 @@ class AuthzAjaxTest extends TestCase
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
             ->get('/tfrb-officer/toda/' . $toda->id . '/members')
             ->assertOk()
-            ->assertJsonPath('members.0.name', $operator->user->name);
+            ->assertJsonPath('count', 1)
+            ->assertSee($operator->user->name);
     }
 }

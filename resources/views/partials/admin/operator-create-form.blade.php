@@ -1,4 +1,4 @@
-{{-- Shared operator create form body. Requires: $routePrefix, $todas --}}
+{{-- Shared operator create form body. Requires: $routePrefix, $todas, $selectedToda (optional preselect) --}}
 
 <form action="{{ route($routePrefix . '.operators.store') }}" method="POST">
     @csrf
@@ -9,7 +9,7 @@
         <select class="tw-select @error('toda_id') is-invalid @enderror" id="toda_id" name="toda_id" required>
             <option value="">-- Select TODA --</option>
             @foreach ($todas as $toda)
-                <option value="{{ $toda->id }}" {{ old('toda_id') == $toda->id ? 'selected' : '' }}>{{ $toda->name }}{{ $toda->area ? " ({$toda->area})" : '' }}</option>
+                <option value="{{ $toda->id }}" {{ (string) old('toda_id', $selectedToda ?? '') === (string) $toda->id ? 'selected' : '' }}>{{ $toda->name }}{{ $toda->area ? " ({$toda->area})" : '' }}</option>
             @endforeach
         </select>
         @error('toda_id') <div class="tw-error-text">{{ $message }}</div> @enderror

@@ -122,6 +122,9 @@
     .tw-btn-ghost {
         @apply tw-btn text-slate-500 hover:bg-slate-100 hover:text-slate-700;
     }
+    .tw-btn-dashed {
+        @apply tw-btn border-2 border-dashed border-slate-300 bg-white text-slate-600 hover:border-navy-500 hover:bg-slate-50 hover:text-navy-700;
+    }
     .tw-btn-link {
         @apply tw-btn text-navy-600 underline-offset-2 hover:underline;
     }
@@ -467,6 +470,9 @@
     }
     .tw-modal {
         @apply w-full max-w-lg rounded-xl bg-white shadow-soft;
+    }
+    .tw-modal-sm {
+        @apply max-w-[400px];
     }
     .tw-modal-head {
         @apply flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-4;

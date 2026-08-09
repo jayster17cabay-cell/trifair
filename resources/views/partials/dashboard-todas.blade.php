@@ -2,6 +2,7 @@
     Shared TODA activity grid. Params:
     - $todaStats   collection of TODAs with operators_count, active_operators_count, avg_rating, area
     - $membersUrl  base URL for the TODA members modal (role-scoped)
+    - $addMemberUrl  URL of the operator create flow (role-scoped)
     Also includes the members modal partial once.
 --}}
 @if (($todaStats ?? collect())->isNotEmpty())
@@ -36,5 +37,5 @@
         </button>
     @endforeach
 </div>
-@include('partials.toda-members-modal', ['membersUrl' => $membersUrl])
+@include('partials.toda-members-modal', ['membersUrl' => $membersUrl, 'addMemberUrl' => $addMemberUrl])
 @endif

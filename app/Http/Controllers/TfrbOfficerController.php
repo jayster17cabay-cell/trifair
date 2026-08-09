@@ -43,10 +43,12 @@ class TfrbOfficerController extends Controller
         return view('tfrb-officer.operators.index', $data);
     }
 
-    public function createOperator()
+    public function createOperator(Request $request)
     {
         $todas = Toda::orderBy('name')->get();
-        return view('tfrb-officer.operators.create', compact('todas'));
+        $selectedToda = $request->query('toda_id');
+
+        return view('tfrb-officer.operators.create', compact('todas', 'selectedToda'));
     }
 
     public function storeOperator(Request $request)
@@ -220,18 +222,33 @@ class TfrbOfficerController extends Controller
         return view('tfrb-officer.activity-logs', $data);
     }
 
-    public function todas()
+    public function todas(Request $request)
     {
-        $todas = app(AdminQueryService::class)->todasData();
+        $data = app(AdminQueryService::class)->todasData($request->query('search'));
+        $todas = $data['todas'];
 
-        return view('tfrb-officer.todas.index', compact('todas'));
+        if ($request->ajax()) {
+            $html = view('partials.admin.toda-members-table', [
+                'todas' => $todas,
+                'routePrefix' => 'tfrb-officer',
+                'showManage' => false,
+            ])->render();
+
+            return response()->json(['html' => $html, 'pagination' => $todas->links('pagination::tailwind')->render()]);
+        }
+
+        return view('tfrb-officer.todas.index', $data);
     }
 
     public function todaMembers(Toda $toda)
     {
         $members = app(AdminQueryService::class)->todaMembersData($toda);
+        $html = view('partials.toda-member-list', [
+            'members' => $members,
+            'routePrefix' => 'tfrb-officer',
+        ])->render();
 
-        return response()->json(['members' => $members]);
+        return response()->json(['html' => $html, 'count' => $members->count()]);
     }
 
     public function invalidRatings()

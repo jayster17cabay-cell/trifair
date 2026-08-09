@@ -28,7 +28,7 @@
     @include('partials.rating-distribution-chart')
 </div>
 
-@include('partials.dashboard-todas', ['membersUrl' => url('/superadmin/toda')])
+@include('partials.dashboard-todas', ['membersUrl' => url('/superadmin/toda'), 'addMemberUrl' => route('superadmin.operators.create')])
 
 @include('partials.dashboard-recent', [
     'complaintsRoute' => 'superadmin.complaints',

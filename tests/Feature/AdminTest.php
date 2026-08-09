@@ -44,13 +44,13 @@ class AdminTest extends TestCase
         ]);
     }
 
-    private function makeOperator(string $status = 'active'): Operator
+    private function makeOperator(string $status = 'active', ?Toda $toda = null): Operator
     {
         $user = $this->makeUser('operator');
 
         return Operator::create([
             'user_id' => $user->id,
-            'toda_id' => $this->makeToda()->id,
+            'toda_id' => ($toda ?? $this->makeToda())->id,
             'qr_code' => Str::random(32),
             'status' => $status,
             'contact_number' => '09171234567',
@@ -558,5 +558,87 @@ class AdminTest extends TestCase
         $filtered = $this->actingAs($admin)->getJson('/notifications?type=unread');
         $filtered->assertOk();
         $this->assertStringContainsString('data-notification-card', $filtered->json('html'));
+    }
+
+    public function test_todas_index_renders_new_table_with_badges_and_clickable_rows()
+    {
+        $admin = $this->makeUser('superadmin');
+        $withMembers = $this->makeToda();
+        $this->makeOperator('active', $withMembers);
+        $empty = $this->makeToda();
+
+        $this->actingAs($admin)->get('/superadmin/todas')
+            ->assertOk()
+            ->assertSee('Search TODA by name or area')
+            ->assertSee($withMembers->name)
+            ->assertSee($empty->name)
+            ->assertSee('1 total')
+            ->assertSee('1 active')
+            ->assertSee('No members')
+            ->assertSee('showTodaMembers', false);
+    }
+
+    public function test_todas_index_search_filters_by_name_or_area()
+    {
+        $admin = $this->makeUser('superadmin');
+        $alpha = Toda::create(['name' => 'Alpha TODA', 'area' => 'Quezon City', 'is_active' => true]);
+        $beta = Toda::create(['name' => 'Beta TODA', 'area' => 'Marikina', 'is_active' => true]);
+
+        $byName = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->getJson('/superadmin/todas?search=Alpha');
+        $byName->assertOk()
+            ->assertJsonStructure(['html', 'pagination']);
+        $this->assertStringContainsString('Alpha TODA', $byName->json('html'));
+        $this->assertStringNotContainsString('Beta TODA', $byName->json('html'));
+
+        $byArea = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->getJson('/superadmin/todas?search=Marikina');
+        $this->assertStringContainsString('Beta TODA', $byArea->json('html'));
+        $this->assertStringNotContainsString('Alpha TODA', $byArea->json('html'));
+    }
+
+    public function test_todas_members_modal_renders_member_rows_with_actions()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+        $operator = $this->makeOperator('active', $toda);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/superadmin/toda/' . $toda->id . '/members');
+
+        $response->assertOk()->assertJsonPath('count', 1);
+        $html = $response->json('html');
+        $this->assertStringContainsString($operator->user->name, $html);
+        $this->assertStringContainsString($operator->plate_number, $html);
+        $this->assertStringContainsString($operator->body_number, $html);
+        $this->assertStringContainsString('Active', $html);
+        $this->assertStringContainsString('/superadmin/operators/' . $operator->id . '/edit', $html);
+        $this->assertStringContainsString('/superadmin/operators/' . $operator->id . '/archive', $html);
+    }
+
+    public function test_todas_members_modal_empty_state()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/superadmin/toda/' . $toda->id . '/members');
+
+        $response->assertOk()->assertJsonPath('count', 0);
+        $this->assertStringContainsString('No members yet', $response->json('html'));
+    }
+
+    public function test_operator_create_preselects_toda_from_query()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        $this->actingAs($admin)->get('/superadmin/operators/create?toda_id=' . $toda->id)
+            ->assertOk()
+            ->assertSee('value="' . $toda->id . '" selected', false);
     }
 }

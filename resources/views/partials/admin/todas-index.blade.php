@@ -1,4 +1,4 @@
-{{-- Shared TODA list page body. Requires: $routePrefix, $showManage, $todas --}}
+{{-- Shared TODA list page body. Requires: $routePrefix, $showManage, $todas, $search --}}
 
 <div class="tw-page-head">
     <div>
@@ -12,82 +12,67 @@
     @endif
 </div>
 
-<div class="tw-table-wrap">
-    <div class="overflow-x-auto">
-        <table class="tw-table">
-            <thead>
-                <tr>
-                    <th class="tw-th">#</th>
-                    <th class="tw-th">TODA Name</th>
-                    <th class="tw-th">Area</th>
-                    <th class="tw-th text-center">Drivers</th>
-                    <th class="tw-th text-center">Active</th>
-                    <th class="tw-th">Status</th>
-                    @if ($showManage)
-                        <th class="tw-th text-right">Actions</th>
-                    @endif
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($todas as $toda)
-                    <tr class="tw-tr-hover">
-                        <td class="tw-td text-slate-500">{{ $loop->iteration + ($todas->currentPage() - 1) * $todas->perPage() }}</td>
-                        <td class="tw-td">
-                            <div class="flex items-center gap-2.5">
-                                <div class="tw-avatar tw-avatar-sm bg-cyan-600 text-white"><i class="bi bi-diagram-3"></i></div>
-                                <span class="cursor-pointer text-sm font-bold text-navy-600 underline underline-offset-2 hover:text-navy-700"
-                                      onclick="showTodaMembers({{ $toda->id }}, @js($toda->name))">{{ $toda->name }}</span>
-                            </div>
-                        </td>
-                        <td class="tw-td text-sm text-slate-500">{{ $toda->area ?? '—' }}</td>
-                        <td class="tw-td text-center">
-                            <span class="tw-badge tw-badge-navy"><i class="bi bi-people"></i>{{ $toda->operators_count }}</span>
-                        </td>
-                        <td class="tw-td text-center">
-                            <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle"></i>{{ $toda->active_operators_count }}</span>
-                        </td>
-                        <td class="tw-td">
-                            @if ($toda->is_active)
-                                <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i>Active</span>
-                            @else
-                                <span class="tw-badge tw-badge-gray"><i class="bi bi-x-circle-fill"></i>Inactive</span>
-                            @endif
-                        </td>
-                        @if ($showManage)
-                            <td class="tw-td text-right">
-                                <div class="inline-flex gap-1.5">
-                                    <a href="{{ route($routePrefix . '.todas.edit', $toda) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form action="{{ route($routePrefix . '.todas.destroy', $toda) }}" method="POST" onsubmit="return confirm('Delete this TODA? Drivers must be reassigned first.')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Delete">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        @endif
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="{{ $showManage ? 7 : 6 }}" class="px-4 py-10 text-center">
-                            <div class="tw-empty">
-                                <div class="tw-empty-icon"><i class="bi bi-diagram-3"></i></div>
-                                <p class="text-sm text-slate-500">No TODA found.</p>
-                            </div>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+<div class="mb-4 max-w-md">
+    <div class="tw-input-group">
+        <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
+        <input type="text" id="todaSearchInput" class="tw-input" placeholder="Search TODA by name or area..." value="{{ $search ?? '' }}" oninput="liveTodaSearch(this.value)" aria-label="Search TODA by name or area">
+        <button type="button" class="shrink-0 bg-navy-600 px-4 text-white transition hover:bg-navy-700" onclick="liveTodaSearch(document.getElementById('todaSearchInput').value)" aria-label="Search">
+            <i class="bi bi-search"></i>
+        </button>
+        @if ($search ?? null)
+            <a href="{{ route($routePrefix . '.todas') }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700" aria-label="Clear search">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        @endif
     </div>
+</div>
+
+<div id="todasTable" class="tw-table-scroll-wrap">
+    <table class="tw-table min-w-[38rem]">
+        <thead class="tw-thead-sticky">
+            <tr>
+                <th class="tw-th">#</th>
+                <th class="tw-th">TODA Name</th>
+                <th class="tw-th">Area</th>
+                <th class="tw-th">Members</th>
+                <th class="tw-th">Status</th>
+                @if ($showManage)
+                    <th class="tw-th text-right">Actions</th>
+                @endif
+            </tr>
+        </thead>
+        @include('partials.admin.toda-members-table', ['todas' => $todas, 'routePrefix' => $routePrefix, 'showManage' => $showManage])
+    </table>
+</div>
+<div id="paginationLinks">
     @if ($todas->hasPages())
-        <div class="border-t border-slate-100 px-4 py-3">
+        <div class="mt-3">
             {{ $todas->links('pagination::tailwind') }}
         </div>
     @endif
 </div>
 
-@include('partials.toda-members-modal', ['membersUrl' => url('/' . $routePrefix . '/toda')])
+@include('partials.toda-members-modal', [
+    'membersUrl' => url('/' . $routePrefix . '/toda'),
+    'addMemberUrl' => route($routePrefix . '.operators.create'),
+])
+
+<script>
+    let todaSearchTimeout;
+    function liveTodaSearch(val) {
+        clearTimeout(todaSearchTimeout);
+        todaSearchTimeout = setTimeout(() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('search', val);
+            fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(d => {
+                    document.querySelector('#todasTable tbody').outerHTML = d.html;
+                    document.querySelector('#paginationLinks').innerHTML = d.pagination;
+                });
+        }, 350);
+    }
+    document.getElementById('todaSearchInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') e.preventDefault();
+    });
+</script>

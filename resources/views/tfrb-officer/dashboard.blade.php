@@ -27,7 +27,7 @@
     @include('partials.rating-distribution-chart')
 </div>
 
-@include('partials.dashboard-todas', ['membersUrl' => url('/tfrb-officer/toda')])
+@include('partials.dashboard-todas', ['membersUrl' => url('/tfrb-officer/toda'), 'addMemberUrl' => route('tfrb-officer.operators.create')])
 
 @include('partials.dashboard-recent', [
     'complaintsRoute' => 'tfrb-officer.complaints',
