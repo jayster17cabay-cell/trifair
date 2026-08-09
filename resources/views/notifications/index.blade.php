@@ -44,65 +44,30 @@
 </div>
 
 <div class="tw-card overflow-hidden">
-    <div class="divide-y divide-slate-100">
-        @forelse ($notifications as $notification)
-            @php
-                $type = $notification->type;
-                if ($type === 'complaint') { $nbg = 'bg-amber-100 text-amber-600'; $nicon = 'exclamation-triangle'; }
-                elseif ($type === 'new_rating') { $nbg = 'bg-emerald-50 text-emerald-600'; $nicon = 'star-fill'; }
-                elseif ($type === 'operator_response') { $nbg = 'bg-blue-50 text-blue-600'; $nicon = 'reply-fill'; }
-                else { $nbg = 'bg-sky-100 text-sky-600'; $nicon = 'info-circle'; }
-            @endphp
-            <div class="flex items-start gap-3 p-4 transition-colors {{ !$notification->is_read ? 'bg-blue-50/50' : 'hover:bg-slate-50' }}">
-                <div class="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg {{ $nbg }}">
-                    <i class="bi bi-{{ $nicon }}"></i>
-                </div>
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <span class="text-[15px] font-bold text-slate-900">{{ $notification->title }}</span>
-                            @if (!$notification->is_read)
-                                <span class="tw-badge tw-badge-navy ml-2">NEW</span>
-                            @endif
-                        </div>
-                        <span class="shrink-0 text-xs text-slate-400">{{ $notification->created_at->diffForHumans() }}</span>
-                    </div>
-                    <p class="mt-1 text-sm text-slate-500">{{ $notification->message }}</p>
-                    @if ($notification->rating && $notification->rating->operator)
-                        <div class="mt-2 text-xs text-slate-500">
-                            <span class="font-semibold text-slate-600"><i class="bi bi-person mr-1"></i>Operator: {{ $notification->rating->operator->user->name ?? 'Unknown' }}</span>
-                            @if ($notification->rating->start_location && $notification->rating->end_location)
-                                <span class="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                    <i class="bi bi-circle-fill text-[0.5rem] text-emerald-600"></i>{{ $notification->rating->start_location }}
-                                    <i class="bi bi-arrow-right text-[0.7rem] text-slate-300"></i>
-                                    <i class="bi bi-circle-fill text-[0.5rem] text-red-600"></i>{{ $notification->rating->end_location }}
-                                </span>
-                            @endif
-                        </div>
-                    @endif
-                    <div class="mt-3">
-                        <a href="{{ route('notifications.read', $notification) }}" class="tw-btn tw-btn-sm tw-btn-outline">
-                            <i class="bi bi-eye"></i> View Details
-                        </a>
-                    </div>
-                </div>
+    @php $lastGroup = null; @endphp
+    @forelse ($notifications as $notification)
+        @if ($loop->first || $notification->date_group !== $lastGroup)
+            @php $lastGroup = $notification->date_group; @endphp
+            <div class="flex items-center gap-2 px-4 pt-4 pb-1 text-[0.7rem] font-bold uppercase tracking-widest text-slate-400 sm:px-5 {{ $loop->first ? '' : 'mt-4' }}">
+                <i class="bi bi-calendar3 text-gold"></i>{{ $lastGroup }}
             </div>
-        @empty
-            @php
-                $emptyTitle = 'No notifications yet';
-                $emptyMsg = "You'll see alerts here when passengers submit ratings.";
-                if ($type === 'unread') { $emptyTitle = "You're all caught up!"; $emptyMsg = 'No unread notifications.'; }
-                elseif ($type === 'complaint') { $emptyTitle = 'No complaint alerts'; $emptyMsg = 'No passenger complaints have been reported.'; }
-                elseif ($type === 'new_rating') { $emptyTitle = 'No new ratings'; $emptyMsg = 'No new passenger ratings have been submitted.'; }
-                elseif ($type === 'operator_response') { $emptyTitle = 'No operator responses'; $emptyMsg = 'No operator responses to review.'; }
-            @endphp
-            <div class="p-10 text-center">
-                <div class="tw-empty-icon"><i class="bi bi-bell-slash"></i></div>
-                <h3 class="text-base font-bold text-slate-700">{{ $emptyTitle }}</h3>
-                <p class="mt-1 text-sm text-slate-400">{{ $emptyMsg }}</p>
-            </div>
-        @endforelse
-    </div>
+        @endif
+        @include('partials.admin.notification-item', ['notification' => $notification])
+    @empty
+        @php
+            $emptyTitle = 'No notifications yet';
+            $emptyMsg = "You'll see alerts here when passengers submit ratings.";
+            if ($type === 'unread') { $emptyTitle = "You're all caught up!"; $emptyMsg = 'No unread notifications.'; }
+            elseif ($type === 'complaint') { $emptyTitle = 'No complaint alerts'; $emptyMsg = 'No passenger complaints have been reported.'; }
+            elseif ($type === 'new_rating') { $emptyTitle = 'No new ratings'; $emptyMsg = 'No new passenger ratings have been submitted.'; }
+            elseif ($type === 'operator_response') { $emptyTitle = 'No operator responses'; $emptyMsg = 'No operator responses to review.'; }
+        @endphp
+        <div class="p-10 text-center">
+            <div class="tw-empty-icon"><i class="bi bi-bell-slash"></i></div>
+            <h3 class="text-base font-bold text-slate-700">{{ $emptyTitle }}</h3>
+            <p class="mt-1 text-sm text-slate-400">{{ $emptyMsg }}</p>
+        </div>
+    @endforelse
 
     @if ($notifications->hasPages())
         <div class="border-t border-slate-100 px-4 py-3">

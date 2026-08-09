@@ -145,6 +145,7 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator
 Route::middleware(['auth', 'role:superadmin,tfrb_officer'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markReadAjax'])->name('notifications.readAjax');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
 });
 

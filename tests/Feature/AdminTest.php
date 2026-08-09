@@ -410,4 +410,110 @@ class AdminTest extends TestCase
         $this->assertNull(Rating::find($rating->id));
         $this->assertEquals(0, Notification::where('rating_id', $rating->id)->count());
     }
+
+    public function test_notifications_page_renders_grouped_compact_list()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $rating = $this->makeValidRating($operator);
+        $rating->update(['passenger_contact' => '09170001111']);
+
+        $today = Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $rating->id,
+            'type' => 'complaint',
+            'title' => 'New Complaint Report',
+            'message' => 'Operator received a 2-star rating (reckless driving).',
+            'is_read' => false,
+        ]);
+        $yesterday = Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $rating->id,
+            'type' => 'new_rating',
+            'title' => 'New Rating Received',
+            'message' => 'Operator received a 5-star rating from a passenger.',
+            'is_read' => true,
+        ]);
+        $yesterday->created_at = now()->subDay();
+        $yesterday->save();
+        $earlier = Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $rating->id,
+            'type' => 'operator_response',
+            'title' => 'Operator Responded',
+            'message' => 'Operator responded to a rating.',
+            'is_read' => false,
+        ]);
+        $earlier->created_at = now()->subDays(10);
+        $earlier->save();
+
+        $response = $this->actingAs($admin)->get('/notifications');
+
+        $response->assertOk();
+        $response->assertSee('Today', false);
+        $response->assertSee('Yesterday', false);
+        $response->assertSee('Earlier', false);
+        $response->assertSee('data-notification-card', false);
+        $response->assertSee('data-notification-toggle', false);
+        $response->assertSee('data-notification-details', false);
+        $response->assertSee('data-notification-dot', false);
+        $response->assertSee('border-l-amber-400', false);
+        $response->assertSee('border-l-emerald-500', false);
+        $response->assertSee('border-l-blue-500', false);
+        $response->assertSee('Operator responded to a rating.', false);
+        $response->assertDontSee('View Details');
+        $response->assertSee('Mark All as Read');
+    }
+
+    public function test_notification_ajax_read_marks_read_and_returns_unread_count()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $rating = $this->makeValidRating($operator);
+
+        $notification = Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $rating->id,
+            'type' => 'new_rating',
+            'title' => 'New Rating Received',
+            'message' => 'Operator received a 5-star rating from a passenger.',
+            'is_read' => false,
+        ]);
+        Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $rating->id,
+            'type' => 'complaint',
+            'title' => 'New Complaint Report',
+            'message' => 'Operator received a 2-star rating.',
+            'is_read' => false,
+        ]);
+
+        $this->actingAs($admin)->postJson('/notifications/' . $notification->id . '/read')
+            ->assertOk()
+            ->assertJson(['ok' => true, 'unread_count' => 1]);
+
+        $this->assertTrue((bool) $notification->fresh()->is_read);
+    }
+
+    public function test_notification_ajax_read_rejects_other_users_notification()
+    {
+        $admin = $this->makeUser('superadmin');
+        $other = $this->makeUser('tfrb_officer');
+        $operator = $this->makeOperator();
+        $rating = $this->makeValidRating($operator);
+
+        $notification = Notification::create([
+            'user_id' => $other->id,
+            'rating_id' => $rating->id,
+            'type' => 'new_rating',
+            'title' => 'New Rating Received',
+            'message' => 'Operator received a 5-star rating from a passenger.',
+            'is_read' => false,
+        ]);
+
+        $this->actingAs($admin)->postJson('/notifications/' . $notification->id . '/read')
+            ->assertForbidden();
+
+        $this->assertFalse((bool) $notification->fresh()->is_read);
+    }
 }

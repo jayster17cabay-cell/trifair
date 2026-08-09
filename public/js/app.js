@@ -8,6 +8,7 @@
         initDropdowns();
         initPasswordToggles();
         initComplaintCards();
+        initNotificationCards();
         initOperatorModals();
     });
 
@@ -158,6 +159,81 @@
         }
 
         updateBulk();
+    }
+
+    function initNotificationCards() {
+        document.querySelectorAll('[data-notification-card]').forEach(function (card) {
+            var header = card.querySelector('[data-notification-toggle]');
+            var details = card.querySelector('[data-notification-details]');
+            var chevron = card.querySelector('[data-notification-chevron]');
+            if (!header || !details) return;
+            var expanded = false;
+
+            function setExpanded(open) {
+                expanded = open;
+                details.classList.toggle('hidden', !open);
+                if (chevron) {
+                    chevron.classList.toggle('rotate-180', open);
+                }
+                header.setAttribute('aria-expanded', String(open));
+                if (open) {
+                    markNotificationRead(card);
+                }
+            }
+
+            header.addEventListener('click', function (e) {
+                if (e.target.closest('a')) return;
+                setExpanded(!expanded);
+            });
+            header.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setExpanded(!expanded);
+                }
+            });
+        });
+    }
+
+    function markNotificationRead(card) {
+        var id = card.getAttribute('data-notification-id');
+        if (!id || card.classList.contains('notification-read')) return;
+        card.classList.add('notification-read');
+
+        card.classList.remove('bg-blue-50/40');
+        var header = card.querySelector('[data-notification-toggle]');
+        if (header) {
+            header.classList.add('hover:bg-slate-50/70');
+        }
+        var dot = card.querySelector('[data-notification-dot]');
+        if (dot) {
+            dot.classList.add('invisible');
+        }
+
+        var token = document.querySelector('meta[name="csrf-token"]');
+        fetch('/notifications/' + encodeURIComponent(id) + '/read', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token ? token.content : '',
+            },
+            body: '{}',
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data && typeof data.unread_count === 'number') {
+                    updateUnreadBadges(data.unread_count);
+                }
+            })
+            .catch(function () {});
+    }
+
+    function updateUnreadBadges(count) {
+        var show = count > 0;
+        var bell = document.getElementById('unreadBellBadge');
+        var side = document.getElementById('unreadSideBadge');
+        if (bell) bell.style.display = show ? '' : 'none';
+        if (side) side.style.display = show ? '' : 'none';
     }
 
     function initPasswordToggles() {

@@ -518,4 +518,19 @@
     .lp-hero-ring {
         @apply pointer-events-none absolute rounded-full border border-gold/15;
     }
+
+    /* ---------- Accordion / expandable panels ---------- */
+    .tw-expand-panel {
+        animation: tw-expand-in 0.2s ease-out;
+    }
+    @keyframes tw-expand-in {
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 }

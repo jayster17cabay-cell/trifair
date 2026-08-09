@@ -45,7 +45,7 @@ class NotificationController extends Controller
 
     public function markAsRead(Notification $notification)
     {
-        if ($notification->user_id !== Auth::id()) {
+        if ((int) $notification->user_id !== (int) Auth::id()) {
             abort(403);
         }
 
@@ -67,6 +67,22 @@ class NotificationController extends Controller
         }
 
         return redirect()->route('tfrb-officer.dashboard');
+    }
+
+    public function markReadAjax(Notification $notification)
+    {
+        if ((int) $notification->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        if (!$notification->is_read) {
+            $notification->update(['is_read' => true]);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'unread_count' => Notification::forUser(Auth::id())->unread()->count(),
+        ]);
     }
 
     public function markAllAsRead()
