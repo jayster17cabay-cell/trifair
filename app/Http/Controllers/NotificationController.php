@@ -40,6 +40,22 @@ class NotificationController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        if ($request->wantsJson()) {
+            $signature = md5(
+                $notifications->pluck('id')->implode(',') .
+                ($notifications->hasMorePages() ? 'M' : 'E')
+            );
+
+            return response()->json([
+                'html' => view('notifications.list', compact('notifications', 'type'))->render(),
+                'signature' => $signature,
+                'counts' => $counts,
+                'invalidCount' => $invalidCount,
+                'unreadCount' => $counts['unread'],
+                'hasItems' => $notifications->count() > 0,
+            ]);
+        }
+
         return view('notifications.index', compact('notifications', 'type', 'counts', 'invalidCount'));
     }
 

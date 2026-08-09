@@ -516,4 +516,47 @@ class AdminTest extends TestCase
 
         $this->assertFalse((bool) $notification->fresh()->is_read);
     }
+
+    public function test_notifications_index_returns_json_for_live_polling()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $rating = $this->makeValidRating($operator);
+
+        Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $rating->id,
+            'type' => 'new_rating',
+            'title' => 'New Rating Received',
+            'message' => 'Operator received a 5-star rating from a passenger.',
+            'is_read' => false,
+        ]);
+        Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $rating->id,
+            'type' => 'complaint',
+            'title' => 'New Complaint Report',
+            'message' => 'Operator received a 2-star rating.',
+            'is_read' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/notifications');
+
+        $response->assertOk();
+        $response->assertJsonStructure(['html', 'signature', 'counts', 'invalidCount', 'unreadCount', 'hasItems']);
+        $response->assertJson([
+            'unreadCount' => 1,
+            'hasItems' => true,
+        ]);
+        $response->assertJsonPath('counts.all', 2);
+        $response->assertJsonPath('counts.unread', 1);
+        $response->assertJsonPath('counts.new_rating', 1);
+        $this->assertStringContainsString('data-notification-card', $response->json('html'));
+        $this->assertStringContainsString('New Complaint Report', $response->json('html'));
+
+        // Filtered view keeps its signature/JSON shape
+        $filtered = $this->actingAs($admin)->getJson('/notifications?type=unread');
+        $filtered->assertOk();
+        $this->assertStringContainsString('data-notification-card', $filtered->json('html'));
+    }
 }

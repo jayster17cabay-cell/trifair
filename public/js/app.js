@@ -9,6 +9,7 @@
         initPasswordToggles();
         initComplaintCards();
         initNotificationCards();
+        initNotificationLive();
         initOperatorModals();
     });
 
@@ -234,6 +235,49 @@
         var side = document.getElementById('unreadSideBadge');
         if (bell) bell.style.display = show ? '' : 'none';
         if (side) side.style.display = show ? '' : 'none';
+    }
+
+    function initNotificationLive() {
+        var listEl = document.getElementById('notificationList');
+        if (!listEl) return;
+        var currentSig = null;
+
+        function render(data) {
+            if (data.signature && data.signature !== currentSig) {
+                currentSig = data.signature;
+                if (data.html) {
+                    listEl.innerHTML = data.html;
+                    initNotificationCards();
+                }
+            }
+            if (data.counts) {
+                Object.keys(data.counts).forEach(function (key) {
+                    var el = document.querySelector('[data-notif-count="' + key + '"]');
+                    if (el) el.textContent = data.counts[key];
+                });
+            }
+            if (typeof data.invalidCount === 'number') {
+                var inv = document.querySelector('[data-notif-count="invalid"]');
+                if (inv) inv.textContent = data.invalidCount;
+            }
+            if (typeof data.unreadCount === 'number') {
+                updateUnreadBadges(data.unreadCount);
+            }
+            if (typeof data.hasItems === 'boolean') {
+                var form = document.getElementById('markAllReadForm');
+                if (form) form.style.display = data.hasItems ? '' : 'none';
+            }
+        }
+
+        function poll() {
+            fetch(window.location.href, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                .then(function (r) { if (!r.ok) throw new Error('poll failed'); return r.json(); })
+                .then(render)
+                .catch(function () {});
+        }
+
+        setTimeout(poll, 4000);
+        setInterval(poll, 30000);
     }
 
     function initPasswordToggles() {
