@@ -25,6 +25,30 @@ class Rating extends Model
         'Others',
     ];
 
+    /**
+     * Complaint severity lookup used to color-code complaint cards. Keys are
+     * matched case-insensitively (full match first, then substring fallback)
+     * so free-text types like "Attitude" still get a sensible level. Adjust the
+     * map below to change the colors without touching the views.
+     */
+    public const COMPLAINT_SEVERITY = [
+        'smoking while driving' => 'danger',
+        'reckless driving' => 'danger',
+        'drunk driving' => 'danger',
+        'passenger harassment' => 'danger',
+        'unsafe overtaking' => 'danger',
+        'use of mobile phone while driving' => 'danger',
+        'overloading' => 'warning',
+        'overcharging' => 'warning',
+        'refusal to trip' => 'warning',
+        'rude driver' => 'warning',
+        'unprofessional driver behavior' => 'warning',
+        'unsafe pick-up/drop-off' => 'warning',
+        'harassment' => 'danger',
+        'attitude' => 'warning',
+        'others' => 'warning',
+    ];
+
     protected $fillable = [
         'operator_id',
         'rating',
@@ -82,6 +106,32 @@ class Rating extends Model
                 'total' => (int) $map->get($type, 0),
             ];
         })->sortByDesc('total')->values();
+    }
+
+    /**
+     * Map a complaint type to a severity level ('danger' | 'warning' | 'neutral').
+     */
+    public static function complaintSeverity(?string $type): string
+    {
+        $key = strtolower(trim((string) $type));
+        if ($key === '') {
+            return 'neutral';
+        }
+
+        if (isset(self::COMPLAINT_SEVERITY[$key])) {
+            return self::COMPLAINT_SEVERITY[$key];
+        }
+
+        $needles = array_keys(self::COMPLAINT_SEVERITY);
+        usort($needles, fn ($a, $b) => strlen($b) <=> strlen($a));
+
+        foreach ($needles as $needle) {
+            if (str_contains($key, $needle)) {
+                return self::COMPLAINT_SEVERITY[$needle];
+            }
+        }
+
+        return 'neutral';
     }
 
     public static function normalizeAddress($address)

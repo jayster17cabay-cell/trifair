@@ -59,6 +59,7 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::get('/complaints', [TfrbOfficerController::class, 'complaints'])->name('complaints');
     Route::patch('/complaints/{rating}/review', [TfrbOfficerController::class, 'complaintsMarkReviewed'])->name('complaints.review');
     Route::delete('/complaints/{rating}', [TfrbOfficerController::class, 'destroyComplaint'])->name('complaints.destroy');
+    Route::post('/complaints/bulk-review', [TfrbOfficerController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
     Route::get('/activity-logs', [TfrbOfficerController::class, 'activityLogs'])->name('activity-logs');
     Route::get('/todas', [TfrbOfficerController::class, 'todas'])->name('todas');
     Route::get('/toda/{toda}/members', [TfrbOfficerController::class, 'todaMembers'])->name('todas.members');
@@ -93,6 +94,7 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::get('/complaints', [SuperadminController::class, 'complaints'])->name('complaints');
     Route::patch('/complaints/{rating}/review', [SuperadminController::class, 'markReviewed'])->name('complaints.review');
     Route::delete('/complaints/{rating}', [SuperadminController::class, 'destroyComplaint'])->name('complaints.destroy');
+    Route::post('/complaints/bulk-review', [SuperadminController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
     Route::get('/ratings', [SuperadminController::class, 'ratings'])->name('ratings');
     Route::get('/reports', [SuperadminController::class, 'reports'])->name('reports');
     Route::get('/reports/operators/{operator}/trips', [SuperadminController::class, 'reportTrips'])->name('reports.trips');

@@ -203,6 +203,11 @@ class TfrbOfficerController extends Controller
         return app(RatingAdminService::class)->complaintsMarkReviewed($rating);
     }
 
+    public function complaintsBulkReview(Request $request)
+    {
+        return app(RatingAdminService::class)->complaintsBulkReview($request);
+    }
+
     public function destroyComplaint(Rating $rating)
     {
         return app(RatingAdminService::class)->destroyComplaint($rating, 'complaint');
