@@ -2,7 +2,6 @@
     Reusable operator table row. Requires:
     - $operator     App\Models\Operator  (must be eager-loaded with user, toda)
     - $routePrefix  string               'superadmin' | 'tfrb-officer'
-    - $rowNumber    int                  sequential display number
     Renders a compact <tr> (Operator/TODA/Contact/Status/Actions) with a
     data-operator payload consumed by initOperatorModals() in public/js/app.js.
 --}}
@@ -46,7 +45,6 @@
 @endphp
 
 <tr class="tw-tr-hover even:bg-slate-50/60">
-    <td class="tw-td text-slate-400">{{ $rowNumber }}</td>
     <td class="tw-td">
         <div class="flex items-center gap-2.5">
             <div class="tw-avatar tw-avatar-sm {{ $avBg }}">{{ strtoupper(substr($operatorName, 0, 1)) }}</div>

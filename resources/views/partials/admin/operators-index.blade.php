@@ -82,29 +82,26 @@
     </div>
 </div>
 
-<div id="operatorsTable" class="tw-table-wrap">
-    <div class="overflow-x-auto">
-        <table class="tw-table">
-            <thead class="tw-thead-sticky-offset">
-                <tr>
-                    <th class="tw-th">#</th>
-                    <th class="tw-th">Operator</th>
-                    <th class="tw-th">TODA</th>
-                    <th class="tw-th hidden md:table-cell">Contact</th>
-                    <th class="tw-th">Status</th>
-                    <th class="tw-th text-right">Actions</th>
-                </tr>
-            </thead>
-            @include('partials.admin.operators-table')
-        </table>
-    </div>
-    <div id="paginationLinks">
-        @if ($operators->hasPages())
-            <div class="border-t border-slate-100 px-4 py-3">
-                {{ $operators->links('pagination::tailwind') }}
-            </div>
-        @endif
-    </div>
+<div id="operatorsTable" class="tw-table-scroll-wrap">
+    <table class="tw-table min-w-[38rem]">
+        <thead class="tw-thead-sticky">
+            <tr>
+                <th class="tw-th">Operator</th>
+                <th class="tw-th">TODA</th>
+                <th class="tw-th hidden md:table-cell">Contact</th>
+                <th class="tw-th">Status</th>
+                <th class="tw-th text-right">Actions</th>
+            </tr>
+        </thead>
+        @include('partials.admin.operators-table')
+    </table>
+</div>
+<div id="paginationLinks">
+    @if ($operators->hasPages())
+        <div class="border-t border-slate-100 px-4 py-3">
+            {{ $operators->links('pagination::tailwind') }}
+        </div>
+    @endif
 </div>
 
 @include('partials.admin.operator-details-modal', ['routePrefix' => $routePrefix])

@@ -327,7 +327,8 @@ class AdminTest extends TestCase
         $res = $this->actingAs($admin)->get('/superadmin/operators');
 
         $res->assertOk();
-        $res->assertSee('tw-thead-sticky-offset', false);
+        $res->assertSee('tw-table-scroll-wrap', false);
+        $res->assertSee('tw-thead-sticky', false);
         $res->assertSee('data-operator-view', false);
         $res->assertSee('operatorDetailsModal', false);
         $res->assertSee('bi-eye', false);
@@ -335,6 +336,7 @@ class AdminTest extends TestCase
         $res->assertSee('View QR Code', false);
         $res->assertSee('License #', false);
         $res->assertSee('even:bg-slate-50/60', false);
+        $res->assertDontSee('<th class="tw-th">#</th>', false);
         $res->assertDontSee('<th class="tw-th">Plate #</th>', false);
         $res->assertDontSee('<th class="tw-th">Body #</th>', false);
         $res->assertDontSee('<th class="tw-th text-center">QR</th>', false);
