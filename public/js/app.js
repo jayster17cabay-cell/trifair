@@ -17,10 +17,11 @@
             if (!btn) return;
             var op;
             try {
-                op = JSON.parse(btn.getAttribute('data-operator'));
+                op = JSON.parse(btn.getAttribute('data-operator-view'));
             } catch (err) {
                 return;
             }
+            if (!op) return;
             fillOperatorModal(op);
             openModal('operatorDetailsModal');
         });
