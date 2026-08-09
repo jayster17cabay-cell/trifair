@@ -319,6 +319,27 @@ class AdminTest extends TestCase
         $this->assertTrue((bool) $b->fresh()->is_reviewed);
     }
 
+    public function test_operators_page_renders_compact_table_and_modal()
+    {
+        $admin = $this->makeUser('superadmin');
+        $this->makeOperator();
+
+        $res = $this->actingAs($admin)->get('/superadmin/operators');
+
+        $res->assertOk();
+        $res->assertSee('tw-thead-sticky-offset', false);
+        $res->assertSee('data-operator-view', false);
+        $res->assertSee('operatorDetailsModal', false);
+        $res->assertSee('bi-eye', false);
+        $res->assertSee('data-tw-modal-close', false);
+        $res->assertSee('View QR Code', false);
+        $res->assertSee('License #', false);
+        $res->assertSee('even:bg-slate-50/60', false);
+        $res->assertDontSee('<th class="tw-th">Plate #</th>', false);
+        $res->assertDontSee('<th class="tw-th">Body #</th>', false);
+        $res->assertDontSee('<th class="tw-th text-center">QR</th>', false);
+    }
+
     public function test_complaints_page_renders_collapsible_list()
     {
         $admin = $this->makeUser('superadmin');

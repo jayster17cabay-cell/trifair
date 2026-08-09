@@ -8,7 +8,80 @@
         initDropdowns();
         initPasswordToggles();
         initComplaintCards();
+        initOperatorModals();
     });
+
+    function initOperatorModals() {
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-operator-view]');
+            if (!btn) return;
+            var op;
+            try {
+                op = JSON.parse(btn.getAttribute('data-operator'));
+            } catch (err) {
+                return;
+            }
+            fillOperatorModal(op);
+            openModal('operatorDetailsModal');
+        });
+    }
+
+    function escHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function fillOperatorModal(op) {
+        function setText(id, value) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.textContent = value == null || value === '' ? '—' : value;
+            }
+        }
+
+        setText('opModalName', op.name);
+        setText('opModalEmail', op.email);
+        setText('opModalToda', op.toda);
+        setText('opModalPlate', op.plate);
+        setText('opModalBody', op.body);
+        setText('opModalLicense', op.license);
+        setText('opModalColor', op.color);
+        setText('opModalAddress', op.address);
+
+        var avatar = document.getElementById('opModalAvatar');
+        if (avatar) {
+            avatar.className = 'tw-avatar tw-avatar-md shrink-0 ' + (op.avatarBg || 'bg-navy-700');
+            avatar.textContent = (op.name || '?').charAt(0).toUpperCase();
+        }
+
+        var status = document.getElementById('opModalStatus');
+        if (status) {
+            status.className = 'tw-badge shrink-0 ' + (op.statusClass || 'tw-badge-gray');
+            status.innerHTML = '<i class="bi ' + escHtml(op.statusIcon || 'bi-circle') + '"></i>' + escHtml(op.statusLabel || '');
+        }
+
+        var contact = document.getElementById('opModalContact');
+        if (contact) {
+            if (op.contact) {
+                contact.innerHTML = '<a href="tel:' + escHtml(op.contact) + '" class="font-semibold text-navy-600 hover:underline">' + escHtml(op.contact) + '</a>';
+            } else {
+                contact.textContent = '—';
+            }
+        }
+
+        var edit = document.getElementById('opModalEdit');
+        if (edit) {
+            edit.setAttribute('href', op.editUrl || '#');
+        }
+        var qr = document.getElementById('opModalQr');
+        if (qr) {
+            qr.setAttribute('href', op.qrUrl || '#');
+        }
+    }
 
     function initComplaintCards() {
         var headers = document.querySelectorAll('[data-complaint-toggle]');

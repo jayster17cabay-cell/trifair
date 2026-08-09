@@ -247,6 +247,9 @@
     .tw-thead-sticky .tw-th {
         @apply sticky top-0 z-10 shadow-[inset_0_-1px_0_theme(colors.slate.200)];
     }
+    .tw-thead-sticky-offset .tw-th {
+        @apply sticky top-[70px] z-10 shadow-[inset_0_-1px_0_theme(colors.slate.200)];
+    }
 
     /* ---------- Alerts ---------- */
     .tw-alert {

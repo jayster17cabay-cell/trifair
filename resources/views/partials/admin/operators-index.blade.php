@@ -85,16 +85,13 @@
 <div id="operatorsTable" class="tw-table-wrap">
     <div class="overflow-x-auto">
         <table class="tw-table">
-            <thead>
+            <thead class="tw-thead-sticky-offset">
                 <tr>
                     <th class="tw-th">#</th>
                     <th class="tw-th">Operator</th>
                     <th class="tw-th">TODA</th>
-                    <th class="tw-th">Contact</th>
-                    <th class="tw-th">Plate #</th>
-                    <th class="tw-th">Body #</th>
+                    <th class="tw-th hidden md:table-cell">Contact</th>
                     <th class="tw-th">Status</th>
-                    <th class="tw-th text-center">QR</th>
                     <th class="tw-th text-right">Actions</th>
                 </tr>
             </thead>
@@ -109,6 +106,8 @@
         @endif
     </div>
 </div>
+
+@include('partials.admin.operator-details-modal', ['routePrefix' => $routePrefix])
 
 <script>
     let searchTimeout;
