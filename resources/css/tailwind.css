@@ -484,6 +484,37 @@
         @apply rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600;
     }
 
+    /* ---------- Drawer (right-side sliding panel) ---------- */
+    .tw-drawer-overlay {
+        @apply fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .tw-drawer-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+    .tw-drawer {
+        @apply fixed right-0 top-0 z-[70] flex h-full w-[400px] max-w-[92vw] flex-col bg-white shadow-soft;
+        transform: translateX(100%);
+        visibility: hidden;
+        transition: transform 0.25s ease, visibility 0.25s ease;
+    }
+    .tw-drawer.open {
+        transform: translateX(0);
+        visibility: visible;
+    }
+    .tw-drawer-head {
+        @apply flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4;
+    }
+    .tw-drawer-body {
+        @apply flex-1 overflow-y-auto px-4 py-4;
+    }
+    .tw-drawer-close {
+        @apply -mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600;
+    }
+
     /* ---------- Misc ---------- */
     .tw-divider {
         @apply my-4 h-px bg-slate-100;

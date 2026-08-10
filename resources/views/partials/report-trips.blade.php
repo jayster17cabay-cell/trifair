@@ -1,40 +1,61 @@
-{{-- Shared AJAX trip-history for the reports page. Requires: $operator, $totalTrips --}}
+{{-- Trip history list rendered inside the reports drawer. Requires: $operator, $totalTrips --}}
 
-@if ($operator->validRatings && $operator->validRatings->count() > 0)
-    <div class="mb-3 flex flex-wrap items-center gap-2 text-[0.7rem] font-bold uppercase tracking-wider text-slate-500">
-        <i class="bi bi-clock-history"></i> All Trips
-        <span class="tw-badge tw-badge-gray">{{ $totalTrips }}</span>
-        @if ($totalTrips > $operator->validRatings->count())
-            <span class="font-medium normal-case tracking-normal text-slate-400">(showing latest {{ $operator->validRatings->count() }})</span>
+@php
+    $shown = $operator->validRatings->count();
+@endphp
+@if ($shown > 0)
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div class="text-[0.7rem] font-bold uppercase tracking-wider text-slate-500">
+            <i class="bi bi-clock-history mr-1"></i> Trip History
+        </div>
+        @if ($totalTrips > $shown)
+            <span class="text-[0.65rem] text-slate-400">Showing latest {{ $shown }} of {{ $totalTrips }}</span>
+        @else
+            <span class="tw-badge tw-badge-gray">{{ $totalTrips }} trip{{ $totalTrips === 1 ? '' : 's' }}</span>
         @endif
     </div>
-    @foreach ($operator->validRatings as $rating)
-        @php
-            $rr = $rating->rating;
-            if ($rr >= 4) { $bc = 'tw-badge-green'; }
-            elseif ($rr <= 2) { $bc = 'tw-badge-red'; }
-            else { $bc = 'tw-badge-amber'; }
-        @endphp
-        <div class="mb-2 flex items-start gap-2 {{ !$loop->last ? 'border-b border-slate-100 pb-2' : '' }}">
-            <span class="tw-badge {{ $bc }} shrink-0">{{ $rr }}</span>
-            <div class="min-w-0 flex-1">
-                @if ($rating->start_location && $rating->end_location)
-                    <div class="text-xs">
-                        <span class="font-semibold text-emerald-600"><i class="bi bi-circle-fill mr-1 text-[0.35rem]"></i>{{ $rating->start_location }}</span>
-                        <br>
-                        <span class="font-semibold text-red-600"><i class="bi bi-record-fill mr-1 text-[0.35rem]"></i>{{ $rating->end_location }}</span>
+
+    <div class="space-y-2">
+        @foreach ($operator->validRatings as $rating)
+            @php
+                $rr = (int) $rating->rating;
+                $isLow = $rr <= 2;
+                $isMore = $loop->index >= 5;
+            @endphp
+            <div class="rounded-xl border p-3 {{ $isLow ? 'border-red-100 bg-red-50/60' : 'border-slate-100 bg-white' }} {{ $isMore ? 'hidden' : '' }}" {{ $isMore ? 'data-trip-more' : '' }}>
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="flex gap-0.5">
+                            @for ($i = 1; $i <= 5; $i++)
+                                <i class="bi text-[0.7rem] {{ $i <= $rr ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-200' }}"></i>
+                            @endfor
+                        </span>
+                        <span class="text-xs font-bold text-slate-700">{{ $rr }}</span>
                     </div>
-                @else
-                    <span class="text-xs text-slate-500">No route data</span>
-                @endif
-                <div class="mt-0.5 text-[0.65rem] text-slate-400">
-                    <i class="bi bi-clock mr-1"></i>{{ $rating->created_at->diffForHumans() }}
+                    <span class="shrink-0 text-[0.65rem] text-slate-400">{{ $rating->created_at->diffForHumans() }}</span>
+                </div>
+                <div class="mt-2.5 space-y-1.5 text-xs">
+                    <div class="flex items-center gap-1.5 text-slate-600">
+                        <i class="bi bi-circle-fill shrink-0 text-[0.4rem] text-emerald-600"></i>
+                        <span class="truncate">{{ $rating->start_location ?: 'No pickup recorded' }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-slate-600">
+                        <i class="bi bi-circle-fill shrink-0 text-[0.4rem] text-red-600"></i>
+                        <span class="truncate">{{ $rating->end_location ?: 'No dropoff recorded' }}</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    @endforeach
+        @endforeach
+    </div>
+
+    @if ($shown > 5)
+        <button type="button" data-trip-show-all class="tw-btn tw-btn-sm tw-btn-ghost mt-3 w-full">
+            <i class="bi bi-chevron-expand"></i> Show all {{ $shown }} trips
+        </button>
+    @endif
 @else
-    <div class="py-3 text-center">
-        <p class="text-xs text-slate-500">No trips recorded yet.</p>
+    <div class="flex flex-col items-center gap-2 py-12 text-center">
+        <div class="tw-empty-icon tw-empty-icon-navy"><i class="bi bi-inbox"></i></div>
+        <p class="text-sm text-slate-500">No trips recorded yet.</p>
     </div>
 @endif

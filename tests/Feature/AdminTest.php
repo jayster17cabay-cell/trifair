@@ -435,6 +435,46 @@ class AdminTest extends TestCase
         $this->assertFalse((bool) $rating->fresh()->is_reviewed);
     }
 
+    public function test_reports_page_renders_drawer_and_star_ratings()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        for ($i = 1; $i <= 6; $i++) {
+            $this->makeValidRating($operator, $i <= 2 ? 2 : ($i <= 4 ? 3 : 5));
+        }
+
+        $res = $this->actingAs($admin)->get('/superadmin/reports');
+
+        $res->assertOk();
+        $res->assertSee('data-open-trips', false);
+        $res->assertSee('data-row-chevron', false);
+        $res->assertSee('data-trip-drawer', false);
+        $res->assertSee('tw-drawer', false);
+        $res->assertSee('tw-drawer-overlay', false);
+        $res->assertSee('bi-star-fill', false);
+        $res->assertSee('trips', false);
+        $res->assertSee('data-trips-url', false);
+    }
+
+    public function test_reports_trips_endpoint_renders_cards_and_show_all()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        for ($i = 1; $i <= 6; $i++) {
+            $this->makeValidRating($operator, $i === 1 ? 1 : 5);
+        }
+
+        $res = $this->actingAs($admin)->get('/superadmin/reports/operators/' . $operator->id . '/trips');
+
+        $res->assertOk();
+        $html = $res->json('html');
+        $this->assertIsString($html);
+        $this->assertStringContainsString('data-trip-show-all', $html);
+        $this->assertStringContainsString('data-trip-more', $html);
+        $this->assertStringContainsString('bg-red-50/60', $html);
+        $this->assertStringContainsString('bi-star-fill', $html);
+    }
+
     public function test_restore_invalid_rating_reapplies_validity()
     {
         $admin = $this->makeUser('superadmin');

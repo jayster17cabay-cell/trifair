@@ -11,6 +11,7 @@
         initNotificationCards();
         initNotificationLive();
         initOperatorModals();
+        initTripHistoryDrawer();
     });
 
     function initOperatorModals() {
@@ -412,6 +413,127 @@
     function closeAllDropdowns() {
         document.querySelectorAll('[data-tw-dropdown-menu]').forEach(function (menu) {
             menu.classList.remove('open');
+        });
+    }
+
+    function initTripHistoryDrawer() {
+        var drawer = document.querySelector('[data-trip-drawer]');
+        var overlay = document.querySelector('[data-trip-drawer-overlay]');
+        if (!drawer || !overlay) return;
+
+        var nameEl = drawer.querySelector('[data-trip-drawer-name]');
+        var subEl = drawer.querySelector('[data-trip-drawer-subtitle]');
+        var avatarEl = drawer.querySelector('[data-trip-drawer-avatar]');
+        var listEl = drawer.querySelector('[data-trip-drawer-list]');
+        var closeBtn = drawer.querySelector('[data-trip-drawer-close]');
+
+        var currentRow = null;
+        var cache = {};
+
+        function starsHtml(avg) {
+            var filled = Math.round(Number(avg) || 0);
+            var html = '';
+            for (var i = 1; i <= 5; i++) {
+                html += '<i class="bi ' + (i <= filled ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-300') + '" style="font-size:0.6rem;"></i>';
+            }
+            return html;
+        }
+
+        function setRowActive(row, active) {
+            if (!row) return;
+            var chevron = row.querySelector('[data-row-chevron]');
+            if (chevron) chevron.classList.toggle('rotate-180', active);
+        }
+
+        function closeDrawer() {
+            if (!drawer.classList.contains('open')) return;
+            drawer.classList.remove('open');
+            overlay.classList.remove('open');
+            drawer.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            if (currentRow) {
+                setRowActive(currentRow, false);
+                currentRow = null;
+            }
+        }
+
+        function openDrawer(row) {
+            if (currentRow === row && drawer.classList.contains('open')) {
+                closeDrawer();
+                return;
+            }
+
+            var url = row.getAttribute('data-trips-url');
+            var name = row.getAttribute('data-name') || 'Unknown';
+            var plate = row.getAttribute('data-plate');
+            var count = row.getAttribute('data-count') || '0';
+            var avg = row.getAttribute('data-avg') || '0.0';
+            var bg = row.getAttribute('data-avatar-bg') || 'bg-navy-700';
+            var letter = row.getAttribute('data-avatar-letter') || '?';
+
+            nameEl.textContent = name;
+            avatarEl.className = 'tw-avatar tw-avatar-md shrink-0 text-white ' + bg;
+            avatarEl.textContent = letter;
+            var subtitle = (plate ? plate + ' \u00b7 ' : '') + count + ' trip' + (count === '1' ? '' : 's') + ' \u00b7 ' + starsHtml(avg) + ' ' + avg + ' avg';
+            subEl.innerHTML = subtitle;
+
+            if (currentRow) setRowActive(currentRow, false);
+            setRowActive(row, true);
+            currentRow = row;
+
+            if (cache[url]) {
+                listEl.innerHTML = cache[url];
+            } else {
+                listEl.innerHTML = '<div class="flex items-center justify-center gap-2 py-10 text-xs text-slate-500"><div class="tw-loading-spinner"></div> Loading trips...</div>';
+                fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                    .then(function (r) { if (!r.ok) throw new Error('load failed'); return r.json(); })
+                    .then(function (data) {
+                        var html = data.html || '<p class="py-8 text-center text-xs text-slate-500">No trips recorded yet.</p>';
+                        cache[url] = html;
+                        if (currentRow && currentRow.getAttribute('data-trips-url') === url) {
+                            listEl.innerHTML = html;
+                        }
+                    })
+                    .catch(function () {
+                        listEl.innerHTML = '<p class="py-8 text-center text-xs text-slate-500">Failed to load trips.</p>';
+                    });
+            }
+
+            drawer.classList.add('open');
+            overlay.classList.add('open');
+            drawer.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        document.addEventListener('click', function (e) {
+            var row = e.target.closest('[data-open-trips]');
+            if (row) {
+                e.preventDefault();
+                openDrawer(row);
+                return;
+            }
+            if (overlay.contains(e.target)) {
+                closeDrawer();
+            }
+        });
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeDrawer);
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && drawer.classList.contains('open')) {
+                closeDrawer();
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-trip-show-all]');
+            if (!btn) return;
+            listEl.querySelectorAll('[data-trip-more]').forEach(function (el) {
+                el.classList.remove('hidden');
+            });
+            btn.classList.add('hidden');
         });
     }
 })();
