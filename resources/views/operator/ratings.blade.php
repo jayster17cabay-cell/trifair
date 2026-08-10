@@ -2,21 +2,22 @@
 
 @section('title', 'My Ratings')
 
+@section('header-body')
+<div class="op-header-greet">
+    <h1 class="op-header-title">My Ratings</h1>
+    <p class="op-header-sub">All feedback received from passengers</p>
+</div>
+@endsection
+
 @section('content')
-<div class="tw-page-head">
-    <div>
-        <h1 class="tw-page-title">My Ratings</h1>
-        <p class="tw-page-sub">All feedback received from passengers</p>
+<div class="op-stat-strip">
+    <div class="op-stat-strip-item">
+        <small>Average</small>
+        <strong>{{ number_format($averageRating ?? 0, 1) }}</strong>
     </div>
-    <div class="flex gap-2">
-        <div class="rounded-xl bg-gold/10 px-3 py-2 text-center">
-            <small class="block text-[0.7rem] font-bold uppercase tracking-widest text-gold-dark">Average</small>
-            <span class="text-xl font-black text-navy-600">{{ number_format($averageRating ?? 0, 1) }}</span>
-        </div>
-        <div class="rounded-xl bg-navy-600/10 px-3 py-2 text-center">
-            <small class="block text-[0.7rem] font-bold uppercase tracking-widest text-navy-600">Total</small>
-            <span class="text-xl font-black text-navy-600">{{ $totalRatings }}</span>
-        </div>
+    <div class="op-stat-strip-item">
+        <small>Total</small>
+        <strong>{{ $totalRatings }}</strong>
     </div>
 </div>
 

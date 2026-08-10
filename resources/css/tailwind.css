@@ -515,6 +515,165 @@
         @apply -mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600;
     }
 
+    /* ---------- Operator mobile app ---------- */
+    .op-app-body {
+        @apply flex min-h-screen flex-col bg-slate-100 text-slate-800 antialiased;
+    }
+    .op-app-main {
+        @apply w-full flex-1 px-[18px] pb-10;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .op-header {
+        @apply relative z-50 text-white;
+        background-image: linear-gradient(160deg, #0a1d33 0%, #0f2a4a 60%, #1a3a5c 100%);
+        border-bottom-left-radius: 22px;
+        border-bottom-right-radius: 22px;
+    }
+    .op-header-top {
+        @apply flex items-center justify-between gap-3 px-[18px] pb-4 pt-4;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .op-brand {
+        @apply flex items-center gap-2 text-lg font-extrabold tracking-tight;
+    }
+    .op-brand-logo {
+        @apply flex h-9 w-9 items-center justify-center rounded-xl bg-gold text-lg text-navy-800;
+    }
+    .op-menu-btn {
+        @apply relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/25 text-slate-200 transition hover:bg-white/10 hover:text-white;
+    }
+    .op-menu {
+        @apply invisible absolute right-0 top-full z-[60] mt-2 w-64 translate-y-1 rounded-xl border border-slate-100 bg-white p-2 opacity-0 shadow-soft transition-all duration-150;
+    }
+    .op-menu.open {
+        @apply visible translate-y-0 opacity-100;
+    }
+    .op-menu-item {
+        @apply flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900;
+    }
+    .op-menu-item i {
+        @apply w-4 text-center text-slate-400;
+    }
+    .op-menu-item.active {
+        @apply bg-gold/10 font-semibold text-gold-800;
+    }
+    .op-menu-item.active i {
+        @apply text-gold-800;
+    }
+    .op-menu-label {
+        @apply px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400;
+    }
+    .op-menu-divider {
+        @apply my-1.5 h-px bg-slate-100;
+    }
+    .op-menu-danger {
+        @apply text-red-600 hover:bg-red-50 hover:text-red-700;
+    }
+    .op-menu-overlay {
+        @apply fixed inset-0 z-[55] bg-slate-900/50;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    .op-menu-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+    .op-header-body {
+        @apply px-[18px] pb-6;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .op-header-greet {
+        @apply mt-4;
+    }
+    .op-header-title {
+        @apply text-[22px] font-semibold leading-tight text-white;
+    }
+    .op-header-sub {
+        @apply mt-1 text-[13px] text-slate-300;
+    }
+    .op-header-rating {
+        @apply mt-4;
+    }
+    .op-avg {
+        @apply flex items-end gap-3;
+    }
+    .op-avg-num {
+        @apply text-4xl font-black leading-none text-gold;
+    }
+    .op-avg-stars {
+        @apply mb-1 flex gap-0.5 text-sm text-gold;
+    }
+    .op-avg-caption {
+        @apply mt-2 text-[11px] font-bold uppercase tracking-wider text-slate-300;
+    }
+    .op-dashboard {
+        @apply pt-[18px];
+    }
+    .op-qa-grid {
+        @apply grid grid-cols-2 gap-3;
+    }
+    .op-qa-card {
+        @apply flex flex-col items-center gap-3 rounded-[14px] bg-white p-[18px] text-center transition hover:-translate-y-0.5;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    .op-qa-icon {
+        @apply flex h-12 w-12 items-center justify-center rounded-2xl text-xl;
+    }
+    .op-qa-icon-green {
+        @apply bg-emerald-50 text-emerald-600;
+    }
+    .op-qa-icon-blue {
+        @apply bg-sky-50 text-sky-600;
+    }
+    .op-qa-label {
+        @apply text-sm font-semibold text-slate-700;
+    }
+    .op-stack {
+        @apply mt-[14px] flex flex-col gap-[14px];
+    }
+    .op-card {
+        @apply rounded-[14px] bg-white p-[18px];
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    .op-card-head {
+        @apply mb-4 flex items-center justify-between border-b border-slate-100 pb-3;
+    }
+    .op-card-title {
+        @apply text-sm font-bold text-slate-900;
+    }
+    .op-qr-panel {
+        @apply flex items-center justify-center rounded-xl bg-slate-100 p-5;
+    }
+    .op-qr-img {
+        @apply h-40 w-40;
+    }
+    .op-qr-actions {
+        @apply mt-4 flex gap-3;
+    }
+    .op-info-banner {
+        @apply mt-4 flex items-center gap-2 rounded-xl bg-sky-50 px-4 py-3 text-xs font-medium text-sky-700;
+    }
+    .op-stat-strip {
+        @apply mb-4 grid grid-cols-2 gap-3;
+    }
+    .op-stat-strip-item {
+        @apply rounded-[14px] bg-white px-4 py-3 text-center;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    .op-stat-strip-item small {
+        @apply block text-[10px] font-bold uppercase tracking-widest text-slate-400;
+    }
+    .op-stat-strip-item strong {
+        @apply block text-xl font-extrabold text-navy-600;
+    }
+
     /* ---------- Misc ---------- */
     .tw-divider {
         @apply my-4 h-px bg-slate-100;

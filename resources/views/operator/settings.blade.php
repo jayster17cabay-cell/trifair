@@ -2,11 +2,14 @@
 
 @section('title', 'Settings')
 
-@section('content')
-<div class="tw-page-head">
-    <h1 class="tw-page-title"><i class="bi bi-gear-fill mr-2 text-navy-600"></i>Settings</h1>
+@section('header-body')
+<div class="op-header-greet">
+    <h1 class="op-header-title">Settings</h1>
+    <p class="op-header-sub">Account and security</p>
 </div>
+@endsection
 
+@section('content')
 <div class="grid gap-5 lg:grid-cols-2">
     <div class="tw-card">
         <div class="tw-card-pad border-b border-slate-100">

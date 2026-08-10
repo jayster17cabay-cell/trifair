@@ -141,6 +141,13 @@
                     if (pr) pr.textContent = data.pendingReview + ' complaint' + (data.pendingReview !== 1 ? 's' : '') + ' pending review';
                 }
                 if (typeof data.totalRatings !== 'undefined') setVisibility('operatorNoRatingsBanner', data.totalRatings > 0);
+                if (typeof data.totalRatings !== 'undefined') {
+                    var cap = document.querySelector('[data-live="ratingCaption"]');
+                    if (cap) {
+                        var n = Number(data.totalRatings);
+                        cap.textContent = 'Avg Rating \u00b7 ' + (n > 0 ? n + (n === 1 ? ' Rating' : ' Ratings') : 'No Ratings Yet');
+                    }
+                }
                 if (typeof data.unreadCount !== 'undefined') {
                     setVisibility('unreadBanner', data.unreadCount > 0);
                     setVisibility('unreadBellBadge', data.unreadCount > 0);

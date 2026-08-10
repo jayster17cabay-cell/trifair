@@ -2,22 +2,14 @@
 
 @section('title', 'My Profile')
 
-@section('content')
-<div class="tw-page-head">
-    <div>
-        <h1 class="tw-page-title"><i class="bi bi-person-badge-fill mr-2 text-navy-600"></i>My Profile</h1>
-        <p class="tw-page-sub">Your registration details and performance snapshot</p>
-    </div>
-    <div class="flex items-center gap-2">
-        <a href="{{ route('operator.settings') }}" class="tw-btn tw-btn-sm tw-btn-outline">
-            <i class="bi bi-gear"></i>Settings
-        </a>
-        <a href="{{ route('rate.operator', $operator->qr_code) }}" target="_blank" class="tw-btn tw-btn-sm tw-btn-outline">
-            <i class="bi bi-qr-code"></i>My QR
-        </a>
-    </div>
+@section('header-body')
+<div class="op-header-greet">
+    <h1 class="op-header-title">My Profile</h1>
+    <p class="op-header-sub">Your registration details and performance snapshot</p>
 </div>
+@endsection
 
+@section('content')
 <div class="grid gap-5 lg:grid-cols-3">
     <div class="lg:col-span-1">
         <div class="tw-card">
