@@ -207,4 +207,81 @@ class StructureAuditTest extends TestCase
         $this->get('/rate/' . $operator->qr_code)->assertOk();
         $this->assertTrue(true);
     }
+
+    public function test_rate_page_phone_shell_structure()
+    {
+        $operator = $this->makeOperator();
+        $response = $this->get('/rate/' . $operator->qr_code);
+        $response->assertOk();
+
+        // Header partial — compact single centered row, verified badge + clock/date
+        $response->assertSee('<div class="rate-header">', false);
+        $response->assertSee('<div class="rate-header-row">', false);
+        $response->assertSee('<span class="rate-verified-pill">', false);
+        $response->assertSee('<i class="bi bi-shield-check"', false);
+        $response->assertSee('Verified', false);
+        $response->assertSee('<span class="rate-header-dot"', false);
+        $response->assertSee('<span class="rate-header-datetime">', false);
+        $response->assertSee('<i class="bi bi-clock"', false);
+        $response->assertSee('<time', false);
+
+        // Driver pill — avatar initials + "Your driver" label
+        $response->assertSee('<div class="driver-pill" role="group" aria-label="Your driver: ' . $operator->user->name . '">', false);
+        $response->assertSee('<span class="driver-avatar"', false);
+        $response->assertSee('Your driver', false);
+        $response->assertSee($operator->user->name, false);
+
+        // Map card — timeline From/To + route map shell
+        $response->assertSee('<div class="rate-card trip-card">', false);
+        $response->assertSee('<div class="route-timeline">', false);
+        $response->assertSee('From', false);
+        $response->assertSee('To', false);
+        $response->assertSee('id="rateMapStart"', false);
+        $response->assertSee('id="rateMapEnd"', false);
+        $response->assertSee('data-trip-route-map', false);
+        $response->assertSee('data-map-id="rateMap"', false);
+        $response->assertSee('data-mode="track"', false);
+        $response->assertSee('id="rateMap" class="route-map"', false);
+
+        // Tracking banner + note start hidden
+        $response->assertSee('id="rateMapTracking" hidden', false);
+        $response->assertSee('id="rateMapNote" role="status" hidden', false);
+
+        // Star card — hidden until route is selected, five flat round-square buttons
+        $response->assertSee('<section class="rate-card" id="starSection" style="display:none;">', false);
+        $response->assertSee('aria-label="Rate your ride from 1 to 5 stars"', false);
+        $response->assertSee('id="ratingValue"', false);
+        $this->assertSame(5, substr_count($response->getContent(), 'class="rate-star"'));
+        $this->assertSame(5, substr_count($response->getContent(), 'role="radio"'));
+
+        $this->assertTrue(true);
+    }
+
+    public function test_trip_route_map_partial_static_mode()
+    {
+        $html = view('partials.rate.trip-route-map', [
+            'mapId' => 'historyMap',
+            'mode' => 'static',
+            'startAddress' => 'Solano, Nueva Vizcaya',
+            'endAddress' => 'Bagabag, Nueva Vizcaya',
+            'startCoords' => [16.52, 121.19],
+            'endCoords' => [16.60, 121.26],
+            'summaryText' => '12.4 km · 25 min',
+        ])->render();
+
+        $this->assertStringContainsString('data-map-id="historyMap"', $html);
+        $this->assertStringContainsString('data-mode="static"', $html);
+        $this->assertStringContainsString('data-start-coords="[16.52,121.19]"', $html);
+        $this->assertStringContainsString('data-end-coords="[16.6,121.26]"', $html);
+        $this->assertStringContainsString('id="historyMapStartText"', $html);
+        $this->assertStringContainsString('id="historyMapEndText"', $html);
+        $this->assertStringContainsString('Solano, Nueva Vizcaya', $html);
+        $this->assertStringContainsString('12.4 km · 25 min', $html);
+        $this->assertStringContainsString('id="historyMapTracking" hidden', $html);
+        $this->assertStringNotContainsString('name="start_location"', $html);
+        $this->assertStringNotContainsString('id="historyMapEnd"', $html);
+
+        $this->assertTrue(true);
+    }
 }
+
