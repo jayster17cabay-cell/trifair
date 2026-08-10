@@ -43,25 +43,24 @@
     @endforeach
 </div>
 
-<div class="tw-table-wrap">
-    <div class="overflow-x-auto">
-        <table class="tw-table">
-            <thead>
-                <tr>
-                    <th class="tw-th w-12"></th>
-                    <th class="tw-th">User</th>
-                    <th class="tw-th">Description</th>
-                    <th class="tw-th">Action</th>
-                    <th class="tw-th">IP Address</th>
-                    <th class="tw-th text-right">Time</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($logs as $log)
-                    @php
-                        $col = $categoryColors[$log->category] ?? 'text-slate-500';
-                        $bg = $categoryBgs[$log->category] ?? 'bg-slate-100';
-                    @endphp
+<div class="tw-table-scroll-wrap">
+    <table class="tw-table min-w-[44rem]">
+        <thead class="tw-thead-sticky">
+            <tr>
+                <th class="tw-th w-12"></th>
+                <th class="tw-th">User</th>
+                <th class="tw-th">Description</th>
+                <th class="tw-th">Action</th>
+                <th class="tw-th">IP Address</th>
+                <th class="tw-th text-right">Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($logs as $log)
+                @php
+                    $col = $categoryColors[$log->category] ?? 'text-slate-500';
+                    $bg = $categoryBgs[$log->category] ?? 'bg-slate-100';
+                @endphp
                     <tr class="tw-tr-hover">
                         <td class="tw-td text-center">
                             <div class="tw-avatar tw-avatar-sm {{ $bg }} {{ $col }} inline-flex text-sm">
@@ -96,17 +95,18 @@
                         <td colspan="6" class="px-4 py-10 text-center">
                             <div class="tw-empty">
                                 <div class="tw-empty-icon"><i class="bi bi-clock-history"></i></div>
-                                <p class="text-sm text-slate-500">No activity logs found.</p>
+                                <h3 class="tw-empty-title">No Activity Logs Yet</h3>
+                                <p class="text-sm text-slate-500">System events and changes will appear here.</p>
                             </div>
                         </td>
                     </tr>
                 @endforelse
-            </tbody>
-        </table>
-    </div>
-    @if ($logs->hasPages())
-        <div class="border-t border-slate-100 px-4 py-3">
-            {{ $logs->withQueryString()->links('pagination::tailwind') }}
-        </div>
-    @endif
+        </tbody>
+    </table>
 </div>
+
+@if ($logs->hasPages())
+    <div class="mt-3">
+        {{ $logs->withQueryString()->links('pagination::tailwind') }}
+    </div>
+@endif

@@ -10,35 +10,34 @@
     </a>
 </div>
 
-<div class="tw-table-wrap">
-    <div class="overflow-x-auto">
-        <table class="tw-table">
-            <thead>
+<div class="tw-table-scroll-wrap">
+    <table class="tw-table min-w-[40rem]">
+        <thead class="tw-thead-sticky">
+            <tr>
+                <th class="tw-th">Operator</th>
+                <th class="tw-th">Plate #</th>
+                <th class="tw-th">Status</th>
+                <th class="tw-th">Average Rating</th>
+                <th class="tw-th text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($operators as $operator)
+                @php $avg = (float) ($operator->valid_ratings_avg_rating ?? 0); @endphp
+                @include('partials.admin.operator-performance-row', ['operator' => $operator, 'routePrefix' => $routePrefix, 'avg' => $avg])
+            @empty
                 <tr>
-                    <th class="tw-th">Operator</th>
-                    <th class="tw-th">Plate #</th>
-                    <th class="tw-th">Status</th>
-                    <th class="tw-th">Average Rating</th>
-                    <th class="tw-th text-right">Total</th>
+                    <td colspan="5" class="px-4 py-10 text-center">
+                        <div class="tw-empty">
+                            <div class="tw-empty-icon"><i class="bi bi-inbox"></i></div>
+                            <h3 class="tw-empty-title">No Operators Found</h3>
+                            <p class="text-sm text-slate-500">No operators match the selected route and period.</p>
+                        </div>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                @forelse ($operators as $operator)
-                    @php $avg = (float) ($operator->valid_ratings_avg_rating ?? 0); @endphp
-                    @include('partials.admin.operator-performance-row', ['operator' => $operator, 'routePrefix' => $routePrefix, 'avg' => $avg])
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-4 py-10 text-center">
-                            <div class="tw-empty">
-                                <div class="tw-empty-icon"><i class="bi bi-inbox"></i></div>
-                                <p class="text-sm text-slate-500">No operators found.</p>
-                            </div>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+            @endforelse
+        </tbody>
+    </table>
 </div>
 
 <div class="mt-4 flex justify-center">

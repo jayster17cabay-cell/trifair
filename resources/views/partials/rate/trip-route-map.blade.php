@@ -68,7 +68,7 @@
     </div>
 
     <div class="map-info">
-        <span class="map-attribution">Map data © OpenStreetMap</span>
+        <span class="map-attribution">Map data © Esri · © OpenStreetMap</span>
         <span class="map-summary" id="{{ $mapId }}Summary">{{ $summaryText ?? 'Select destination' }}</span>
     </div>
 

@@ -11,6 +11,7 @@
         initNotificationCards();
         initNotificationLive();
         initOperatorModals();
+        initOfficerModals();
         initTripHistoryDrawer();
         initOperatorMenu();
     });
@@ -38,6 +39,57 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    function initOfficerModals() {
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-officer-view]');
+            if (!btn) return;
+            var officer;
+            try {
+                officer = JSON.parse(btn.getAttribute('data-officer-view'));
+            } catch (err) {
+                return;
+            }
+            if (!officer) return;
+            fillOfficerModal(officer);
+            openModal('officerDetailsModal');
+        });
+    }
+
+    function fillOfficerModal(officer) {
+        function setText(id, value) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.textContent = value == null || value === '' ? '—' : value;
+            }
+        }
+
+        setText('ofModalName', officer.name);
+        setText('ofModalEmail', officer.email);
+        setText('ofModalPhone', officer.phone);
+        setText('ofModalJoined', officer.joined);
+
+        var avatar = document.getElementById('ofModalAvatar');
+        if (avatar) {
+            avatar.className = 'tw-avatar tw-avatar-md shrink-0 ' + (officer.avatarBg || 'bg-navy-700');
+            avatar.textContent = (officer.name || '?').charAt(0).toUpperCase();
+        }
+
+        var status = document.getElementById('ofModalStatus');
+        if (status) {
+            status.className = 'tw-badge shrink-0 ' + (officer.statusClass || 'tw-badge-gray');
+            status.innerHTML = '<i class="bi ' + escHtml(officer.statusIcon || 'bi-circle') + '"></i>' + escHtml(officer.statusLabel || '');
+        }
+
+        var verified = document.getElementById('ofModalVerified');
+        if (verified) {
+            if (officer.verified) {
+                verified.innerHTML = '<span class="inline-flex items-center gap-1.5 text-sm text-emerald-700"><i class="bi bi-patch-check-fill"></i> Email address verified</span>';
+            } else {
+                verified.innerHTML = '<span class="inline-flex items-center gap-1.5 text-sm text-amber-700"><i class="bi bi-clock-fill"></i> Awaiting email verification</span>';
+            }
+        }
     }
 
     function fillOperatorModal(op) {

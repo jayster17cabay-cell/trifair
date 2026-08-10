@@ -11,7 +11,7 @@
                 'label' => 'Main Menu',
                 'links' => [
                     ['label' => 'Dashboard', 'icon' => 'bi-grid-1x2', 'route' => 'tfrb-officer.dashboard', 'match' => 'tfrb-officer.dashboard'],
-                    ['label' => 'Complaints', 'icon' => 'bi-exclamation-triangle', 'route' => 'tfrb-officer.complaints', 'match' => 'tfrb-officer.complaints'],
+                    ['label' => 'Complaints', 'icon' => 'bi-exclamation-triangle', 'route' => 'tfrb-officer.complaints', 'match' => 'tfrb-officer.complaints*'],
                 ],
             ],
             [
@@ -20,7 +20,7 @@
                     ['label' => 'Operators', 'icon' => 'bi-people', 'route' => 'tfrb-officer.operators', 'match' => 'tfrb-officer.operators'],
                     ['label' => 'Pending Approvals', 'icon' => 'bi-hourglass-split', 'href' => route('tfrb-officer.operators', ['status' => 'pending']), 'match' => 'tfrb-officer.operators', 'active' => request()->query('status') === 'pending', 'gold' => true],
                     ['label' => 'Ratings', 'icon' => 'bi-star-half', 'route' => 'tfrb-officer.ratings', 'match' => 'tfrb-officer.ratings*'],
-                    ['label' => 'Reports', 'icon' => 'bi-bar-chart-line', 'route' => 'tfrb-officer.reports', 'match' => 'tfrb-officer.reports'],
+                    ['label' => 'Reports', 'icon' => 'bi-bar-chart-line', 'route' => 'tfrb-officer.reports', 'match' => 'tfrb-officer.reports*'],
                     ['label' => 'TODA', 'icon' => 'bi-diagram-3', 'route' => 'tfrb-officer.todas', 'match' => 'tfrb-officer.todas*'],
                 ],
             ],

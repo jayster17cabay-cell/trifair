@@ -12,7 +12,7 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --primary: #1e3a5f;
-            --gold: #f5a623;
+            --gold: #f5b800;
             --green: #10b981;
             --green-dark: #059669;
             --gray-50: #f9fafb;
@@ -67,7 +67,7 @@
         .close-btn {
             display: inline-flex; align-items: center; gap: 0.5rem;
             padding: 0.8rem 2.5rem; border: none; border-radius: 14px;
-            background: linear-gradient(135deg, var(--gold), #d48b0a);
+            background: linear-gradient(135deg, var(--gold), #e0a800);
             color: white; font-size: 0.95rem; font-weight: 800;
             font-family: inherit; cursor: pointer; margin-top: 1.5rem;
             transition: all 0.2s;

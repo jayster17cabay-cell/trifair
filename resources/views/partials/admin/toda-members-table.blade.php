@@ -13,7 +13,13 @@
             <td colspan="{{ $showManage ? 6 : 5 }}" class="px-4 py-10 text-center">
                 <div class="tw-empty">
                     <div class="tw-empty-icon"><i class="bi bi-diagram-3"></i></div>
-                    <p class="text-sm text-slate-500">No TODA found.</p>
+                    <h3 class="tw-empty-title">No TODA Found</h3>
+                    <p class="text-sm text-slate-500">No TODA associations match the current filters.</p>
+                    @if ($showManage && !request('search'))
+                        <a href="{{ route($routePrefix . '.todas.create') }}" class="tw-btn tw-btn-sm tw-btn-gold mt-4">
+                            <i class="bi bi-plus-lg"></i>Add TODA
+                        </a>
+                    @endif
                 </div>
             </td>
         </tr>

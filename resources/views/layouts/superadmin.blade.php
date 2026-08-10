@@ -12,7 +12,7 @@
                 'links' => [
                     ['label' => 'Dashboard', 'icon' => 'bi-speedometer2', 'route' => 'superadmin.dashboard', 'match' => 'superadmin.dashboard'],
                     ['label' => 'TFRB Officers', 'icon' => 'bi-shield', 'route' => 'superadmin.officers', 'match' => 'superadmin.officers*'],
-                    ['label' => 'Complaints', 'icon' => 'bi-exclamation-triangle', 'route' => 'superadmin.complaints', 'match' => 'superadmin.complaints'],
+                    ['label' => 'Complaints', 'icon' => 'bi-exclamation-triangle', 'route' => 'superadmin.complaints', 'match' => 'superadmin.complaints*'],
                 ],
             ],
             [
@@ -21,7 +21,7 @@
                     ['label' => 'Operators', 'icon' => 'bi-people', 'route' => 'superadmin.operators', 'match' => 'superadmin.operators'],
                     ['label' => 'TODA', 'icon' => 'bi-diagram-3', 'route' => 'superadmin.todas', 'match' => 'superadmin.todas*'],
                     ['label' => 'Ratings', 'icon' => 'bi-star', 'route' => 'superadmin.ratings', 'match' => 'superadmin.ratings*'],
-                    ['label' => 'Reports', 'icon' => 'bi-bar-chart', 'route' => 'superadmin.reports', 'match' => 'superadmin.reports'],
+                    ['label' => 'Reports', 'icon' => 'bi-bar-chart', 'route' => 'superadmin.reports', 'match' => 'superadmin.reports*'],
                 ],
             ],
             [

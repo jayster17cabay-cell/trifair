@@ -692,7 +692,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #f5a623, #0f2a4a);
+        background: linear-gradient(90deg, #f5b800, #0f2a4a);
     }
     .rate-header-row {
         display: inline-flex;
@@ -715,7 +715,7 @@
         color: rgba(255, 255, 255, 0.95);
     }
     .rate-verified-pill i {
-        color: #f5a623;
+        color: #f5b800;
         font-size: 0.78rem;
     }
     .rate-header-dot {
@@ -733,7 +733,7 @@
         color: rgba(255, 255, 255, 0.92);
     }
     .rate-header-datetime i {
-        color: #f5a623;
+        color: #f5b800;
     }
 
     /* Cards + page stack */
@@ -785,7 +785,7 @@
         height: 44px;
         border-radius: 50%;
         background: #0f2a4a;
-        color: #f5a623;
+        color: #f5b800;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -972,6 +972,44 @@
     .leaflet-routing-container {
         display: none !important;
     }
+    .map-shell .leaflet-control-layers {
+        border: none;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .map-shell .leaflet-control-layers-toggle {
+        width: 34px;
+        height: 34px;
+        background-color: #ffffff;
+        background-size: 20px 20px;
+        background-position: center;
+        border-radius: 10px;
+    }
+    .map-shell .leaflet-control-layers-expanded {
+        padding: 8px;
+        background: #ffffff;
+        color: #0f2a4a;
+        border-radius: 10px;
+    }
+    .map-shell .leaflet-control-layers-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+    }
+    .map-shell .leaflet-control-layers-base {
+        display: grid;
+        gap: 2px;
+    }
+    .map-shell .leaflet-control-layers-base label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+    }
+    .map-shell .leaflet-control-layers-base input[type='radio'] {
+        accent-color: #0f2a4a;
+        margin-right: 6px;
+    }
 
     /* TripRouteMap — markers */
     .marker-pickup {
@@ -1127,7 +1165,7 @@
         transform: scale(0.9);
     }
     .rate-star.selected {
-        background: #f5a623;
+        background: #f5b800;
     }
     .rate-star.selected i {
         color: #ffffff;
@@ -1186,8 +1224,8 @@
         color: #cbd5e1;
     }
     .rate-field:focus {
-        border-color: #f5a623;
-        box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.12);
+        border-color: #f5b800;
+        box-shadow: 0 0 0 3px rgba(245, 184, 0, 0.12);
     }
     .rate-field-grid {
         display: grid;
@@ -1238,7 +1276,7 @@
         margin-top: 0.75rem;
     }
     .rate-upload:active {
-        border-color: #f5a623;
+        border-color: #f5b800;
         background: #f8fafc;
     }
     .rate-upload i {
@@ -1288,7 +1326,7 @@
         padding: 0.9rem;
         border: none;
         border-radius: 12px;
-        background: linear-gradient(135deg, #f5a623, #e08e00);
+        background: linear-gradient(135deg, #f5b800, #e0a800);
         color: #1f2937;
         font-size: 0.95rem;
         font-weight: 800;

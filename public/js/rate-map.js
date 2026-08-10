@@ -6,7 +6,10 @@
    Solano, Nueva Vizcaya). The turn-by-turn instructions panel is hidden
    (`show: false`) — passengers only see the route line.
 
-   Rendering: CARTO Positron tiles, a navy route polyline with a subtle white
+   Rendering: Google Maps–style basemaps from Esri — a Transportation
+   (World Street Map) basemap with a Satellite (World Imagery) alternative,
+   switchable via the bottom-left layer control. Overlaid on top is a navy
+   route polyline with a subtle white
    dashed overlay + directional arrows (leaflet-polylinedecorator), custom
    pickup (navy circle + white center dot) and dropoff (red teardrop) markers,
    and styled zoom controls at the bottom-right.
@@ -142,13 +145,24 @@
             attributionControl: true
         });
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
+        var transportationLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 20
-        }).addTo(map);
+        });
+
+        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.arcgis.com/home/index.html">ArcGIS</a>',
+            maxZoom: 20
+        });
+
+        transportationLayer.addTo(map);
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        L.control.layers({
+            'Transportation': transportationLayer,
+            'Satellite': satelliteLayer
+        }, null, { position: 'bottomleft', collapsed: true }).addTo(map);
 
         /* LRM computes the route but draws nothing itself (`styles: []`) so the
            module fully controls route-line lifecycle (validation clears,

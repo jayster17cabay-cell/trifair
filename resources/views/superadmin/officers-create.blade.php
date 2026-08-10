@@ -32,6 +32,11 @@
                 <input type="password" class="tw-input @error('password') is-invalid @enderror" id="password" name="password" required placeholder="Min. 8 characters">
                 @error('password') <div class="tw-error-text">{{ $message }}</div> @enderror
             </div>
+            <div class="sm:col-span-2">
+                <label for="phone" class="tw-label">Phone Number</label>
+                <input type="text" class="tw-input @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone') }}" placeholder="Enter phone number">
+                @error('phone') <div class="tw-error-text">{{ $message }}</div> @enderror
+            </div>
         </div>
         <div class="mt-6 border-t border-slate-100 pt-4">
             <button type="submit" class="tw-btn tw-btn-gold px-5">

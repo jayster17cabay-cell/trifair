@@ -37,7 +37,7 @@ class TfrbOfficerController extends Controller
         $operators = $data['operators'];
         if ($request->ajax()) {
             $html = view('partials.admin.operators-table', ['operators' => $operators, 'routePrefix' => 'tfrb-officer'])->render();
-            $pagination = $operators->links()->render();
+            $pagination = $operators->links('pagination::tailwind')->render();
             return response()->json(compact('html', 'pagination'));
         }
         return view('tfrb-officer.operators.index', $data);

@@ -101,13 +101,14 @@ class AdminQueryService
 
     public function operatorsData(Request $request): array
     {
-        $operators = $this->operatorsBaseQuery($request)->latest()->paginate(10);
+        $operators = $this->operatorsBaseQuery($request)->latest()->paginate(10)->withQueryString();
 
         $search = $request->query('search');
         $status = $request->query('status');
         $archivedCount = Operator::archived()->count();
+        $activeOperatorsCount = Operator::notArchived()->where('status', 'active')->count();
 
-        return compact('operators', 'search', 'status', 'archivedCount');
+        return compact('operators', 'search', 'status', 'archivedCount', 'activeOperatorsCount');
     }
 
     public function operatorsForExport(Request $request)
@@ -218,7 +219,7 @@ class AdminQueryService
             $query->where('category', $category);
         }
 
-        $logs = $query->latestFirst()->paginate(20);
+        $logs = $query->latestFirst()->paginate(20)->withQueryString();
 
         return compact('logs', 'category');
     }
@@ -240,7 +241,8 @@ class AdminQueryService
                 });
             })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return compact('todas', 'search');
     }

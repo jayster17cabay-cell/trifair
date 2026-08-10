@@ -51,7 +51,7 @@
     </div>
     <div class="tw-stat">
         <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-check-circle"></i></div>
-        <div class="tw-stat-num">{{ $operators->filter(function($d){ return $d->status === 'active'; })->count() }}</div>
+        <div class="tw-stat-num">{{ $activeOperatorsCount }}</div>
         <div class="tw-stat-label">Active</div>
     </div>
 </div>

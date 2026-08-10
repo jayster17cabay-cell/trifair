@@ -15,21 +15,20 @@
     </div>
 </div>
 
-<div class="tw-table-wrap">
-    <div class="overflow-x-auto">
-        <table class="tw-table">
-            <thead>
-                <tr>
-                    <th class="tw-th">#</th>
-                    <th class="tw-th">Operator</th>
-                    <th class="tw-th">Rating</th>
-                    <th class="tw-th">Reason</th>
-                    <th class="tw-th">Invalid Reason</th>
-                    <th class="tw-th">Route</th>
-                    <th class="tw-th">Date</th>
-                    <th class="tw-th text-right">Action</th>
-                </tr>
-            </thead>
+<div class="tw-table-scroll-wrap">
+    <table class="tw-table min-w-[52rem]">
+        <thead class="tw-thead-sticky">
+            <tr>
+                <th class="tw-th">#</th>
+                <th class="tw-th">Operator</th>
+                <th class="tw-th">Rating</th>
+                <th class="tw-th">Reason</th>
+                <th class="tw-th">Invalid Reason</th>
+                <th class="tw-th">Route</th>
+                <th class="tw-th">Date</th>
+                <th class="tw-th text-right">Action</th>
+            </tr>
+        </thead>
             <tbody>
                 @forelse ($ratings as $rating)
                     <tr class="tw-tr-hover">
@@ -77,17 +76,18 @@
                         <td colspan="8" class="px-4 py-10 text-center">
                             <div class="tw-empty">
                                 <div class="tw-empty-icon"><i class="bi bi-check-circle text-emerald-500"></i></div>
-                                <p class="text-sm text-slate-500">No invalid ratings. All ratings are valid.</p>
+                                <h3 class="tw-empty-title">No Invalid Ratings</h3>
+                                <p class="text-sm text-slate-500">All ratings are valid.</p>
                             </div>
                         </td>
                     </tr>
                 @endforelse
-            </tbody>
-        </table>
-    </div>
-    @if ($ratings->hasPages())
-        <div class="border-t border-slate-100 px-4 py-3">
-            {{ $ratings->links('pagination::tailwind') }}
-        </div>
-    @endif
+        </tbody>
+    </table>
 </div>
+
+@if ($ratings->hasPages())
+    <div class="mt-3">
+        {{ $ratings->links('pagination::tailwind') }}
+    </div>
+@endif

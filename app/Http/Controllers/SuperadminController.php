@@ -32,10 +32,34 @@ class SuperadminController extends Controller
         return view('superadmin.dashboard', $stats);
     }
 
-    public function officers()
+    public function officers(Request $request)
     {
-        $officers = User::where('role', 'tfrb_officer')->latest()->paginate(20);
-        return view('superadmin.officers', compact('officers'));
+        $search = $request->query('search');
+
+        $officers = User::where('role', 'tfrb_officer')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        if ($request->ajax()) {
+            $html = view('partials.admin.officers-table', ['officers' => $officers])->render();
+            return response()->json([
+                'html' => $html,
+                'pagination' => $officers->links('pagination::tailwind')->render(),
+            ]);
+        }
+
+        $totalOfficers = User::where('role', 'tfrb_officer')->count();
+        $activeOfficers = User::where('role', 'tfrb_officer')->where('is_active', true)->count();
+        $verifiedOfficers = User::where('role', 'tfrb_officer')->whereNotNull('email_verified_at')->count();
+
+        return view('superadmin.officers', compact('officers', 'search', 'totalOfficers', 'activeOfficers', 'verifiedOfficers'));
     }
 
     public function createOfficer()
@@ -51,12 +75,14 @@ class SuperadminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
+            'phone' => 'nullable|string|max:20',
         ]);
 
         $officer = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'phone' => $data['phone'] ?? null,
         ]);
 
         // role/is_active are intentionally NOT mass-assignable (see User model)
@@ -84,7 +110,7 @@ class SuperadminController extends Controller
 
         ActivityLogger::log('delete_tfrb_officer', "Deleted TFRB Officer {$officerName}", null, 'tfrb_officer');
 
-        return back()->with('success', 'TFRB Officer removed successfully.');
+        return redirect()->route('superadmin.officers')->with('success', 'TFRB Officer removed successfully.');
     }
 
     public function showSettings()
@@ -107,7 +133,7 @@ class SuperadminController extends Controller
             'update_password',
             "Updated own password",
             $user,
-            'tfrb_officer'
+            'auth'
         );
 
         return back()->with('success', 'Password updated successfully.');
@@ -174,7 +200,7 @@ class SuperadminController extends Controller
         $operators = $data['operators'];
         if ($request->ajax()) {
             $html = view('partials.admin.operators-table', ['operators' => $operators, 'routePrefix' => 'superadmin'])->render();
-            $pagination = $operators->links()->render();
+            $pagination = $operators->links('pagination::tailwind')->render();
             return response()->json(compact('html', 'pagination'));
         }
         return view('superadmin.operators.index', $data);

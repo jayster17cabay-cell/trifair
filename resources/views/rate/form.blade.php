@@ -21,7 +21,7 @@
         body {
             background:
                 radial-gradient(1000px 520px at 50% -12%, rgba(15,42,74,0.10) 0%, transparent 60%),
-                radial-gradient(700px 420px at 100% 105%, rgba(245,166,35,0.07) 0%, transparent 60%),
+                radial-gradient(700px 420px at 100% 105%, rgba(245,184,0,0.07) 0%, transparent 60%),
                 #f8fafc;
             background-attachment: fixed;
             min-height: 100vh;
@@ -175,7 +175,7 @@
                     <div class="screen-stars">
                         @php
                             $er = $existingRating->rating;
-                            $esOn = '#f5a623';
+                            $esOn = '#f5b800';
                             $esOff = '#e2e8f0';
                         @endphp
                         @for($i = 1; $i <= 5; $i++)
