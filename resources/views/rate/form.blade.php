@@ -143,6 +143,18 @@
             font-size: 0.78rem; color: #64748b; cursor: pointer;
             margin-top: 0.75rem; text-decoration: underline;
         }
+
+        /* Map marker tooltips */
+        .marker-label-from, .marker-label-to {
+            background: #0f2a4a; color: #fff; border: none; border-radius: 8px;
+            padding: 0.2rem 0.55rem; font-size: 0.68rem; font-weight: 700;
+            box-shadow: 0 2px 8px rgba(15,42,74,0.25); letter-spacing: 0.02em;
+        }
+        .marker-label-from::before, .marker-label-to::before {
+            border-top-color: #0f2a4a;
+        }
+        .marker-label-to { background: #dc2626; }
+        .marker-label-to::before { border-top-color: #dc2626; }
     </style>
 </head>
 <body>
@@ -486,7 +498,7 @@
                     setStartMarker(latlng);
                     var acc = Math.round(p.coords.accuracy);
                     var inSolanoNow = inSolano(latlng);
-                    mapApi.setView(inSolanoNow ? latlng : L.latLng(SOLANO_CENTER), inSolanoNow ? 16 : 14);
+                    mapApi.setView(inSolanoNow ? latlng : L.latLng(SOLANO_CENTER), inSolanoNow ? 15 : 14);
                     updateLocStatus(inSolanoNow
                         ? 'Location detected! Accuracy: ~' + acc + 'm. Tracking movement.'
                         : 'Location detected outside Solano (nearby town). Tracking movement.', 'ok');
@@ -523,7 +535,7 @@
     function setFallbackLocation() {
         var fallback = L.latLng(SOLANO_CENTER);
         setStartMarker(fallback);
-        mapApi.setView(fallback, 14);
+        mapApi.setView(fallback, 15);
         updateLocStatus('Using Solano center — type destination or tap map.', 'ok');
         reverseGeocode(fallback, 'rateMapStart');
         startTracking();
@@ -558,24 +570,40 @@
 
     function followMarker(latlng) {
         if (!map || !latlng) return;
-        if (!map.__followBound) {
-            map.__followBound = true;
-            map.on('dragstart', markMapInteraction);
-            map.on('zoomstart', markMapInteraction);
-            map.on('touchstart', markMapInteraction);
-        }
-        if (Date.now() - mapLastInteracted < 8000) return;
-        var size = map.getSize();
-        var inner = L.latLngBounds(
-            map.containerPointToLatLng(L.point(size.x * 0.25, size.y * 0.3)),
-            map.containerPointToLatLng(L.point(size.x * 0.75, size.y * 0.7))
-        );
-        if (!inner.contains(latlng)) {
-            map.panTo(latlng, { animate: true, duration: 0.4 });
-        }
+        try {
+            if (!map.__followBound) {
+                map.__followBound = true;
+                map.on('dragstart', markMapInteraction);
+                map.on('zoomstart', markMapInteraction);
+                map.on('touchstart', markMapInteraction);
+            }
+            if (Date.now() - mapLastInteracted < 8000) return;
+            var size = map.getSize();
+            var inner = L.latLngBounds(
+                map.containerPointToLatLng(L.point(size.x * 0.25, size.y * 0.3)),
+                map.containerPointToLatLng(L.point(size.x * 0.75, size.y * 0.7))
+            );
+            if (!inner.contains(latlng)) {
+                map.panTo(latlng, { animate: true, duration: 0.4 });
+            }
+        } catch (e) { /* map may be mid-transition during zoom */ }
     }
 
     function markMapInteraction() { mapLastInteracted = Date.now(); }
+
+    function fitBothMarkers() {
+        if (!map || !startMarker) return;
+        var pts = [startMarker.getLatLng()];
+        if (endMarker) { pts.push(endMarker.getLatLng()); }
+        try {
+            var b = L.latLngBounds(pts);
+            if (serviceBounds) {
+                var clamped = b.intersect(serviceBounds);
+                if (clamped.isValid()) { b = clamped; }
+            }
+            map.fitBounds(b.pad(0.4), { maxZoom: 16, animate: true, duration: 0.5 });
+        } catch (e) { /* ignore mid-transition */ }
+    }
 
     /* ---- Markers ---- */
 
@@ -585,7 +613,9 @@
             startMarker.setLatLng(latlng);
             return;
         }
-        startMarker = L.marker(latlng, { icon: icon, zIndexOffset: 1000 }).addTo(map);
+        startMarker = L.marker(latlng, { icon: icon, zIndexOffset: 1000 })
+            .addTo(map)
+            .bindTooltip('From', { permanent: false, direction: 'top', offset: [0, -16], className: 'marker-label-from' });
     }
 
     function setEndMarker(latlng) {
@@ -596,7 +626,9 @@
             drawRoute();
             return;
         }
-        endMarker = L.marker(latlng, { icon: icon }).addTo(map);
+        endMarker = L.marker(latlng, { icon: icon })
+            .addTo(map)
+            .bindTooltip('To', { permanent: false, direction: 'top', offset: [0, -38], className: 'marker-label-to' });
         drawRoute();
     }
 
@@ -611,6 +643,7 @@
         if (ov) ov.classList.remove('show');
         if (dw) dw.classList.remove('show');
         setEndMarker(latlng);
+        setTimeout(fitBothMarkers, 400);
     }
 
     /* ---- Route drawing ---- */
@@ -658,7 +691,7 @@
         approxLine = L.polyline([start, end], {
             color: '#0f2a4a', weight: 4, opacity: 0.5, dashArray: '4 6', interactive: false
         }).addTo(map);
-        mapApi.fitBounds([start, end]);
+        fitBothMarkers();
 
         var distMeters = start.distanceTo(end);
         updateSummary(fmtDistance(distMeters) + ' · — <span style="opacity:0.75;">(straight line)</span>');

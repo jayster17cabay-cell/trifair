@@ -28,7 +28,7 @@
     var SOLANO_CENTER = [16.52, 121.19];
     var SOLANO_SW = [16.45, 121.12];
     var SOLANO_NE = [16.59, 121.26];
-    var SERVICE_RADIUS_DEG = 0.15;
+    var SERVICE_RADIUS_DEG = 0.25;
 
     API.SOLANO_CENTER = SOLANO_CENTER;
     API.serviceBounds = L.latLngBounds(
@@ -140,9 +140,11 @@
             minZoom: 11,
             maxZoom: 18,
             maxBounds: bounds,
-            maxBoundsViscosity: 1.0,
+            maxBoundsViscosity: 0.8,
             zoomControl: false,
-            attributionControl: true
+            attributionControl: true,
+            zoomSnap: 1,
+            zoomDelta: 1
         });
 
         var transportationLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
@@ -231,7 +233,14 @@
             drawRouteGeometry(route.coordinates);
             if (opts.onRouteSelected) { opts.onRouteSelected(route); }
             if (api._fitNext !== false) {
-                api.fitBounds(route.coordinates);
+                var pts = route.coordinates.slice();
+                if (route.inputWaypoints) {
+                    for (var i = 0; i < route.inputWaypoints.length; i++) {
+                        var wp = route.inputWaypoints[i];
+                        if (wp && wp.latLng) { pts.push(wp.latLng); }
+                    }
+                }
+                api.fitBounds(pts);
             }
         });
 
@@ -255,7 +264,12 @@
             },
             fitBounds: function (latlngs) {
                 if (latlngs && latlngs.length) {
-                    map.fitBounds(L.latLngBounds(latlngs).pad(0.25), { maxZoom: 16 });
+                    var target = L.latLngBounds(latlngs);
+                    if (bounds) {
+                        var clamped = target.intersect(bounds);
+                        if (clamped.isValid()) { target = clamped; }
+                    }
+                    map.fitBounds(target.pad(0.35), { maxZoom: 16, animate: true, duration: 0.6 });
                 }
             },
             setView: function (latlng, zoom) {
