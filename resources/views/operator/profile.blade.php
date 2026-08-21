@@ -35,31 +35,31 @@
                 @endif
                 <div class="mt-4 w-full border-t border-slate-100 pt-4 text-left text-sm">
                     <div class="mb-3 flex items-center justify-between">
-                        <span class="text-slate-500">Body #</span>
+                        <span class="text-navy-600 font-semibold">Body #</span>
                         <span class="font-bold text-slate-800">{{ $operator->body_number ?? '—' }}</span>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
-                        <span class="text-slate-500">Plate #</span>
+                        <span class="text-navy-600 font-semibold">Plate #</span>
                         <span class="font-bold text-slate-800">{{ $operator->plate_number ?? '—' }}</span>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
-                        <span class="text-slate-500">License #</span>
+                        <span class="text-navy-600 font-semibold">License #</span>
                         <span class="font-bold text-slate-800">{{ $operator->license_number ?? '—' }}</span>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
-                        <span class="text-slate-500">Motorcycle Model</span>
+                        <span class="text-navy-600 font-semibold">Motorcycle Model</span>
                         <span class="font-bold text-slate-800">{{ $operator->motorcycle_model ?? '—' }}</span>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
-                        <span class="text-slate-500">Contact</span>
+                        <span class="text-navy-600 font-semibold">Contact</span>
                         <span class="font-bold text-slate-800">{{ $operator->contact_number ?? '—' }}</span>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
-                        <span class="text-slate-500">Address</span>
+                        <span class="text-navy-600 font-semibold">Address</span>
                         <span class="font-bold text-slate-800">{{ $operator->address ?? '—' }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-500">Member Since</span>
+                        <span class="text-navy-600 font-semibold">Member Since</span>
                         <span class="font-bold text-slate-800">{{ $operator->created_at?->format('M d, Y') ?? '—' }}</span>
                     </div>
                 </div>
@@ -98,27 +98,27 @@
             <div class="tw-card-pad">
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
-                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">Full Name</label>
+                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Full Name</label>
                         <p class="font-semibold text-slate-800">{{ $operator->user->name }}</p>
                     </div>
                     <div>
-                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">Email</label>
+                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Email</label>
                         <p class="font-semibold text-slate-800">{{ $operator->user->email }}</p>
                     </div>
                     <div>
-                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">TODA Organization</label>
+                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">TODA Organization</label>
                         <p class="font-semibold text-slate-800">{{ $operator->toda->name ?? 'Unassigned' }}</p>
                     </div>
                     <div>
-                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">Phone</label>
+                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Phone</label>
                         <p class="font-semibold text-slate-800">{{ $operator->user->phone ?? '—' }}</p>
                     </div>
                     <div>
-                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">License Number</label>
+                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">License Number</label>
                         <p class="font-semibold text-slate-800">{{ $operator->license_number ?? '—' }}</p>
                     </div>
                     <div>
-                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">QR Code</label>
+                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">QR Code</label>
                         <p class="font-semibold text-slate-800">
                             <code class="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{{ $operator->qr_code }}</code>
                         </p>

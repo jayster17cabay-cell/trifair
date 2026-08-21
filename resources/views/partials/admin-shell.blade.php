@@ -54,7 +54,7 @@
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
             <div class="hidden text-right md:block">
-                <div class="text-[11px] font-bold text-slate-300" data-live-clock="datetime"></div>
+                <div class="text-[11px] font-bold text-white/60" data-live-clock="datetime"></div>
             </div>
             @if ($shell['showBell'])
                 <a href="{{ route('notifications.index') }}" class="tw-topbar-icon-btn" title="Notifications" aria-label="Notifications">
@@ -66,7 +66,7 @@
             @endif
             <div class="hidden items-center gap-3 sm:flex">
                 <div class="text-right">
-                    <small class="block text-[11px] font-medium uppercase tracking-wider text-slate-400">Welcome back</small>
+                    <small class="block text-[11px] font-medium uppercase tracking-wider text-white/60">Welcome back</small>
                     <strong class="text-sm font-bold text-gold">{{ Auth::user()->name }}</strong>
                 </div>
                 <div class="tw-avatar tw-avatar-md bg-gold text-navy-800">

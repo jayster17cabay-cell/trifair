@@ -58,15 +58,15 @@
         </div>
         <div class="tw-card-pad">
             <div class="mb-4">
-                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">Name</label>
+                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Name</label>
                 <p class="font-semibold text-slate-800">{{ Auth::user()->name }}</p>
             </div>
             <div class="mb-4">
-                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">Email</label>
+                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Email</label>
                 <p class="font-semibold text-slate-800">{{ Auth::user()->email }}</p>
             </div>
             <div>
-                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">Role</label>
+                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Role</label>
                 <p class="font-semibold text-slate-800">Superadmin</p>
             </div>
         </div>

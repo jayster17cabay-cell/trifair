@@ -4,7 +4,7 @@
     @csrf
     @method('PUT')
 
-    <div class="mb-2 mt-1 text-xs font-bold uppercase tracking-wider text-slate-400">Account</div>
+    <div class="mb-2 mt-1 text-xs font-bold uppercase tracking-wider text-navy-600">Account</div>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
             <label for="name" class="tw-label">Full Name <span class="text-red-600">*</span></label>
@@ -19,12 +19,12 @@
         <div>
             <label for="password" class="tw-label">New Password</label>
             <input type="password" class="tw-input @error('password') is-invalid @enderror" id="password" name="password" placeholder="Leave empty to keep current">
-            <small class="mt-1 block text-xs text-slate-400">Leave blank if you don't want to change.</small>
+                <small class="mt-1 block text-xs text-slate-500">Leave blank if you don't want to change.</small>
             @error('password') <div class="tw-error-text">{{ $message }}</div> @enderror
         </div>
     </div>
 
-    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-slate-400">Profile</div>
+    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Profile</div>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
             <label for="toda_id" class="tw-label">TODA <span class="text-red-600">*</span></label>
@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-slate-400">Motorcycle</div>
+    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Motorcycle</div>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
             <label for="plate_number" class="tw-label">Plate Number</label>

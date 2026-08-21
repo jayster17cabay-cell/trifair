@@ -7,7 +7,7 @@
     <div class="op-header-top">
         <a href="{{ route('operator.dashboard') }}" class="op-brand">
             <span class="op-brand-logo"><i class="bi bi-bicycle"></i></span>
-            <span>TriFair <span class="text-gold">Operator</span></span>
+            <span class="font-extrabold">TriFair <span class="text-gold">Operator</span></span>
         </a>
 
         @include('partials.operator.nav-dropdown-menu', ['nav' => $nav ?? []])

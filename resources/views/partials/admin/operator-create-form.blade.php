@@ -3,7 +3,7 @@
 <form action="{{ route($routePrefix . '.operators.store') }}" method="POST">
     @csrf
 
-    <div class="mb-2 mt-1 text-xs font-bold uppercase tracking-wider text-slate-400">Assignment</div>
+    <div class="mb-2 mt-1 text-xs font-bold uppercase tracking-wider text-navy-600">Assignment</div>
     <div class="mb-4">
         <label for="toda_id" class="tw-label">TODA <span class="text-red-600">*</span></label>
         <select class="tw-select @error('toda_id') is-invalid @enderror" id="toda_id" name="toda_id" required>
@@ -15,7 +15,7 @@
         @error('toda_id') <div class="tw-error-text">{{ $message }}</div> @enderror
     </div>
 
-    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-slate-400">Account Details</div>
+    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Account Details</div>
     <div class="grid gap-4 sm:grid-cols-2">
         <div>
             <label for="name" class="tw-label">Full Name <span class="text-red-600">*</span></label>
@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-slate-400">Motorcycle Details</div>
+    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Motorcycle Details</div>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
             <label for="plate_number" class="tw-label">Plate Number</label>

@@ -60,20 +60,20 @@
         </div>
         <div class="tw-card-pad">
             <div class="mb-4">
-                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">Name</label>
+                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Name</label>
                 <p class="font-semibold text-slate-800">{{ Auth::user()->name }}</p>
             </div>
             <div class="mb-4">
-                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">Email</label>
+                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Email</label>
                 <p class="font-semibold text-slate-800">{{ Auth::user()->email }}</p>
             </div>
             @if($operator)
             <div class="mb-4">
-                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">License Number</label>
+                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">License Number</label>
                 <p class="font-semibold text-slate-800">{{ $operator->license_number ?? 'N/A' }}</p>
             </div>
             <div>
-                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-slate-500">Body Number</label>
+                <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Body Number</label>
                 <p class="font-semibold text-slate-800">{{ $operator->body_number ?? 'N/A' }}</p>
             </div>
             @endif

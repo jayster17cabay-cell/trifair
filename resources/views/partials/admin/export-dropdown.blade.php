@@ -19,7 +19,7 @@
     <div id="{{ $dropdownId }}" data-tw-dropdown-menu class="tw-dropdown right-0 top-full z-50 mt-2 w-80 p-0">
         <form method="GET" action="{{ $exportRoute }}">
             <div class="px-4 pt-4 pb-3">
-                <p class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">Export Options</p>
+                <p class="mb-3 text-xs font-bold uppercase tracking-wider text-navy-600">Export Options</p>
 
                 @if ($activeOperators ?? null)
                     <div class="mb-3">
