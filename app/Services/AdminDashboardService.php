@@ -53,7 +53,7 @@ class AdminDashboardService
             'activeOperators' => Operator::notArchived()->where('status', 'active')->count(),
             'totalRatings' => Rating::isValid()->count(),
             'averageRating' => Rating::isValid()->avg('rating'),
-            'totalComplaints' => Rating::isValid()->where('rating', '<=', 2)->count(),
+            'totalComplaints' => Rating::isValid()->where('rating', '<=', 2)->whereNotNull('complaint_type')->count(),
             'totalTodas' => Toda::count(),
         ];
 
