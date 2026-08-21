@@ -459,6 +459,10 @@
                 reverseGeocode(e.latlng, 'rateMapEnd');
             });
 
+            var fallback = L.latLng(SOLANO_CENTER);
+            setStartMarker(fallback);
+            mapApi.setView(fallback, 15);
+            reverseGeocode(fallback, 'rateMapStart');
             detectLocation();
         } catch (e) {
             document.getElementById('rateMap').innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;"><i class="bi bi-map" style="font-size:1.5rem;"></i><br><small>Map unavailable</small></div>';
@@ -492,7 +496,7 @@
             return;
         }
         updateLocStatus('Detecting your location...');
-        getPositionWithRetry(3, { timeout: 15000, enableHighAccuracy: true, maximumAge: 10000 })
+        getPositionWithRetry(2, { timeout: 8000, enableHighAccuracy: true, maximumAge: 10000 })
             .then(function (p) {
                 if (locationCancelled) { return; }
                 var latlng = L.latLng(p.coords.latitude, p.coords.longitude);
@@ -546,7 +550,7 @@
     }
 
     function startTracking() {
-        if (!navigator.geolocation) return;
+        if (!navigator.geolocation || trackingWatchId !== null) return;
         trackingWatchId = navigator.geolocation.watchPosition(function (p) {
             var latlng = L.latLng(p.coords.latitude, p.coords.longitude);
             if (!serviceBounds.contains(latlng)) return;
@@ -642,12 +646,13 @@
         lastRerouteTime = 0;
         deviationCooldown = false;
         deviationDismissed = false;
+        mapLastInteracted = Date.now();
         var ov = document.getElementById('devOverlay');
         var dw = document.getElementById('devWarning');
         if (ov) ov.classList.remove('show');
         if (dw) dw.classList.remove('show');
         setEndMarker(latlng);
-        setTimeout(fitBothMarkers, 400);
+        setTimeout(fitBothMarkers, 150);
     }
 
     /* ---- Route drawing ---- */
@@ -866,7 +871,7 @@
         var q = this.value.trim();
         if (q.length < 1) { searchResults.innerHTML = ''; return; }
         clearTimeout(searchTimeout);
-        var wait = Math.max(500, lastGeocodeCall + 1200 - Date.now());
+        var wait = Math.max(300, lastGeocodeCall + 800 - Date.now());
         searchTimeout = setTimeout(function () { forwardGeocode(q); }, wait);
     });
 
@@ -1042,7 +1047,7 @@
     window.retryLocation = retryLocation;
     window.skipLocation = skipLocation;
 
-    setTimeout(function () { initMap(); }, 300);
+    setTimeout(function () { initMap(); }, 50);
 })();
 </script>
 </body>
