@@ -70,13 +70,13 @@
                                 <div class="mt-1 flex flex-wrap gap-2">
                                     @foreach ($rating->proofs as $proof)
                                         @if (str_starts_with($proof->file_type, 'image'))
-                                            <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}" target="_blank" rel="noopener">
+                                            <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}">
                                                 <img src="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
                                                      alt="{{ $proof->original_name }}"
                                                      class="h-16 w-16 rounded-lg border border-slate-200 object-cover">
                                             </a>
                                         @else
-                                            <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}" target="_blank" rel="noopener"
+                                            <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
                                                class="tw-btn tw-btn-sm tw-btn-outline">
                                                 <i class="bi bi-file-earmark"></i> {{ $proof->original_name }}
                                             </a>

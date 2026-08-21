@@ -4,7 +4,7 @@
 --}}
 <div class="op-qa-grid">
     @if ($operator && $operator->qr_code)
-        <a href="https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data={{ urlencode(route('rate.operator', $operator->qr_code)) }}" target="_blank" rel="noopener" class="op-qa-card">
+        <a href="https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data={{ urlencode(route('rate.operator', $operator->qr_code)) }}" class="op-qa-card">
             <span class="op-qa-icon op-qa-icon-green"><i class="bi bi-printer-fill"></i></span>
             <span class="op-qa-label">Print QR</span>
         </a>

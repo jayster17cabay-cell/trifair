@@ -96,36 +96,42 @@ class TfrbOfficerController extends Controller
     public function exportOperators(Request $request)
     {
         $operators = app(AdminQueryService::class)->operatorsForExport($request);
+        $format = $request->query('format', 'csv');
 
-        return app(ExportService::class)->operatorsCsv($operators);
+        return app(ExportService::class)->operatorsFormat($operators, $format);
     }
 
-    public function exportRatings()
+    public function exportRatings(Request $request)
     {
-        $ratings = app(AdminQueryService::class)->ratingsForExport();
+        $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
+        $ratings = app(AdminQueryService::class)->ratingsForExport($operatorId);
+        $format = $request->query('format', 'csv');
 
-        return app(ExportService::class)->ratingsCsv($ratings);
+        return app(ExportService::class)->ratingsFormat($ratings, $format);
     }
 
     public function exportComplaints(Request $request)
     {
         $complaints = app(AdminQueryService::class)->complaintsForExport($request);
+        $format = $request->query('format', 'csv');
 
-        return app(ExportService::class)->complaintsCsv($complaints);
+        return app(ExportService::class)->complaintsFormat($complaints, $format);
     }
 
-    public function exportReports()
+    public function exportReports(Request $request)
     {
         $reports = app(AdminQueryService::class)->reportsForExport();
+        $format = $request->query('format', 'csv');
 
-        return app(ExportService::class)->reportsCsv($reports);
+        return app(ExportService::class)->reportsFormat($reports, $format);
     }
 
     public function exportActivityLogs(Request $request)
     {
         $logs = app(AdminQueryService::class)->activityLogsForExport($request);
+        $format = $request->query('format', 'csv');
 
-        return app(ExportService::class)->activityLogsCsv($logs);
+        return app(ExportService::class)->activityLogsFormat($logs, $format);
     }
 
     public function showQrCode(Operator $operator)
@@ -163,8 +169,9 @@ class TfrbOfficerController extends Controller
     public function ratings()
     {
         $ratings = app(AdminQueryService::class)->ratingsData();
+        $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('tfrb-officer.ratings', compact('ratings'));
+        return view('tfrb-officer.ratings', compact('ratings', 'activeOperators'));
     }
 
     public function reports()
@@ -201,6 +208,7 @@ class TfrbOfficerController extends Controller
     public function complaints(Request $request)
     {
         $data = app(AdminQueryService::class)->complaintsData($request);
+        $data['activeOperators'] = app(AdminQueryService::class)->activeOperators();
 
         return view('tfrb-officer.complaints', $data);
     }

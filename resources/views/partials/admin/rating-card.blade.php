@@ -135,7 +135,7 @@
                     @if ($rating->proofs->count() > 0)
                         <div class="flex flex-wrap gap-2">
                             @foreach ($rating->proofs as $proof)
-                                <a href="{{ URL::signedRoute('proof.serve', ['path' => $proof->file_path]) }}" target="_blank" rel="noopener"
+                                <a href="{{ URL::signedRoute('proof.serve', ['path' => $proof->file_path]) }}"
                                    class="inline-flex items-center gap-1.5 rounded-lg border-[1.5px] border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition hover:border-blue-300 hover:bg-blue-100">
                                     <i class="bi bi-{{ str_contains($proof->file_type ?? '', 'image') ? 'image' : (str_contains($proof->file_type ?? '', 'video') ? 'play-circle' : 'file-earmark') }}"></i>
                                     View Proof

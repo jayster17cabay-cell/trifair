@@ -116,10 +116,14 @@ class AdminQueryService
         return $this->operatorsBaseQuery($request)->latest()->get();
     }
 
-    public function ratingsForExport(): \Illuminate\Support\Collection
+    public function ratingsForExport(?int $operatorId = null): \Illuminate\Support\Collection
     {
-        return Rating::isValid()->with(['operator.user', 'response'])
-            ->latest()
+        $query = Rating::isValid()->with(['operator.user', 'response']);
+        if ($operatorId) {
+            $query->where('operator_id', $operatorId);
+        }
+
+        return $query->latest()
             ->get()
             ->map(function ($rating) {
                 return [
@@ -136,11 +140,15 @@ class AdminQueryService
     public function complaintsForExport(Request $request): \Illuminate\Support\Collection
     {
         $filter = $request->query('filter', 'pending');
+        $operatorId = $request->query('operator_id');
         $base = Rating::isValid()->where('rating', '<=', 2);
         if ($filter === 'reviewed') {
             $base->where('is_reviewed', true);
         } elseif ($filter !== 'all') {
             $base->where('is_reviewed', false);
+        }
+        if ($operatorId) {
+            $base->where('operator_id', $operatorId);
         }
 
         return $base->with(['operator.user', 'response'])
@@ -199,6 +207,15 @@ class AdminQueryService
                     'description' => $log->description ?? '',
                 ];
             });
+    }
+
+    public function activeOperators(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Operator::notArchived()
+            ->where('status', 'active')
+            ->with('user')
+            ->orderBy('id')
+            ->get();
     }
 
     public function invalidRatingsData(): LengthAwarePaginator

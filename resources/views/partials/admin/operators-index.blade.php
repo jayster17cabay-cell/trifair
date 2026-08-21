@@ -24,9 +24,16 @@
         </p>
     </div>
     <div class="flex items-center gap-2">
-        <a href="{{ route($routePrefix . '.operators.export', ['search' => $search ?? null, 'status' => $currentStatus ?? null]) }}" class="tw-btn tw-btn-sm tw-btn-outline">
-            <i class="bi bi-download"></i>Export CSV
-        </a>
+        <form method="GET" action="{{ route($routePrefix . '.operators.export') }}" class="flex items-center gap-1.5">
+            @if ($search ?? null)<input type="hidden" name="search" value="{{ $search }}">@endif
+            @if ($currentStatus ?? null)<input type="hidden" name="status" value="{{ $currentStatus }}">@endif
+            <select name="format" class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-navy focus:ring-1 focus:ring-navy">
+                <option value="csv">CSV</option>
+                <option value="word">Word</option>
+                <option value="pdf">PDF</option>
+            </select>
+            <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline"><i class="bi bi-download"></i>Export</button>
+        </form>
         @if ($currentStatus === 'pending')
             <a href="{{ route($routePrefix . '.operators') }}" class="tw-btn tw-btn-sm tw-btn-outline">
                 <i class="bi bi-arrow-left"></i>Back to All Operators

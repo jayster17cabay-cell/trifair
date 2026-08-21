@@ -57,7 +57,7 @@
             <a id="opModalEdit" href="#" class="tw-btn tw-btn-sm tw-btn-gold">
                 <i class="bi bi-pencil"></i>Edit Operator
             </a>
-            <a id="opModalQr" href="#" target="_blank" rel="noopener" class="tw-btn tw-btn-sm tw-btn-outline">
+            <a id="opModalQr" href="#" class="tw-btn tw-btn-sm tw-btn-outline">
                 <i class="bi bi-qr-code"></i>View QR Code
             </a>
             <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost ml-auto" data-tw-modal-close>
