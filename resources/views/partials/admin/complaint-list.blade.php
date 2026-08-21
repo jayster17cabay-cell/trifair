@@ -12,21 +12,11 @@
         <h1 class="tw-page-title"><i class="bi bi-exclamation-triangle mr-2 text-amber-500"></i>Complaints</h1>
         <p class="tw-page-sub">Low ratings (1-2 stars) reported by passengers</p>
     </div>
-    <form method="GET" action="{{ route($routePrefix . '.complaints.export') }}" class="flex items-center gap-1.5">
-        <input type="hidden" name="filter" value="{{ $filter }}">
-        <select name="operator_id" class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-navy focus:ring-1 focus:ring-navy">
-            <option value="">All Operators</option>
-            @foreach($activeOperators as $op)
-                <option value="{{ $op->id }}">{{ $op->user->name ?? 'Unknown' }}</option>
-            @endforeach
-        </select>
-        <select name="format" class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-navy focus:ring-1 focus:ring-navy">
-            <option value="csv">CSV</option>
-            <option value="word">Word</option>
-            <option value="pdf">PDF</option>
-        </select>
-        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline"><i class="bi bi-download"></i>Export</button>
-    </form>
+    @include('partials.admin.export-dropdown', [
+        'exportRoute' => route($routePrefix . '.complaints.export'),
+        'activeOperators' => $activeOperators,
+        'preservedParams' => ['filter' => $filter],
+    ])
 </div>
 
 {{-- Sticky summary + filter bar: stays pinned below the topbar while the list scrolls. --}}

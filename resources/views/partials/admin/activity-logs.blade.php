@@ -5,15 +5,10 @@
         <h1 class="tw-page-title"><i class="bi bi-clock-history mr-2 text-amber-500"></i>Activity Logs</h1>
         <p class="tw-page-sub">Audit trail of all system actions</p>
     </div>
-    <form method="GET" action="{{ route($routePrefix . '.activity-logs.export') }}" class="flex items-center gap-1.5">
-        <input type="hidden" name="category" value="{{ $category }}">
-        <select name="format" class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-navy focus:ring-1 focus:ring-navy">
-            <option value="csv">CSV</option>
-            <option value="word">Word</option>
-            <option value="pdf">PDF</option>
-        </select>
-        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline"><i class="bi bi-download"></i>Export</button>
-    </form>
+    @include('partials.admin.export-dropdown', [
+        'exportRoute' => route($routePrefix . '.activity-logs.export'),
+        'preservedParams' => ['category' => $category],
+    ])
 </div>
 
 @php

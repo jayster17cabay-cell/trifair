@@ -457,7 +457,7 @@
             });
         });
         document.addEventListener('click', function (e) {
-            if (!e.target.closest('[data-tw-dropdown]')) {
+            if (!e.target.closest('[data-tw-dropdown]') && !e.target.closest('[data-tw-dropdown-menu]')) {
                 closeAllDropdowns();
             }
         });

@@ -158,8 +158,9 @@ class SuperadminController extends Controller
     public function reports()
     {
         $operators = app(AdminQueryService::class)->reportsData();
+        $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('superadmin.reports', compact('operators'));
+        return view('superadmin.reports', compact('operators', 'activeOperators'));
     }
 
     /**
@@ -199,6 +200,7 @@ class SuperadminController extends Controller
     public function operators(Request $request)
     {
         $data = app(AdminQueryService::class)->operatorsData($request);
+        $data['activeOperators'] = app(AdminQueryService::class)->activeOperators();
         $operators = $data['operators'];
         if ($request->ajax()) {
             $html = view('partials.admin.operators-table', ['operators' => $operators, 'routePrefix' => 'superadmin'])->render();
@@ -285,7 +287,7 @@ class SuperadminController extends Controller
 
     public function exportReports(Request $request)
     {
-        $reports = app(AdminQueryService::class)->reportsForExport();
+        $reports = app(AdminQueryService::class)->reportsForExport($request);
         $format = $request->query('format', 'csv');
 
         return app(ExportService::class)->reportsFormat($reports, $format);

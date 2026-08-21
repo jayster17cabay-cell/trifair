@@ -5,14 +5,10 @@
         <h1 class="tw-page-title"><i class="bi bi-bar-chart-line mr-2 text-violet-600"></i>Operator Performance</h1>
         <p class="tw-page-sub">Analytics and performance overview of all operators</p>
     </div>
-    <form method="GET" action="{{ route($routePrefix . '.reports.export') }}" class="flex items-center gap-1.5">
-        <select name="format" class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-navy focus:ring-1 focus:ring-navy">
-            <option value="csv">CSV</option>
-            <option value="word">Word</option>
-            <option value="pdf">PDF</option>
-        </select>
-        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline"><i class="bi bi-download"></i>Export</button>
-    </form>
+    @include('partials.admin.export-dropdown', [
+        'exportRoute' => route($routePrefix . '.reports.export'),
+        'activeOperators' => $activeOperators,
+    ])
 </div>
 
 <div class="tw-table-scroll-wrap">

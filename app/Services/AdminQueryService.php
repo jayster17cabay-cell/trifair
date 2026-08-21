@@ -114,7 +114,14 @@ class AdminQueryService
 
     public function operatorsForExport(Request $request)
     {
-        return $this->operatorsBaseQuery($request)->latest()->get();
+        $query = $this->operatorsBaseQuery($request);
+
+        $operatorId = $request->query('operator_id');
+        if ($operatorId) {
+            $query->where('operators.id', $operatorId);
+        }
+
+        return $query->latest()->get();
     }
 
     public function ratingsForExport(?int $operatorId = null): \Illuminate\Support\Collection
@@ -168,13 +175,21 @@ class AdminQueryService
             });
     }
 
-    public function reportsForExport(): \Illuminate\Support\Collection
+    public function reportsForExport(Request $request = null): \Illuminate\Support\Collection
     {
-        return Operator::with('user', 'toda')
+        $query = Operator::with('user', 'toda')
             ->withCount('validRatings')
             ->whereNotIn('status', ['pending', 'rejected'])
-            ->whereNull('archived_at')
-            ->get()
+            ->whereNull('archived_at');
+
+        if ($request) {
+            $operatorId = $request->query('operator_id');
+            if ($operatorId) {
+                $query->where('operators.id', $operatorId);
+            }
+        }
+
+        return $query->get()
             ->map(function ($operator) {
                 return [
                     'name' => $operator->user->name ?? 'Unknown',
