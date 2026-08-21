@@ -67,7 +67,7 @@
     <a href="{{ route($routePrefix . '.operators') }}" class="{{ !$status ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-people"></i> All
     </a>
-    @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'pending' => 'Pending', 'rejected' => 'Rejected', 'archived' => 'Archived'] as $key => $label)
+    @foreach (['active' => 'Active', 'inactive' => 'Inactive'] as $key => $label)
         <a href="{{ route($routePrefix . '.operators', ['status' => $key]) }}" class="{{ $status === $key ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
             {{ $label }}
         </a>
