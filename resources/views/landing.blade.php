@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TriFair — the tricycle operator rating system for Solano, Nueva Vizcaya. Scan, rate, and help build accountable, community-trusted rides.">
-    <title>TriFair — Tricycle Operator Rating System</title>
+    <meta name="description" content="TriFair — the motorcycle operator rating system for Solano, Nueva Vizcaya. Scan, rate, and help build accountable, community-trusted rides.">
+    <title>TriFair — Motorcycle Operator Rating System</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,7 +78,7 @@
                 <span class="bg-gradient-to-r from-gold via-gold to-gold-light bg-clip-text text-transparent">Every operator accountable.</span>
             </h1>
             <p class="mx-auto mb-9 max-w-[500px] text-lg leading-relaxed text-white/60 lg:mx-0">
-                TriFair lets passengers rate their tricycle ride in seconds — turning everyday trips into honest feedback that builds trust and improves public transport.
+                TriFair lets passengers rate their motorcycle ride in seconds — turning everyday trips into honest feedback that builds trust and improves public transport.
             </p>
             <div class="flex flex-wrap justify-center gap-3 lg:justify-start">
                 <a href="{{ route('login') }}" class="tw-btn tw-btn-gold tw-btn-lg"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
@@ -243,7 +243,7 @@
         <div class="mb-10 text-center">
             <div class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3.5 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-gold-dark"><i class="bi bi-stars"></i> Features</div>
             <h2 class="mb-2.5 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">Built for Community Trust</h2>
-            <p class="mx-auto max-w-[540px] text-[0.95rem] leading-relaxed text-slate-500">Everything you need to ensure fair, transparent, and accountable tricycle rides.</p>
+            <p class="mx-auto max-w-[540px] text-[0.95rem] leading-relaxed text-slate-500">Everything you need to ensure fair, transparent, and accountable motorcycle rides.</p>
         </div>
         <div class="grid gap-6 md:grid-cols-3">
             <div class="anim rounded-2xl border border-slate-100 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-gold/20 hover:shadow-soft">
@@ -259,7 +259,7 @@
             <div class="anim anim-d2 rounded-2xl border border-slate-100 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-gold/20 hover:shadow-soft">
                 <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600/10 text-lg text-emerald-600"><i class="bi bi-diagram-3"></i></div>
                 <h4 class="mb-1.5 text-[0.95rem] font-bold text-slate-900">TODA Management</h4>
-                <p class="text-[0.84rem] leading-relaxed text-slate-500">Organize operators by tricycle operators' associations. Track per-TODA performance.</p>
+                <p class="text-[0.84rem] leading-relaxed text-slate-500">Organize operators by motorcycle operators' associations. Track per-TODA performance.</p>
             </div>
             <div class="anim rounded-2xl border border-slate-100 bg-white p-7 shadow-sm transition-all hover:-translate-y-1 hover:border-gold/20 hover:shadow-soft">
                 <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-red-600/10 text-lg text-red-600"><i class="bi bi-flag"></i></div>
@@ -293,7 +293,7 @@
             <div class="anim relative z-10 text-center">
                 <div class="mx-auto mb-4 flex h-[72px] w-[72px] items-center justify-center rounded-[18px] bg-gradient-to-br from-navy-600 to-navy-500 text-2xl font-black text-white shadow-lift">1</div>
                 <h4 class="mb-1.5 text-[0.95rem] font-bold text-slate-900">Scan the QR Code</h4>
-                <p class="mx-auto max-w-[280px] text-[0.84rem] leading-relaxed text-slate-500">After your ride, scan the operator's QR code displayed inside the tricycle.</p>
+                <p class="mx-auto max-w-[280px] text-[0.84rem] leading-relaxed text-slate-500">After your ride, scan the operator's QR code displayed inside the motorcycle.</p>
             </div>
             <div class="anim anim-d1 relative z-10 text-center">
                 <div class="mx-auto mb-4 flex h-[72px] w-[72px] items-center justify-center rounded-[18px] bg-gradient-to-br from-navy-600 to-navy-500 text-2xl font-black text-white shadow-lift">2</div>
@@ -315,13 +315,13 @@
         <div class="mb-10 text-center">
             <div class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3.5 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-gold-dark"><i class="bi bi-people"></i> For Everyone</div>
             <h2 class="mb-2.5 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">Who Uses TriFair?</h2>
-            <p class="mx-auto max-w-[540px] text-[0.95rem] leading-relaxed text-slate-500">Designed for every member of the tricycle community.</p>
+            <p class="mx-auto max-w-[540px] text-[0.95rem] leading-relaxed text-slate-500">Designed for every member of the motorcycle community.</p>
         </div>
         <div class="grid gap-6 md:grid-cols-3">
             <div class="anim rounded-2xl border-2 border-slate-100 bg-white p-8 text-center transition-all hover:-translate-y-1 hover:border-gold hover:shadow-soft">
                 <div class="mx-auto mb-3.5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/10 text-xl text-gold-dark"><i class="bi bi-person-walking"></i></div>
                 <h4 class="mb-1 text-[0.95rem] font-bold text-slate-900">Passengers</h4>
-                <p class="text-[0.84rem] leading-relaxed text-slate-500">Scan the QR, rate your ride, and help improve tricycle services — no account needed.</p>
+                <p class="text-[0.84rem] leading-relaxed text-slate-500">Scan the QR, rate your ride, and help improve motorcycle services — no account needed.</p>
             </div>
             <div class="anim anim-d1 rounded-2xl border-2 border-slate-100 bg-white p-8 text-center transition-all hover:-translate-y-1 hover:border-gold hover:shadow-soft">
                 <div class="mx-auto mb-3.5 flex h-14 w-14 items-center justify-center rounded-2xl bg-navy-600/10 text-xl text-navy-600"><i class="bi bi-bicycle"></i></div>
@@ -348,7 +348,7 @@
         <div class="grid gap-6 md:grid-cols-3">
             <div class="anim flex flex-col rounded-2xl border border-slate-100 bg-slate-50 p-7">
                 <div class="mb-4 flex items-center gap-1 text-gold"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
-                <p class="mb-5 flex-1 text-sm leading-relaxed text-slate-600">"I rate my ride right after I get off. It takes seconds, and I actually see operators improve — they greet you, and the tricycles feel cleaner."</p>
+                <p class="mb-5 flex-1 text-sm leading-relaxed text-slate-600">"I rate my ride right after I get off. It takes seconds, and I actually see operators improve — they greet you, and the motorcycles feel cleaner."</p>
                 <div class="flex items-center gap-3">
                     <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-navy-500 to-navy-700 text-sm font-extrabold text-white">MG</span>
                     <div>
@@ -364,7 +364,7 @@
                     <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark text-sm font-extrabold text-navy-800">RC</span>
                     <div>
                         <div class="text-sm font-bold text-slate-900">Romy C.</div>
-                        <div class="text-xs text-slate-400">Tricycle operator · TODA Solano East</div>
+                        <div class="text-xs text-slate-400">Motorcycle operator · TODA Solano East</div>
                     </div>
                 </div>
             </div>
@@ -389,7 +389,7 @@
     <div class="pointer-events-none absolute -right-24 -top-[40%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(245,184,0,0.10)_0%,transparent_65%)]"></div>
     <div class="relative z-10 mx-auto max-w-2xl">
         <h2 class="mb-3 text-3xl font-extrabold tracking-tight text-white md:text-4xl">Ready to Get Started?</h2>
-        <p class="mb-8 text-[0.95rem] leading-relaxed text-white/60">Log in to access your dashboard and start managing or rating tricycle rides today.</p>
+        <p class="mb-8 text-[0.95rem] leading-relaxed text-white/60">Log in to access your dashboard and start managing or rating motorcycle rides today.</p>
         <div class="flex flex-wrap justify-center gap-3">
             <a href="{{ route('login') }}" class="tw-btn tw-btn-gold tw-btn-lg"><i class="bi bi-box-arrow-in-right"></i> Log In Now</a>
             <a href="{{ route('register') }}" class="tw-btn tw-btn-lg border border-white/20 bg-white/10 text-white backdrop-blur transition hover:border-white/30 hover:bg-white/15"><i class="bi bi-person-plus"></i> Create Account</a>
@@ -406,7 +406,7 @@
                     <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gold text-lg text-navy-800"><i class="bi bi-bicycle"></i></span>
                     <span class="text-xl font-black tracking-tight text-white">Tri<span class="text-gold">Fair</span></span>
                 </a>
-                <p class="mb-5 max-w-xs text-sm leading-relaxed text-white/40">A transparent rating system for tricycle operators, built for the commuters of Solano, Nueva Vizcaya.</p>
+                <p class="mb-5 max-w-xs text-sm leading-relaxed text-white/40">A transparent rating system for motorcycle operators, built for the commuters of Solano, Nueva Vizcaya.</p>
                 <div class="flex items-center gap-2">
                     <a href="#" aria-label="Facebook" class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-white/50 transition hover:bg-gold hover:text-navy-800"><i class="bi bi-facebook"></i></a>
                     <a href="#" aria-label="Twitter" class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-white/50 transition hover:bg-gold hover:text-navy-800"><i class="bi bi-twitter"></i></a>
@@ -440,7 +440,7 @@
             </div>
         </div>
         <div class="mt-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-center text-xs text-white/40 md:flex-row">
-            <p>&copy; {{ date('Y') }} <a href="/" class="font-semibold text-gold hover:underline">TriFair</a> &mdash; Tricycle Operator Rating System.</p>
+            <p>&copy; {{ date('Y') }} <a href="/" class="font-semibold text-gold hover:underline">TriFair</a> &mdash; Motorcycle Operator Rating System.</p>
             <p>Built for the commuters of <span class="text-white/60">Bayan ng Solano</span>.</p>
         </div>
     </div>

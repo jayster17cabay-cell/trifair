@@ -176,7 +176,7 @@ class AdminTest extends TestCase
             'contact_number' => '09171234567',
             'plate_number' => 'PLATE-STORE',
             'body_number' => 'BODY-STORE',
-            'tricycle_color' => 'Red',
+            'motorcycle_model' => 'Honda Wave 125',
             'toda_id' => $toda->id,
         ])->assertRedirect(route('superadmin.operators'));
 

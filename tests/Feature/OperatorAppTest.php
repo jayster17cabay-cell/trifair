@@ -118,7 +118,7 @@ class OperatorAppTest extends TestCase
         $res->assertSee('0.0', false);
         $res->assertSee('No ratings yet. Share your QR code!', false);
         $res->assertSee('Your QR code', false);
-        $res->assertSee('Print and display inside your tricycle', false);
+        $res->assertSee('Print and display inside your motorcycle', false);
         $res->assertSee('Rating breakdown', false);
     }
 

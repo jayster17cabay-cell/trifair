@@ -1,6 +1,6 @@
-# TriFair - Tricycle Driver Rating System
+# TriFair - Motorcycle Driver Rating System
 
-A web application for rating tricycle drivers. Passengers scan a QR code on the driver's tricycle to rate their trip and provide feedback.
+A web application for rating motorcycle drivers. Passengers scan a QR code on the driver's motorcycle to rate their trip and provide feedback.
 
 ## Features
 

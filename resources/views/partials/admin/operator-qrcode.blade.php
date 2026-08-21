@@ -37,7 +37,7 @@
             </button>
         </div>
         <div class="border-t border-slate-100 bg-slate-50 px-6 py-3 text-center text-sm text-slate-500">
-            <i class="bi bi-info-circle mr-1"></i>Display this QR code on the operator's tricycle
+            <i class="bi bi-info-circle mr-1"></i>Display this QR code on the operator's motorcycle
         </div>
     </div>
 </div>

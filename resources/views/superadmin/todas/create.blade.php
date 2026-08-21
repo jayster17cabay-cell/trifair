@@ -6,7 +6,7 @@
 <div class="tw-page-head">
     <div>
         <h1 class="tw-page-title">Add New TODA</h1>
-        <p class="tw-page-sub">Create a Tricycle Operators and Drivers Association</p>
+        <p class="tw-page-sub">Create a Motorcycle Operators and Drivers Association</p>
     </div>
     <a href="{{ route('superadmin.todas') }}" class="tw-btn tw-btn-outline">
         <i class="bi bi-arrow-left"></i>Back

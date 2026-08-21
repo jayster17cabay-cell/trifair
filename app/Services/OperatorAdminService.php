@@ -35,7 +35,7 @@ class OperatorAdminService
             'contact_number' => 'nullable|string|max:20',
             'plate_number' => 'required|string|max:20|unique:operators,plate_number',
             'body_number' => 'required|string|max:20|unique:operators,body_number',
-            'tricycle_color' => 'nullable|string|max:50',
+            'motorcycle_model' => 'nullable|string|max:50',
             'toda_id' => 'required|exists:todas,id',
         ], [
             'plate_number.unique' => 'This plate number is already registered in the system.',
@@ -61,7 +61,7 @@ class OperatorAdminService
             'contact_number' => $data['contact_number'] ?? null,
             'plate_number' => $data['plate_number'],
             'body_number' => $data['body_number'],
-            'tricycle_color' => $data['tricycle_color'] ?? null,
+            'motorcycle_model' => $data['motorcycle_model'] ?? null,
             'qr_code' => $qrCode,
             'toda_id' => $data['toda_id'],
             'status' => 'active',
@@ -89,7 +89,7 @@ class OperatorAdminService
             'contact_number' => 'nullable|string|max:20',
             'plate_number' => 'required|string|max:20|unique:operators,plate_number,' . $operator->id,
             'body_number' => 'required|string|max:20|unique:operators,body_number,' . $operator->id,
-            'tricycle_color' => 'nullable|string|max:50',
+            'motorcycle_model' => 'nullable|string|max:50',
             'status' => 'required|in:active,inactive',
             'toda_id' => 'required|exists:todas,id',
         ], [
@@ -113,7 +113,7 @@ class OperatorAdminService
             'contact_number' => $data['contact_number'] ?? null,
             'plate_number' => $data['plate_number'] ?? null,
             'body_number' => $data['body_number'] ?? null,
-            'tricycle_color' => $data['tricycle_color'] ?? null,
+            'motorcycle_model' => $data['motorcycle_model'] ?? null,
             'status' => $data['status'],
             'toda_id' => $data['toda_id'],
         ]);

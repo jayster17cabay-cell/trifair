@@ -145,6 +145,10 @@
             zoomDelta: 1
         });
 
+        setTimeout(function () { map.invalidateSize(); }, 100);
+        setTimeout(function () { map.invalidateSize(); }, 500);
+        window.addEventListener('resize', function () { map.invalidateSize(); });
+
         var loadingEl = document.getElementById(elId + 'Loading');
         var pendingTiles = 0;
 

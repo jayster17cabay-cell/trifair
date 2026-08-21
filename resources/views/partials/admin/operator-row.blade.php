@@ -34,7 +34,7 @@
         'plate' => $operator->plate_number,
         'body' => $operator->body_number,
         'license' => $operator->license_number,
-        'color' => $operator->tricycle_color,
+        'color' => $operator->motorcycle_model,
         'address' => $operator->address,
         'statusLabel' => $statusLabel,
         'statusClass' => $statusClass,

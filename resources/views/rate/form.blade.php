@@ -450,6 +450,9 @@
             if (!mapApi) throw new Error('map init failed');
             map = mapApi.getMap();
 
+            map.invalidateSize();
+            setTimeout(function () { map.invalidateSize(); }, 300);
+
             map.on('click', function (e) {
                 if (!serviceBounds.contains(e.latlng)) return;
                 applyDestination(e.latlng);
@@ -535,6 +538,7 @@
     function setFallbackLocation() {
         var fallback = L.latLng(SOLANO_CENTER);
         setStartMarker(fallback);
+        map.invalidateSize();
         mapApi.setView(fallback, 15);
         updateLocStatus('Using Solano center — type destination or tap map.', 'ok');
         reverseGeocode(fallback, 'rateMapStart');

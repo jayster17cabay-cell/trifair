@@ -20,7 +20,7 @@ class Operator extends Model
         'status',
         'plate_number',
         'body_number',
-        'tricycle_color',
+        'motorcycle_model',
         'archived_at',
     ];
 

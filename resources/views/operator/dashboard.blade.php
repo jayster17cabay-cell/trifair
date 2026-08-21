@@ -56,7 +56,7 @@
                 <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold/10 text-sm font-extrabold text-gold-dark">2</div>
                 <div>
                     <strong class="text-sm">Print & Display</strong>
-                    <p class="text-sm text-slate-500">Tap "Print QR" to get a large copy. Tape it inside your tricycle.</p>
+                    <p class="text-sm text-slate-500">Tap "Print QR" to get a large copy. Tape it inside your motorcycle.</p>
                 </div>
             </div>
             <div class="flex gap-3">

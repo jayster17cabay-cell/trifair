@@ -53,7 +53,7 @@ class ExportService
 
     public function operatorsFormat(\Illuminate\Support\Collection $operators, string $format): Response
     {
-        $headers = ['ID', 'Name', 'Email', 'TODA', 'License No.', 'Plate No.', 'Body No.', 'Tricycle Color', 'Contact', 'Address', 'Status', 'Archived', 'Registered'];
+        $headers = ['ID', 'Name', 'Email', 'TODA', 'License No.', 'Plate No.', 'Body No.', 'Motorcycle Model', 'Contact', 'Address', 'Status', 'Archived', 'Registered'];
         $rows = $operators->map(function ($o) {
             return [
                 $o->id,
@@ -63,7 +63,7 @@ class ExportService
                 $o->license_number ?? '',
                 $o->plate_number ?? '',
                 $o->body_number ?? '',
-                $o->tricycle_color ?? '',
+                $o->motorcycle_model ?? '',
                 $o->contact_number ?? '',
                 $o->address ?? '',
                 ucfirst($o->status),

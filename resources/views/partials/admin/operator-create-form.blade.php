@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-slate-400">Tricycle Details</div>
+    <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-slate-400">Motorcycle Details</div>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
             <label for="plate_number" class="tw-label">Plate Number</label>
@@ -52,9 +52,9 @@
             @error('body_number') <div class="tw-error-text">{{ $message }}</div> @enderror
         </div>
         <div>
-            <label for="tricycle_color" class="tw-label">Tricycle Color</label>
-            <input type="text" class="tw-input @error('tricycle_color') is-invalid @enderror" id="tricycle_color" name="tricycle_color" value="{{ old('tricycle_color') }}" placeholder="e.g. Red/White">
-            @error('tricycle_color') <div class="tw-error-text">{{ $message }}</div> @enderror
+            <label for="motorcycle_model" class="tw-label">Motorcycle Model</label>
+            <input type="text" class="tw-input @error('motorcycle_model') is-invalid @enderror" id="motorcycle_model" name="motorcycle_model" value="{{ old('motorcycle_model') }}" placeholder="e.g. Honda Wave 125">
+            @error('motorcycle_model') <div class="tw-error-text">{{ $message }}</div> @enderror
         </div>
         <div>
             <label for="license_number" class="tw-label">License Number</label>

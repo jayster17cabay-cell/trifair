@@ -9,7 +9,7 @@
                         <i class="bi bi-person-plus"></i> Operator Registration
                     </div>
                     <h4 class="text-2xl font-extrabold tracking-tight text-navy-700">Create Account</h4>
-                    <p class="mt-1 text-sm text-slate-500">Register as a tricycle operator and start tracking your ratings.</p>
+                    <p class="mt-1 text-sm text-slate-500">Register as a motorcycle operator and start tracking your ratings.</p>
                 </div>
 
                 @if ($errors->any())

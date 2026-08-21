@@ -47,8 +47,8 @@
                         <span class="font-bold text-slate-800">{{ $operator->license_number ?? '—' }}</span>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
-                        <span class="text-slate-500">Tricycle Color</span>
-                        <span class="font-bold text-slate-800">{{ $operator->tricycle_color ?? '—' }}</span>
+                        <span class="text-slate-500">Motorcycle Model</span>
+                        <span class="font-bold text-slate-800">{{ $operator->motorcycle_model ?? '—' }}</span>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
                         <span class="text-slate-500">Contact</span>

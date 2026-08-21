@@ -19,7 +19,7 @@
             @elseif ($currentStatus === 'archived')
                 Archived operators are hidden from active lists but keep their rating history
             @else
-                Manage all registered tricycle operators
+                Manage all registered motorcycle operators
             @endif
         </p>
     </div>

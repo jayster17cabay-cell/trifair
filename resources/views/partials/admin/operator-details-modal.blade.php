@@ -43,7 +43,7 @@
                     <div id="opModalLicense" class="text-sm font-semibold text-slate-700">—</div>
                 </div>
                 <div>
-                    <div class="tw-stat-label mb-1"><i class="bi bi-palette mr-1 text-pink-600"></i>Tricycle Color</div>
+                    <div class="tw-stat-label mb-1"><i class="bi bi-bicycle mr-1 text-pink-600"></i>Motorcycle Model</div>
                     <div id="opModalColor" class="text-sm text-slate-700">—</div>
                 </div>
                 <div class="sm:col-span-2">

@@ -23,7 +23,7 @@
 
         <div class="op-info-banner">
             <i class="bi bi-info-circle-fill"></i>
-            <span>Print and display inside your tricycle</span>
+            <span>Print and display inside your motorcycle</span>
         </div>
     @else
         <div class="py-2 text-center">

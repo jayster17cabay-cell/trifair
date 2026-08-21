@@ -3,7 +3,7 @@
 <div class="tw-page-head">
     <div>
         <h1 class="tw-page-title"><i class="bi bi-diagram-3 mr-2 text-cyan-600"></i>TODA</h1>
-        <p class="tw-page-sub">View all Tricycle Operators and Drivers Associations</p>
+        <p class="tw-page-sub">View all Motorcycle Operators and Drivers Associations</p>
     </div>
     @if ($showManage)
         <a href="{{ route($routePrefix . '.todas.create') }}" class="tw-btn tw-btn-gold">
