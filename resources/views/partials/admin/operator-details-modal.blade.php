@@ -54,7 +54,7 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 px-6 py-4">
-            <a id="opModalEdit" href="#" class="tw-btn tw-btn-sm tw-btn-success">
+            <a id="opModalEdit" href="#" class="tw-btn tw-btn-sm tw-btn-gold">
                 <i class="bi bi-pencil"></i>Edit Operator
             </a>
             <a id="opModalQr" href="#" target="_blank" rel="noopener" class="tw-btn tw-btn-sm tw-btn-outline">

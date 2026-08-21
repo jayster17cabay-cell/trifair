@@ -36,7 +36,7 @@
                 <i class="bi bi-arrow-left"></i>Back to Operators
             </a>
         @else
-            <a href="{{ route($routePrefix . '.operators.create') }}" class="tw-btn tw-btn-success">
+            <a href="{{ route($routePrefix . '.operators.create') }}" class="tw-btn tw-btn-gold">
                 <i class="bi bi-person-plus"></i>Add Operator
             </a>
         @endif

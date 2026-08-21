@@ -12,7 +12,7 @@
                     <h3 class="tw-empty-title">No Operators Found</h3>
                     <p class="text-sm text-slate-500">No operators match the current filters.</p>
                     @if (!request('status'))
-                        <a href="{{ route($routePrefix . '.operators.create') }}" class="tw-btn tw-btn-sm tw-btn-success mt-4">
+                        <a href="{{ route($routePrefix . '.operators.create') }}" class="tw-btn tw-btn-sm tw-btn-gold mt-4">
                             <i class="bi bi-person-plus"></i>Add Operator
                         </a>
                     @endif

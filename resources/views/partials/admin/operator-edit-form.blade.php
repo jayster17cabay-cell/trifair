@@ -86,7 +86,7 @@
     </div>
 
     <div class="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
-        <button type="submit" class="tw-btn tw-btn-success px-5">
+        <button type="submit" class="tw-btn tw-btn-gold px-5">
             <i class="bi bi-save"></i>Update Operator
         </button>
         <a href="{{ route($routePrefix . '.operators') }}" class="tw-btn tw-btn-ghost">Cancel</a>

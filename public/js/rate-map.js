@@ -139,8 +139,6 @@
             zoom: opts.zoom || 14,
             minZoom: 11,
             maxZoom: 18,
-            maxBounds: bounds,
-            maxBoundsViscosity: 0.8,
             zoomControl: false,
             attributionControl: true,
             zoomSnap: 1,
