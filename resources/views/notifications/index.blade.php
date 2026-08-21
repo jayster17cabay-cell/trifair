@@ -30,6 +30,31 @@
     ];
 @endphp
 
+<div class="mb-3 grid gap-3">
+    <div class="tw-stat col-span-full border-l-4 border-gold bg-amber-50/60">
+        <div class="tw-stat-icon tw-stat-icon-amber"><i class="bi bi-bell"></i></div>
+        <div class="tw-stat-num text-2xl">{{ $counts['all'] }}</div>
+        <div class="tw-stat-label">Total Alerts</div>
+    </div>
+</div>
+<div class="mb-5 grid grid-cols-3 gap-3">
+    <div class="tw-stat">
+        <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-envelope-dash"></i></div>
+        <div class="tw-stat-num">{{ $counts['unread'] }}</div>
+        <div class="tw-stat-label">Unread</div>
+    </div>
+    <div class="tw-stat">
+        <div class="tw-stat-icon tw-stat-icon-amber"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="tw-stat-num">{{ $counts['complaint'] }}</div>
+        <div class="tw-stat-label">Complaints</div>
+    </div>
+    <div class="tw-stat">
+        <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-x-circle"></i></div>
+        <div class="tw-stat-num">{{ $invalidCount }}</div>
+        <div class="tw-stat-label">Invalid</div>
+    </div>
+</div>
+
 <div class="mb-5 flex flex-wrap items-center gap-2">
     @foreach ($tabs as $tab)
         <a href="{{ route('notifications.index', ['type' => $tab['key']]) }}" class="{{ $type === $tab['key'] ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
