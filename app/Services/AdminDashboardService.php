@@ -53,7 +53,7 @@ class AdminDashboardService
             'activeOperators' => Operator::notArchived()->where('status', 'active')->count(),
             'totalRatings' => Rating::isValid()->count(),
             'averageRating' => Rating::isValid()->avg('rating'),
-            'totalComplaints' => Rating::isValid()->where('rating', '<=', 2)->whereNotNull('complaint_type')->count(),
+            'totalComplaints' => Rating::isValid()->where('rating', '<=', 2)->count(),
             'totalTodas' => Toda::count(),
         ];
 
@@ -84,8 +84,7 @@ class AdminDashboardService
         $data['complaintStats'] = Rating::paddedComplaintStats(
             Rating::isValid()
                 ->where('rating', '<=', 2)
-                ->whereNotNull('complaint_type')
-                ->select('complaint_type', DB::raw('count(*) as total'))
+                ->select(DB::raw("COALESCE(complaint_type, 'Others') as complaint_type"), DB::raw('count(*) as total'))
                 ->groupBy('complaint_type')
                 ->orderByDesc('total')
                 ->get()

@@ -13,9 +13,9 @@
 
 @php
     $totalR = $ratings->total();
-    $goodR = $ratings->getCollection()->filter(fn($r) => $r->rating >= 4)->count();
-    $proofsR = $ratings->getCollection()->sum(fn($r) => $r->proofs->count());
-    $reviewedR = $ratings->getCollection()->filter(fn($r) => $r->is_reviewed)->count();
+    $goodR = $goodCount;
+    $proofsR = $proofsCount;
+    $reviewedR = $reviewedCount;
 @endphp
 
 {{-- Sticky summary + bulk bar: stays pinned below the topbar while the list scrolls. --}}

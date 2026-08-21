@@ -8,6 +8,7 @@ use App\Models\Operator;
 use App\Models\Rating;
 use App\Models\User;
 use App\Models\Toda;
+use App\Services\AdminDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -68,6 +69,7 @@ class OperatorAdminService
         ]);
 
         ActivityLogger::log('create_operator', "Created operator {$user->name} ({$user->email})", $operator, 'operator');
+        app(AdminDashboardService::class)->flush();
 
         return redirect()->route($redirectRoute)
             ->with('success', 'Operator created successfully.')
@@ -119,6 +121,7 @@ class OperatorAdminService
         ]);
 
         ActivityLogger::log('update_operator', "Updated operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
+        app(AdminDashboardService::class)->flush();
 
         return redirect()->route($redirectRoute)
             ->with('success', 'Operator updated successfully.');
@@ -134,6 +137,7 @@ class OperatorAdminService
         $operatorName = $operator->user->name;
         $operator->delete();
         $operator->user->delete();
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('delete_operator', "Deleted operator {$operatorName}", null, 'operator');
 
@@ -148,6 +152,7 @@ class OperatorAdminService
         }
 
         $operator->update(['archived_at' => now()]);
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('archive_operator', "Archived operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
 
@@ -162,6 +167,7 @@ class OperatorAdminService
         }
 
         $operator->update(['archived_at' => null]);
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('restore_operator', "Restored operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
 
@@ -174,6 +180,7 @@ class OperatorAdminService
         $operator->load('user');
         $operator->update(['status' => 'active']);
         $operator->user->forceFill(['is_active' => true])->save();
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('approve_operator', "Approved operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
 
@@ -200,6 +207,7 @@ class OperatorAdminService
 
         $operator->delete();
         $operator->user->delete();
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('reject_operator', "Rejected and deleted operator {$operatorName} ({$operatorEmail})", null, 'operator');
 

@@ -77,7 +77,7 @@ class ExportService
 
     public function ratingsFormat(\Illuminate\Support\Collection $ratings, string $format): Response
     {
-        $headers = ['ID', 'Trip ID', 'Operator', 'Rating', 'Comment', 'Date'];
+        $headers = ['ID', 'Operator', 'Rating', 'Comment', 'Date'];
         $rows = $ratings->all();
 
         return $this->dispatch('ratings', $headers, $rows, $format);
@@ -85,7 +85,7 @@ class ExportService
 
     public function complaintsFormat(\Illuminate\Support\Collection $complaints, string $format): Response
     {
-        $headers = ['ID', 'Trip ID', 'Operator', 'Rating', 'Complaint', 'Status', 'Date'];
+        $headers = ['ID', 'Operator', 'Rating', 'Complaint', 'Status', 'Date'];
         $rows = $complaints->all();
 
         return $this->dispatch('complaints', $headers, $rows, $format);

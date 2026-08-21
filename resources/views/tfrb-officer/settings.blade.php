@@ -45,7 +45,7 @@
                         placeholder="Re-enter new password" required>
                 </div>
 
-                <button type="submit" class="tw-btn tw-btn-navy w-full tw-btn-lg">
+                <button type="submit" class="tw-btn tw-btn-gold w-full tw-btn-lg">
                     <i class="bi bi-check-lg"></i> Update Password
                 </button>
             </form>

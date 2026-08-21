@@ -44,12 +44,21 @@ class AdminQueryService
         return compact('complaints', 'filter', 'pendingCount', 'reviewedCount', 'totalCount');
     }
 
-    public function ratingsData(): LengthAwarePaginator
+    public function ratingsData(): array
     {
-        return Rating::isValid()->where('rating', '>', 2)
+        $base = Rating::isValid()->where('rating', '>', 2);
+
+        $goodCount = (clone $base)->where('rating', '>=', 4)->count();
+        $reviewedCount = (clone $base)->where('is_reviewed', true)->count();
+        $proofsCount = (clone $base)->has('proofs')->count();
+
+        $ratings = (clone $base)
             ->with(['operator.user', 'proofs', 'response'])
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
+
+        return compact('ratings', 'goodCount', 'reviewedCount', 'proofsCount');
     }
 
     public function reportsData(): LengthAwarePaginator
@@ -136,7 +145,6 @@ class AdminQueryService
             ->map(function ($rating) {
                 return [
                     'id' => $rating->id,
-                    'trip' => $rating->trip_id ?? '—',
                     'operator' => $rating->operator->user->name ?? 'Unknown',
                     'rating' => $rating->rating,
                     'comment' => $rating->comment ?? '',
@@ -165,7 +173,6 @@ class AdminQueryService
             ->map(function ($complaint) {
                 return [
                     'id' => $complaint->id,
-                    'trip' => $complaint->trip_id ?? '—',
                     'operator' => $complaint->operator->user->name ?? 'Unknown',
                     'rating' => $complaint->rating,
                     'complaint' => $complaint->comment ?? '',
@@ -239,7 +246,8 @@ class AdminQueryService
         return Rating::with(['operator.user', 'proofs'])
             ->where('is_valid', false)
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
     }
 
     public function activityLogsData(Request $request): array

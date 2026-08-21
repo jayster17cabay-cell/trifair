@@ -6,6 +6,7 @@ use App\Helpers\ActivityLogger;
 use App\Helpers\SupabaseStorage;
 use App\Models\Notification;
 use App\Models\Rating;
+use App\Services\AdminDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -20,6 +21,7 @@ class RatingAdminService
     public function markReviewed(Rating $rating): RedirectResponse
     {
         $rating->update(['is_reviewed' => true]);
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('mark_reviewed', "Marked rating #{$rating->id} as reviewed (operator: {$rating->operator->user->name})", $rating, 'review');
 
@@ -29,6 +31,7 @@ class RatingAdminService
     public function complaintsMarkReviewed(Rating $rating): RedirectResponse
     {
         $rating->update(['is_reviewed' => true]);
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('mark_reviewed', "Marked complaint #{$rating->id} as reviewed (operator: {$rating->operator->user->name})", $rating, 'review');
 
@@ -61,6 +64,8 @@ class RatingAdminService
                 $count++;
             });
 
+        app(AdminDashboardService::class)->flush();
+
         return back()->with('success', $count > 0
             ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' marked as reviewed.'
             : 'No pending complaints were marked.');
@@ -91,6 +96,8 @@ class RatingAdminService
                 $count++;
             });
 
+        app(AdminDashboardService::class)->flush();
+
         return back()->with('success', $count > 0
             ? "{$count} rating" . ($count === 1 ? '' : 's') . ' marked as reviewed.'
             : 'No pending ratings were marked.');
@@ -108,6 +115,7 @@ class RatingAdminService
         $rating->response()->delete();
         Notification::where('rating_id', $rating->id)->delete();
         $rating->delete();
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('delete_complaint', "Deleted {$noun} #{$rating->id} (operator: {$operatorName})", null, 'review');
 
@@ -117,6 +125,7 @@ class RatingAdminService
     public function restore(Rating $rating): RedirectResponse
     {
         $rating->update(['is_valid' => $rating->evaluateValidity()]);
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('restore_rating', "Restored rating #{$rating->id} as valid (operator: {$rating->operator->user->name})", $rating, 'review');
 
