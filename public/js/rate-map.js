@@ -145,14 +145,61 @@
             zoomDelta: 1
         });
 
-        var transportationLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 20
+        var loadingEl = document.getElementById(elId + 'Loading');
+        var pendingTiles = 0;
+
+        function showLoading() {
+            if (loadingEl) { loadingEl.classList.remove('hidden'); }
+        }
+        function hideLoading() {
+            if (loadingEl) { loadingEl.classList.add('hidden'); }
+        }
+
+        function tileRetryLayer(urlTemplate, opts) {
+            var defaults = {
+                maxZoom: 20,
+                updateWhenIdle: false,
+                updateWhenZooming: true,
+                keepBuffer: 2,
+                crossOrigin: 'anonymous'
+            };
+            var merged = L.Util.extend({}, defaults, opts || {});
+            var layer = L.tileLayer(urlTemplate, merged);
+
+            layer.on('tileloadstart', function () {
+                pendingTiles++;
+                showLoading();
+            });
+            layer.on('tileload', function () {
+                pendingTiles = Math.max(0, pendingTiles - 1);
+                if (pendingTiles === 0) { hideLoading(); }
+            });
+            layer.on('tileerror', function (e) {
+                var tile = e.tile;
+                if (!tile) return;
+                if (tile._tfRetries == null) { tile._tfRetries = 0; }
+                if (tile._tfRetries < 3) {
+                    tile._tfRetries++;
+                    setTimeout(function () {
+                        var src = tile.src;
+                        if (src) { tile.src = ''; tile.src = src; }
+                    }, 400 * tile._tfRetries);
+                } else {
+                    tile.style.opacity = '0';
+                    pendingTiles = Math.max(0, pendingTiles - 1);
+                    if (pendingTiles === 0) { hideLoading(); }
+                }
+            });
+
+            return layer;
+        }
+
+        var transportationLayer = tileRetryLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         });
 
-        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.arcgis.com/home/index.html">ArcGIS</a>',
-            maxZoom: 20
+        var satelliteLayer = tileRetryLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.arcgis.com/home/index.html">ArcGIS</a>'
         });
 
         transportationLayer.addTo(map);

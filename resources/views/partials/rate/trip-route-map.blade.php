@@ -61,6 +61,7 @@
 
     <div class="map-shell" data-trip-route-map data-map-id="{{ $mapId }}" data-mode="{{ $mode }}"{!! $startCoordsAttr !!}{!! $endCoordsAttr !!}>
         <div id="{{ $mapId }}" class="route-map" role="application" aria-label="Trip route map"></div>
+        <div class="map-loading" id="{{ $mapId }}Loading"><div class="map-loading-spinner"></div></div>
     </div>
 
     <div class="tracking-banner" id="{{ $mapId }}Tracking" hidden>
