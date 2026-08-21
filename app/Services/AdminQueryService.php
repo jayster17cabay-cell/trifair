@@ -46,7 +46,8 @@ class AdminQueryService
 
     public function ratingsData(): LengthAwarePaginator
     {
-        return Rating::isValid()->with(['operator.user', 'proofs', 'response'])
+        return Rating::isValid()->where('rating', '>', 2)
+            ->with(['operator.user', 'proofs', 'response'])
             ->latest()
             ->paginate(15);
     }
@@ -118,7 +119,7 @@ class AdminQueryService
 
     public function ratingsForExport(?int $operatorId = null): \Illuminate\Support\Collection
     {
-        $query = Rating::isValid()->with(['operator.user', 'response']);
+        $query = Rating::isValid()->where('rating', '>', 2)->with(['operator.user', 'response']);
         if ($operatorId) {
             $query->where('operator_id', $operatorId);
         }

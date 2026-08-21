@@ -23,9 +23,9 @@
 
 @php
     $totalR = $ratings->total();
-    $pendingR = $ratings->getCollection()->filter(fn($r) => $r->rating <= 2 && !$r->is_reviewed)->count();
     $goodR = $ratings->getCollection()->filter(fn($r) => $r->rating >= 4)->count();
     $proofsR = $ratings->getCollection()->sum(fn($r) => $r->proofs->count());
+    $reviewedR = $ratings->getCollection()->filter(fn($r) => $r->is_reviewed)->count();
 @endphp
 
 {{-- Sticky summary + bulk bar: stays pinned below the topbar while the list scrolls. --}}
@@ -43,7 +43,7 @@
         </div>
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-clock-history"></i></div>
-            <div class="tw-stat-num">{{ $pendingR }}</div>
+            <div class="tw-stat-num">{{ $totalR - $reviewedR }}</div>
             <div class="tw-stat-label">Pending</div>
         </div>
         <div class="tw-stat">

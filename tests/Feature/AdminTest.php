@@ -377,7 +377,6 @@ class AdminTest extends TestCase
         $res->assertSee('data-rating-bulk-review', false);
         $res->assertSee('ratingBulkReviewForm', false);
         $res->assertSee('border-l-4', false);
-        $res->assertSee('border-l-red-500', false);
         $res->assertSee('border-l-emerald-500', false);
     }
 
