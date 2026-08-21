@@ -32,6 +32,7 @@ class RegisterController extends Controller
             'license_number' => 'required|string|max:50',
             'plate_number' => 'required|string|max:20|unique:operators,plate_number',
             'body_number' => 'required|string|max:20|unique:operators,body_number',
+            'motorcycle_model' => 'nullable|string|max:100',
             'toda_id' => 'nullable|exists:todas,id',
             'password' => 'required|string|min:8|confirmed',
         ], [
@@ -56,6 +57,7 @@ class RegisterController extends Controller
             'license_number' => $data['license_number'],
             'plate_number' => $data['plate_number'],
             'body_number' => $data['body_number'],
+            'motorcycle_model' => $data['motorcycle_model'] ?? null,
             'qr_code' => Str::random(32),
             'status' => 'pending',
         ]);

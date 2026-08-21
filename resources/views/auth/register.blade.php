@@ -96,6 +96,17 @@
                             @enderror
                         </div>
 
+                        <div class="tw-auth-field">
+                            <label for="motorcycle_model" class="tw-label">Motorcycle Model</label>
+                            <div class="tw-input-group">
+                                <span class="tw-input-group-icon"><i class="bi bi-bicycle"></i></span>
+                                <input id="motorcycle_model" type="text" class="tw-input @error('motorcycle_model') is-invalid @enderror" name="motorcycle_model" value="{{ old('motorcycle_model') }}" placeholder="e.g. Honda Wave 125">
+                            </div>
+                            @error('motorcycle_model')
+                                <span class="tw-error-text" role="alert">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="tw-auth-field sm:col-span-2">
                             <label for="toda_id" class="tw-label">TODA</label>
                             <div class="tw-input-group">

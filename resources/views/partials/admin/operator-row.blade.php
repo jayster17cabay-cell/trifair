@@ -78,14 +78,14 @@
                 <form action="{{ route($routePrefix . '.operators.approve', $operator) }}" method="POST">
                     @csrf
                     @method('PATCH')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-success" title="Approve" onclick="return confirm(@js('Approve ' . $operatorName . '?'))">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" title="Approve" onclick="return confirm(@js('Approve ' . $operatorName . '?'))">
                         <i class="bi bi-check-lg"></i>Approve
                     </button>
                 </form>
                 <form action="{{ route($routePrefix . '.operators.reject', $operator) }}" method="POST">
                     @csrf
                     @method('PATCH')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline text-red-600" title="Reject" onclick="return confirm(@js('Reject and delete ' . $operatorName . '?'))">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Reject" onclick="return confirm(@js('Reject and delete ' . $operatorName . '?'))">
                         <i class="bi bi-x-lg"></i>Reject
                     </button>
                 </form>
@@ -93,7 +93,7 @@
                 <form action="{{ route($routePrefix . '.operators.restore', $operator) }}" method="POST">
                     @csrf
                     @method('PATCH')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-success" title="Restore" onclick="return confirm(@js('Restore ' . $operatorName . '?'))">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" title="Restore" onclick="return confirm(@js('Restore ' . $operatorName . '?'))">
                         <i class="bi bi-arrow-counterclockwise"></i>Restore
                     </button>
                 </form>
@@ -111,7 +111,7 @@
                 <form action="{{ route($routePrefix . '.operators.destroy', $operator) }}" method="POST" onsubmit="return confirm('Delete this operator? This action cannot be undone.')">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline text-red-600" title="Delete" aria-label="Delete {{ $operatorName }}">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Delete" aria-label="Delete {{ $operatorName }}">
                         <i class="bi bi-trash"></i>
                     </button>
                 </form>

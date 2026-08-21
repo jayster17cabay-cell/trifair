@@ -67,7 +67,7 @@
                             <form action="{{ route($routePrefix . '.ratings.restore', $rating) }}" method="POST" onsubmit="return confirm('Restore this rating? It will count towards the operator\'s average again.')">
                                 @csrf
                                 @method('PATCH')
-                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-success"><i class="bi bi-check-circle"></i>Restore</button>
+                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold"><i class="bi bi-check-circle"></i>Restore</button>
                             </form>
                         </td>
                     </tr>

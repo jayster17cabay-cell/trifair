@@ -57,7 +57,7 @@
                     <form action="{{ route('superadmin.officers.destroy', $officer) }}" method="POST" onsubmit="return confirm('Remove this officer? They will lose all system access.')">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline text-red-600" title="Remove Officer" aria-label="Remove {{ $officer->name }}">
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Remove Officer" aria-label="Remove {{ $officer->name }}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </form>
