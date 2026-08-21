@@ -18,14 +18,12 @@
 
 {{-- Sticky summary + filter bar: stays pinned below the topbar while the list scrolls. --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 bg-slate-50/95 px-4 pb-4 pt-2 shadow-[0_4px_10px_-8px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-    <div class="mb-3 grid gap-3">
-        <div class="tw-stat col-span-full border-l-4 border-amber-400 bg-amber-50/60">
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-amber"><i class="bi bi-exclamation-circle"></i></div>
-            <div class="tw-stat-num text-2xl">{{ $complaints->total() }}</div>
-            <div class="tw-stat-label">Total Complaints</div>
+            <div class="tw-stat-num">{{ $totalCount }}</div>
+            <div class="tw-stat-label">Total</div>
         </div>
-    </div>
-    <div class="grid grid-cols-3 gap-3">
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-clock-history"></i></div>
             <div class="tw-stat-num">{{ $pendingCount }}</div>
@@ -45,14 +43,14 @@
 
     <div class="mt-3 flex flex-wrap items-center gap-3">
         <div class="flex flex-wrap gap-2">
+            <a href="{{ route($routePrefix . '.complaints', ['filter' => 'all']) }}" class="{{ $filter === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+                <i class="bi bi-list-ul"></i> All <span class="tw-badge tw-badge-gray ml-1">{{ $totalCount }}</span>
+            </a>
             <a href="{{ route($routePrefix . '.complaints', ['filter' => 'pending']) }}" class="{{ $filter === 'pending' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
                 <i class="bi bi-clock-history"></i> Pending <span class="tw-badge tw-badge-amber ml-1">{{ $pendingCount }}</span>
             </a>
             <a href="{{ route($routePrefix . '.complaints', ['filter' => 'reviewed']) }}" class="{{ $filter === 'reviewed' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
                 <i class="bi bi-check-circle"></i> Reviewed <span class="tw-badge tw-badge-green ml-1">{{ $reviewedCount }}</span>
-            </a>
-            <a href="{{ route($routePrefix . '.complaints', ['filter' => 'all']) }}" class="{{ $filter === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                <i class="bi bi-list-ul"></i> All <span class="tw-badge tw-badge-gray ml-1">{{ $totalCount }}</span>
             </a>
         </div>
 
