@@ -75,29 +75,40 @@
             var qs = 'slat=' + start.lat.toFixed(6) + '&slng=' + start.lng.toFixed(6)
                 + '&elat=' + end.lat.toFixed(6) + '&elng=' + end.lng.toFixed(6);
 
-            fetchWithTimeout('/route?' + qs, { credentials: 'same-origin' }, 15000)
-                .then(function (data) {
-                    if (!data || !data.coords || data.coords.length < 2) {
-                        throw new Error('Route unavailable');
-                    }
-                    var coordinates = data.coords.map(function (c) { return L.latLng(c[0], c[1]); });
-                    callback.call(context, null, [{
-                        name: 'route',
-                        coordinates: coordinates,
-                        instructions: [],
-                        summary: {
-                            totalDistance: data.distanceMeters || 0,
-                            totalTime: data.durationSeconds || 0
-                        },
-                        inputWaypoints: waypoints,
-                        waypoints: waypoints,
-                        actualWaypoints: waypoints,
-                        properties: { isSimplified: false }
-                    }]);
-                })
-                .catch(function (err) {
-                    callback.call(context, err);
-                });
+            /* Timeouts/429s can be transient (Render cold starts, OSRM slow
+               upstream), so retry once before giving up to the straight-line
+               fallback. */
+            function attempt(remaining) {
+                fetchWithTimeout('/route?' + qs, { credentials: 'same-origin' }, 20000)
+                    .then(function (data) {
+                        if (!data || !data.coords || data.coords.length < 2) {
+                            throw new Error('Route unavailable');
+                        }
+                        var coordinates = data.coords.map(function (c) { return L.latLng(c[0], c[1]); });
+                        callback.call(context, null, [{
+                            name: 'route',
+                            coordinates: coordinates,
+                            instructions: [],
+                            summary: {
+                                totalDistance: data.distanceMeters || 0,
+                                totalTime: data.durationSeconds || 0
+                            },
+                            inputWaypoints: waypoints,
+                            waypoints: waypoints,
+                            actualWaypoints: waypoints,
+                            properties: { isSimplified: false }
+                        }]);
+                    })
+                    .catch(function () {
+                        if (remaining > 1) {
+                            setTimeout(function () { attempt(remaining - 1); }, 900);
+                        } else {
+                            callback.call(context, new Error('Route unavailable'));
+                        }
+                    });
+            }
+
+            attempt(2);
         }
     });
 
@@ -187,9 +198,24 @@
             return layer;
         }
 
+        /* Lightweight street basemap placed UNDER the satellite layer. On slow
+           mobile networks the satellite tiles can take a while (or fail and are
+           replaced by a transparent pixel), so the underlying street tiles keep
+           the map readable instead of showing a blank area. */
+        var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20,
+            updateWhenIdle: true,
+            updateWhenZooming: false
+        });
+
         var satelliteLayer = tileRetryLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.arcgis.com/home/index.html">ArcGIS</a>'
         });
+
+        baseLayer.addTo(map);
+        satelliteLayer.addTo(map);
 
         var refreshTimer = null;
 

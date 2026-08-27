@@ -307,7 +307,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
-<script src="{{ asset('js/rate-map.js') }}"></script>
+<script src="{{ asset('js/rate-map.js') . '?v=' . filemtime(public_path('js/rate-map.js')) }}"></script>
 <script>
 (function () {
     'use strict';

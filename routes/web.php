@@ -275,6 +275,6 @@ Route::post('/rate/{qrCode}', [RatingController::class, 'submitRating'])->name('
 Route::get('/rate/{qrCode}/submitted', [RatingController::class, 'showSubmitted'])->name('rate.submitted');
 
 // Server-side route lookup for the passenger map (cached)
-Route::get('/route', [RouteController::class, 'fetch'])->middleware('throttle:30,1');
+Route::get('/route', [RouteController::class, 'fetch'])->middleware('throttle:60,1');
 
 
