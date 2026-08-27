@@ -19,12 +19,16 @@
         <small>Total</small>
         <strong>{{ $totalRatings }}</strong>
     </div>
+    <div class="op-stat-strip-item">
+        <small>Pending</small>
+        <strong>{{ $pendingCount ?? 0 }}</strong>
+    </div>
 </div>
 
 @if($ratings->count() > 0)
 <div class="tw-alert tw-alert-navy mb-4">
     <i class="bi bi-info-circle-fill mt-0.5"></i>
-    <span class="text-sm">Low ratings (1-2 stars) allow you to respond and explain your side.</span>
+    <span class="text-sm">Low ratings (1-2 stars) allow you to respond and explain your side. Pending ratings are still waiting for your reply.</span>
 </div>
 @endif
 
@@ -64,7 +68,7 @@
                             <p class="mb-2 text-sm text-slate-600">{{ $rating->reason }}</p>
                         @endif
 
-                        @if ($rating->proofs->count() > 0)
+                        @if ($rating->rating <= 2 && $rating->proofs->count() > 0)
                             <div class="mb-2">
                                 <small class="text-xs text-slate-400">Attached proof ({{ $rating->proofs->count() }} file(s)):</small>
                                 <div class="mt-1 flex flex-wrap gap-2">

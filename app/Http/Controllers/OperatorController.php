@@ -68,8 +68,13 @@ class OperatorController extends Controller
         $averageRating = $operator->ratings()->isValid()->avg('rating');
         $totalRatings = $operator->ratings()->isValid()->count();
 
+        $pendingCount = $operator->ratings()->isValid()
+            ->where('rating', '<=', 2)
+            ->whereDoesntHave('response')
+            ->count();
+
         return view('operator.ratings', compact(
-            'operator', 'ratings', 'averageRating', 'totalRatings'
+            'operator', 'ratings', 'averageRating', 'totalRatings', 'pendingCount'
         ));
     }
 

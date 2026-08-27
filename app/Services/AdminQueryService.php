@@ -52,13 +52,18 @@ class AdminQueryService
         $reviewedCount = (clone $base)->where('is_reviewed', true)->count();
         $proofsCount = (clone $base)->has('proofs')->count();
 
+        $pendingCount = Rating::isValid()
+            ->where('rating', '<=', 2)
+            ->where('is_reviewed', false)
+            ->count();
+
         $ratings = (clone $base)
             ->with(['operator.user', 'proofs', 'response'])
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
-        return compact('ratings', 'goodCount', 'reviewedCount', 'proofsCount');
+        return compact('ratings', 'goodCount', 'reviewedCount', 'proofsCount', 'pendingCount');
     }
 
     public function reportsData(): LengthAwarePaginator

@@ -132,7 +132,7 @@
                 </div>
                 <div>
                     <div class="tw-stat-label mb-1"><i class="bi bi-paperclip mr-1 text-amber-500"></i>Evidence</div>
-                    @if ($rating->proofs->count() > 0)
+                    @if ($rating->rating <= 2 && $rating->proofs->count() > 0)
                         <div class="flex flex-wrap gap-2">
                             @foreach ($rating->proofs as $proof)
                                 <a href="{{ URL::signedRoute('proof.serve', ['path' => $proof->file_path]) }}"

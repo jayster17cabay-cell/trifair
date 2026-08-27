@@ -16,6 +16,7 @@
     $goodR = $goodCount;
     $proofsR = $proofsCount;
     $reviewedR = $reviewedCount;
+    $pendingR = $pendingCount ?? ($totalR - $reviewedR);
 @endphp
 
 {{-- Sticky summary + bulk bar: stays pinned below the topbar while the list scrolls. --}}
@@ -33,7 +34,7 @@
         </div>
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-clock-history"></i></div>
-            <div class="tw-stat-num">{{ $totalR - $reviewedR }}</div>
+            <div class="tw-stat-num">{{ $pendingR }}</div>
             <div class="tw-stat-label">Pending</div>
         </div>
         <div class="tw-stat">
