@@ -6,8 +6,10 @@
    Solano, Nueva Vizcaya). The turn-by-turn instructions panel is hidden
    (`show: false`) — passengers only see the route line.
 
-   Rendering: an Esri Satellite (World Imagery) basemap that shows real buildings,
-   with no alternate layers. Overlaid on top is a navy
+   Rendering: a street basemap (CARTO Voyager over OpenStreetMap) that shows
+   street names and buildings, with no satellite layer (Esri satellite tiles
+   frequently served "Map data not yet available" placeholders and loaded
+   slowly on mobile networks). Overlaid on top is a navy
    route polyline with a subtle white
    dashed overlay + directional arrows (leaflet-polylinedecorator), custom
    pickup (navy circle + white center dot) and dropoff (red teardrop) markers,
@@ -159,76 +161,17 @@
         setTimeout(function () { map.invalidateSize(); }, 500);
         window.addEventListener('resize', function () { map.invalidateSize(); });
 
-        var pendingTiles = 0;
-
-        function tileRetryLayer(urlTemplate, opts) {
-            var defaults = {
-                maxZoom: 20,
-                updateWhenIdle: true,
-                updateWhenZooming: false,
-                keepBuffer: 2,
-                crossOrigin: 'anonymous',
-                errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-            };
-            var merged = L.Util.extend({}, defaults, opts || {});
-            var layer = L.tileLayer(urlTemplate, merged);
-
-            layer.on('tileloadstart', function () {
-                pendingTiles++;
-            });
-            layer.on('tileload', function () {
-                pendingTiles = Math.max(0, pendingTiles - 1);
-            });
-            layer.on('tileerror', function (e) {
-                var tile = e.tile;
-                if (!tile) return;
-                if (tile._tfRetries == null) { tile._tfRetries = 0; }
-                if (tile._tfRetries < 2) {
-                    tile._tfRetries++;
-                    setTimeout(function () {
-                        var src = tile.src;
-                        if (src) { tile.src = ''; tile.src = src; }
-                    }, 300 * tile._tfRetries);
-                } else {
-                    tile.style.opacity = '0';
-                    pendingTiles = Math.max(0, pendingTiles - 1);
-                }
-            });
-
-            return layer;
-        }
-
-        /* Lightweight street basemap placed UNDER the satellite layer. On slow
-           mobile networks the satellite tiles can take a while (or fail and are
-           replaced by a transparent pixel), so the underlying street tiles keep
-           the map readable instead of showing a blank area. */
+        /* Single easy-to-load street basemap (CARTO Voyager). Unlike the Esri
+           satellite tiles it never serves "Map data not yet available"
+           placeholders, it loads fast on mobile networks, and the street labels
+           stay crisp while zooming. */
         var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
             maxZoom: 20,
             updateWhenIdle: true,
             updateWhenZooming: false
-        });
-
-        var satelliteLayer = tileRetryLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.arcgis.com/home/index.html">ArcGIS</a>'
-        });
-
-        baseLayer.addTo(map);
-        satelliteLayer.addTo(map);
-
-        var refreshTimer = null;
-
-        /* Esri sometimes serves a "Map data not yet available" placeholder tile
-           (a valid 200 image, so no tileerror fires). Re-request the visible
-           tiles shortly after load and after each zoom so real tiles replace
-           placeholders once ArcGIS has generated them. */
-        setTimeout(function () { satelliteLayer.redraw(); }, 1500);
-        setTimeout(function () { satelliteLayer.redraw(); }, 4000);
-        map.on('zoomend', function () {
-            clearTimeout(refreshTimer);
-            refreshTimer = setTimeout(function () { satelliteLayer.redraw(); }, 800);
-        });
+        }).addTo(map);
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
