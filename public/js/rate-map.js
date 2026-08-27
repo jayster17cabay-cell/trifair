@@ -6,10 +6,10 @@
    Solano, Nueva Vizcaya). The turn-by-turn instructions panel is hidden
    (`show: false`) — passengers only see the route line.
 
-   Rendering: a street basemap (CARTO Voyager over OpenStreetMap) that shows
+   Rendering: a street basemap (OpenStreetMap standard tiles) that shows
    street names and buildings, with no satellite layer (Esri satellite tiles
-   frequently served "Map data not yet available" placeholders and loaded
-   slowly on mobile networks). Overlaid on top is a navy
+   frequently served "Map data not yet available" placeholders and CARTO
+   needs an API key on some networks). Overlaid on top is a navy
    route polyline with a subtle white
    dashed overlay + directional arrows (leaflet-polylinedecorator), custom
    pickup (navy circle + white center dot) and dropoff (red teardrop) markers,
@@ -161,14 +161,13 @@
         setTimeout(function () { map.invalidateSize(); }, 500);
         window.addEventListener('resize', function () { map.invalidateSize(); });
 
-        /* Single easy-to-load street basemap (CARTO Voyager). Unlike the Esri
-           satellite tiles it never serves "Map data not yet available"
-           placeholders, it loads fast on mobile networks, and the street labels
-           stay crisp while zooming. */
-        var baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20,
+        /* Single easy-to-load street basemap (OpenStreetMap standard tiles). No API
+           key required, loads fast on mobile networks, never serves
+           "Map data not yet available" / "API key required" placeholders, and
+           the street labels stay crisp while zooming. */
+        var baseLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
             updateWhenIdle: true,
             updateWhenZooming: false
         }).addTo(map);

@@ -10,6 +10,7 @@ use App\Http\Controllers\SuperadminController;
 use App\Http\Controllers\OperatorController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\RouteController;
+use App\Http\Controllers\GeocodeController;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Artisan;
 
@@ -276,5 +277,9 @@ Route::get('/rate/{qrCode}/submitted', [RatingController::class, 'showSubmitted'
 
 // Server-side route lookup for the passenger map (cached)
 Route::get('/route', [RouteController::class, 'fetch'])->middleware('throttle:60,1');
+
+// Server-side geocoding proxy for the passenger map (cached)
+Route::get('/geocode/reverse', [GeocodeController::class, 'reverse'])->middleware('throttle:60,1');
+Route::get('/geocode/search', [GeocodeController::class, 'search'])->middleware('throttle:60,1');
 
 

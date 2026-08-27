@@ -893,8 +893,10 @@
 
     function forwardGeocode(query) {
         lastGeocodeCall = Date.now();
-        var vb = '121.0,16.7,121.4,16.3';
-        var base = 'https://nominatim.openstreetmap.org/search?format=json&countrycodes=ph&viewbox=' + vb + '&limit=10&addressdetails=1';
+
+        function fetchResults(q) {
+            return fetch('/geocode/search?q=' + encodeURIComponent(q)).then(function (r) { return r.json(); });
+        }
 
         function render(results) {
             searchResults.innerHTML = '';
@@ -903,6 +905,7 @@
             var inside = [], outside = [];
             results.forEach(function (item) {
                 var latlng = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
+                if (!latlng.lat || !latlng.lng || isNaN(latlng.lat) || isNaN(latlng.lng)) return;
                 (serviceBounds.contains(latlng) ? inside : outside).push({ item: item, latlng: latlng });
             });
 
@@ -930,34 +933,44 @@
             });
         }
 
-        fetch(base + '&q=' + encodeURIComponent(query))
-            .then(function (r) { return r.json(); })
+        fetchResults(query)
             .then(function (results) {
                 if (!results || results.length === 0) {
-                    return fetch(base + '&q=' + encodeURIComponent(query + ', Nueva Vizcaya'))
-                        .then(function (r) { return r.json(); })
-                        .then(render);
+                    return fetchResults(query + ', Nueva Vizcaya').then(render);
                 }
                 var hasInside = results.some(function (item) {
-                    return serviceBounds.contains(L.latLng(parseFloat(item.lat), parseFloat(item.lon)));
+                    var ll = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
+                    return serviceBounds.contains(ll);
                 });
                 if (!hasInside) {
-                    return fetch(base + '&q=' + encodeURIComponent(query + ', Nueva Vizcaya'))
-                        .then(function (r) { return r.json(); })
-                        .then(function (fb) { render(results.concat(fb)); });
+                    return fetchResults(query + ', Nueva Vizcaya')
+                        .then(function (fb) { render(results.concat(fb || [])); });
                 }
                 render(results);
             }).catch(function () { searchResults.innerHTML = ''; });
     }
 
     function reverseGeocode(latlng, inputId) {
-        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + latlng.lat + '&lon=' + latlng.lng + '&zoom=18&addressdetails=1')
+        var timer = setTimeout(function () { fallbackName(inputId); }, 6000);
+        fetch('/geocode/reverse?lat=' + latlng.lat + '&lng=' + latlng.lng)
             .then(function (r) { return r.json(); })
             .then(function (d) {
+                clearTimeout(timer);
                 if (d.display_name) {
                     document.getElementById(inputId).value = trimAddress(d.display_name);
+                } else {
+                    fallbackName(inputId);
                 }
-            }).catch(function () {});
+            }).catch(function () {
+                clearTimeout(timer);
+                fallbackName(inputId);
+            });
+    }
+
+    function fallbackName(inputId) {
+        var el = document.getElementById(inputId);
+        if (!el || (el.value && el.value !== 'Detecting location...')) return;
+        el.value = 'Current location, Solano';
     }
 
     function trimAddress(addr) {

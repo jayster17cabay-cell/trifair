@@ -68,7 +68,7 @@
     </div>
 
     <div class="map-info">
-        <span class="map-attribution">© OpenStreetMap · © CARTO</span>
+        <span class="map-attribution">© OpenStreetMap contributors</span>
         <span class="map-summary" id="{{ $mapId }}Summary">{{ $summaryText ?? 'Select destination' }}</span>
     </div>
 
