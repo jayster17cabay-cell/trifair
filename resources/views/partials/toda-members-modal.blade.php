@@ -6,8 +6,7 @@
 --}}
 
 <div id="todaModal" class="tw-modal-backdrop hidden"
-     data-members-url="{{ rtrim($membersUrl, '/') }}"
-     data-add-url="{{ $addMemberUrl ?? '#' }}">
+     data-members-url="{{ rtrim($membersUrl, '/') }}">
     <div class="tw-modal tw-modal-sm tw-expand-panel" role="dialog" aria-modal="true" aria-labelledby="todaModalTitle">
         <div class="tw-modal-head">
             <div class="flex min-w-0 flex-1 items-center gap-3">
@@ -22,12 +21,6 @@
             <button type="button" class="tw-modal-close" data-tw-modal-close aria-label="Close">
                 <i class="bi bi-x-lg"></i>
             </button>
-        </div>
-
-        <div class="px-6 pt-4">
-            <a id="addMemberBtn" href="#" class="tw-btn tw-btn-dashed w-full">
-                <i class="bi bi-person-plus"></i>Add Member
-            </a>
         </div>
 
         <div class="tw-modal-body">
@@ -53,11 +46,9 @@
         var title = document.getElementById('todaModalTitle');
         var count = document.getElementById('todaModalCount');
         var list = document.getElementById('todaMembersList');
-        var addBtn = document.getElementById('addMemberBtn');
 
         if (title) title.textContent = todaName;
         if (count) count.textContent = 'Loading members…';
-        if (addBtn) addBtn.href = (modal.getAttribute('data-add-url') || '#') + '?toda_id=' + encodeURIComponent(todaId);
         if (list) {
             list.innerHTML = '<div class="py-8 text-center text-slate-400">' +
                 '<div class="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-navy-600"></div>' +

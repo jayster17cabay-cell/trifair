@@ -6,7 +6,7 @@
             <i class="bi bi-people"></i>
         </div>
         <p class="text-sm font-semibold text-slate-600">No members yet</p>
-        <p class="mt-0.5 text-xs text-slate-400">Use "Add Member" to register the first operator.</p>
+        <p class="mt-0.5 text-xs text-slate-400">No operators registered yet.</p>
     </div>
 @else
     @foreach ($members as $member)
