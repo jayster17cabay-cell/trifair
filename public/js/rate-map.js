@@ -6,9 +6,8 @@
    Solano, Nueva Vizcaya). The turn-by-turn instructions panel is hidden
    (`show: false`) — passengers only see the route line.
 
-   Rendering: Google Maps–style basemaps from Esri — a Transportation
-   (World Street Map) basemap with a Satellite (World Imagery) alternative,
-   switchable via the bottom-left layer control. Overlaid on top is a navy
+   Rendering: an Esri Satellite (World Imagery) basemap that shows real buildings,
+   with no alternate layers. Overlaid on top is a navy
    route polyline with a subtle white
    dashed overlay + directional arrows (leaflet-polylinedecorator), custom
    pickup (navy circle + white center dot) and dropoff (red teardrop) markers,
@@ -188,22 +187,24 @@
             return layer;
         }
 
-        var transportationLayer = tileRetryLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        });
-
         var satelliteLayer = tileRetryLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: '&copy; <a href="https://www.esri.com">Esri</a>, &copy; <a href="https://www.arcgis.com/home/index.html">ArcGIS</a>'
         });
 
-        transportationLayer.addTo(map);
+        var refreshTimer = null;
+
+        /* Esri sometimes serves a "Map data not yet available" placeholder tile
+           (a valid 200 image, so no tileerror fires). Re-request the visible
+           tiles shortly after load and after each zoom so real tiles replace
+           placeholders once ArcGIS has generated them. */
+        setTimeout(function () { satelliteLayer.redraw(); }, 1500);
+        setTimeout(function () { satelliteLayer.redraw(); }, 4000);
+        map.on('zoomend', function () {
+            clearTimeout(refreshTimer);
+            refreshTimer = setTimeout(function () { satelliteLayer.redraw(); }, 800);
+        });
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-        L.control.layers({
-            'Transportation': transportationLayer,
-            'Satellite': satelliteLayer
-        }, null, { position: 'bottomleft', collapsed: true }).addTo(map);
 
         /* LRM computes the route but draws nothing itself (`styles: []`) so the
            module fully controls route-line lifecycle (validation clears,
