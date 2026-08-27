@@ -14,12 +14,6 @@
 
     $borderClass = \App\Models\Rating::ratingBorderClass($stars);
 
-    $avClass = match (true) {
-        $stars <= 2 => 'bg-red-600',
-        $stars == 3 => 'bg-amber-600',
-        default => 'bg-emerald-600',
-    };
-
     $avScoreClass = match (true) {
         $stars <= 2 => 'text-red-600',
         $stars == 3 => 'text-amber-600',
@@ -38,9 +32,6 @@
 <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-rating-card>
     <div class="flex cursor-pointer select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:px-5" data-rating-toggle role="button" tabindex="0" aria-expanded="false">
         <input type="checkbox" class="tw-check rating-check" value="{{ $rating->id }}" data-rating-check aria-label="Select rating #{{ $rating->id }}">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white {{ $avClass }}">
-            {{ strtoupper(substr($operatorName, 0, 1)) }}
-        </div>
         <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <span class="truncate text-sm font-bold text-slate-800">{{ $operatorName }}</span>
@@ -60,11 +51,6 @@
                     <i class="bi {{ $i <= $stars ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-200' }}"></i>
                 @endfor
             </div>
-            @if ($rating->is_reviewed)
-                <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Reviewed</span>
-            @else
-                <span class="tw-badge tw-badge-amber"><i class="bi bi-clock-fill"></i> Pending</span>
-            @endif
             <i class="bi bi-chevron-down text-slate-400 transition-transform duration-200" data-rating-chevron></i>
         </div>
     </div>
@@ -130,22 +116,24 @@
                         <div class="text-sm text-slate-400">No route data</div>
                     @endif
                 </div>
-                <div>
-                    <div class="tw-stat-label mb-1"><i class="bi bi-paperclip mr-1 text-amber-500"></i>Evidence</div>
-                    @if ($rating->rating <= 2 && $rating->proofs->count() > 0)
-                        <div class="flex flex-wrap gap-2">
-                            @foreach ($rating->proofs as $proof)
-                                <a href="{{ URL::signedRoute('proof.serve', ['path' => $proof->file_path]) }}"
-                                   class="inline-flex items-center gap-1.5 rounded-lg border-[1.5px] border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition hover:border-blue-300 hover:bg-blue-100">
-                                    <i class="bi bi-{{ str_contains($proof->file_type ?? '', 'image') ? 'image' : (str_contains($proof->file_type ?? '', 'video') ? 'play-circle' : 'file-earmark') }}"></i>
-                                    View Proof
-                                </a>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="text-sm text-slate-400">No evidence attached</div>
-                    @endif
-                </div>
+                @if ($rating->rating <= 2)
+                    <div>
+                        <div class="tw-stat-label mb-1"><i class="bi bi-paperclip mr-1 text-amber-500"></i>Evidence</div>
+                        @if ($rating->proofs->count() > 0)
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($rating->proofs as $proof)
+                                    <a href="{{ URL::signedRoute('proof.serve', ['path' => $proof->file_path]) }}"
+                                       class="inline-flex items-center gap-1.5 rounded-lg border-[1.5px] border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition hover:border-blue-300 hover:bg-blue-100">
+                                        <i class="bi bi-{{ str_contains($proof->file_type ?? '', 'image') ? 'image' : (str_contains($proof->file_type ?? '', 'video') ? 'play-circle' : 'file-earmark') }}"></i>
+                                        View Proof
+                                    </a>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-sm text-slate-400">No evidence attached</div>
+                        @endif
+                    </div>
+                @endif
             </div>
         </div>
 

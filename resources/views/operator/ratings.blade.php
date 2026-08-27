@@ -19,16 +19,12 @@
         <small>Total</small>
         <strong>{{ $totalRatings }}</strong>
     </div>
-    <div class="op-stat-strip-item">
-        <small>Pending</small>
-        <strong>{{ $pendingCount ?? 0 }}</strong>
-    </div>
 </div>
 
 @if($ratings->count() > 0)
 <div class="tw-alert tw-alert-navy mb-4">
     <i class="bi bi-info-circle-fill mt-0.5"></i>
-    <span class="text-sm">Low ratings (1-2 stars) allow you to respond and explain your side. Pending ratings are still waiting for your reply.</span>
+    <span class="text-sm">Low ratings (1-2 stars) allow you to respond and explain your side.</span>
 </div>
 @endif
 

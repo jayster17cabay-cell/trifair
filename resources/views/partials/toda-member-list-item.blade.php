@@ -6,9 +6,6 @@
     expands an inline Edit/Remove action strip (data-member-more + data-member-actions).
 --}}
 @php
-    $avatarColors = ['bg-navy-700', 'bg-blue-600', 'bg-purple-600', 'bg-cyan-600', 'bg-emerald-600', 'bg-amber-600', 'bg-red-600'];
-    $avBg = $avatarColors[$member->id % count($avatarColors)];
-
     if ($member->isArchived()) {
         $statusLabel = 'Archived'; $statusClass = 'tw-badge-gray'; $statusIcon = 'bi-archive-fill';
     } elseif ($member->status === 'active') {
@@ -26,7 +23,6 @@
 
 <div class="border-b border-slate-100 py-3 last:border-b-0" data-member-item>
     <div class="flex items-center gap-3">
-        <div class="tw-avatar tw-avatar-md {{ $avBg }} rounded-full">{{ strtoupper(substr($memberName, 0, 1)) }}</div>
         <div class="min-w-0 flex-1">
             <div class="truncate text-sm font-bold text-slate-800">{{ $memberName }}</div>
             <div class="truncate text-xs text-slate-500">

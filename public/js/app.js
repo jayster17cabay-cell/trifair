@@ -109,12 +109,6 @@
         setText('opModalColor', op.color);
         setText('opModalAddress', op.address);
 
-        var avatar = document.getElementById('opModalAvatar');
-        if (avatar) {
-            avatar.className = 'tw-avatar tw-avatar-md shrink-0 ' + (op.avatarBg || 'bg-navy-700');
-            avatar.textContent = (op.name || '?').charAt(0).toUpperCase();
-        }
-
         var status = document.getElementById('opModalStatus');
         if (status) {
             status.className = 'tw-badge shrink-0 ' + (op.statusClass || 'tw-badge-gray');
@@ -512,7 +506,6 @@
 
         var nameEl = drawer.querySelector('[data-trip-drawer-name]');
         var subEl = drawer.querySelector('[data-trip-drawer-subtitle]');
-        var avatarEl = drawer.querySelector('[data-trip-drawer-avatar]');
         var listEl = drawer.querySelector('[data-trip-drawer-list]');
         var closeBtn = drawer.querySelector('[data-trip-drawer-close]');
 
@@ -557,12 +550,8 @@
             var plate = row.getAttribute('data-plate');
             var count = row.getAttribute('data-count') || '0';
             var avg = row.getAttribute('data-avg') || '0.0';
-            var bg = row.getAttribute('data-avatar-bg') || 'bg-navy-700';
-            var letter = row.getAttribute('data-avatar-letter') || '?';
 
             nameEl.textContent = name;
-            avatarEl.className = 'tw-avatar tw-avatar-md shrink-0 text-white ' + bg;
-            avatarEl.textContent = letter;
             var subtitle = (plate ? plate + ' \u00b7 ' : '') + count + ' trip' + (count === '1' ? '' : 's') + ' \u00b7 ' + starsHtml(avg) + ' ' + avg + ' avg';
             subEl.innerHTML = subtitle;
 

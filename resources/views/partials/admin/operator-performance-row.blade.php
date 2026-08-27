@@ -13,8 +13,6 @@
     $avg = isset($avg) ? (float) $avg : (float) ($operator->valid_ratings_avg_rating ?? 0);
     $count = (int) ($operator->valid_ratings_count ?? 0);
     $name = $operator->user->name ?? 'Unknown';
-    $avatarPalette = ['bg-navy-700', 'bg-blue-600', 'bg-violet-600', 'bg-amber-700', 'bg-emerald-600', 'bg-rose-600'];
-    $avatarBg = $avatarPalette[$operator->id % count($avatarPalette)];
     $totalBadge = $count === 0 ? 'tw-badge-gray' : 'tw-badge-navy';
 @endphp
 <tr class="tw-tr-hover cursor-pointer" data-open-trips
@@ -22,12 +20,9 @@
     data-name="{{ $name }}"
     data-plate="{{ $operator->plate_number ?? '' }}"
     data-count="{{ $count }}"
-    data-avg="{{ number_format($avg, 1) }}"
-    data-avatar-bg="{{ $avatarBg }}"
-    data-avatar-letter="{{ strtoupper(substr($name, 0, 1)) }}">
+    data-avg="{{ number_format($avg, 1) }}">
     <td class="tw-td">
         <div class="flex items-center gap-3">
-            <div class="tw-avatar tw-avatar-md shrink-0 text-white {{ $avatarBg }}">{{ strtoupper(substr($name, 0, 1)) }}</div>
             <div class="min-w-0">
                 <div class="truncate text-sm font-bold text-slate-800">{{ $name }}</div>
             </div>

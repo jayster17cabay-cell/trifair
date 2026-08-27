@@ -6,9 +6,6 @@
     data-operator payload consumed by initOperatorModals() in public/js/app.js.
 --}}
 @php
-    $avatarColors = ['bg-navy-700', 'bg-blue-600', 'bg-purple-600', 'bg-cyan-600', 'bg-emerald-600', 'bg-amber-600', 'bg-red-600'];
-    $avBg = $avatarColors[$operator->id % count($avatarColors)];
-
     if ($operator->isArchived()) {
         $statusLabel = 'Archived'; $statusClass = 'tw-badge-gray'; $statusIcon = 'bi-archive-fill';
     } elseif ($operator->status === 'active') {
@@ -28,7 +25,6 @@
         'id' => $operator->id,
         'name' => $operatorName,
         'email' => $operator->user->email ?? '',
-        'avatarBg' => $avBg,
         'toda' => $todaName,
         'contact' => $operator->contact_number,
         'plate' => $operator->plate_number,
@@ -47,7 +43,6 @@
 <tr class="tw-tr-hover even:bg-slate-50/60">
     <td class="tw-td">
         <div class="flex items-center gap-2.5">
-            <div class="tw-avatar tw-avatar-sm {{ $avBg }}">{{ strtoupper(substr($operatorName, 0, 1)) }}</div>
             <div class="min-w-0">
                 <div class="truncate text-sm font-bold text-slate-800">{{ $operatorName }}</div>
                 <div class="truncate text-xs text-slate-500">{{ $operator->user->email ?? '—' }}</div>

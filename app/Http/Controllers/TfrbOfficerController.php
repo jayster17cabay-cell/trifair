@@ -172,7 +172,7 @@ class TfrbOfficerController extends Controller
         extract(app(AdminQueryService::class)->ratingsData());
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('tfrb-officer.ratings', compact('ratings', 'activeOperators', 'goodCount', 'reviewedCount', 'proofsCount', 'pendingCount'));
+        return view('tfrb-officer.ratings', compact('ratings', 'activeOperators', 'goodCount', 'reviewedCount', 'proofsCount'));
     }
 
     public function reports()

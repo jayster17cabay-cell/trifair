@@ -5,7 +5,6 @@
     - data-open-trips
     - data-trips-url   (AJAX endpoint returning { html: ... })
     - data-name, data-plate, data-count, data-avg
-    - data-avatar-bg, data-avatar-letter
     The drawer is populated entirely from those attributes by
     initTripHistoryDrawer() in public/js/app.js, so other pages can reuse it
     (e.g. an operator's trip history from the Operators page).
@@ -14,7 +13,6 @@
 <aside class="tw-drawer" data-trip-drawer role="dialog" aria-modal="true" aria-labelledby="tripDrawerTitle" aria-hidden="true">
     <div class="tw-drawer-head">
         <div class="flex min-w-0 items-center gap-3">
-            <div class="tw-avatar tw-avatar-md shrink-0 bg-navy-700 text-white" data-trip-drawer-avatar>?</div>
             <div class="min-w-0">
                 <div id="tripDrawerTitle" class="truncate text-sm font-bold text-slate-800" data-trip-drawer-name>Operator</div>
                 <div class="mt-0.5 truncate text-xs text-slate-500" data-trip-drawer-subtitle></div>

@@ -15,13 +15,11 @@
     $totalR = $ratings->total();
     $goodR = $goodCount;
     $proofsR = $proofsCount;
-    $reviewedR = $reviewedCount;
-    $pendingR = $pendingCount ?? ($totalR - $reviewedR);
 @endphp
 
 {{-- Sticky summary + bulk bar: stays pinned below the topbar while the list scrolls. --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 bg-slate-50/95 px-4 pb-4 pt-2 shadow-[0_4px_10px_-8px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-star"></i></div>
             <div class="tw-stat-num">{{ $totalR }}</div>
@@ -31,11 +29,6 @@
             <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-hand-thumbs-up"></i></div>
             <div class="tw-stat-num">{{ $goodR }}</div>
             <div class="tw-stat-label">Good (4-5)</div>
-        </div>
-        <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-clock-history"></i></div>
-            <div class="tw-stat-num">{{ $pendingR }}</div>
-            <div class="tw-stat-label">Pending</div>
         </div>
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-paperclip"></i></div>

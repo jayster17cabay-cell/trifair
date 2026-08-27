@@ -8,7 +8,6 @@
     <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="opModalName">
         <div class="tw-modal-head">
             <div class="flex min-w-0 flex-1 items-center gap-3">
-                <div id="opModalAvatar" class="tw-avatar tw-avatar-md shrink-0 bg-navy-700"></div>
                 <div class="min-w-0 flex-1">
                     <div id="opModalName" class="truncate text-base font-bold text-slate-900">Operator</div>
                     <div id="opModalEmail" class="truncate text-xs text-slate-500">&nbsp;</div>

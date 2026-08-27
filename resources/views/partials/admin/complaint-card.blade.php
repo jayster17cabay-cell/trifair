@@ -21,17 +21,11 @@
         'warning' => 'border-amber-100 bg-amber-50 text-amber-700',
         'neutral' => 'border-slate-200 bg-slate-100 text-slate-600',
     ][$severity];
-
-    $avatarColors = ['bg-red-600', 'bg-orange-600', 'bg-amber-600', 'bg-amber-800', 'bg-purple-600'];
-    $avBg = $avatarColors[$rating->id % count($avatarColors)];
 @endphp
 
 <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
     <div class="flex cursor-pointer select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:px-5" data-complaint-toggle role="button" tabindex="0" aria-expanded="false">
         <input type="checkbox" class="tw-check complaint-check" value="{{ $rating->id }}" data-complaint-check aria-label="Select complaint #{{ $rating->id }}">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white {{ $avBg }}">
-            {{ strtoupper(substr($operatorName, 0, 1)) }}
-        </div>
         <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <span class="truncate text-sm font-bold text-slate-800">{{ $operatorName }}</span>
