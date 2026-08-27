@@ -50,7 +50,7 @@
             <div class="route-body">
                 <span class="route-label">To</span>
                 @if ($mode === 'track')
-                    <input type="text" name="end_location" id="{{ $mapId }}End" class="route-text to" value="{{ $endAddress }}" placeholder="{{ $endAddress }}" autocomplete="off" aria-label="Destination">
+                    <input type="text" name="end_location" id="{{ $mapId }}End" class="route-text to" value="" placeholder="{{ $endAddress }}" autocomplete="off" aria-label="Destination">
                     <div class="search-results" id="{{ $mapId }}SearchResults" aria-live="polite"></div>
                 @else
                     <span class="route-text to" id="{{ $mapId }}EndText">{{ $endAddress }}</span>
@@ -61,7 +61,6 @@
 
     <div class="map-shell" data-trip-route-map data-map-id="{{ $mapId }}" data-mode="{{ $mode }}"{!! $startCoordsAttr !!}{!! $endCoordsAttr !!}>
         <div id="{{ $mapId }}" class="route-map" role="application" aria-label="Trip route map"></div>
-        <div class="map-loading" id="{{ $mapId }}Loading"><div class="map-loading-spinner"></div></div>
     </div>
 
     <div class="tracking-banner" id="{{ $mapId }}Tracking" hidden>

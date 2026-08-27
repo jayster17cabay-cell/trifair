@@ -1021,33 +1021,22 @@
     .map-shell .leaflet-tile-pane .leaflet-tile-loading {
         opacity: 0.4;
     }
+    .map-shell .leaflet-control-attribution a:last-child {
+        display: none;
+    }
+    .map-shell .leaflet-control-attribution {
+        font-size: 9px;
+        opacity: 0.6;
+    }
+    .map-shell .leaflet-tile-pane img[src=""],
+    .map-shell .leaflet-tile-pane img.leaflet-tile-loaded {
+        opacity: 1;
+    }
+    .map-shell .leaflet-overlay-pane svg path.leaflet-interactive {
+        cursor: default;
+    }
 
-    /* Tile loading spinner */
-    .map-shell .map-loading {
-        position: absolute;
-        inset: 0;
-        z-index: 450;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(232, 237, 242, 0.35);
-        transition: opacity 0.3s ease;
-        pointer-events: none;
-    }
-    .map-shell .map-loading.hidden {
-        opacity: 0;
-    }
-    .map-shell .map-loading-spinner {
-        width: 28px;
-        height: 28px;
-        border: 3px solid rgba(15, 42, 74, 0.15);
-        border-top-color: #0f2a4a;
-        border-radius: 50%;
-        animation: mapSpin 0.8s linear infinite;
-    }
-    @keyframes mapSpin {
-        to { transform: rotate(360deg); }
-    }
+    /* Tile loading spinner (removed — tiles fade in natively) */
 
     /* TripRouteMap — markers */
     .marker-pickup {

@@ -149,53 +149,39 @@
         setTimeout(function () { map.invalidateSize(); }, 500);
         window.addEventListener('resize', function () { map.invalidateSize(); });
 
-        var loadingEl = document.getElementById(elId + 'Loading');
         var pendingTiles = 0;
-        var loadingTimer = null;
-
-        function showLoading() {
-            if (loadingEl) { loadingEl.classList.remove('hidden'); }
-            clearTimeout(loadingTimer);
-            loadingTimer = setTimeout(hideLoading, 6000);
-        }
-        function hideLoading() {
-            clearTimeout(loadingTimer);
-            if (loadingEl) { loadingEl.classList.add('hidden'); }
-        }
 
         function tileRetryLayer(urlTemplate, opts) {
             var defaults = {
                 maxZoom: 20,
-                updateWhenIdle: false,
-                updateWhenZooming: true,
+                updateWhenIdle: true,
+                updateWhenZooming: false,
                 keepBuffer: 2,
-                crossOrigin: 'anonymous'
+                crossOrigin: 'anonymous',
+                errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
             };
             var merged = L.Util.extend({}, defaults, opts || {});
             var layer = L.tileLayer(urlTemplate, merged);
 
             layer.on('tileloadstart', function () {
                 pendingTiles++;
-                showLoading();
             });
             layer.on('tileload', function () {
                 pendingTiles = Math.max(0, pendingTiles - 1);
-                if (pendingTiles === 0) { hideLoading(); }
             });
             layer.on('tileerror', function (e) {
                 var tile = e.tile;
                 if (!tile) return;
                 if (tile._tfRetries == null) { tile._tfRetries = 0; }
-                if (tile._tfRetries < 3) {
+                if (tile._tfRetries < 2) {
                     tile._tfRetries++;
                     setTimeout(function () {
                         var src = tile.src;
                         if (src) { tile.src = ''; tile.src = src; }
-                    }, 400 * tile._tfRetries);
+                    }, 300 * tile._tfRetries);
                 } else {
                     tile.style.opacity = '0';
                     pendingTiles = Math.max(0, pendingTiles - 1);
-                    if (pendingTiles === 0) { hideLoading(); }
                 }
             });
 
