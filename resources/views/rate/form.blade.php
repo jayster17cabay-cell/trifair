@@ -218,7 +218,7 @@
                     'mapId' => 'rateMap',
                     'mode' => 'track',
                     'startAddress' => 'Detecting location...',
-                    'endAddress' => 'Type destination or tap map',
+                    'endAddress' => 'Search destination...',
                     'summaryText' => 'Select destination',
                 ])
 
@@ -324,6 +324,7 @@
     var tripAccepted = false;
     var routeCoords = [];
     var approxLine = null;
+    var hasDestination = false;
 
     var deviationDismissed = false;
     var deviationCooldown = false;
@@ -544,7 +545,7 @@
         setStartMarker(fallback);
         map.invalidateSize();
         mapApi.setView(fallback, 15);
-        updateLocStatus('Using Solano center — type destination or tap map.', 'ok');
+        updateLocStatus('Using Solano center — search destination above.', 'ok');
         reverseGeocode(fallback, 'rateMapStart');
         startTracking();
     }
@@ -577,11 +578,11 @@
     }
 
     function followMarker(latlng) {
-        if (!map || !latlng) return;
+        if (!map || !latlng || hasDestination) return;
         try {
             if (!map.__followBound) {
                 map.__followBound = true;
-                map.on('dragstart', markMapInteraction);
+                map.on('dragstart', function () { markMapInteraction(); hasDestination = false; });
                 map.on('zoomstart', markMapInteraction);
                 map.on('touchstart', markMapInteraction);
             }
@@ -603,11 +604,17 @@
         if (!map || !startMarker) return;
         var pts = [startMarker.getLatLng()];
         if (endMarker) { pts.push(endMarker.getLatLng()); }
+        if (pts.length < 1) return;
         try {
             var b = L.latLngBounds(pts);
+            if (!b.isValid()) return;
+            if (b.getNorth() === b.getSouth() && b.getEast() === b.getWest()) {
+                map.setView(b.getNorthWest(), 16, { animate: true, duration: 0.5 });
+                return;
+            }
             if (serviceBounds) {
                 var clamped = b.intersect(serviceBounds);
-                if (clamped.isValid()) { b = clamped; }
+                if (clamped && clamped.isValid()) { b = clamped; }
             }
             map.fitBounds(b.pad(0.4), { maxZoom: 16, animate: true, duration: 0.5 });
         } catch (e) { /* ignore mid-transition */ }
@@ -642,6 +649,7 @@
 
     function applyDestination(latlng) {
         endLatLng = latlng;
+        hasDestination = true;
         lastRerouteLatLng = null;
         lastRerouteTime = 0;
         deviationCooldown = false;

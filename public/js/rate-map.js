@@ -151,11 +151,15 @@
 
         var loadingEl = document.getElementById(elId + 'Loading');
         var pendingTiles = 0;
+        var loadingTimer = null;
 
         function showLoading() {
             if (loadingEl) { loadingEl.classList.remove('hidden'); }
+            clearTimeout(loadingTimer);
+            loadingTimer = setTimeout(hideLoading, 6000);
         }
         function hideLoading() {
+            clearTimeout(loadingTimer);
             if (loadingEl) { loadingEl.classList.add('hidden'); }
         }
 
@@ -314,9 +318,14 @@
             fitBounds: function (latlngs) {
                 if (latlngs && latlngs.length) {
                     var target = L.latLngBounds(latlngs);
+                    if (!target.isValid()) return;
+                    if (target.getNorth() === target.getSouth() && target.getEast() === target.getWest()) {
+                        map.setView(target.getNorthWest(), 16, { animate: true, duration: 0.6 });
+                        return;
+                    }
                     if (bounds) {
                         var clamped = target.intersect(bounds);
-                        if (clamped.isValid()) { target = clamped; }
+                        if (clamped && clamped.isValid()) { target = clamped; }
                     }
                     map.fitBounds(target.pad(0.35), { maxZoom: 16, animate: true, duration: 0.6 });
                 }
