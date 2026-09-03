@@ -25,15 +25,31 @@ Route::get('/__pdiag', function () {
         abort(404);
     }
     $out = [];
+    // president dashboard as real supervisor-president user via controller
     try {
-        $out['toda_list'] = \App\Models\Toda::orderBy('id')->get(['id', 'name', 'area', 'is_active'])->toArray();
-        $out['todas_count'] = \App\Models\Toda::count();
-        $hv = view('superadmin.presidents-create', ['todas' => \App\Models\Toda::orderBy('name')->get()])->render();
-        // extract the select options
-        preg_match_all('/<option value="(\d+)">(.*?)<\/option>/s', $hv, $m, PREG_SET_ORDER);
-        $out['options'] = array_map(fn($o) => ['value' => $o[1], 'text' => trim(preg_replace('/\s+/', ' ', strip_tags($o[2])))], $m);
+        $puser = \App\Models\User::where('role', 'operator_president')->first();
+        \Illuminate\Support\Facades\Auth::login($puser);
+        $c = new \App\Http\Controllers\PresidentController(app(\App\Services\PresidentQueryService::class));
+        $resp = $c->dashboard();
+        $out['president_dashboard_view'] = strlen($resp->getContent());
+        \Illuminate\Support\Facades\Auth::logout();
     } catch (\Throwable $e) {
-        $out['create_view_error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine();
+        $out['president_dashboard_error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine();
+        \Illuminate\Support\Facades\Auth::logout();
+    }
+    // superadmin create-president form as real superadmin
+    try {
+        $suser = \App\Models\User::where('role', 'superadmin')->first();
+        \Illuminate\Support\Facades\Auth::login($suser);
+        $sc = new \App\Http\Controllers\SuperadminController();
+        $out['superadmin_email'] = $suser ? $suser->email : 'none';
+        $out['sc_superadmin_access'] = method_exists($sc, 'createPresident');
+        $r2 = $sc->createPresident();
+        $out['create_form_view'] = strlen($r2->getContent());
+        \Illuminate\Support\Facades\Auth::logout();
+    } catch (\Throwable $e) {
+        $out['create_form_error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine();
+        \Illuminate\Support\Facades\Auth::logout();
     }
     return response()->json($out);
 });
