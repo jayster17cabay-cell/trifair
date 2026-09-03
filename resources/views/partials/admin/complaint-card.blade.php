@@ -40,10 +40,13 @@
             <div class="mt-0.5 text-xs text-slate-500">{{ $rating->created_at->format('M d, Y \a\t h:i A') }}</div>
         </div>
         <div class="flex shrink-0 items-center gap-2 sm:gap-3">
-            <div class="hidden gap-0.5 sm:flex">
-                @for ($i = 1; $i <= 5; $i++)
-                    <i class="bi {{ $i <= $rating->rating ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-200' }}"></i>
-                @endfor
+            <div class="hidden items-center gap-2 sm:flex">
+                <span class="tw-badge tw-badge-blue">{{ $rating->rating }} / 5</span>
+                <span class="flex gap-0.5">
+                    @for ($i = 1; $i <= 5; $i++)
+                        <i class="bi {{ $i <= $rating->rating ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-200' }}"></i>
+                    @endfor
+                </span>
             </div>
             @if ($rating->is_reviewed)
                 <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Reviewed</span>

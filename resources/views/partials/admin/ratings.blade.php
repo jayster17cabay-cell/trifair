@@ -3,7 +3,7 @@
 <div class="tw-page-head">
     <div>
         <h1 class="tw-page-title"><i class="bi bi-star-half mr-2 text-gold"></i>Ratings & Feedback</h1>
-        <p class="tw-page-sub">Review all passenger feedback and complaints</p>
+        <p class="tw-page-sub">Review passenger ratings (1-5 stars)</p>
     </div>
         @include('partials.admin.export-dropdown', [
             'exportRoute' => route($routePrefix . '.ratings.export'),

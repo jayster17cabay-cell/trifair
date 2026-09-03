@@ -72,6 +72,8 @@ class FeatureImprovementsTest extends TestCase
             'is_valid' => true,
             'is_reviewed' => false,
             'is_auto' => false,
+            'complaint_type' => 'Rude Driver',
+            'complaint_details' => 'Rude to passenger',
         ]);
 
         RatingProof::create([

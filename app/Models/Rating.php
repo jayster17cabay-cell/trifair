@@ -118,6 +118,26 @@ class Rating extends Model
         return $query->where('is_valid', false);
     }
 
+    /**
+     * A "real complaint" is any rating that carries an actual complaint
+     * type/details, regardless of star count. This drives the Complaints
+     * page so it only lists genuine complaints (not every low rating).
+     */
+    public function scopeIsComplaint($query)
+    {
+        return $query->whereNotNull('complaint_type');
+    }
+
+    /**
+     * The inverse: feedback without a complaint attached. Used by the
+     * Ratings page so it lists all 1-5 star feedback that isn't itself a
+     * complaint entry.
+     */
+    public function scopeNotComplaint($query)
+    {
+        return $query->whereNull('complaint_type');
+    }
+
     public static function paddedComplaintStats($stats)
     {
         $map = collect($stats)->pluck('total', 'complaint_type');

@@ -120,7 +120,7 @@ class OperatorController extends Controller
         $stats = [
             'totalRatings' => $operator->ratings()->isValid()->count(),
             'averageRating' => $operator->ratings()->isValid()->avg('rating'),
-            'totalComplaints' => $operator->ratings()->isValid()->where('rating', '<=', 2)->count(),
+            'totalComplaints' => $operator->ratings()->isValid()->isComplaint()->count(),
             'responseRate' => $operator->ratings()->isValid()->whereHas('response')->count(),
         ];
 

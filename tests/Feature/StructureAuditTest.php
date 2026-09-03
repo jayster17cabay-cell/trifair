@@ -75,6 +75,7 @@ class StructureAuditTest extends TestCase
     private function makeValidComplaint(Operator $operator): Rating
     {
         $rating = $this->makeValidRating($operator, 2);
+        $rating->update(['complaint_type' => 'Rude Driver', 'complaint_details' => 'Rude to passenger']);
 
         RatingProof::create([
             'rating_id' => $rating->id,

@@ -21,7 +21,7 @@ class AdminQueryService
     {
         $filter = $request->query('filter', 'pending');
 
-        $base = Rating::isValid()->where('rating', '<=', 2);
+        $base = Rating::isValid()->isComplaint();
 
         $pendingCount = (clone $base)->where('is_reviewed', false)->count();
         $reviewedCount = (clone $base)->where('is_reviewed', true)->count();
@@ -46,7 +46,7 @@ class AdminQueryService
 
     public function ratingsData(): array
     {
-        $base = Rating::isValid()->where('rating', '>', 2);
+        $base = Rating::isValid()->notComplaint();
 
         $goodCount = (clone $base)->where('rating', '>=', 4)->count();
         $reviewedCount = (clone $base)->where('is_reviewed', true)->count();
@@ -135,7 +135,7 @@ class AdminQueryService
 
     public function ratingsForExport(?int $operatorId = null): \Illuminate\Support\Collection
     {
-        $query = Rating::isValid()->where('rating', '>', 2)->with(['operator.user', 'response']);
+        $query = Rating::isValid()->notComplaint()->with(['operator.user', 'response']);
         if ($operatorId) {
             $query->where('operator_id', $operatorId);
         }
@@ -157,7 +157,7 @@ class AdminQueryService
     {
         $filter = $request->query('filter', 'pending');
         $operatorId = $request->query('operator_id');
-        $base = Rating::isValid()->where('rating', '<=', 2);
+        $base = Rating::isValid()->isComplaint();
         if ($filter === 'reviewed') {
             $base->where('is_reviewed', true);
         } elseif ($filter !== 'all') {

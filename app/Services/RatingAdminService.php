@@ -54,7 +54,7 @@ class RatingAdminService
         $count = 0;
         Rating::whereIn('id', $ids)
             ->isValid()
-            ->where('rating', '<=', 2)
+            ->whereNotNull('complaint_type')
             ->where('is_reviewed', false)
             ->with('operator.user')
             ->get()

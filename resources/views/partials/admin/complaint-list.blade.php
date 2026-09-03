@@ -10,7 +10,7 @@
 <div class="tw-page-head">
     <div>
         <h1 class="tw-page-title"><i class="bi bi-exclamation-triangle mr-2 text-amber-500"></i>Complaints</h1>
-        <p class="tw-page-sub">Low ratings (1-2 stars) reported by passengers</p>
+        <p class="tw-page-sub">Passenger complaints filed against operators</p>
     </div>
     @include('partials.admin.export-dropdown', [
         'exportRoute' => route($routePrefix . '.complaints.export'),
@@ -75,7 +75,7 @@
 
 @php
     $emptyTitle = 'No Complaints';
-    $emptyMsg = 'All operators are doing great! No low ratings reported.';
+    $emptyMsg = 'All operators are doing great! No complaints filed.';
     if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for review. Keep it up!'; }
     elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints you mark as reviewed will appear here.'; }
 @endphp
