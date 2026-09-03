@@ -20,6 +20,7 @@
                 'links' => [
                     ['label' => 'Operators', 'icon' => 'bi-people', 'route' => 'superadmin.operators', 'match' => 'superadmin.operators'],
                     ['label' => 'TODA', 'icon' => 'bi-diagram-3', 'route' => 'superadmin.todas', 'match' => 'superadmin.todas*'],
+                    ['label' => 'Presidents', 'icon' => 'bi-award', 'route' => 'superadmin.presidents', 'match' => 'superadmin.presidents*'],
                     ['label' => 'Ratings', 'icon' => 'bi-star', 'route' => 'superadmin.ratings', 'match' => 'superadmin.ratings*'],
                     ['label' => 'Reports', 'icon' => 'bi-bar-chart', 'route' => 'superadmin.reports', 'match' => 'superadmin.reports*'],
                 ],

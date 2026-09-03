@@ -15,6 +15,7 @@ use App\Services\RatingAdminService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class SuperadminController extends Controller
 {
@@ -111,6 +112,105 @@ class SuperadminController extends Controller
         ActivityLogger::log('delete_tfrb_officer', "Deleted TFRB Officer {$officerName}", null, 'tfrb_officer');
 
         return redirect()->route('superadmin.officers')->with('success', 'TFRB Officer removed successfully.');
+    }
+
+    public function presidents(Request $request)
+    {
+        $search = $request->query('search');
+
+        $presidents = User::where('role', 'operator_president')
+            ->with('toda')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        if ($request->ajax()) {
+            $html = view('partials.admin.presidents-table', ['presidents' => $presidents])->render();
+            return response()->json([
+                'html' => $html,
+                'pagination' => $presidents->links('pagination::tailwind')->render(),
+            ]);
+        }
+
+        $totalPresidents = User::where('role', 'operator_president')->count();
+        $assignedPresidents = User::where('role', 'operator_president')->whereNotNull('toda_id')->count();
+
+        return view('superadmin.presidents', compact('presidents', 'search', 'totalPresidents', 'assignedPresidents'));
+    }
+
+    public function createPresident()
+    {
+        $todas = Toda::orderBy('name')->get();
+        return view('superadmin.presidents-create', compact('todas'));
+    }
+
+    public function storePresident(Request $request)
+    {
+        $request->merge(['email' => strtolower(trim($request->input('email')))]);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
+            'phone' => 'nullable|string|max:20',
+            'toda_id' => 'required|exists:todas,id',
+        ]);
+
+        $president = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'phone' => $data['phone'] ?? null,
+        ]);
+
+        // role/is_active/toda_id are intentionally NOT mass-assignable by form
+        // (only role is guarded via forceFill, mirroring officer creation).
+        $president->forceFill([
+            'role' => 'operator_president',
+            'is_active' => true,
+            'toda_id' => (int) $data['toda_id'],
+        ])->save();
+
+        // A president is also an operator so they can carry their own rating.
+        Operator::updateOrCreate(
+            ['user_id' => $president->id],
+            [
+                'toda_id' => (int) $data['toda_id'],
+                'contact_number' => $data['phone'] ?? null,
+                'address' => null,
+                'qr_code' => Str::random(32),
+                'status' => 'active',
+            ]
+        );
+
+        $president->markEmailAsVerified();
+
+        ActivityLogger::log('create_toda_president', "Created TODA President {$data['name']} ({$data['email']}) for TODA #{$data['toda_id']}", null, 'tfrb_officer');
+
+        return redirect()->route('superadmin.presidents')
+            ->with('success', 'TODA President created successfully.');
+    }
+
+    public function destroyPresident(User $user)
+    {
+        if ($user->role !== 'operator_president') {
+            return back()->withErrors(['error' => 'User is not a TODA President.']);
+        }
+        if ($user->id === Auth::id()) {
+            return back()->withErrors(['error' => 'You cannot remove your own account.']);
+        }
+        $presidentName = $user->name;
+        $user->delete();
+
+        ActivityLogger::log('delete_toda_president', "Deleted TODA President {$presidentName}", null, 'tfrb_officer');
+
+        return redirect()->route('superadmin.presidents')->with('success', 'TODA President removed successfully.');
     }
 
     public function showSettings()

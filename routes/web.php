@@ -98,6 +98,10 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::get('/officers/create', [SuperadminController::class, 'createOfficer'])->name('officers.create');
     Route::post('/officers', [SuperadminController::class, 'storeOfficer'])->name('officers.store');
     Route::delete('/officers/{user}', [SuperadminController::class, 'destroyOfficer'])->name('officers.destroy');
+    Route::get('/presidents', [SuperadminController::class, 'presidents'])->name('presidents');
+    Route::get('/presidents/create', [SuperadminController::class, 'createPresident'])->name('presidents.create');
+    Route::post('/presidents', [SuperadminController::class, 'storePresident'])->name('presidents.store');
+    Route::delete('/presidents/{user}', [SuperadminController::class, 'destroyPresident'])->name('presidents.destroy');
     Route::get('/complaints', [SuperadminController::class, 'complaints'])->name('complaints');
     Route::patch('/complaints/{rating}/review', [SuperadminController::class, 'markReviewed'])->name('complaints.review');
     Route::delete('/complaints/{rating}', [SuperadminController::class, 'destroyComplaint'])->name('complaints.destroy');
