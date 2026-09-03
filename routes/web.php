@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\TfrbOfficerController;
 use App\Http\Controllers\SuperadminController;
 use App\Http\Controllers\OperatorController;
+use App\Http\Controllers\PresidentController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\GeocodeController;
@@ -145,6 +146,12 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator
         Route::get('/settings', [OperatorController::class, 'showSettings'])->name('settings');
         Route::put('/settings/password', [OperatorController::class, 'updatePassword'])->name('settings.password');
     });
+});
+
+Route::middleware(['auth', 'role:operator_president', 'president.active', 'desktop'])->prefix('president')->name('president.')->group(function () {
+    Route::get('/dashboard', [PresidentController::class, 'dashboard'])->name('dashboard');
+    Route::get('/members', [PresidentController::class, 'members'])->name('members');
+    Route::get('/members/{member}', [PresidentController::class, 'memberDetail'])->name('members.detail');
 });
 
 // Notification routes (TFRB Officer & Superadmin only — operators have no

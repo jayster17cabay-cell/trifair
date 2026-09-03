@@ -133,5 +133,36 @@ class DatabaseSeeder extends Seeder
                 'status' => 'active',
             ]
         );
+
+        $presidentPassword = $mk('SEED_PRESIDENT_PASSWORD');
+
+        $presidentUser = User::firstOrCreate(
+            ['email' => 'president@trifair.com'],
+            [
+                'name' => 'TODA President',
+                'password' => Hash::make($presidentPassword),
+                'phone' => '09161234567',
+            ]
+        );
+        $presidentUser->forceFill([
+            'role' => 'operator_president',
+            'is_active' => true,
+            'toda_id' => $toda1->id,
+        ])->save();
+
+        Operator::firstOrCreate(
+            ['user_id' => $presidentUser->id],
+            [
+                'toda_id' => $toda1->id,
+                'license_number' => 'N01-PRES-01',
+                'plate_number' => 'PRES 001',
+                'body_number' => 'P01',
+                'motorcycle_model' => 'Honda Beat',
+                'contact_number' => '09161234567',
+                'address' => 'Sampaloc, Manila',
+                'qr_code' => Str::random(32),
+                'status' => 'active',
+            ]
+        );
     }
 }

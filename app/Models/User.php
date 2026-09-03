@@ -21,6 +21,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone',
         'provider',
         'provider_id',
+        'toda_id',
     ];
 
     protected $hidden = [
@@ -48,6 +49,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Operator::class);
     }
 
+    public function toda()
+    {
+        return $this->belongsTo(Toda::class);
+    }
+
     public function isSuperadmin()
     {
         return $this->role === 'superadmin';
@@ -61,6 +67,24 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isOperator()
     {
         return $this->role === 'operator';
+    }
+
+    public function isOperatorPresident()
+    {
+        return $this->role === 'operator_president';
+    }
+
+    /**
+     * The TODA this president governs. Uses the dedicated users.toda_id when
+     * set, otherwise falls back to the president's own operator record's TODA
+     * (a president is also an operator and may carry a personal rating).
+     */
+    public function presidentToda()
+    {
+        if ($this->toda_id) {
+            return Toda::find($this->toda_id);
+        }
+        return $this->operator ? $this->operator->toda : null;
     }
 
     public function isTfrbOfficerOrSuperadmin()

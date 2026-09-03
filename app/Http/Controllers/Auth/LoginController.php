@@ -53,6 +53,18 @@ class LoginController extends Controller
                 return redirect()->route('tfrb-officer.dashboard');
             }
 
+            if ($user->isOperatorPresident()) {
+                if (!$user->presidentToda()) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return back()->withErrors([
+                        'email' => 'Your account is not assigned to a TODA. Please contact support.',
+                    ])->onlyInput('email');
+                }
+                return redirect()->route('president.dashboard');
+            }
+
             if ($user->isOperator()) {
                 $operator = $user->operator;
                 if (!$operator) {

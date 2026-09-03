@@ -80,6 +80,18 @@ class SocialiteController extends Controller
             return redirect()->route('tfrb-officer.dashboard');
         }
 
+        if ($user->isOperatorPresident()) {
+            if (!$user->presidentToda()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Your account is not assigned to a TODA. Please contact support.',
+                ]);
+            }
+            return redirect()->route('president.dashboard');
+        }
+
         if ($user->isOperator()) {
             $operator = $user->operator;
 
