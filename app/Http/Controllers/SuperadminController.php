@@ -150,6 +150,9 @@ class SuperadminController extends Controller
                 'line'  => $e->getLine(),
                 'trace' => substr($e->getTraceAsString(), 0, 2000),
             ]);
+            if ($request->query('debug') === '1') {
+                return response("PRESIDENT_DEBUG\n" . $e->getMessage() . "\n\n" . $e->getFile() . ':' . $e->getLine() . "\n\n" . $e->getTraceAsString(), 500);
+            }
             abort(500);
         }
     }
