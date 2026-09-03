@@ -15,6 +15,7 @@ use App\Services\RatingAdminService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SuperadminController extends Controller
@@ -116,32 +117,41 @@ class SuperadminController extends Controller
 
     public function presidents(Request $request)
     {
-        $search = $request->query('search');
+        try {
+            $search = $request->query('search');
 
-        $presidents = User::where('role', 'operator_president')
-            ->with('toda')
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                });
-            })
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
+            $presidents = User::where('role', 'operator_president')
+                ->with('toda')
+                ->when($search, function ($query, $search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+                })
+                ->latest()
+                ->paginate(20)
+                ->withQueryString();
 
-        if ($request->ajax()) {
-            $html = view('partials.admin.presidents-table', ['presidents' => $presidents])->render();
-            return response()->json([
-                'html' => $html,
-                'pagination' => $presidents->links('pagination::tailwind')->render(),
+            if ($request->ajax()) {
+                $html = view('partials.admin.presidents-table', ['presidents' => $presidents])->render();
+                return response()->json([
+                    'html' => $html,
+                    'pagination' => $presidents->links('pagination::tailwind')->render(),
+                ]);
+            }
+
+            $totalPresidents = User::where('role', 'operator_president')->count();
+            $assignedPresidents = User::where('role', 'operator_president')->whereNotNull('toda_id')->count();
+
+            return view('superadmin.presidents', compact('presidents', 'search', 'totalPresidents', 'assignedPresidents'));
+        } catch (\Throwable $e) {
+            Log::error('President page 500: ' . $e->getMessage(), [
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+                'trace' => substr($e->getTraceAsString(), 0, 2000),
             ]);
+            abort(500);
         }
-
-        $totalPresidents = User::where('role', 'operator_president')->count();
-        $assignedPresidents = User::where('role', 'operator_president')->whereNotNull('toda_id')->count();
-
-        return view('superadmin.presidents', compact('presidents', 'search', 'totalPresidents', 'assignedPresidents'));
     }
 
     public function createPresident()
