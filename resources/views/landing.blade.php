@@ -407,11 +407,6 @@
                     <span class="text-xl font-black tracking-tight text-white">Tri<span class="text-gold">Fair</span></span>
                 </a>
                 <p class="mb-5 max-w-xs text-sm leading-relaxed text-white/40">A transparent rating system for motorcycle operators, built for the commuters of Solano, Nueva Vizcaya.</p>
-                <div class="flex items-center gap-2">
-                    <a href="#" aria-label="Facebook" class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-white/50 transition hover:bg-gold hover:text-navy-800"><i class="bi bi-facebook"></i></a>
-                    <a href="#" aria-label="Twitter" class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-white/50 transition hover:bg-gold hover:text-navy-800"><i class="bi bi-twitter"></i></a>
-                    <a href="#" aria-label="Instagram" class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-white/50 transition hover:bg-gold hover:text-navy-800"><i class="bi bi-instagram"></i></a>
-                </div>
             </div>
             <div>
                 <h5 class="mb-4 text-xs font-bold uppercase tracking-widest text-white/70">Explore</h5>

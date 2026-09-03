@@ -55,9 +55,7 @@
             @if ($shell['showBell'])
                 <a href="{{ route('notifications.index') }}" class="tw-topbar-icon-btn" title="Notifications" aria-label="Notifications">
                     <i class="bi bi-bell text-lg"></i>
-                    @if ($unreadCount > 0)
-                        <span id="unreadBellBadge" class="tw-topbar-badge" data-live="unreadCount">{{ $unreadCount }}</span>
-                    @endif
+                    <span id="unreadBellBadge" class="tw-topbar-badge" data-live="unreadCount" style="display: {{ $unreadCount > 0 ? '' : 'none' }}">{{ $unreadCount }}</span>
                 </a>
             @endif
             <div class="hidden items-center gap-3 sm:flex">
@@ -112,8 +110,9 @@
                         <a class="tw-sidebar-link {{ $isActive ? 'active' : '' }} {{ !empty($link['gold']) && !$isActive ? 'border-l-2 border-gold' : '' }}" href="{{ $href }}" aria-current="{{ $isActive ? 'page' : 'false' }}">
                             <i class="bi {{ $link['icon'] }} w-5 text-center {{ !empty($link['gold']) ? 'text-gold' : '' }}"></i>
                             {{ $link['label'] }}
-                            @if (isset($link['badge']) && $link['badge'] > 0)
-                                <span class="tw-sidebar-badge" data-live="unreadCount" data-badge="{{ $link['badge'] }}">{{ $link['badge'] }}</span>
+                            @if (isset($link['badge']))
+                                @php $sidebarBadge = (int) $link['badge']; @endphp
+                                <span id="unreadSideBadge" class="tw-sidebar-badge" data-live="unreadCount" data-badge="{{ $sidebarBadge }}" style="display: {{ $sidebarBadge > 0 ? '' : 'none' }}">{{ $sidebarBadge }}</span>
                             @endif
                         </a>
                     @endforeach

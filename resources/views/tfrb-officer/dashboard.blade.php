@@ -20,6 +20,14 @@
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.todas'), 'icon' => 'bi-diagram-3', 'value' => $totalTodas, 'label' => 'TODA', 'live' => 'totalTodas']])
 </div>
 
+<div id="pendingReviewBanner" class="mb-3" style="{{ ($pendingReview ?? 0) > 0 ? '' : 'display:none' }}">
+    <a href="{{ route('tfrb-officer.complaints') }}" class="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800 shadow-sm transition hover:border-amber-300 hover:bg-amber-100">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600"><i class="bi bi-flag-fill"></i></span>
+        <span class="text-sm font-semibold"><span id="pendingReviewText">{{ $pendingReview ?? 0 }} complaint(s) pending review</span></span>
+        <span class="ml-auto text-xs font-bold uppercase tracking-wider text-amber-500">Review <i class="bi bi-chevron-right"></i></span>
+    </a>
+</div>
+
 @include('partials.complaint-breakdown-modal')
 
 <div class="mb-3 grid gap-3 lg:grid-cols-2">

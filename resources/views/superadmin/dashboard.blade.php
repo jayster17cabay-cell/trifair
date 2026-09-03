@@ -13,7 +13,7 @@
 
 <div class="mb-3 grid grid-cols-2 gap-2.5 md:grid-cols-4 xl:grid-cols-7">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators'), 'icon' => 'bi-people', 'value' => $totalOperators, 'label' => 'Operators', 'live' => 'totalOperators']])
-    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators', ['status' => 'active']), 'icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.ratings'), 'icon' => 'bi-star', 'value' => $totalRatings, 'label' => 'Ratings', 'live' => 'totalRatings']])
     @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-award', 'value' => number_format($averageRating ?? 0, 1), 'label' => 'Avg Rating', 'live' => 'averageRating']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.complaints'), 'icon' => 'bi-flag', 'value' => $totalComplaints, 'label' => 'Complaints', 'live' => 'totalComplaints']])

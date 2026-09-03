@@ -1435,6 +1435,15 @@
         background-size: 46px 46px;
     }
 
+    /* ---------- Auth ambient drift animation ---------- */
+    @keyframes lp-drift {
+        0%   { transform: translate3d(0, 0, 0) scale(1); }
+        50%  { transform: translate3d(40px, -30px, 0) scale(1.18); }
+        100% { transform: translate3d(0, 0, 0) scale(1); }
+    }
+    .anim-drift      { animation: lp-drift 16s ease-in-out infinite; }
+    .anim-drift-slow { animation: lp-drift 24s ease-in-out infinite reverse; }
+
     /* ---------- Landing page refinements ---------- */
     .lp-link {
         @apply rounded-lg px-4 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white;
