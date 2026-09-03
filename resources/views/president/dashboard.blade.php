@@ -1,38 +1,34 @@
 @extends('layouts.president')
 
-@section('title', 'My Ratings')
+@section('title', 'TODA President Dashboard')
 
 @section('content')
-<div class="tw-page-head">
-    <div>
-        <h1 class="tw-page-title"><i class="bi bi-award mr-2 text-gold"></i>{{ $toda->name }}</h1>
-        <p class="tw-page-sub">
-            @if ($summary['todaArea'])
-                {{ $summary['todaArea'] }} ·
-            @endif
-            Overseeing {{ $summary['totalMembers'] }} {{ $summary['totalMembers'] === 1 ? 'member' : 'members' }}
-        </p>
-    </div>
-</div>
+@include('partials.dashboard-hero', [
+    'eyebrow' => 'TriFair TODA President',
+    'subtitle' => $summary['todaArea'] ? ($summary['todaArea'] . ' · ' . $summary['totalMembers'] . ' members in ' . $toda->name) : ($summary['totalMembers'] . ($summary['totalMembers'] === 1 ? ' member' : ' members') . ' in ' . $toda->name),
+])
 
+{{-- KPI cards --}}
 <div class="mb-4 grid grid-cols-2 gap-2.5 md:grid-cols-4">
-    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-award', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating', 'live' => 'ownAvg']])
-    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#ownRatings', 'icon' => 'bi-award', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating', 'live' => 'ownAvg']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#membersSection', 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
     @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-bar-chart', 'value' => number_format($summary['avgMemberRating'], 1), 'label' => 'TODA Avg']])
-    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-flag', 'value' => $summary['pendingComplaints'], 'label' => 'Complaints']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#membersSection', 'icon' => 'bi-flag', 'value' => $summary['pendingComplaints'], 'label' => 'Complaints']])
 </div>
 
-{{-- Section 1 — the president's OWN ratings first --}}
-@include('partials.president.own-ratings', ['ownOperator' => $ownOperator, 'ownRecentRatings' => $ownRecentRatings])
+{{-- Section 1 — My Ratings (the president's own), first and highlighted --}}
+<div id="ownRatings" class="mb-4 scroll-mt-24">
+    @include('partials.president.own-ratings', ['ownOperator' => $ownOperator, 'ownRecentRatings' => $ownRecentRatings])
+</div>
 
-{{-- Section 2 — member rating breakdown --}}
-<div class="mt-3">
+{{-- Section 2 — Member rating breakdown --}}
+<div class="mb-4">
     @include('partials.president.breakdown-chart', ['breakdown' => $breakdown])
 </div>
 
-{{-- Section 3 — members toggle button --}}
+{{-- Section 3 — Members toggle button --}}
 @php $membersActive = request()->has('search') || request()->has('status'); @endphp
-<div class="mt-3">
+<div id="membersSection" class="scroll-mt-24">
     <button id="presidentMembersToggle" type="button" class="tw-btn tw-btn-gold w-full justify-center px-4 py-3 text-base" onclick="togglePresidentMembers()">
         <i class="bi bi-people-fill mr-2"></i><span id="presidentMembersToggleLabel">{{ $membersActive ? 'Hide Members' : 'View Members' }}</span>
         <i id="presidentMembersToggleChevron" class="bi {{ $membersActive ? 'bi-chevron-up' : 'bi-chevron-down' }} ml-auto"></i>
@@ -60,6 +56,7 @@
         label.textContent = hidden ? 'Hide Members' : 'View Members';
         chevron.classList.toggle('bi-chevron-down', !hidden);
         chevron.classList.toggle('bi-chevron-up', hidden);
+        if (hidden) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 </script>
 @endsection
