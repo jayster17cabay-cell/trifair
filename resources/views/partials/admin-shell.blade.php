@@ -20,10 +20,6 @@
     $shell['home'] = $shell['home'] ?? '#';
     $shell['showBell'] = $shell['showBell'] ?? true;
     $unreadCount = isset($unreadCount) ? (int) $unreadCount : 0;
-
-    $menuLinks = collect($shell['groups'])
-        ->flatMap(fn($group) => $group['links'])
-        ->reject(fn($link) => ($link['inMenu'] ?? true) === false || !empty($link['logout']));
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -71,24 +67,6 @@
                 </div>
                 <div class="tw-avatar tw-avatar-md bg-gold text-navy-800">
                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                </div>
-            </div>
-            <div class="relative">
-                <button type="button" data-tw-dropdown="topMenu" class="inline-flex items-center justify-center rounded-md bg-slate-100 p-2 text-slate-800 transition-colors hover:bg-slate-200" aria-label="Menu">
-                    <i class="bi bi-list text-2xl"></i>
-                </button>
-                <div id="topMenu" data-tw-dropdown-menu class="tw-dropdown right-0 top-12 w-64">
-                    <div class="tw-dropdown-label">Menu</div>
-                    @foreach ($menuLinks as $link)
-                        <a href="{{ $link['href'] ?? route($link['route']) }}" class="tw-dropdown-item">
-                            <i class="bi {{ $link['icon'] }}"></i> {{ $link['label'] }}
-                        </a>
-                    @endforeach
-                    <div class="tw-dropdown-divider"></div>
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="tw-dropdown-item tw-dropdown-danger"><i class="bi bi-box-arrow-right"></i> Logout</button>
-                    </form>
                 </div>
             </div>
         </div>
