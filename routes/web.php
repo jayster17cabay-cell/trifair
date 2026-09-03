@@ -20,40 +20,6 @@ Route::get('/', function () {
     return view('landing');
 });
 
-Route::get('/__pdiag', function () {
-    if (\request()->query('t') !== 'ppres') {
-        abort(404);
-    }
-    $out = [];
-    // president dashboard as real supervisor-president user via controller
-    try {
-        $puser = \App\Models\User::where('role', 'operator_president')->first();
-        \Illuminate\Support\Facades\Auth::login($puser);
-        $c = new \App\Http\Controllers\PresidentController(app(\App\Services\PresidentQueryService::class));
-        $resp = $c->dashboard();
-        $out['president_dashboard_view'] = strlen($resp->render());
-        \Illuminate\Support\Facades\Auth::logout();
-    } catch (\Throwable $e) {
-        $out['president_dashboard_error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine();
-        \Illuminate\Support\Facades\Auth::logout();
-    }
-    // superadmin create-president form as real superadmin
-    try {
-        $suser = \App\Models\User::where('role', 'superadmin')->first();
-        \Illuminate\Support\Facades\Auth::login($suser);
-        $sc = new \App\Http\Controllers\SuperadminController();
-        $out['superadmin_email'] = $suser ? $suser->email : 'none';
-        $out['sc_superadmin_access'] = method_exists($sc, 'createPresident');
-        $r2 = $sc->createPresident();
-        $out['create_form_view'] = strlen($r2->render());
-        \Illuminate\Support\Facades\Auth::logout();
-    } catch (\Throwable $e) {
-        $out['create_form_error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine();
-        \Illuminate\Support\Facades\Auth::logout();
-    }
-    return response()->json($out);
-});
-
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
