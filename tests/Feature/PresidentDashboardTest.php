@@ -187,6 +187,33 @@ class PresidentDashboardTest extends TestCase
     {
         $this->get('/president/dashboard')->assertRedirect(route('login'));
     }
+
+    public function test_members_search_filters_by_member_name()
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+        $target = $this->makeOperator($toda);
+        $other = $this->makeOperator($toda);
+        $target->user->forceFill(['name' => 'Ziggy Searchable Name'])->save();
+
+        $resp = $this->actingAs($pres['user'])->getJson('/president/members?search=Searchable');
+        $resp->assertOk();
+        $this->assertStringContainsString('Ziggy Searchable Name', $resp->json('html'));
+        $this->assertStringNotContainsString($other->user->name, $resp->json('html'));
+    }
+
+    public function test_members_status_filter_filters_by_status()
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+        $active = $this->makeOperator($toda, 'active');
+        $inactive = $this->makeOperator($toda, 'inactive');
+
+        $resp = $this->actingAs($pres['user'])->getJson('/president/members?status=active');
+        $resp->assertOk();
+        $this->assertStringContainsString($active->user->name, $resp->json('html'));
+        $this->assertStringNotContainsString($inactive->user->name, $resp->json('html'));
+    }
 }
 
 

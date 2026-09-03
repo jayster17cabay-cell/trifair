@@ -28,14 +28,30 @@
 
 {{-- Section 3 — Members toggle button --}}
 @php $membersActive = request()->has('search') || request()->has('status'); @endphp
-<div id="membersSection" class="scroll-mt-24">
-    <button id="presidentMembersToggle" type="button" class="tw-btn tw-btn-gold w-full justify-center px-4 py-3 text-base" onclick="togglePresidentMembers()">
-        <i class="bi bi-people-fill mr-2"></i><span id="presidentMembersToggleLabel">{{ $membersActive ? 'Hide Members' : 'View Members' }}</span>
-        <i id="presidentMembersToggleChevron" class="bi {{ $membersActive ? 'bi-chevron-up' : 'bi-chevron-down' }} ml-auto"></i>
-    </button>
+{{-- Section 3 — Members search + toggle (search is always visible) --}}
+<div id="membersSection" class="scroll-mt-24 tw-card mb-3 overflow-hidden">
+    <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="background-image: linear-gradient(135deg, #0a1d33 0%, #0f2a4a 100%);">
+        <div class="flex items-center gap-2">
+            <button id="presidentMembersToggle" type="button" class="tw-btn tw-btn-gold px-4 py-2 text-sm" onclick="togglePresidentMembers()">
+                <i class="bi bi-people-fill mr-1"></i><span id="presidentMembersToggleLabel">{{ $membersActive ? 'Hide Members' : 'View Members' }}</span>
+                <i id="presidentMembersToggleChevron" class="bi {{ $membersActive ? 'bi-chevron-up' : 'bi-chevron-down' }} ml-1"></i>
+            </button>
+        </div>
+        <form id="presidentMemberFilter" class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center" method="GET" action="{{ route('president.dashboard') }}">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, body #, plate…"
+                   class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold sm:w-56">
+            <select name="status" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
+                <option value="">All statuses</option>
+                @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $val => $label)
+                    <option value="{{ $val }}" @selected(request('status') === $val)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <button type="submit" class="tw-btn tw-btn-gold px-4 py-2 text-sm"><i class="bi bi-search mr-1"></i> Search</button>
+        </form>
+    </div>
 </div>
 
-{{-- Section 4 — members list (hidden until toggled), each member opens their ratings --}}
+{{-- Section 4 — members list (hidden until toggled / search active), each member opens their ratings --}}
 <div id="presidentMembersWrap" class="mt-3 {{ $membersActive ? '' : 'hidden' }}">
     @include('partials.president.members-section', ['members' => $members, 'memberDetailUrl' => route('president.members')])
 </div>
@@ -58,5 +74,12 @@
         chevron.classList.toggle('bi-chevron-up', hidden);
         if (hidden) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+
+    @if ($membersActive)
+        document.addEventListener('DOMContentLoaded', function () {
+            var wrap = document.getElementById('presidentMembersWrap');
+            if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    @endif
 </script>
 @endsection
