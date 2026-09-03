@@ -49,6 +49,22 @@ Route::get('/__diag', function () {
     } catch (\Throwable $e) {
         $out['migrations_error'] = $e->getMessage();
     }
+
+    if (\request()->query('run') === 'migrate') {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            $out['migrate_output'] = trim(\Illuminate\Support\Facades\Artisan::output());
+        } catch (\Throwable $e) {
+            $out['migrate_error'] = get_class($e) . ': ' . $e->getMessage();
+        }
+        // re-check
+        try {
+            $out['users.toda_id_exists_after'] = \Illuminate\Support\Facades\Schema::hasColumn('users', 'toda_id');
+        } catch (\Throwable $e) {
+            $out['recheck_error'] = $e->getMessage();
+        }
+    }
+
     return response()->json($out);
 });
 
