@@ -43,6 +43,12 @@ Route::get('/__diag', function () {
             $out['count_error'] = $e->getMessage();
         }
     }
+
+    try {
+        $out['applied_migrations'] = \Illuminate\Support\Facades\DB::table('migrations')->orderBy('id')->get()->pluck('migration')->toArray();
+    } catch (\Throwable $e) {
+        $out['migrations_error'] = $e->getMessage();
+    }
     return response()->json($out);
 });
 
