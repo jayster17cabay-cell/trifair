@@ -40,9 +40,9 @@
             <td class="tw-td text-right">
                 <div class="inline-flex gap-1.5">
                     @if ($hasToda)
-                        <a href="{{ route('superadmin.todas.members', $toda->id) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="View members" aria-label="View {{ $toda->name }} members">
+                        <button type="button" onclick="showTodaMembers({{ $toda->id }}, @js($toda->name))" class="tw-btn tw-btn-sm tw-btn-outline" title="View members" aria-label="View {{ $toda->name }} members">
                             <i class="bi bi-people"></i>
-                        </a>
+                        </button>
                     @endif
                     <form action="{{ route('superadmin.presidents.destroy', $president) }}" method="POST" onsubmit="return confirm('Remove this TODA President? They will lose all system access.')">
                         @csrf

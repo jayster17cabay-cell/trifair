@@ -129,4 +129,24 @@ class PresidentManagementTest extends TestCase
             ->get('/superadmin/presidents')
             ->assertForbidden();
     }
+
+    public function test_presidents_view_members_button_opens_modal_not_raw_json()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+        $president = $this->makeUser('operator_president');
+        $president->forceFill(['toda_id' => $toda->id])->save();
+
+        $html = $this->actingAs($admin)
+            ->get('/superadmin/presidents')
+            ->assertOk()
+            ->getContent();
+
+        // The modal and its handler are present on the page...
+        $this->assertStringContainsString('id="todaModal"', $html);
+        $this->assertStringContainsString('function showTodaMembers', $html);
+        $this->assertStringContainsString('showTodaMembers(' . $toda->id . ',', $html);
+        // ...and there must be NO direct anchor to the raw JSON endpoint.
+        $this->assertStringNotContainsString('href="/superadmin/toda/' . $toda->id . '/members"', $html);
+    }
 }

@@ -82,4 +82,6 @@
         if (e.key === 'Enter') e.preventDefault();
     });
 </script>
+
+@include('partials.toda-members-modal', ['membersUrl' => url('/superadmin/toda'), 'addMemberUrl' => route('superadmin.operators.create')])
 @endsection
