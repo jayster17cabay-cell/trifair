@@ -75,7 +75,7 @@
             </div>
         </div>
         <div class="border-t border-slate-100 px-6 py-4">
-            <button type="button" class="tw-btn tw-btn-navy w-full" data-tw-modal-close>Got it!</button>
+            <button type="button" class="tw-btn tw-btn-gold w-full" data-tw-modal-close>Got it!</button>
         </div>
     </div>
 </div>

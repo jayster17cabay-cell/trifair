@@ -524,6 +524,14 @@
                     if (body) body.innerHTML = '<div class="p-8 text-center text-sm text-red-500">Unable to load member details.</div>';
                 });
         });
+
+        // The member-detail partial is injected via AJAX after page load, so its
+        // data-tw-modal-close button needs a delegated handler to close the modal.
+        document.addEventListener('click', function (e) {
+            var closeBtn = e.target.closest('#presidentMemberModal [data-tw-modal-close]');
+            if (!closeBtn) return;
+            closeModal(closeBtn.closest('.tw-modal'));
+        });
     }
 
     function initTripHistoryDrawer() {

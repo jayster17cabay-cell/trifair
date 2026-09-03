@@ -80,14 +80,6 @@
             });
     }
 
-    function closeTodaModal() {
-        var modal = document.getElementById('todaModal');
-        if (modal) {
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-    }
-
     document.addEventListener('click', function (e) {
         var btn = e.target.closest('[data-member-more]');
         if (!btn) return;

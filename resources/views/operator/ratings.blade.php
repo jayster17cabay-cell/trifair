@@ -107,7 +107,7 @@
                                             <textarea class="tw-textarea text-sm @error('message') is-invalid @enderror"
                                                       name="message" rows="2" placeholder="Write your explanation here..."></textarea>
                                             @error('message') <span class="tw-error-text">{{ $message }}</span> @enderror
-                                            <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy mt-2">
+                                            <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold mt-2">
                                                 <i class="bi bi-send"></i> Submit Response
                                             </button>
                                         </form>
@@ -123,7 +123,7 @@
                 <div class="tw-empty-icon"><i class="bi bi-inbox"></i></div>
                 <p class="mt-2 text-sm text-slate-500">No ratings yet.</p>
                 <p class="text-[0.85rem] text-slate-400">Once passengers scan your QR code and rate their trip, their feedback will appear here.</p>
-                <a href="{{ route('operator.dashboard') }}" class="tw-btn tw-btn-sm tw-btn-navy mt-3">
+                <a href="{{ route('operator.dashboard') }}" class="tw-btn tw-btn-sm tw-btn-gold mt-3">
                     <i class="bi bi-qr-code"></i> Go to Dashboard
                 </a>
             </div>

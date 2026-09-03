@@ -56,7 +56,7 @@
                         </td>
                         <td class="whitespace-nowrap px-4 py-3"><span class="tw-badge {{ $statusColor }}">{{ ucfirst($member->status) }}</span></td>
                         <td class="whitespace-nowrap px-4 py-3 text-right">
-                            <button type="button" class="tw-btn tw-btn-gold px-3 py-1.5 text-xs" data-president-member="{{ $member->id }}" data-url="{{ $memberDetailUrl }}/{{ $member->id }}" data-name="{{ $member->user->name }}"><i class="bi bi-eye mr-1"></i> View Ratings</button>
+                            <button type="button" class="tw-btn tw-btn-gold px-3 py-1.5 text-xs" data-president-member="{{ $member->id }}" data-url="{{ $memberDetailUrl }}/{{ $member->id }}"><i class="bi bi-eye mr-1"></i> View Ratings</button>
                         </td>
                     </tr>
                 @endforeach

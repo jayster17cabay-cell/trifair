@@ -13,7 +13,7 @@
         </div>
 
         <div class="op-qr-actions">
-            <a href="https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data={{ urlencode(route('rate.operator', $operator->qr_code)) }}" class="tw-btn tw-btn-navy tw-btn-sm flex-1">
+            <a href="https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data={{ urlencode(route('rate.operator', $operator->qr_code)) }}" class="tw-btn tw-btn-gold tw-btn-sm flex-1">
                 <i class="bi bi-printer"></i> Print
             </a>
             <a href="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode(route('rate.operator', $operator->qr_code)) }}" download="trifair-qr-{{ $operator->qr_code }}.png" class="tw-btn tw-btn-outline tw-btn-sm flex-1">

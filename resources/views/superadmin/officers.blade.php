@@ -35,7 +35,7 @@
     <div class="tw-input-group">
         <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
         <input type="text" id="officerSearchInput" class="tw-input" placeholder="Search officers by name or email..." value="{{ $search ?? '' }}" oninput="liveOfficerSearch(this.value)" aria-label="Search officers by name or email">
-        <button type="button" class="shrink-0 bg-navy-600 px-4 text-white transition hover:bg-navy-700" onclick="liveOfficerSearch(document.getElementById('officerSearchInput').value)" aria-label="Search">
+        <button type="button" class="tw-btn tw-btn-gold shrink-0 px-4" onclick="liveOfficerSearch(document.getElementById('officerSearchInput').value)" aria-label="Search">
             <i class="bi bi-search"></i>
         </button>
         @if ($search)
