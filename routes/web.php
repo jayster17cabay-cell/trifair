@@ -20,6 +20,32 @@ Route::get('/', function () {
     return view('landing');
 });
 
+Route::get('/__diag', function () {
+    $token = env('DIAG_TOKEN', 'trifair-diag');
+    if (\request()->query('t') !== $token) {
+        abort(404);
+    }
+    $out = [];
+    try {
+        $todaCol = \Illuminate\Support\Facades\Schema::hasColumn('users', 'toda_id');
+        $out['users.toda_id_exists'] = $todaCol;
+        $out['users_columns'] = \Illuminate\Support\Facades\Schema::getColumnListing('users');
+        $out['conn'] = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+    } catch (\Throwable $e) {
+        $out['error'] = $e->getMessage();
+    }
+
+    if ($todaCol ?? false) {
+        try {
+            $out['president_count'] = \Illuminate\Support\Facades\DB::table('users')->where('role', 'operator_president')->count();
+            $out['operators_without_toda_col_check'] = true;
+        } catch (\Throwable $e) {
+            $out['count_error'] = $e->getMessage();
+        }
+    }
+    return response()->json($out);
+});
+
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
