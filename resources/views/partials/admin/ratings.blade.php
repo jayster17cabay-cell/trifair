@@ -7,6 +7,8 @@
     </div>
         @include('partials.admin.export-dropdown', [
             'exportRoute' => route($routePrefix . '.ratings.export'),
+            'exportLabel' => 'Ratings',
+            'exportIcon' => 'bi-star',
             'activeOperators' => $activeOperators,
         ])
 </div>

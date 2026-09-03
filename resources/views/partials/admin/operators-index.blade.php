@@ -26,6 +26,8 @@
     <div class="flex items-center gap-2">
         @include('partials.admin.export-dropdown', [
             'exportRoute' => route($routePrefix . '.operators.export'),
+            'exportLabel' => 'Operators',
+            'exportIcon' => 'bi-people',
             'activeOperators' => $activeOperators ?? collect(),
             'preservedParams' => array_filter(['search' => $search ?? null, 'status' => $currentStatus ?? null]),
         ])

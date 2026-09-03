@@ -14,6 +14,8 @@
     </div>
     @include('partials.admin.export-dropdown', [
         'exportRoute' => route($routePrefix . '.complaints.export'),
+        'exportLabel' => 'Complaints',
+        'exportIcon' => 'bi-exclamation-triangle',
         'activeOperators' => $activeOperators,
         'preservedParams' => ['filter' => $filter],
     ])

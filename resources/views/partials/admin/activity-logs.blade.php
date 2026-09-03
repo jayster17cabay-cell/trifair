@@ -7,6 +7,9 @@
     </div>
     @include('partials.admin.export-dropdown', [
         'exportRoute' => route($routePrefix . '.activity-logs.export'),
+        'exportLabel' => 'Activity Logs',
+        'exportIcon' => 'bi-clock-history',
+        'exportSub' => 'Audit trail of all system actions',
         'preservedParams' => ['category' => $category],
     ])
 </div>
