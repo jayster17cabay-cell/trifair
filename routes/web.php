@@ -24,27 +24,16 @@ Route::get('/__pdiag', function () {
     if (\request()->query('t') !== 'ppres') {
         abort(404);
     }
+    $out = [];
     try {
-        $toda = \App\Models\Toda::orderBy('id')->first();
-        $u = \App\Models\User::where('role', 'operator_president')->first();
-        $out = ['toda' => $toda ? $toda->id : null, 'president' => $u ? $u->email : null];
-        if ($toda && $u) {
-            $svc = app(\App\Services\PresidentQueryService::class);
-            $op = $svc->presidentOperator($u);
-            $out['op_found'] = $op ? $op->id : null;
-            $summary = $svc->summary($toda, $op);
-            $out['summary'] = $summary;
-            $out['members_paginator_total'] = $svc->members($toda, null, null)->total();
-            $out['ownRecent_count'] = $svc->ownRecentRatings($op)->count();
-            $out['breakdown_count'] = $svc->memberBreakdown($toda)->count();
-            $hv = view('president.dashboard', [
-                'toda' => $toda, 'summary' => $summary, 'members' => $svc->members($toda, null, null),
-                'ownOperator' => $op, 'ownRecentRatings' => $svc->ownRecentRatings($op), 'breakdown' => $svc->memberBreakdown($toda),
-            ])->render();
-            $out['view_rendered'] = strlen($hv);
-        }
+        $out['toda_list'] = \App\Models\Toda::orderBy('id')->get(['id', 'name', 'area', 'is_active'])->toArray();
+        $out['todas_count'] = \App\Models\Toda::count();
+        $hv = view('superadmin.presidents-create', ['todas' => \App\Models\Toda::orderBy('name')->get()])->render();
+        // extract the select options
+        preg_match_all('/<option value="(\d+)">(.*?)<\/option>/s', $hv, $m, PREG_SET_ORDER);
+        $out['options'] = array_map(fn($o) => ['value' => $o[1], 'text' => trim(preg_replace('/\s+/', ' ', strip_tags($o[2])))], $m);
     } catch (\Throwable $e) {
-        $out['error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine();
+        $out['create_view_error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine();
     }
     return response()->json($out);
 });
