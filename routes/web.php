@@ -20,54 +20,6 @@ Route::get('/', function () {
     return view('landing');
 });
 
-Route::get('/__diag', function () {
-    $token = env('DIAG_TOKEN', 'trifair-diag');
-    if (\request()->query('t') !== $token) {
-        abort(404);
-    }
-    $out = [];
-    try {
-        $todaCol = \Illuminate\Support\Facades\Schema::hasColumn('users', 'toda_id');
-        $out['users.toda_id_exists'] = $todaCol;
-        $out['users_columns'] = \Illuminate\Support\Facades\Schema::getColumnListing('users');
-        $out['conn'] = \Illuminate\Support\Facades\DB::connection()->getDriverName();
-    } catch (\Throwable $e) {
-        $out['error'] = $e->getMessage();
-    }
-
-    if ($todaCol ?? false) {
-        try {
-            $out['president_count'] = \Illuminate\Support\Facades\DB::table('users')->where('role', 'operator_president')->count();
-            $out['operators_without_toda_col_check'] = true;
-        } catch (\Throwable $e) {
-            $out['count_error'] = $e->getMessage();
-        }
-    }
-
-    try {
-        $out['applied_migrations'] = \Illuminate\Support\Facades\DB::table('migrations')->orderBy('id')->get()->pluck('migration')->toArray();
-    } catch (\Throwable $e) {
-        $out['migrations_error'] = $e->getMessage();
-    }
-
-    if (\request()->query('run') === 'migrate') {
-        try {
-            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-            $out['migrate_output'] = trim(\Illuminate\Support\Facades\Artisan::output());
-        } catch (\Throwable $e) {
-            $out['migrate_error'] = get_class($e) . ': ' . $e->getMessage();
-        }
-        // re-check
-        try {
-            $out['users.toda_id_exists_after'] = \Illuminate\Support\Facades\Schema::hasColumn('users', 'toda_id');
-        } catch (\Throwable $e) {
-            $out['recheck_error'] = $e->getMessage();
-        }
-    }
-
-    return response()->json($out);
-});
-
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
