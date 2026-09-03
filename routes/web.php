@@ -31,7 +31,7 @@ Route::get('/__pdiag', function () {
         \Illuminate\Support\Facades\Auth::login($puser);
         $c = new \App\Http\Controllers\PresidentController(app(\App\Services\PresidentQueryService::class));
         $resp = $c->dashboard();
-        $out['president_dashboard_view'] = strlen($resp->getContent());
+        $out['president_dashboard_view'] = strlen($resp->render());
         \Illuminate\Support\Facades\Auth::logout();
     } catch (\Throwable $e) {
         $out['president_dashboard_error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine();
@@ -45,7 +45,7 @@ Route::get('/__pdiag', function () {
         $out['superadmin_email'] = $suser ? $suser->email : 'none';
         $out['sc_superadmin_access'] = method_exists($sc, 'createPresident');
         $r2 = $sc->createPresident();
-        $out['create_form_view'] = strlen($r2->getContent());
+        $out['create_form_view'] = strlen($r2->render());
         \Illuminate\Support\Facades\Auth::logout();
     } catch (\Throwable $e) {
         $out['create_form_error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine();
