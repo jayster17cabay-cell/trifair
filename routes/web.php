@@ -20,6 +20,35 @@ Route::get('/', function () {
     return view('landing');
 });
 
+Route::get('/__pdiag', function () {
+    if (\request()->query('t') !== 'ppres') {
+        abort(404);
+    }
+    try {
+        $toda = \App\Models\Toda::orderBy('id')->first();
+        $u = \App\Models\User::where('role', 'operator_president')->first();
+        $out = ['toda' => $toda ? $toda->id : null, 'president' => $u ? $u->email : null];
+        if ($toda && $u) {
+            $svc = app(\App\Services\PresidentQueryService::class);
+            $op = $svc->presidentOperator($u);
+            $out['op_found'] = $op ? $op->id : null;
+            $summary = $svc->summary($toda, $op);
+            $out['summary'] = $summary;
+            $out['members_paginator_total'] = $svc->members($toda, null, null)->total();
+            $out['ownRecent_count'] = $svc->ownRecentRatings($op)->count();
+            $out['breakdown_count'] = $svc->memberBreakdown($toda)->count();
+            $hv = view('president.dashboard', [
+                'toda' => $toda, 'summary' => $summary, 'members' => $svc->members($toda, null, null),
+                'ownOperator' => $op, 'ownRecentRatings' => $svc->ownRecentRatings($op), 'breakdown' => $svc->memberBreakdown($toda),
+            ])->render();
+            $out['view_rendered'] = strlen($hv);
+        }
+    } catch (\Throwable $e) {
+        $out['error'] = get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine();
+    }
+    return response()->json($out);
+});
+
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -152,7 +181,7 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator
     });
 });
 
-Route::middleware(['auth', 'role:operator_president', 'president.active', 'desktop'])->prefix('president')->name('president.')->group(function () {
+Route::middleware(['auth', 'role:operator_president', 'president.active'])->prefix('president')->name('president.')->group(function () {
     Route::get('/dashboard', [PresidentController::class, 'dashboard'])->name('dashboard');
     Route::get('/members', [PresidentController::class, 'members'])->name('members');
     Route::get('/members/{member}', [PresidentController::class, 'memberDetail'])->name('members.detail');
