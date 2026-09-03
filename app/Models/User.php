@@ -19,6 +19,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'phone',
+        'provider',
+        'provider_id',
     ];
 
     protected $hidden = [
@@ -64,5 +66,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isTfrbOfficerOrSuperadmin()
     {
         return in_array($this->role, ['superadmin', 'tfrb_officer']);
+    }
+
+    public function isGoogleLinked()
+    {
+        return $this->provider === 'google' && $this->provider_id !== null;
     }
 }

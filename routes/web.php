@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\TfrbOfficerController;
 use App\Http\Controllers\SuperadminController;
 use App\Http\Controllers\OperatorController;
@@ -21,6 +22,9 @@ Route::get('/', function () {
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+Route::get('/auth/google', [SocialiteController::class, 'redirect'])->middleware('guest')->name('login.google');
+Route::get('/auth/google/callback', [SocialiteController::class, 'callback'])->middleware('guest')->name('login.google.callback');
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
