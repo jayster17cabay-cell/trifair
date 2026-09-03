@@ -44,7 +44,7 @@
 <body>
     <nav class="tw-topbar">
         <div class="flex items-center gap-3">
-            <button id="sidebarToggle" type="button" class="tw-topbar-icon-btn lg:hidden" aria-label="Toggle menu">
+            <button id="sidebarToggle" type="button" class="inline-flex items-center justify-center rounded-md bg-slate-100 p-2 text-slate-800 transition-colors hover:bg-slate-200 lg:hidden" aria-label="Toggle menu">
                 <i class="bi bi-list text-2xl"></i>
             </button>
             <a class="tw-topbar-brand" href="{{ route($shell['home']) }}">
@@ -74,7 +74,7 @@
                 </div>
             </div>
             <div class="relative">
-                <button type="button" data-tw-dropdown="topMenu" class="tw-topbar-icon-btn" aria-label="Menu">
+                <button type="button" data-tw-dropdown="topMenu" class="inline-flex items-center justify-center rounded-md bg-slate-100 p-2 text-slate-800 transition-colors hover:bg-slate-200" aria-label="Menu">
                     <i class="bi bi-list text-2xl"></i>
                 </button>
                 <div id="topMenu" data-tw-dropdown-menu class="tw-dropdown right-0 top-12 w-64">
