@@ -65,8 +65,9 @@ class RegisterController extends Controller
         try {
             event(new Registered($user));
         } catch (\Exception $e) {
+            // A failed verification e-mail is NOT proof of verification. Log the
+            // failure so it can be retried; do not auto-verify the account.
             Log::error('Email verification failed: ' . get_class($e) . ': ' . $e->getMessage());
-            $user->markEmailAsVerified();
         }
 
         Auth::login($user);

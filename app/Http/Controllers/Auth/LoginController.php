@@ -43,13 +43,13 @@ class LoginController extends Controller
                 ])->onlyInput('email');
             }
 
-            ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
-
             if ($user->isSuperadmin()) {
+                ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
                 return redirect()->route('superadmin.dashboard');
             }
 
             if ($user->isTfrbOfficer()) {
+                ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
                 return redirect()->route('tfrb-officer.dashboard');
             }
 
@@ -62,6 +62,7 @@ class LoginController extends Controller
                         'email' => 'Your account is not assigned to a TODA. Please contact support.',
                     ])->onlyInput('email');
                 }
+                ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
                 return redirect()->route('president.dashboard');
             }
 
@@ -84,6 +85,7 @@ class LoginController extends Controller
                     ])->onlyInput('email');
                 }
                 if ($operator->status === 'pending') {
+                    ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
                     return redirect()->route('operator.pending');
                 }
                 if ($operator->status === 'rejected') {
@@ -104,6 +106,19 @@ class LoginController extends Controller
                 }
             }
 
+            // Unknown/legacy role (e.g. the old `driver` default): don't send the
+            // user into the role-gated operator dashboard (which would 403) — log
+            // them out and ask them to contact support.
+            if (!$user->isOperator()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Your account role is not recognized. Please contact support.',
+                ]);
+            }
+
+            ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
             return redirect()->route('operator.dashboard');
         }
 

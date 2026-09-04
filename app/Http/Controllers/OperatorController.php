@@ -81,6 +81,13 @@ class OperatorController extends Controller
             return back()->with('error', 'Unauthorized.');
         }
 
+        // Operators may only respond to their own valid low-rated (<=2 star)
+        // complaints — matching the UI, which only offers the response form there.
+        // This blocks a crafted POST that tries to respond to any other rating.
+        if (!$rating->is_valid || $rating->rating > 2) {
+            return back()->with('error', 'You can only respond to low-rated complaints.');
+        }
+
         $data = $request->validate([
             'message' => 'required|string|max:2000',
         ]);

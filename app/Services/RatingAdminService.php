@@ -127,7 +127,8 @@ class RatingAdminService
         $rating->update(['is_valid' => $rating->evaluateValidity()]);
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('restore_rating', "Restored rating #{$rating->id} as valid (operator: {$rating->operator->user->name})", $rating, 'review');
+        $restoredAsValid = $rating->is_valid ? 'Restored rating ' : 'Attempted to restore rating ';
+        ActivityLogger::log('restore_rating', "{$restoredAsValid}#{$rating->id} (now " . ($rating->is_valid ? 'valid' : 'still invalid') . ", operator: {$rating->operator->user->name})", $rating, 'review');
 
         $message = $rating->is_valid
             ? "Rating restored as valid. It will count towards the operator's average again."

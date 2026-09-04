@@ -199,12 +199,6 @@ class OperatorAdminService
                 ->with('error', "Cannot reject operator {$operatorName}: rating history exists. Deactivate the account instead.");
         }
 
-        $operator->ratings()->with('proofs')->get()->each(function ($rating) {
-            foreach ($rating->proofs as $proof) {
-                SupabaseStorage::delete($proof->file_path);
-            }
-        });
-
         $operator->delete();
         $operator->user->delete();
         app(AdminDashboardService::class)->flush();

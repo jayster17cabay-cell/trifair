@@ -64,19 +64,41 @@ class PresidentController extends Controller
     public function members(Request $request)
     {
         $toda = $this->toda();
+        $user = Auth::user();
+
+        $ownOperator = $this->query->presidentOperator($user);
+        $summary = $this->query->summary($toda, $ownOperator);
+        $summary['todaName'] = $toda->name;
+        $summary['todaArea'] = $toda->area;
+
         $members = $this->query->members(
             $toda,
             $request->query('search'),
             $request->query('status')
         );
+        $ownRecentRatings = $this->query->ownRecentRatings($ownOperator);
+        $breakdown = $this->query->memberBreakdown($toda);
 
-        $html = view('partials.president.members-table', ['members' => $members, 'memberDetailUrl' => route('president.members')])->render();
+        // AJAX (members search inside the dashboard) returns a JSON table fragment.
+        if ($request->wantsJson()) {
+            $html = view('partials.president.members-table', ['members' => $members, 'memberDetailUrl' => route('president.members')])->render();
+            return response()->json([
+                'html' => $html,
+                'pagination' => $members->links('pagination::tailwind')->render(),
+                'count' => $members->total(),
+            ]);
+        }
 
-        return response()->json([
-            'html' => $html,
-            'pagination' => $members->links('pagination::tailwind')->render(),
-            'count' => $members->total(),
-        ]);
+        // Direct navigation (e.g. clicking "Members" in the sidebar) renders the
+        // full dashboard page with the members section open.
+        return view('president.dashboard', compact(
+            'toda',
+            'summary',
+            'members',
+            'ownOperator',
+            'ownRecentRatings',
+            'breakdown'
+        ))->with('membersActive', true);
     }
 
     public function memberDetail(Operator $member)

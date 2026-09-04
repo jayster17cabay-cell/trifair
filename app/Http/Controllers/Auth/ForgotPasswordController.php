@@ -17,6 +17,10 @@ class ForgotPasswordController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
+        // All stored emails are lowercased/trimmed on save, so normalize the input
+        // before the (case-sensitive on some DBs) password-broker lookup.
+        $request->merge(['email' => strtolower(trim($request->input('email')))]);
+
         $status = Password::sendResetLink(
             $request->only('email')
         );

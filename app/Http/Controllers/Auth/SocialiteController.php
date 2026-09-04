@@ -27,8 +27,12 @@ class SocialiteController extends Controller
         }
 
         // Google's own email-verified flag must be true (account email confirmed by Google).
+        // Default to false when the flag is absent, and use filter_var so the string
+        // "false" is not treated as truthy (a naive (bool) cast would).
         $raw = (array) $googleUser->user;
-        $emailVerified = array_key_exists('email_verified', $raw) ? (bool) $raw['email_verified'] : true;
+        $emailVerified = array_key_exists('email_verified', $raw)
+            ? filter_var($raw['email_verified'], FILTER_VALIDATE_BOOLEAN)
+            : false;
 
         if (!$emailVerified) {
             return redirect()->route('login')->withErrors([
@@ -70,13 +74,13 @@ class SocialiteController extends Controller
 
         $request->session()->regenerate();
 
-        ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
-
         if ($user->isSuperadmin()) {
+            ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
             return redirect()->route('superadmin.dashboard');
         }
 
         if ($user->isTfrbOfficer()) {
+            ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
             return redirect()->route('tfrb-officer.dashboard');
         }
 
@@ -89,6 +93,7 @@ class SocialiteController extends Controller
                     'email' => 'Your account is not assigned to a TODA. Please contact support.',
                 ]);
             }
+            ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
             return redirect()->route('president.dashboard');
         }
 
@@ -114,6 +119,7 @@ class SocialiteController extends Controller
             }
 
             if ($operator->status === 'pending') {
+                ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
                 return redirect()->route('operator.pending');
             }
 
@@ -135,6 +141,7 @@ class SocialiteController extends Controller
                 ]);
             }
 
+            ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
             return redirect()->route('operator.dashboard');
         }
 

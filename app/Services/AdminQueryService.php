@@ -125,7 +125,7 @@ class AdminQueryService
         $search = $request->query('search');
         $status = $request->query('status');
         $archivedCount = Operator::archived()->count();
-        $activeOperatorsCount = Operator::notArchived()->where('status', 'active')->count();
+        $activeOperatorsCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator'))->where('status', 'active')->count();
 
         return compact('operators', 'search', 'status', 'archivedCount', 'activeOperatorsCount');
     }
@@ -156,7 +156,7 @@ class AdminQueryService
                     'id' => $rating->id,
                     'operator' => $rating->operator->user->name ?? 'Unknown',
                     'rating' => $rating->rating,
-                    'comment' => $rating->comment ?? '',
+                    'comment' => $rating->reason ?? '',
                     'date' => $rating->created_at?->format('Y-m-d H:i'),
                 ];
             });
@@ -184,7 +184,7 @@ class AdminQueryService
                     'id' => $complaint->id,
                     'operator' => $complaint->operator->user->name ?? 'Unknown',
                     'rating' => $complaint->rating,
-                    'complaint' => $complaint->comment ?? '',
+                    'complaint' => $complaint->complaint_details ?? '',
                     'status' => $complaint->is_reviewed ? 'Reviewed' : 'Pending',
                     'date' => $complaint->created_at?->format('Y-m-d H:i'),
                 ];
@@ -195,6 +195,9 @@ class AdminQueryService
     {
         $query = Operator::with('user', 'toda')
             ->withCount('validRatings')
+            ->whereHas('user', function ($u) {
+                $u->where('role', 'operator');
+            })
             ->whereNotIn('status', ['pending', 'rejected'])
             ->whereNull('archived_at');
 

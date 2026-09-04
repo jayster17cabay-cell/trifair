@@ -16,11 +16,15 @@ class CheckRole
 
         $userRole = Auth::user()->role;
 
-        // Superadmin can access admin/officer routes, but NOT operator routes:
-        // a superadmin has no operator profile and entering those pages used to
-        // cause a 500 error (Auth::user()->operator was null).
-        if ($userRole === 'superadmin' && !in_array('operator', $roles, true)) {
-            return $next($request);
+        // Superadmin can access staff (superadmin/TFRB officer) routes, but must
+        // NOT bypass operator or TODA-president scoped routes: a superadmin has no
+        // operator/president profile, and those pages rely on role-specific data.
+        if ($userRole === 'superadmin') {
+            $staffRoles = ['superadmin', 'tfrb_officer'];
+            $scopedRoles = ['operator', 'operator_president'];
+            if (array_intersect($roles, $staffRoles) && !array_intersect($roles, $scopedRoles)) {
+                return $next($request);
+            }
         }
 
         if (!in_array($userRole, $roles)) {

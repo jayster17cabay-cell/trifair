@@ -94,6 +94,8 @@ class SuperadminController extends Controller
 
         ActivityLogger::log('create_tfrb_officer', "Created TFRB Officer {$data['name']} ({$data['email']})", null, 'tfrb_officer');
 
+        app(AdminDashboardService::class)->flush();
+
         return redirect()->route('superadmin.officers')
             ->with('success', 'TFRB Officer created successfully.');
     }
@@ -110,6 +112,8 @@ class SuperadminController extends Controller
         $user->delete();
 
         ActivityLogger::log('delete_tfrb_officer', "Deleted TFRB Officer {$officerName}", null, 'tfrb_officer');
+
+        app(AdminDashboardService::class)->flush();
 
         return redirect()->route('superadmin.officers')->with('success', 'TFRB Officer removed successfully.');
     }
@@ -193,6 +197,8 @@ class SuperadminController extends Controller
 
         ActivityLogger::log('create_toda_president', "Created TODA President {$data['name']} ({$data['email']}) for TODA #{$data['toda_id']}", null, 'tfrb_officer');
 
+        app(AdminDashboardService::class)->flush();
+
         return redirect()->route('superadmin.presidents')
             ->with('success', 'TODA President created successfully.');
     }
@@ -209,6 +215,8 @@ class SuperadminController extends Controller
         $user->delete();
 
         ActivityLogger::log('delete_toda_president', "Deleted TODA President {$presidentName}", null, 'tfrb_officer');
+
+        app(AdminDashboardService::class)->flush();
 
         return redirect()->route('superadmin.presidents')->with('success', 'TODA President removed successfully.');
     }
@@ -280,6 +288,11 @@ class SuperadminController extends Controller
     public function markReviewed(Rating $rating)
     {
         return app(RatingAdminService::class)->markReviewed($rating);
+    }
+
+    public function complaintsMarkReviewed(Rating $rating)
+    {
+        return app(RatingAdminService::class)->complaintsMarkReviewed($rating);
     }
 
     public function ratingsBulkReview(Request $request)
@@ -449,6 +462,8 @@ class SuperadminController extends Controller
 
         ActivityLogger::log('create_toda', "Created TODA: {$data['name']}", null, 'operator');
 
+        app(AdminDashboardService::class)->flush();
+
         return redirect()->route('superadmin.todas')
             ->with('success', 'TODA created successfully.');
     }
@@ -471,6 +486,8 @@ class SuperadminController extends Controller
 
         ActivityLogger::log('update_toda', "Updated TODA: {$data['name']}", null, 'operator');
 
+        app(AdminDashboardService::class)->flush();
+
         return redirect()->route('superadmin.todas')
             ->with('success', 'TODA updated successfully.');
     }
@@ -485,6 +502,8 @@ class SuperadminController extends Controller
         $toda->delete();
 
         ActivityLogger::log('delete_toda', "Deleted TODA: {$todaName}", null, 'operator');
+
+        app(AdminDashboardService::class)->flush();
 
         return redirect()->route('superadmin.todas')
             ->with('success', 'TODA deleted successfully.');

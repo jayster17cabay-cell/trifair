@@ -27,7 +27,7 @@
 </div>
 
 {{-- Section 3 — Members toggle button --}}
-@php $membersActive = request()->has('search') || request()->has('status'); @endphp
+@php $membersActive = ($membersActive ?? false) || request()->has('search') || request()->has('status'); @endphp
 {{-- Section 3 — Members search + toggle (search is always visible) --}}
 <div id="membersSection" class="scroll-mt-24 tw-card mb-3 overflow-hidden">
     <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="background-image: linear-gradient(135deg, #0a1d33 0%, #0f2a4a 100%);">

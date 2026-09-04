@@ -5,9 +5,14 @@
 @section('content')
 @include('auth.partials.auth-shell-open')
                 <div class="mb-6">
-                    <h4 class="text-2xl font-extrabold tracking-tight text-navy-700">Welcome back</h4>
+                    <div class="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-navy-600 text-xl text-gold">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <h4 class="text-2xl font-extrabold tracking-tight text-navy-700">Welcome <span class="text-gold">back</span></h4>
                     <p class="mt-1 text-sm text-slate-500">Log in to your TriFair account to continue.</p>
                 </div>
+
+                <div class="mb-4 h-1 w-16 rounded-full bg-gradient-to-r from-gold to-navy-600"></div>
 
                 @if (session('status'))
                     <div class="tw-alert tw-alert-success mt-4">

@@ -48,7 +48,7 @@ class PresidentQueryService
         $memberRatingAgg = Rating::query()
             ->whereIn('operator_id', $memberIds)
             ->isValid()
-            ->selectRaw('COUNT(*) as total, AVG(rating) as avg, SUM(CASE WHEN complaint_type IS NOT NULL THEN 1 ELSE 0 END) as complaints')
+            ->selectRaw('COUNT(*) as total, AVG(rating) as avg, SUM(CASE WHEN complaint_type IS NOT NULL AND is_reviewed = 0 THEN 1 ELSE 0 END) as complaints')
             ->first();
 
         $avgMemberRating = $memberRatingAgg && $memberRatingAgg->total > 0
