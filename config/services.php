@@ -45,4 +45,9 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'sendinblue' => [
+        'key_identifier' => env('SENDINBLUE_KEY_IDENTIFIER', 'api-key'),
+        'key' => env('SENDINBLUE_KEY'),
+    ],
+
 ];

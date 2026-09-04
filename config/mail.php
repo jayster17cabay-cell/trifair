@@ -34,10 +34,8 @@ return [
     */
 
     'mailers' => [
-        'mailjet' => [
-            'transport' => 'mailjet',
-            'api_key' => env('MAILJET_API_KEY'),
-            'secret_key' => env('MAILJET_SECRET_KEY'),
+        'sendinblue' => [
+            'transport' => 'sendinblue',
         ],
 
         'smtp' => [

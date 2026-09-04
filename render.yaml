@@ -50,12 +50,10 @@ services:
       - key: LOG_CHANNEL
         value: stderr
       - key: MAIL_MAILER
-        value: mailjet
-      - key: MAILJET_API_KEY
-        sync: false
-      - key: MAILJET_SECRET_KEY
+        value: sendinblue
+      - key: SENDINBLUE_KEY
         sync: false
       - key: MAIL_FROM_ADDRESS
-        value: jayster17cabay@gmail.com
+        value: your-verified-brevo-sender@example.com
       - key: MAIL_FROM_NAME
         value: TriFair
