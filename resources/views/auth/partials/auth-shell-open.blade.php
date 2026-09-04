@@ -11,8 +11,10 @@
     <div class="pointer-events-none anim-drift absolute -top-10 left-1/4 h-[260px] w-[260px] rounded-full bg-[radial-gradient(circle,rgba(245,184,0,0.10)_0%,transparent_65%)]" style="animation-delay:-8s;"></div>
 
     <div class="relative z-10 w-full {{ $authWidth }}">
-        <div class="overflow-hidden rounded-3xl border border-white/60 bg-white p-7 shadow-[0_30px_70px_rgba(0,0,0,0.45)] sm:p-9">
+        <div class="overflow-hidden rounded-3xl border-2 border-gold/40 bg-gradient-to-br from-navy-50 via-white to-amber-50 p-7 shadow-[0_30px_70px_rgba(0,0,0,0.45)] sm:p-9">
             <div class="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-navy-700 via-gold to-navy-700"></div>
+            <div class="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-gold/15 blur-2xl"></div>
+            <div class="pointer-events-none absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-navy-500/15 blur-2xl"></div>
             <div class="mb-6 mt-1.5 flex flex-col items-center text-center">
                 <span class="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gold text-2xl text-navy-800 shadow-goldlift">
                     <i class="bi bi-bicycle"></i>

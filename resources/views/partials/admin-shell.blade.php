@@ -40,7 +40,7 @@
 <body>
     <nav class="tw-topbar">
         <div class="flex items-center gap-3">
-            <button id="sidebarToggle" type="button" class="inline-flex items-center justify-center rounded-md bg-slate-100 p-2 text-slate-800 transition-colors hover:bg-slate-200 lg:hidden" aria-label="Toggle menu">
+            <button id="sidebarToggle" type="button" class="tw-topbar-icon-btn inline-flex items-center justify-center rounded-md bg-white/10 text-white transition-colors hover:bg-white/20" aria-label="Toggle menu">
                 <i class="bi bi-list text-2xl"></i>
             </button>
             <a class="tw-topbar-brand" href="{{ route($shell['home']) }}">
@@ -71,8 +71,8 @@
     </nav>
 
     <div class="flex">
-        <div id="sidebarOverlay" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm lg:hidden"></div>
-        <aside data-tw-sidebar class="tw-sidebar fixed left-0 top-0 z-50 -translate-x-full transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0">
+        <div id="sidebarOverlay" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm"></div>
+        <aside data-tw-sidebar class="tw-sidebar fixed left-0 top-0 z-50 h-screen -translate-x-full transition-transform duration-200">
             <div class="tw-sidebar-brand">
                 <div class="tw-sidebar-brand-logo"><i class="bi {{ $shell['roleIcon'] }}"></i></div>
                 <div class="min-w-0">

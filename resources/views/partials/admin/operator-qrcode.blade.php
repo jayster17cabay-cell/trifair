@@ -28,10 +28,6 @@
                      style="width: 200px; height: 200px; display: block;">
             </div>
             <p class="mb-4 text-sm text-slate-500">Passengers scan this QR code to rate the operator</p>
-            <div class="mb-5 rounded-xl bg-slate-50 px-4 py-3">
-                <div class="mb-0.5 text-[0.68rem] font-semibold uppercase tracking-wider text-slate-500">Rating URL</div>
-                <a href="{{ $url }}" class="break-all text-xs font-semibold text-emerald-600">{{ $url }}</a>
-            </div>
             <button type="button" class="tw-btn tw-btn-gold px-5" onclick="window.print()">
                 <i class="bi bi-printer"></i>Print QR Code
             </button>

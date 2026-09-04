@@ -64,6 +64,9 @@ class AdminQueryService
     public function reportsData(): LengthAwarePaginator
     {
         return Operator::with('user')
+            ->whereHas('user', function ($u) {
+                $u->where('role', 'operator');
+            })
             ->leftJoin(
                 DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true group by operator_id) as vr'),
                 'vr.operator_id',
@@ -87,7 +90,13 @@ class AdminQueryService
         $search = $request->query('search');
         $status = $request->query('status');
 
-        $query = Operator::with('user', 'toda');
+        // Only "true" operators appear in the Operators management list. A TODA
+        // president is also given an Operator row (so they can carry their own
+        // rating), but presidents are managed under their own Presidents section.
+        $query = Operator::with('user', 'toda')
+            ->whereHas('user', function ($u) {
+                $u->where('role', 'operator');
+            });
 
         if ($status === 'archived') {
             $query->archived();

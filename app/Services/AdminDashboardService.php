@@ -49,8 +49,8 @@ class AdminDashboardService
         $recentLimit = $options['recentLimit'] ?? 5;
 
         $data = [
-            'totalOperators' => Operator::notArchived()->count(),
-            'activeOperators' => Operator::notArchived()->where('status', 'active')->count(),
+            'totalOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->count(),
+            'activeOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'active')->count(),
             'totalRatings' => Rating::isValid()->count(),
             'averageRating' => Rating::isValid()->avg('rating'),
             'totalComplaints' => Rating::isValid()->isComplaint()->count(),
@@ -103,6 +103,7 @@ class AdminDashboardService
 
         $data['topOperators'] = Operator::with('user', 'toda')
             ->whereNull('operators.archived_at')
+            ->whereHas('user', fn ($q) => $q->where('role', 'operator'))
             ->leftJoin(
                 DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true group by operator_id) as vr'),
                 'vr.operator_id',
