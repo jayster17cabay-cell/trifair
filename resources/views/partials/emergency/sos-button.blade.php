@@ -7,27 +7,29 @@
 <style>
     .sos-fab {
         position: fixed;
-        right: 18px;
-        bottom: calc(18px + var(--safe-bottom, 0px));
+        top: calc(var(--safe-top, 0px) + 12px);
+        right: 14px;
         z-index: 9999;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        padding: 0;
         border: none;
         border-radius: 999px;
-        padding: 8px 18px 8px 10px;
         background: #dc2626;
         color: #fff;
-        font-weight: 800;
-        font-size: 0.85rem;
-        letter-spacing: 0.02em;
-        box-shadow: 0 8px 24px rgba(220, 38, 38, 0.45);
+        font-weight: 900;
+        font-size: 0.74rem;
+        letter-spacing: 0.03em;
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
         cursor: pointer;
         transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
         font-family: inherit;
     }
-    .sos-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(220, 38, 38, 0.55); }
-    .sos-fab:active { transform: translateY(0) scale(0.98); }
+    .sos-fab:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(220, 38, 38, 0.6); }
+    .sos-fab:active { transform: translateY(0) scale(0.96); }
     .sos-fab.sos-fab-cooling { opacity: 0.75; cursor: default; }
     .sos-pulse {
         position: relative;
@@ -47,17 +49,18 @@
     }
     .sos-dot {
         display: inline-flex;
-        width: 30px;
-        height: 30px;
         align-items: center;
         justify-content: center;
+        width: 40px;
+        height: 40px;
         border-radius: 999px;
         background: #fff;
         color: #dc2626;
         font-weight: 900;
-        font-size: 0.72rem;
-        letter-spacing: 0.02em;
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
     }
+    #sosFabLabel { display: none; }
     .sos-overlay {
         position: fixed;
         inset: 0;

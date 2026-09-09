@@ -878,18 +878,26 @@
 
         function render(results) {
             searchResults.innerHTML = '';
-            if (!results || results.length === 0) return;
+            if (!results || results.length === 0) {
+                showNoMatch();
+                return;
+            }
 
-            var inside = [], outside = [];
+            // Only destinations inside the Solano service area are accepted,
+            // so show those — never unrelated far-away places.
+            var inside = [];
             results.forEach(function (item) {
                 var latlng = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
                 if (!latlng.lat || !latlng.lng || isNaN(latlng.lat) || isNaN(latlng.lng)) return;
-                (serviceBounds.contains(latlng) ? inside : outside).push({ item: item, latlng: latlng });
+                if (serviceBounds.contains(latlng)) inside.push({ item: item, latlng: latlng });
             });
 
-            var list = inside.length > 0 ? inside : outside.slice(0, 5);
+            if (inside.length === 0) {
+                showNoMatch();
+                return;
+            }
 
-            list.forEach(function (e) {
+            inside.slice(0, 5).forEach(function (e) {
                 var item = e.item, latlng = e.latlng;
 
                 var div = document.createElement('div');
@@ -900,31 +908,31 @@
                 div.addEventListener('click', function () {
                     endInput.value = this.textContent;
                     searchResults.innerHTML = '';
-                    var ll = L.latLng(parseFloat(this.getAttribute('data-lat')), parseFloat(this.getAttribute('data-lon')));
-                    if (!serviceBounds.contains(ll)) {
-                        updateLocStatus('Destination is too far from Solano. Only nearby towns (~15 km) are accepted.', 'warn');
-                        return;
-                    }
-                    applyDestination(ll);
+                    applyDestination(latlng);
                 });
                 searchResults.appendChild(div);
             });
         }
 
+        function showNoMatch() {
+            searchResults.innerHTML = '<div class="search-item search-empty">No matching place found near Solano.</div>';
+        }
+
+        function hasInside(results) {
+            if (!results || results.length === 0) return false;
+            return results.some(function (item) {
+                var ll = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
+                return ll.lat && ll.lng && !isNaN(ll.lat) && !isNaN(ll.lng) && serviceBounds.contains(ll);
+            });
+        }
+
         fetchResults(query)
             .then(function (results) {
-                if (!results || results.length === 0) {
-                    return fetchResults(query + ', Nueva Vizcaya').then(render);
+                if (hasInside(results)) {
+                    render(results);
+                    return;
                 }
-                var hasInside = results.some(function (item) {
-                    var ll = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
-                    return serviceBounds.contains(ll);
-                });
-                if (!hasInside) {
-                    return fetchResults(query + ', Nueva Vizcaya')
-                        .then(function (fb) { render(results.concat(fb || [])); });
-                }
-                render(results);
+                return fetchResults(query + ', Nueva Vizcaya').then(render);
             }).catch(function () { searchResults.innerHTML = ''; });
     }
 

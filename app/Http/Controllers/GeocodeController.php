@@ -64,41 +64,69 @@ class GeocodeController extends Controller
      */
     public function search(Request $request)
     {
-        $q = trim((string) $request->query('q', ''));
-        if ($q === '' || mb_strlen($q) > 120) {
+        $qRaw = trim((string) $request->query('q', ''));
+        if ($qRaw === '' || mb_strlen($qRaw) > 120) {
             return response()->json(['error' => 'missing query'], 422);
         }
+        $q = mb_strtolower($qRaw);
 
-        $cacheKey = 'fwdgeo_' . substr(md5(mb_strtolower($q)), 0, 16);
+        $cacheKey = 'fwdgeo_v2_' . substr(md5($q), 0, 16);
         $cached = Cache::get($cacheKey);
         if ($cached !== null) {
             return response()->json($cached);
         }
 
+        // Solano service-area viewport (left, top, right, bottom). Passing it
+        // as a hint (bounded=0) makes local places rank first, so a passenger
+        // typing a town/street in Nueva Vizcaya gets the right match on top.
+        $viewbox = '121.10,16.63,121.33,16.42';
+
         try {
             $resp = Http::timeout(6)->withHeaders(['User-Agent' => 'TriFair/1.0 (passenger trip rating)'])
                 ->get('https://nominatim.openstreetmap.org/search', [
                     'format' => 'json',
-                    'q' => $q,
+                    'q' => $qRaw,
                     'countrycodes' => 'ph',
-                    'limit' => 10,
+                    'limit' => 14,
                     'addressdetails' => 1,
+                    'viewbox' => $viewbox,
+                    'bounded' => 0,
                 ]);
 
             if (!$resp->ok()) {
                 return response()->json(['error' => 'geocode failed'], 502);
             }
 
-            $results = array_values(array_filter($resp->json(), function ($item) {
-                return isset($item['lat'], $item['lon'], $item['display_name']);
+            // Keep only results whose name actually contains the query (or at
+            // least one meaningful query token). Nominatim's free-text search
+            // is fuzzy, so drop hits that have nothing to do with the message.
+            $tokens = array_values(array_filter(preg_split('/\s+/u', $q), function ($t) {
+                return mb_strlen($t) >= 3;
             }));
-            $list = array_map(function ($item) {
+
+            $results = array_values(array_filter($resp->json(), function ($item) use ($q, $tokens) {
+                if (!isset($item['lat'], $item['lon'], $item['display_name'])) {
+                    return false;
+                }
+                $name = mb_strtolower($item['display_name']);
+                if (mb_strpos($name, $q) !== false) {
+                    return true;
+                }
+                foreach ($tokens as $t) {
+                    if (mb_strpos($name, $t) !== false) {
+                        return true;
+                    }
+                }
+                return false;
+            }));
+
+            $list = array_slice(array_map(function ($item) {
                 return [
                     'lat' => (string) $item['lat'],
                     'lon' => (string) $item['lon'],
                     'display_name' => $item['display_name'],
                 ];
-            }, $results);
+            }, $results), 0, 8);
 
             Cache::put($cacheKey, $list, 60 * 60 * 24 * 30);
 

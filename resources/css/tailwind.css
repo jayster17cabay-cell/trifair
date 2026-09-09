@@ -928,6 +928,14 @@
     .search-item:hover {
         background: #f1f5f9;
     }
+    .search-item.search-empty {
+        color: #94a3b8;
+        font-style: italic;
+        cursor: default;
+    }
+    .search-item.search-empty:hover {
+        background: #ffffff;
+    }
 
     /* TripRouteMap — map shell */
     .map-shell {
