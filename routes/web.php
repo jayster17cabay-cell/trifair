@@ -46,7 +46,25 @@ Route::get('/email/verify', function () {
 
 Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Foundation\Auth\EmailVerificationRequest $request) {
     $request->fulfill();
-    return redirect()->route('operator.pending');
+    $user = $request->user();
+
+    if ($user->role === 'operator') {
+        $operator = $user->operator;
+        if ($operator && $operator->status === 'active') {
+            return redirect()->route('operator.dashboard');
+        }
+        return redirect()->route('operator.pending');
+    }
+
+    if ($user->role === 'tfrb_officer' || $user->role === 'superadmin') {
+        return redirect()->route('tfrb-officer.dashboard');
+    }
+
+    if ($user->role === 'operator_president') {
+        return redirect()->route('president.dashboard');
+    }
+
+    return redirect('/');
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
 Route::post('/email/resend', function (\Illuminate\Http\Request $request) {

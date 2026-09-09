@@ -161,6 +161,28 @@ class AuditFixRegressionTest extends TestCase
         $response->assertSee('Resend Verification Link');
     }
 
+    public function test_verification_verify_redirects_by_role()
+    {
+        // Pending operator -> operator.pending
+        [$operatorUser] = $this->makeOperatorUser(false, 'pending');
+        $url = \Illuminate\Support\Facades\URL::signedRoute('verification.verify', [
+            'id' => $operatorUser->id,
+            'hash' => sha1($operatorUser->getEmailForVerification()),
+        ]);
+        $this->actingAs($operatorUser)->get($url)->assertRedirect(route('operator.pending'));
+        $this->assertNotNull($operatorUser->fresh()->email_verified_at);
+
+        // Officer -> officer dashboard (no 403 on operator.pending)
+        $officer = $this->makeOfficer('tfrb_officer');
+        $officer->forceFill(['email_verified_at' => null])->save();
+        $url = \Illuminate\Support\Facades\URL::signedRoute('verification.verify', [
+            'id' => $officer->id,
+            'hash' => sha1($officer->getEmailForVerification()),
+        ]);
+        $this->actingAs($officer)->get($url)->assertRedirect(route('tfrb-officer.dashboard'));
+        $this->assertNotNull($officer->fresh()->email_verified_at);
+    }
+
     public function test_pending_operator_page_uses_resend_route_action()
     {
         [$user] = $this->makeOperatorUser(false, 'pending');

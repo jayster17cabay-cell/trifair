@@ -46,7 +46,7 @@
                             <p class="mb-3 text-xs text-amber-600">
                                 Approvals can be processed sooner once your email is verified.
                             </p>
-                            @if (session('status') === 'verification-link-sent')
+                            @if (session('message') === 'Verification link sent!')
                                 <p class="mb-3 text-xs font-medium text-emerald-600">
                                     <i class="bi bi-check-circle me-1"></i> A new verification link has been sent to your email.
                                 </p>
@@ -54,7 +54,7 @@
                             <form method="POST" action="{{ route('verification.resend') }}">
                                 @csrf
                                 <button type="submit" class="tw-btn tw-btn-outline w-full text-xs"
-                                    {{ session('status') === 'verification-link-sent' ? 'disabled' : '' }}>
+                                    {{ session('message') === 'Verification link sent!' ? 'disabled' : '' }}>
                                     <i class="bi bi-envelope-check"></i> Resend Verification Link
                                 </button>
                             </form>

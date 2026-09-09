@@ -104,7 +104,7 @@
                             </div>
                             <div>
                                 <span class="tw-stat-label"><i class="bi bi-diagram-3 mr-1 text-violet-500"></i>TODA</span>
-                                <div class="font-semibold text-slate-700">{{ $alert->toda ? $alert->toda->name : 'â€”' }}</div>
+                                <div class="font-semibold text-slate-700">{{ $alert->toda ? $alert->toda->name : '—' }}</div>
                             </div>
                         </div>
                         <div class="space-y-1.5">

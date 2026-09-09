@@ -178,30 +178,7 @@
             </div>
         @endif
 
-        @if(isset($alreadyRated) && $alreadyRated && isset($existingRating))
-            <div class="rate-card">
-                <div class="screen-center">
-                    <div class="screen-icon"><i class="bi bi-clock-history"></i></div>
-                    <h3>Already Rated Today</h3>
-                    <p>You already gave <strong>{{ $operator->user->name }}</strong> a rating today.</p>
-                    <div class="screen-stars">
-                        @php
-                            $er = $existingRating->rating;
-                            $esOn = '#F5B301';
-                            $esOff = '#e2e8f0';
-                        @endphp
-                        @for($i = 1; $i <= 5; $i++)
-                            <i class="bi {{ $i <= $er ? 'bi-star-fill' : 'bi-star' }}" style="color: {{ $i <= $er ? $esOn : $esOff }};" aria-hidden="true"></i>
-                        @endfor
-                    </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.5rem;">One rating per operator per day.</p>
-                    <button type="button" onclick="window.close()" class="btn-action">
-                        <i class="bi bi-x-lg" aria-hidden="true"></i> Close
-                    </button>
-                </div>
-            </div>
-        @else
-            <section class="rate-card">
+        <section class="rate-card">
                 <h3 class="rate-heading">Rate Your Trip</h3>
                 <p class="rate-subtitle" style="margin-top: 0.15rem;">How's my ride?</p>
                 <div class="rate-driver-row">
@@ -282,7 +259,6 @@
                     </div>
                 </section>
             </form>
-        @endif
 
     </div>
 </div>
