@@ -294,58 +294,6 @@ class TfrbOfficerController extends Controller
         return view('tfrb-officer.presidents', compact('presidents', 'search', 'totalPresidents', 'assignedPresidents'));
     }
 
-    public function createPresident()
-    {
-        $todas = Toda::orderBy('name')->get();
-        return view('tfrb-officer.presidents-create', compact('todas'));
-    }
-
-    public function storePresident(Request $request)
-    {
-        $request->merge(['email' => strtolower(trim($request->input('email')))]);
-
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'phone' => 'nullable|string|max:20',
-            'toda_id' => 'required|exists:todas,id',
-        ]);
-
-        $president = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-            'phone' => $data['phone'] ?? null,
-        ]);
-
-        $president->forceFill([
-            'role' => 'operator_president',
-            'is_active' => true,
-            'toda_id' => (int) $data['toda_id'],
-        ])->save();
-
-        Operator::updateOrCreate(
-            ['user_id' => $president->id],
-            [
-                'toda_id' => (int) $data['toda_id'],
-                'contact_number' => $data['phone'] ?? null,
-                'address' => null,
-                'qr_code' => Str::random(32),
-                'status' => 'active',
-            ]
-        );
-
-        $president->markEmailAsVerified();
-
-        ActivityLogger::log('create_toda_president', "Created TODA President {$data['name']} ({$data['email']}) for TODA #{$data['toda_id']}", null, 'tfrb_officer');
-
-        app(AdminDashboardService::class)->flush();
-
-        return redirect()->route('tfrb-officer.presidents')
-            ->with('success', 'TODA President created successfully.');
-    }
-
     public function destroyPresident(User $user)
     {
         if ($user->role !== 'operator_president') {

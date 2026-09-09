@@ -90,7 +90,6 @@ class PageRenderTest extends TestCase
         $president->forceFill(['toda_id' => $toda->id])->save();
 
         $this->actingAs($officer)->get('/tfrb-officer/presidents')->assertOk();
-        $this->actingAs($officer)->get('/tfrb-officer/presidents/create')->assertOk();
         $this->actingAs($officer)->get('/tfrb-officer/presidents?search=' . substr($president->name, 0, 4))->assertOk();
     }
 
@@ -120,7 +119,6 @@ class PageRenderTest extends TestCase
                 '/superadmin/reports',
                 '/superadmin/activity-logs',
                 '/superadmin/presidents',
-                '/superadmin/presidents/create',
                 '/superadmin/todas',
                 '/superadmin/todas/create',
                 '/superadmin/todas/' . $toda->id . '/edit',
@@ -135,7 +133,6 @@ class PageRenderTest extends TestCase
                 '/tfrb-officer/reports',
                 '/tfrb-officer/activity-logs',
                 '/tfrb-officer/presidents',
-                '/tfrb-officer/presidents/create',
                 '/tfrb-officer/todas',
             ],
         ];

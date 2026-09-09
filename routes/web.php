@@ -110,8 +110,6 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::get('/settings', [TfrbOfficerController::class, 'showSettings'])->name('settings');
     Route::put('/settings/password', [TfrbOfficerController::class, 'updatePassword'])->name('settings.password');
     Route::get('/presidents', [TfrbOfficerController::class, 'presidents'])->name('presidents');
-    Route::get('/presidents/create', [TfrbOfficerController::class, 'createPresident'])->name('presidents.create');
-    Route::post('/presidents', [TfrbOfficerController::class, 'storePresident'])->name('presidents.store');
     Route::delete('/presidents/{user}', [TfrbOfficerController::class, 'destroyPresident'])->name('presidents.destroy');
     Route::get('/alerts', [EmergencyAlertController::class, 'index'])->name('alerts');
     Route::patch('/alerts/{alert}', [EmergencyAlertController::class, 'update'])->name('alerts.update');
@@ -131,8 +129,6 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::post('/officers', [SuperadminController::class, 'storeOfficer'])->name('officers.store');
     Route::delete('/officers/{user}', [SuperadminController::class, 'destroyOfficer'])->name('officers.destroy');
     Route::get('/presidents', [SuperadminController::class, 'presidents'])->name('presidents');
-    Route::get('/presidents/create', [SuperadminController::class, 'createPresident'])->name('presidents.create');
-    Route::post('/presidents', [SuperadminController::class, 'storePresident'])->name('presidents.store');
     Route::delete('/presidents/{user}', [SuperadminController::class, 'destroyPresident'])->name('presidents.destroy');
     Route::get('/complaints', [SuperadminController::class, 'complaints'])->name('complaints');
         Route::patch('/complaints/{rating}/review', [SuperadminController::class, 'complaintsMarkReviewed'])->name('complaints.review');

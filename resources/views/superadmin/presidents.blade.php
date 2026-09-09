@@ -8,9 +8,6 @@
         <h1 class="tw-page-title"><i class="bi bi-award mr-2 text-gold"></i>TODA President Management</h1>
         <p class="tw-page-sub">Assign a president to oversee the members of each TODA</p>
     </div>
-    <a href="{{ route('superadmin.presidents.create') }}" class="tw-btn tw-btn-gold">
-        <i class="bi bi-award"></i>Add President
-    </a>
 </div>
 
 <div class="mb-6 grid max-w-lg grid-cols-2 gap-3">

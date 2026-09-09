@@ -61,10 +61,7 @@
                 <div class="tw-empty">
                     <div class="tw-empty-icon"><i class="bi bi-award"></i></div>
                     <h3 class="tw-empty-title">No Presidents Found</h3>
-                    <p class="text-sm text-slate-500">Assign a president to a TODA so they can oversee its members.</p>
-                    <a href="{{ route($routePrefix . '.presidents.create') }}" class="tw-btn tw-btn-sm tw-btn-gold mt-4">
-                        <i class="bi bi-award"></i>Add President
-                    </a>
+                    <p class="text-sm text-slate-500">Assign an operator as president of a TODA — use the Assign button in the Operators list.</p>
                 </div>
             </td>
         </tr>

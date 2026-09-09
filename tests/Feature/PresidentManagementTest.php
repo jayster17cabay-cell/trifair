@@ -53,53 +53,26 @@ class PresidentManagementTest extends TestCase
             ->assertSee($toda->name);
     }
 
-    public function test_superadmin_can_view_create_president_form()
-    {
-        $admin = $this->makeUser('superadmin');
-        $this->actingAs($admin)
-            ->get('/superadmin/presidents/create')
-            ->assertOk()
-            ->assertSee('TODA to Oversee');
-    }
-
-    public function test_superadmin_can_store_president()
+    public function test_superadmin_can_store_president_via_assign_flow()
     {
         $admin = $this->makeUser('superadmin');
         $toda = $this->makeToda();
+        $operator = $this->makeUser('operator');
+        $operatorRecord = Operator::create([
+            'user_id' => $operator->id,
+            'toda_id' => $toda->id,
+            'qr_code' => Str::random(32),
+            'contact_number' => '09170000000',
+            'status' => 'active',
+        ]);
 
         $this->actingAs($admin)
-            ->post('/superadmin/presidents', [
-                'name' => 'New President',
-                'email' => 'president' . Str::random(4) . '@example.com',
-                'password' => 'password123',
-                'phone' => '09171234567',
-                'toda_id' => $toda->id,
-            ])
-            ->assertRedirect(route('superadmin.presidents'));
+            ->post('/superadmin/operators/' . $operatorRecord->id . '/assign-president')
+            ->assertRedirect();
 
-        $president = User::where('role', 'operator_president')->first();
-        $this->assertNotNull($president);
-        $this->assertEquals($toda->id, (int) $president->toda_id);
-        $this->assertNotNull($president->email_verified_at);
-
-        // A president also gets an operator record so they can carry a rating.
-        $operator = Operator::where('user_id', $president->id)->first();
-        $this->assertNotNull($operator);
-        $this->assertEquals($toda->id, (int) $operator->toda_id);
-    }
-
-    public function test_store_president_requires_toda()
-    {
-        $admin = $this->makeUser('superadmin');
-
-        $this->actingAs($admin)
-            ->from(route('superadmin.presidents.create'))
-            ->post('/superadmin/presidents', [
-                'name' => 'New President',
-                'email' => 'president' . Str::random(4) . '@example.com',
-                'password' => 'password123',
-            ])
-            ->assertSessionHasErrors('toda_id');
+        $operator->refresh();
+        $this->assertEquals('operator_president', $operator->role);
+        $this->assertNotNull($operator->presidentToda());
     }
 
     public function test_superadmin_can_delete_president()
