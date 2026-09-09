@@ -28,6 +28,7 @@
                     </div>
                 @endif
 
+                @if (config('services.google.client_id') && config('services.google.client_secret'))
                 <a href="{{ route('login.google') }}" class="mt-6 flex w-full items-center justify-center gap-2.5 rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow">
                     <svg class="h-5 w-5" viewBox="0 0 48 48" aria-hidden="true">
                         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -43,6 +44,7 @@
                     <span class="text-xs font-medium uppercase tracking-wide text-slate-400">or log in with email</span>
                     <div class="h-px flex-1 bg-slate-200"></div>
                 </div>
+                @endif
 
                 <form method="POST" action="{{ route('login') }}">
                     @csrf
