@@ -476,6 +476,5 @@
     document.querySelectorAll('.anim').forEach(function (el) { observer.observe(el); });
 </script>
 
-@include('partials.emergency.sos-button', ['sosOperatorId' => null])
 </body>
 </html>

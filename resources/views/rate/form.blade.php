@@ -473,7 +473,10 @@
             return;
         }
         updateLocStatus('Detecting your location...');
-        getPositionWithRetry(2, { timeout: 8000, enableHighAccuracy: true, maximumAge: 10000 })
+        /* Get a quick fix first. Coarse (cell/WiFi) is near-instant and
+           usually accurate enough to show on the map; we then let startTracking
+           upgrade to high-accuracy GPS in the background as watchPosition fires. */
+        getPositionWithRetry(2, { timeout: 6000, enableHighAccuracy: false, maximumAge: 15000 })
             .then(function (p) {
                 if (locationCancelled) { return; }
                 var latlng = L.latLng(p.coords.latitude, p.coords.longitude);
@@ -528,6 +531,8 @@
 
     function startTracking() {
         if (!navigator.geolocation || trackingWatchId !== null) return;
+        /* Start with coarse accuracy so the update fires fast, then let the
+           browser raise accuracy over time (GPS warms up in the background). */
         trackingWatchId = navigator.geolocation.watchPosition(function (p) {
             var latlng = L.latLng(p.coords.latitude, p.coords.longitude);
             if (!serviceBounds.contains(latlng)) return;
@@ -849,14 +854,12 @@
     var endInput = document.getElementById('rateMapEnd');
     var searchResults = document.getElementById('rateMapSearchResults');
     var searchTimeout = null;
-    var lastGeocodeCall = 0;
 
     endInput.addEventListener('input', function () {
         var q = this.value.trim();
         if (q.length < 1) { searchResults.innerHTML = ''; return; }
         clearTimeout(searchTimeout);
-        var wait = Math.max(300, lastGeocodeCall + 800 - Date.now());
-        searchTimeout = setTimeout(function () { forwardGeocode(q); }, wait);
+        searchTimeout = setTimeout(function () { forwardGeocode(q); }, 200);
     });
 
     endInput.addEventListener('focus', function () {
@@ -868,7 +871,6 @@
     });
 
     function forwardGeocode(query) {
-        lastGeocodeCall = Date.now();
 
         function fetchResults(q) {
             return fetch('/geocode/search?q=' + encodeURIComponent(q)).then(function (r) { return r.json(); });
