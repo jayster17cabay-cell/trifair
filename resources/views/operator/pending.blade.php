@@ -32,10 +32,34 @@
                         </p>
                         <ul class="list-inside list-disc space-y-1 pl-2 text-xs text-slate-500">
                             <li>Your details will be verified by a TFRB Officer</li>
+                            <li>Verify your email address by clicking the link sent to you</li>
                             <li>You'll receive a notification once approved</li>
                             <li>Then you can log in and access your dashboard</li>
                         </ul>
                     </div>
+
+                    @if (!Auth::user()->hasVerifiedEmail())
+                        <div class="mb-6 w-full rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left">
+                            <p class="mb-1 text-xs font-semibold text-amber-700">
+                                <i class="bi bi-envelope-exclamation me-1"></i> Email not yet verified
+                            </p>
+                            <p class="mb-3 text-xs text-amber-600">
+                                Approvals can be processed sooner once your email is verified.
+                            </p>
+                            @if (session('status') === 'verification-link-sent')
+                                <p class="mb-3 text-xs font-medium text-emerald-600">
+                                    <i class="bi bi-check-circle me-1"></i> A new verification link has been sent to your email.
+                                </p>
+                            @endif
+                            <form method="POST" action="{{ route('verification.resend') }}">
+                                @csrf
+                                <button type="submit" class="tw-btn tw-btn-outline w-full text-xs"
+                                    {{ session('status') === 'verification-link-sent' ? 'disabled' : '' }}>
+                                    <i class="bi bi-envelope-check"></i> Resend Verification Link
+                                </button>
+                            </form>
+                        </div>
+                    @endif
 
                     <form method="POST" action="{{ route('logout') }}" class="w-full">
                         @csrf

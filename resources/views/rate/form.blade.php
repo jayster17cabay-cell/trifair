@@ -178,7 +178,7 @@
             </div>
         @endif
 
-        @if(isset($alreadyRated) && $alreadyRated)
+        @if(isset($alreadyRated) && $alreadyRated && isset($existingRating))
             <div class="rate-card">
                 <div class="screen-center">
                     <div class="screen-icon"><i class="bi bi-clock-history"></i></div>

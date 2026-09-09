@@ -42,13 +42,13 @@
     <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Motorcycle Details</div>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
-            <label for="plate_number" class="tw-label">Plate Number</label>
-            <input type="text" class="tw-input @error('plate_number') is-invalid @enderror" id="plate_number" name="plate_number" value="{{ old('plate_number') }}" placeholder="e.g. ABC-123">
+            <label for="plate_number" class="tw-label">Plate Number <span class="text-red-600">*</span></label>
+            <input type="text" class="tw-input @error('plate_number') is-invalid @enderror" id="plate_number" name="plate_number" value="{{ old('plate_number') }}" required placeholder="e.g. ABC-123">
             @error('plate_number') <div class="tw-error-text">{{ $message }}</div> @enderror
         </div>
         <div>
-            <label for="body_number" class="tw-label">Body Number</label>
-            <input type="text" class="tw-input @error('body_number') is-invalid @enderror" id="body_number" name="body_number" value="{{ old('body_number') }}" placeholder="e.g. 1234">
+            <label for="body_number" class="tw-label">Body Number <span class="text-red-600">*</span></label>
+            <input type="text" class="tw-input @error('body_number') is-invalid @enderror" id="body_number" name="body_number" value="{{ old('body_number') }}" required placeholder="e.g. 1234">
             @error('body_number') <div class="tw-error-text">{{ $message }}</div> @enderror
         </div>
         <div>

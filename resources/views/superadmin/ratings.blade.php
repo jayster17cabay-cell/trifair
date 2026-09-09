@@ -5,7 +5,7 @@
 @section('content')
     @php
         $routePrefix = 'superadmin';
-        $reviewRouteName = 'superadmin.complaints.review';
+        $reviewRouteName = 'superadmin.ratings.review';
         $showDelete = true;
     @endphp
     @include('partials.admin.ratings')

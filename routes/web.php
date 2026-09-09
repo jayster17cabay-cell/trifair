@@ -121,6 +121,7 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::delete('/complaints/{rating}', [SuperadminController::class, 'destroyComplaint'])->name('complaints.destroy');
     Route::post('/complaints/bulk-review', [SuperadminController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
     Route::get('/ratings', [SuperadminController::class, 'ratings'])->name('ratings');
+    Route::patch('/ratings/{rating}/review', [SuperadminController::class, 'markReviewed'])->name('ratings.review');
     Route::post('/ratings/bulk-review', [SuperadminController::class, 'ratingsBulkReview'])->name('ratings.bulkReview');
     Route::get('/reports', [SuperadminController::class, 'reports'])->name('reports');
     Route::get('/reports/operators/{operator}/trips', [SuperadminController::class, 'reportTrips'])->name('reports.trips');
