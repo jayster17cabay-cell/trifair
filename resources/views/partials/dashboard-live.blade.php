@@ -74,7 +74,7 @@
                     '<span class="truncate font-semibold text-slate-600">' + escHtml(s.complaint_type) + '</span>' +
                     '<span class="shrink-0 font-bold text-slate-900">' + s.total + '</span></div>' +
                     '<div class="h-2.5 overflow-hidden rounded-full bg-slate-100">' +
-                    '<div class="h-full rounded-full" style="width:' + pct + '%;background:linear-gradient(90deg,#2e7dd1,#0f2a4a);"></div></div>' +
+                    '<div class="h-full rounded-full" style="width:' + pct + '%;background:linear-gradient(90deg,#2e7dd1,#0A2A5E);"></div></div>' +
                     '</div>';
             }
             body.innerHTML = html;
@@ -110,7 +110,7 @@
             var pct = max > 0 ? Math.round((counts[i] / max) * 100) : 0;
             html += '<div class="flex h-full flex-1 flex-col items-center justify-end">' +
                 '<span class="mb-1 text-[11px] font-bold text-slate-700">' + counts[i] + '</span>' +
-                '<div class="w-full rounded-t-md" style="height:' + Math.max(pct, 2) + '%;background:linear-gradient(180deg,#2e7dd1,#0f2a4a);"></div>' +
+                '<div class="w-full rounded-t-md" style="height:' + Math.max(pct, 2) + '%;background:linear-gradient(180deg,#2e7dd1,#0A2A5E);"></div>' +
                 '</div>';
         }
         body.innerHTML = html;

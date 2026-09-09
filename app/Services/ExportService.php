@@ -184,7 +184,7 @@ class ExportService
 
         $hCells = '';
         foreach ($headers as $h) {
-            $hCells .= '<th style="background:#0f2a4a;color:#fff;padding:8px 12px;text-align:left;font-size:12px;border:1px solid #ccc;">' . htmlspecialchars($h) . '</th>';
+            $hCells .= '<th style="background:#0A2A5E;color:#fff;padding:8px 12px;text-align:left;font-size:12px;border:1px solid #ccc;">' . htmlspecialchars($h) . '</th>';
         }
 
         $body = '';

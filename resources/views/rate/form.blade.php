@@ -88,7 +88,7 @@
         .route-deviation p { font-size: 0.82rem; color: #64748b; margin-bottom: 1rem; }
         .route-deviation .dev-btn {
             padding: 0.6rem 1.5rem; border: none; border-radius: 10px;
-            background: #0f2a4a; color: #fff; font-weight: 700;
+            background: #0A2A5E; color: #fff; font-weight: 700;
             font-size: 0.85rem; cursor: pointer; font-family: inherit;
         }
         .route-deviation .dev-dismiss {
@@ -124,7 +124,7 @@
         }
         .loc-overlay-icon {
             width: 64px; height: 64px; border-radius: 50%;
-            background: linear-gradient(135deg, #2563eb, #0f2a4a);
+            background: linear-gradient(135deg, #2563eb, #0A2A5E);
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 1rem; font-size: 1.6rem; color: #fff;
         }
@@ -133,7 +133,7 @@
         .loc-overlay-btn {
             display: inline-flex; align-items: center; justify-content: center;
             padding: 0.75rem 2rem; border: none; border-radius: 12px;
-            background: linear-gradient(135deg, #2563eb, #0f2a4a);
+            background: linear-gradient(135deg, #2563eb, #0A2A5E);
             color: #fff; font-size: 0.9rem; font-weight: 700;
             font-family: inherit; cursor: pointer; width: 100%;
             transition: all 0.2s;
@@ -146,12 +146,12 @@
 
         /* Map marker tooltips */
         .marker-label-from, .marker-label-to {
-            background: #0f2a4a; color: #fff; border: none; border-radius: 8px;
+            background: #0A2A5E; color: #fff; border: none; border-radius: 8px;
             padding: 0.2rem 0.55rem; font-size: 0.68rem; font-weight: 700;
             box-shadow: 0 2px 8px rgba(15,42,74,0.25); letter-spacing: 0.02em;
         }
         .marker-label-from::before, .marker-label-to::before {
-            border-top-color: #0f2a4a;
+            border-top-color: #0A2A5E;
         }
         .marker-label-to { background: #dc2626; }
         .marker-label-to::before { border-top-color: #dc2626; }
@@ -187,7 +187,7 @@
                     <div class="screen-stars">
                         @php
                             $er = $existingRating->rating;
-                            $esOn = '#f5b800';
+                            $esOn = '#F5B301';
                             $esOff = '#e2e8f0';
                         @endphp
                         @for($i = 1; $i <= 5; $i++)
@@ -706,7 +706,7 @@
         clearRouteLayers();
         routeCoords = [start, end];
         approxLine = L.polyline([start, end], {
-            color: '#0f2a4a', weight: 4, opacity: 0.5, dashArray: '4 6', interactive: false
+            color: '#0A2A5E', weight: 4, opacity: 0.5, dashArray: '4 6', interactive: false
         }).addTo(map);
         fitBothMarkers();
 

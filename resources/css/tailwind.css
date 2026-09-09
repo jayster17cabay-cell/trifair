@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-    --primary: #0f2a4a;
-    --primary-dark: #0a1d33;
+    --primary: #0A2A5E;
+    --primary-dark: #071e42;
     --primary-light: #2e7dd1;
     --primary-50: #e6f1fb;
-    --secondary: #f5b800;
+    --secondary: #F5B301;
     --secondary-dark: #e0a800;
     --secondary-50: #faeeda;
     --success: #059669;
@@ -303,7 +303,7 @@
     /* ---------- Topbar ---------- */
     .tw-topbar {
         @apply sticky top-0 z-40 flex h-[70px] items-center justify-between gap-3 border-b-[3px] border-gold px-4 text-white shadow-lg shadow-slate-900/15 sm:px-6;
-        background-image: linear-gradient(160deg, #060e1a 0%, #0f2a4a 50%, #1a3a5c 100%);
+        background-image: linear-gradient(160deg, #051327 0%, #0A2A5E 50%, #11366f 100%);
     }
     .tw-topbar-brand {
         @apply flex items-center gap-2 text-lg font-extrabold tracking-tight;
@@ -321,7 +321,7 @@
     /* ---------- Sidebar ---------- */
     .tw-sidebar {
         @apply flex h-screen w-64 shrink-0 flex-col overflow-y-auto px-4 py-5;
-        background-image: linear-gradient(180deg, #060e1a 0%, #0f2a4a 50%, #0a1525 100%);
+        background-image: linear-gradient(180deg, #051327 0%, #0A2A5E 50%, #051327 100%);
         border-right: 1px solid rgba(245, 184, 0, 0.15);
     }
     .tw-sidebar-heading {
@@ -528,8 +528,8 @@
     }
     .op-header {
         @apply relative z-50 text-white;
-        background-image: linear-gradient(160deg, #060e1a 0%, #0f2a4a 50%, #1a3a5c 100%);
-        border-bottom: 3px solid #f5b800;
+        background-image: linear-gradient(160deg, #051327 0%, #0A2A5E 50%, #11366f 100%);
+        border-bottom: 3px solid #F5B301;
         border-bottom-left-radius: 22px;
         border-bottom-right-radius: 22px;
     }
@@ -680,7 +680,7 @@
     /* ---------- Passenger rating page ---------- */
     /* RatingPageHeader */
     .rate-header {
-        background: linear-gradient(160deg, #0a1d33 0%, #0f2a4a 60%, #1a3a5c 100%);
+        background: linear-gradient(160deg, #071e42 0%, #0A2A5E 60%, #11366f 100%);
         padding: calc(var(--safe-top, 0px) + 0.7rem) 1.25rem 0.8rem;
         color: #ffffff;
         text-align: center;
@@ -695,7 +695,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, #f5b800, #0f2a4a);
+        background: linear-gradient(90deg, #F5B301, #0A2A5E);
     }
     .rate-header-row {
         display: inline-flex;
@@ -718,7 +718,7 @@
         color: rgba(255, 255, 255, 0.95);
     }
     .rate-verified-pill i {
-        color: #f5b800;
+        color: #F5B301;
         font-size: 0.78rem;
     }
     .rate-header-dot {
@@ -736,7 +736,7 @@
         color: rgba(255, 255, 255, 0.92);
     }
     .rate-header-datetime i {
-        color: #f5b800;
+        color: #F5B301;
     }
 
     /* Cards + page stack */
@@ -787,8 +787,8 @@
         width: 44px;
         height: 44px;
         border-radius: 50%;
-        background: #0f2a4a;
-        color: #f5b800;
+        background: #0A2A5E;
+        color: #F5B301;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -949,7 +949,7 @@
     }
     .map-shell .leaflet-control-zoom a {
         background: #ffffff;
-        color: #0f2a4a;
+        color: #0A2A5E;
         width: 34px;
         height: 34px;
         line-height: 34px;
@@ -960,7 +960,7 @@
     }
     .map-shell .leaflet-control-zoom a:hover {
         background: #f1f5f9;
-        color: #0f2a4a;
+        color: #0A2A5E;
     }
     .map-shell .leaflet-control-zoom a.leaflet-control-zoom-in {
         border-radius: 10px 10px 0 0;
@@ -992,7 +992,7 @@
     .map-shell .leaflet-control-layers-expanded {
         padding: 8px;
         background: #ffffff;
-        color: #0f2a4a;
+        color: #0A2A5E;
         border-radius: 10px;
     }
     .map-shell .leaflet-control-layers-label {
@@ -1010,7 +1010,7 @@
         color: #334155;
     }
     .map-shell .leaflet-control-layers-base input[type='radio'] {
-        accent-color: #0f2a4a;
+        accent-color: #0A2A5E;
         margin-right: 6px;
     }
 
@@ -1060,7 +1060,7 @@
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: #0f2a4a;
+        background: #0A2A5E;
         border: 2px solid #ffffff;
         box-shadow: 0 1px 5px rgba(15, 42, 74, 0.4);
         z-index: 2;
@@ -1142,7 +1142,7 @@
         color: #94a3b8;
     }
     .map-summary {
-        color: #0f2a4a;
+        color: #0A2A5E;
         font-weight: 700;
     }
     .map-note {
@@ -1192,7 +1192,7 @@
         transform: scale(0.9);
     }
     .rate-star.selected {
-        background: #f5b800;
+        background: #F5B301;
     }
     .rate-star.selected i {
         color: #ffffff;
@@ -1251,7 +1251,7 @@
         color: #cbd5e1;
     }
     .rate-field:focus {
-        border-color: #f5b800;
+        border-color: #F5B301;
         box-shadow: 0 0 0 3px rgba(245, 184, 0, 0.12);
     }
     .rate-field-grid {
@@ -1303,7 +1303,7 @@
         margin-top: 0.75rem;
     }
     .rate-upload:active {
-        border-color: #f5b800;
+        border-color: #F5B301;
         background: #f8fafc;
     }
     .rate-upload i {
@@ -1333,7 +1333,7 @@
         align-items: center;
         gap: 0.25rem;
         background: #ffffff;
-        color: #0f2a4a;
+        color: #0A2A5E;
         padding: 0.25rem 0.5rem;
         border-radius: 6px;
         font-size: 0.72rem;
@@ -1353,7 +1353,7 @@
         padding: 0.9rem;
         border: none;
         border-radius: 12px;
-        background: linear-gradient(135deg, #f5b800, #e0a800);
+        background: linear-gradient(135deg, #F5B301, #e0a800);
         color: #1f2937;
         font-size: 0.95rem;
         font-weight: 800;
@@ -1426,7 +1426,7 @@
         background-image:
             radial-gradient(ellipse 90% 55% at 12% -8%, rgba(245, 184, 0, 0.2), transparent),
             radial-gradient(ellipse 70% 45% at 105% 115%, rgba(245, 184, 0, 0.1), transparent),
-            linear-gradient(165deg, #060e1a 0%, #0f2a4a 55%, #1a3a5c 100%);
+            linear-gradient(165deg, #051327 0%, #0A2A5E 55%, #11366f 100%);
     }
     .lp-bg-grid {
         background-image:

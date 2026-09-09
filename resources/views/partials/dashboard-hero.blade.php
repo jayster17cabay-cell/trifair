@@ -6,7 +6,7 @@
     Reads $unreadCount (guarded) to show an inline notification chip.
 --}}
 @php $unreadCount = isset($unreadCount) ? (int) $unreadCount : 0; @endphp
-<div class="relative mb-6 overflow-hidden rounded-2xl text-white shadow-soft" style="background-image: linear-gradient(135deg, #0a1d33 0%, #0f2a4a 55%, #1a3a5c 100%);">
+<div class="relative mb-6 overflow-hidden rounded-2xl text-white shadow-soft" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 55%, #11366f 100%);">
     <div class="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full" style="background: radial-gradient(circle, rgba(245,184,0,0.22) 0%, transparent 70%);"></div>
     <div class="pointer-events-none absolute -bottom-20 -left-16 h-64 w-64 rounded-full" style="background: radial-gradient(circle, rgba(46,125,209,0.2) 0%, transparent 70%);"></div>
     <div class="relative z-10 flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5">

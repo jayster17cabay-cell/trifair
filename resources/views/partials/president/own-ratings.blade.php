@@ -10,7 +10,7 @@
 @endphp
 <div class="tw-card overflow-hidden transition-shadow duration-200 hover:shadow-md">
     {{-- Header band — navy blue with gold accent --}}
-    <div class="flex items-center justify-between px-4 py-3" style="background-image: linear-gradient(135deg, #0a1d33 0%, #0f2a4a 100%);">
+    <div class="flex items-center justify-between px-4 py-3" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
         <h3 class="tw-card-title text-sm !text-white"><i class="bi bi-star-fill mr-1 text-gold"></i> My Ratings</h3>
         <span class="tw-badge !bg-gold !text-navy-800">{{ $total }} {{ $total === 1 ? 'Rating' : 'Ratings' }}</span>
     </div>

@@ -30,7 +30,7 @@
 @php $membersActive = ($membersActive ?? false) || request()->has('search') || request()->has('status'); @endphp
 {{-- Section 3 — Members search + toggle (search is always visible) --}}
 <div id="membersSection" class="scroll-mt-24 tw-card mb-3 overflow-hidden">
-    <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="background-image: linear-gradient(135deg, #0a1d33 0%, #0f2a4a 100%);">
+    <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
         <div class="flex items-center gap-2">
             <button id="presidentMembersToggle" type="button" class="tw-btn tw-btn-gold px-4 py-2 text-sm" onclick="togglePresidentMembers()">
                 <i class="bi bi-people-fill mr-1"></i><span id="presidentMembersToggleLabel">{{ $membersActive ? 'Hide Members' : 'View Members' }}</span>

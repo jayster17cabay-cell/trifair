@@ -12,7 +12,7 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --primary: #1e3a5f;
-            --gold: #f5b800;
+            --gold: #F5B301;
             --green: #10b981;
             --green-dark: #059669;
             --gray-50: #f9fafb;
