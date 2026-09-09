@@ -1,4 +1,4 @@
-{{-- Shared operators index page body. Requires: $routePrefix, $operators, $search, $status --}}
+{{-- Shared operators index page body. Requires: $routePrefix, $operators, $search, $status, $account, $accountsActiveCount, $accountsInactiveCount, $activeOperators --}}
 
 @php $currentStatus = request('status'); @endphp
 
@@ -54,21 +54,22 @@
         <div class="tw-stat-label">Total</div>
     </div>
     <div class="tw-stat">
-        <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-check-circle"></i></div>
-        <div class="tw-stat-num">{{ $activeOperatorsCount }}</div>
-        <div class="tw-stat-label">Active</div>
+        <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-person-check"></i></div>
+        <div class="tw-stat-num">{{ $accountsActiveCount }}</div>
+        <div class="tw-stat-label">Account Active</div>
     </div>
 </div>
 
 <div class="mb-4 flex flex-wrap gap-2">
-    <a href="{{ route($routePrefix . '.operators') }}" class="{{ !$status ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+    <a href="{{ route($routePrefix . '.operators', array_filter(['account' => 'all'])) }}" class="{{ $account === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-people"></i> All
     </a>
-    @foreach (['active' => 'Active', 'inactive' => 'Inactive'] as $key => $label)
-        <a href="{{ route($routePrefix . '.operators', ['status' => $key]) }}" class="{{ $status === $key ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-            {{ $label }}
-        </a>
-    @endforeach
+    <a href="{{ route($routePrefix . '.operators', ['account' => 'active']) }}" class="{{ $account === 'active' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+        <i class="bi bi-person-check"></i> Active <span class="tw-badge tw-badge-green ml-1">{{ $accountsActiveCount }}</span>
+    </a>
+    <a href="{{ route($routePrefix . '.operators', ['account' => 'inactive']) }}" class="{{ $account === 'inactive' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+        <i class="bi bi-person-dash"></i> Inactive <span class="tw-badge tw-badge-gray ml-1">{{ $accountsInactiveCount }}</span>
+    </a>
 </div>
 
 <div class="mb-4 max-w-md">

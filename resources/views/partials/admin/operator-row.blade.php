@@ -18,6 +18,10 @@
         $statusLabel = 'Inactive'; $statusClass = 'tw-badge-gray'; $statusIcon = 'bi-pause-circle-fill';
     }
 
+    $accountActive = (bool) ($operator->user->is_active ?? true);
+    // Role badge shown in the approval-status column (Presidents get it too).
+    $isPresident = optional($operator->user->role ?? null) === 'operator_president';
+
     $operatorName = $operator->user->name ?? 'Unknown';
     $todaName = $operator->toda ? $operator->toda->name : null;
 
@@ -35,12 +39,13 @@
         'statusLabel' => $statusLabel,
         'statusClass' => $statusClass,
         'statusIcon' => $statusIcon,
+        'accountActive' => $accountActive,
         'editUrl' => route($routePrefix . '.operators.edit', $operator),
         'qrUrl' => route($routePrefix . '.operators.qrcode', $operator),
     ];
 @endphp
 
-<tr class="tw-tr-hover even:bg-slate-50/60">
+<tr class="tw-tr-hover even:bg-slate-50/60 {{ $accountActive ? '' : 'opacity-60' }}">
     <td class="tw-td">
         <div class="flex items-center gap-2.5">
             <div class="min-w-0">
@@ -61,7 +66,17 @@
     </td>
     <td class="tw-td hidden text-sm text-slate-500 md:table-cell">{{ $operator->contact_number ?? '—' }}</td>
     <td class="tw-td">
-        <span class="tw-badge {{ $statusClass }}"><i class="bi {{ $statusIcon }}"></i>{{ $statusLabel }}</span>
+        <div class="flex flex-wrap items-center gap-1">
+            <span class="tw-badge {{ $statusClass }}"><i class="bi {{ $statusIcon }}"></i>{{ $statusLabel }}</span>
+            @if ($isPresident)
+                <span class="tw-badge tw-badge-gold" title="President of this TODA"><i class="bi bi-award"></i>President</span>
+            @endif
+            @if (!$operator->isArchived())
+                <span class="tw-badge {{ $accountActive ? 'tw-badge-green' : 'tw-badge-gray' }}" title="Account {{ $accountActive ? 'enabled' : 'disabled' }}">
+                    <i class="bi {{ $accountActive ? 'bi-person-check' : 'bi-person-dash' }}"></i>{{ $accountActive ? 'Account Active' : 'Account Inactive' }}
+                </span>
+            @endif
+        </div>
     </td>
     <td class="tw-td text-right">
         <div class="inline-flex gap-1.5">
@@ -96,6 +111,13 @@
                 <a href="{{ route($routePrefix . '.operators.edit', $operator) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Edit" aria-label="Edit {{ $operatorName }}">
                     <i class="bi bi-pencil"></i>
                 </a>
+                <form action="{{ route($routePrefix . '.operators.toggleActive', $operator) }}" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="{{ $accountActive ? 'Deactivate account' : 'Activate account' }}" aria-label="{{ $accountActive ? 'Deactivate' : 'Activate' }} {{ $operatorName }}" onclick="return confirm(@js(($accountActive ? 'Deactivate' : 'Activate') . ' the account of ' . $operatorName . '? Inactive accounts cannot log in.'))">
+                        <i class="bi {{ $accountActive ? 'bi-person-dash' : 'bi-person-check' }}"></i>
+                    </button>
+                </form>
                 <form action="{{ route($routePrefix . '.operators.archive', $operator) }}" method="POST" onsubmit="return confirm('Archive this operator? They will be hidden from active lists but keep their rating history.')">
                     @csrf
                     @method('PATCH')

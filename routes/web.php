@@ -76,6 +76,7 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::patch('/operators/{operator}/reject', [TfrbOfficerController::class, 'rejectOperator'])->name('operators.reject');
     Route::patch('/operators/{operator}/archive', [TfrbOfficerController::class, 'archiveOperator'])->name('operators.archive');
     Route::patch('/operators/{operator}/restore', [TfrbOfficerController::class, 'restoreOperator'])->name('operators.restore');
+    Route::patch('/operators/{operator}/toggle-active', [TfrbOfficerController::class, 'toggleActive'])->name('operators.toggleActive');
     Route::get('/operators/export', [TfrbOfficerController::class, 'exportOperators'])->name('operators.export');
     Route::get('/reports/export', [TfrbOfficerController::class, 'exportReports'])->name('reports.export');
     Route::get('/ratings/export', [TfrbOfficerController::class, 'exportRatings'])->name('ratings.export');
@@ -124,6 +125,7 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::patch('/operators/{operator}/reject', [SuperadminController::class, 'rejectOperator'])->name('operators.reject');
     Route::patch('/operators/{operator}/archive', [SuperadminController::class, 'archiveOperator'])->name('operators.archive');
     Route::patch('/operators/{operator}/restore', [SuperadminController::class, 'restoreOperator'])->name('operators.restore');
+    Route::patch('/operators/{operator}/toggle-active', [SuperadminController::class, 'toggleActive'])->name('operators.toggleActive');
     Route::get('/operators/export', [SuperadminController::class, 'exportOperators'])->name('operators.export');
     Route::get('/reports/export', [SuperadminController::class, 'exportReports'])->name('reports.export');
     Route::get('/ratings/export', [SuperadminController::class, 'exportRatings'])->name('ratings.export');

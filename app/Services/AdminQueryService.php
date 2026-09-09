@@ -89,6 +89,7 @@ class AdminQueryService
     {
         $search = $request->query('search');
         $status = $request->query('status');
+        $account = $request->query('account', 'all');
 
         // Only "true" operators appear in the Operators management list. A TODA
         // president is also given an Operator row (so they can carry their own
@@ -105,6 +106,13 @@ class AdminQueryService
         } else {
             $status = null;
             $query->notArchived();
+        }
+
+        if ($account && $account !== 'all') {
+            $accountActive = $account === 'active';
+            $query->whereHas('user', function ($u) use ($accountActive) {
+                $u->where('is_active', $accountActive);
+            });
         }
 
         if ($search) {
@@ -124,10 +132,14 @@ class AdminQueryService
 
         $search = $request->query('search');
         $status = $request->query('status');
+        $account = $request->query('account', 'all');
+
         $archivedCount = Operator::archived()->count();
         $activeOperatorsCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator'))->where('status', 'active')->count();
+        $accountsActiveCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator')->where('is_active', true))->count();
+        $accountsInactiveCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator')->where('is_active', false))->count();
 
-        return compact('operators', 'search', 'status', 'archivedCount', 'activeOperatorsCount');
+        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'activeOperatorsCount', 'accountsActiveCount', 'accountsInactiveCount');
     }
 
     public function operatorsForExport(Request $request)

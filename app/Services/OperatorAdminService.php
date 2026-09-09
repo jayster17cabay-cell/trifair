@@ -175,6 +175,33 @@ class OperatorAdminService
             ->with('success', "Operator {$operator->user->name} restored successfully.");
     }
 
+    /**
+     * Toggle the operator's account state (users.is_active) without touching
+     * the approval status (operators.status). Beware: is_active blocks login.
+     */
+    public function toggleActive(Operator $operator, string $redirectRoute): RedirectResponse
+    {
+        $operator->load('user');
+
+        if ($operator->user->role !== 'operator') {
+            return redirect()->back()->with('error', 'Only operator accounts can be toggled.');
+        }
+
+        $target = !$operator->user->is_active;
+        $operator->user->forceFill(['is_active' => $target])->save();
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log(
+            $target ? 'activate_operator' : 'deactivate_operator',
+            ($target ? 'Activated' : 'Deactivated') . " account of {$operator->user->name} ({$operator->user->email})",
+            $operator,
+            'operator'
+        );
+
+        return redirect()->route($redirectRoute)
+            ->with('success', "{$operator->user->name} is now " . ($target ? 'active' : 'inactive') . '.');
+    }
+
     public function approve(Operator $operator, string $redirectRoute): RedirectResponse
     {
         $operator->load('user');

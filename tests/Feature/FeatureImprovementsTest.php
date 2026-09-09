@@ -305,6 +305,78 @@ class FeatureImprovementsTest extends TestCase
         $this->assertNull($operator->fresh()->archived_at);
     }
 
+    public function test_superadmin_can_deactivate_and_reactivate_operator_account()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $userId = $operator->user->id;
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/operators/' . $operator->id . '/toggle-active')
+            ->assertRedirect(route('superadmin.operators'));
+
+        $this->assertFalse((bool) User::find($userId)->is_active);
+        $this->assertNotNull(ActivityLog::where('action', 'deactivate_operator')->latest()->first());
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/operators/' . $operator->id . '/toggle-active')
+            ->assertRedirect(route('superadmin.operators'));
+
+        $this->assertTrue((bool) User::find($userId)->is_active);
+        $this->assertNotNull(ActivityLog::where('action', 'activate_operator')->latest()->first());
+    }
+
+    public function test_officer_can_toggle_operator_account()
+    {
+        $officer = $this->makeUser('tfrb_officer');
+        $operator = $this->makeOperator();
+
+        $this->actingAs($officer)
+            ->patch('/tfrb-officer/operators/' . $operator->id . '/toggle-active')
+            ->assertRedirect(route('tfrb-officer.operators'));
+
+        $this->assertFalse((bool) $operator->fresh()->user->is_active);
+    }
+
+    public function test_deactivated_operator_cannot_login()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $operator->user->forceFill(['password' => Hash::make('password123')])->save();
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/operators/' . $operator->id . '/toggle-active');
+
+        $this->post('/login', [
+            'email' => $operator->user->email,
+            'password' => 'password123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_account_filter_shows_only_matching_operators()
+    {
+        $admin = $this->makeUser('superadmin');
+        $active = $this->makeOperator();
+        $active->user->forceFill(['name' => 'Active Rider One'])->save();
+        $inactive = $this->makeOperator();
+        $inactive->user->forceFill(['name' => 'Inactive Rider Two'])->save();
+        $inactive->user->forceFill(['is_active' => false])->save();
+
+        $response = $this->actingAs($admin)->get('/superadmin/operators?account=active');
+        $response->assertOk();
+        $table = substr($response->getContent(), strpos($response->getContent(), '<tbody>'));
+        $this->assertStringContainsString('Active Rider One', $table);
+        $this->assertStringNotContainsString('Inactive Rider Two', $table);
+
+        $response = $this->actingAs($admin)->get('/superadmin/operators?account=inactive');
+        $response->assertOk();
+        $table = substr($response->getContent(), strpos($response->getContent(), '<tbody>'));
+        $this->assertStringContainsString('Inactive Rider Two', $table);
+        $this->assertStringNotContainsString('Active Rider One', $table);
+    }
+
     public function test_archived_operator_rate_form_is_404()
     {
         $operator = $this->makeOperator();
