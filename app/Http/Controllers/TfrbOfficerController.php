@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Operator;
 use App\Models\Rating;
 use App\Models\Toda;
+use App\Models\User;
 use App\Services\AdminDashboardService;
 use App\Services\AdminQueryService;
 use App\Services\ExportService;
