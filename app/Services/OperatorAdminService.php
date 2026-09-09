@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\ActivityLogger;
 use App\Helpers\SupabaseStorage;
+use App\Mail\OperatorCredentials;
 use App\Models\Operator;
 use App\Models\Rating;
 use App\Models\User;
@@ -12,6 +13,8 @@ use App\Services\AdminDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
@@ -200,6 +203,95 @@ class OperatorAdminService
 
         return redirect()->route($redirectRoute)
             ->with('success', "{$operator->user->name} is now " . ($target ? 'active' : 'inactive') . '.');
+    }
+
+    /**
+     * Assign the operator as the President of their TODA. If the TODA already
+     * has a president, the previous one is demoted back to a regular operator
+     * (their Operator row and rating history are kept). Presidents keep their
+     * own Operator row so they can still receive ratings.
+     */
+    public function assignPresident(Operator $operator, string $redirectRoute): RedirectResponse
+    {
+        $operator->load('user', 'toda');
+
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be assigned as president.');
+        }
+        if (!$operator->toda_id) {
+            return redirect()->route($redirectRoute)->with('error', 'Assign this operator to a TODA first.');
+        }
+
+        $previous = User::where('role', 'operator_president')
+            ->where('toda_id', $operator->toda_id)
+            ->where('id', '!=', $operator->user_id)
+            ->first();
+
+        // Demote the previous president so the TODA has exactly one leader.
+        if ($previous) {
+            $previous->forceFill(['role' => 'operator', 'toda_id' => $operator->toda_id])->save();
+            Operator::updateOrCreate(
+                ['user_id' => $previous->id],
+                ['toda_id' => $operator->toda_id, 'status' => 'active']
+            );
+        }
+
+        $operator->user->forceFill([
+            'role' => 'operator_president',
+            'toda_id' => $operator->toda_id,
+        ])->save();
+
+        // Ensure the president can still receive their own ratings.
+        Operator::updateOrCreate(
+            ['user_id' => $operator->user_id],
+            ['toda_id' => $operator->toda_id, 'status' => 'active']
+        );
+
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log(
+            'assign_toda_president',
+            ($previous ? 'Replaced president and promoted ' : 'Promoted ') . "{$operator->user->name} as President of TODA #{$operator->toda_id}",
+            $operator,
+            'tfrb_officer'
+        );
+
+        return redirect()->route($redirectRoute)
+            ->with('success', "{$operator->user->name} is now the President of {$operator->toda->name}.");
+    }
+
+    /**
+     * Reset the operator's password to a fresh temporary password, e-mail it to
+     * them, and record the action. The operator is forced to pick a new password
+     * right after signing in with the temporary one.
+     */
+    public function resetPassword(Operator $operator, string $redirectRoute): RedirectResponse
+    {
+        $operator->load('user');
+
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can have their password reset.');
+        }
+
+        $tempPassword = Str::random(10);
+        $operator->user->forceFill(['password' => Hash::make($tempPassword)])->save();
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log(
+            'reset_operator_password',
+            "Reset password for operator {$operator->user->name} ({$operator->user->email})",
+            $operator,
+            'operator'
+        );
+
+        try {
+            Mail::to($operator->user->email)->send(new OperatorCredentials($operator->user, $tempPassword));
+        } catch (\Throwable $e) {
+            Log::warning('Operator credentials e-mail failed for ' . $operator->user->email . ': ' . $e->getMessage());
+        }
+
+        return redirect()->route($redirectRoute)
+            ->with('success', "Password reset for {$operator->user->name}. Temporary password: {$tempPassword}.");
     }
 
     public function approve(Operator $operator, string $redirectRoute): RedirectResponse

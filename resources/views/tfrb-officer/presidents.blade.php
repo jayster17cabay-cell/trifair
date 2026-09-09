@@ -1,4 +1,4 @@
-@extends('layouts.superadmin')
+@extends('layouts.tfrb-officer')
 
 @section('title', 'Manage TODA Presidents')
 
@@ -8,7 +8,7 @@
         <h1 class="tw-page-title"><i class="bi bi-award mr-2 text-gold"></i>TODA President Management</h1>
         <p class="tw-page-sub">Assign a president to oversee the members of each TODA</p>
     </div>
-    <a href="{{ route('superadmin.presidents.create') }}" class="tw-btn tw-btn-gold">
+    <a href="{{ route('tfrb-officer.presidents.create') }}" class="tw-btn tw-btn-gold">
         <i class="bi bi-award"></i>Add President
     </a>
 </div>
@@ -34,7 +34,7 @@
             <i class="bi bi-search"></i>
         </button>
         @if ($search)
-            <a href="{{ route('superadmin.presidents') }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700" aria-label="Clear search">
+            <a href="{{ route('tfrb-officer.presidents') }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700" aria-label="Clear search">
                 <i class="bi bi-x-lg"></i>
             </a>
         @endif
@@ -52,7 +52,7 @@
                 <th class="tw-th text-right">Actions</th>
             </tr>
         </thead>
-        @php $routePrefix = 'superadmin'; @endphp
+        @php $routePrefix = 'tfrb-officer'; @endphp
         @include('partials.admin.presidents-table', ['routePrefix' => $routePrefix])
     </table>
 </div>
@@ -84,5 +84,5 @@
     });
 </script>
 
-@include('partials.toda-members-modal', ['membersUrl' => url('/superadmin/toda'), 'addMemberUrl' => route('superadmin.operators.create')])
+@include('partials.toda-members-modal', ['membersUrl' => url('/tfrb-officer/toda'), 'addMemberUrl' => route('tfrb-officer.operators.create')])
 @endsection

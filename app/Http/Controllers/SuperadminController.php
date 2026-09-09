@@ -135,7 +135,7 @@ class SuperadminController extends Controller
             ->withQueryString();
 
         if ($request->ajax()) {
-            $html = view('partials.admin.presidents-table', ['presidents' => $presidents])->render();
+            $html = view('partials.admin.presidents-table', ['presidents' => $presidents, 'routePrefix' => 'superadmin'])->render();
             return response()->json([
                 'html' => $html,
                 'pagination' => $presidents->links('pagination::tailwind')->render(),
@@ -255,20 +255,20 @@ class SuperadminController extends Controller
         return view('superadmin.complaints', $data);
     }
 
-    public function ratings()
+    public function ratings(Request $request)
     {
-        extract(app(AdminQueryService::class)->ratingsData());
+        extract(app(AdminQueryService::class)->ratingsData($request));
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('superadmin.ratings', compact('ratings', 'activeOperators', 'goodCount', 'reviewedCount', 'proofsCount'));
+        return view('superadmin.ratings', compact('ratings', 'activeOperators', 'goodCount', 'reviewedCount', 'proofsCount', 'dateFrom', 'dateTo', 'operatorId'));
     }
 
-    public function reports()
+    public function reports(Request $request)
     {
-        $operators = app(AdminQueryService::class)->reportsData();
+        extract(app(AdminQueryService::class)->reportsData($request));
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('superadmin.reports', compact('operators', 'activeOperators'));
+        return view('superadmin.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating'));
     }
 
     /**
@@ -373,6 +373,16 @@ class SuperadminController extends Controller
         return app(OperatorAdminService::class)->toggleActive($operator, 'superadmin.operators');
     }
 
+    public function assignPresident(Operator $operator)
+    {
+        return app(OperatorAdminService::class)->assignPresident($operator, 'superadmin.operators');
+    }
+
+    public function resetPassword(Operator $operator)
+    {
+        return app(OperatorAdminService::class)->resetPassword($operator, 'superadmin.operators');
+    }
+
     public function restoreOperator(Operator $operator)
     {
         return app(OperatorAdminService::class)->restore($operator, 'superadmin.operators');
@@ -388,8 +398,7 @@ class SuperadminController extends Controller
 
     public function exportRatings(Request $request)
     {
-        $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
-        $ratings = app(AdminQueryService::class)->ratingsForExport($operatorId);
+        $ratings = app(AdminQueryService::class)->ratingsForExport($request);
         $format = $request->query('format', 'csv');
 
         return app(ExportService::class)->ratingsFormat($ratings, $format);
@@ -408,7 +417,18 @@ class SuperadminController extends Controller
         $reports = app(AdminQueryService::class)->reportsForExport($request);
         $format = $request->query('format', 'csv');
 
-        return app(ExportService::class)->reportsFormat($reports, $format);
+        $context = [];
+        if ($request->query('toda_id')) {
+            $toda = Toda::find((int) $request->query('toda_id'));
+            if ($toda) {
+                $context['toda'] = $toda->name;
+            }
+        }
+        if ($request->query('date_from') || $request->query('date_to')) {
+            $context['period'] = trim(($request->query('date_from') ?? 'start') . ' — ' . ($request->query('date_to') ?? 'today'));
+        }
+
+        return app(ExportService::class)->reportsFormat($reports, $format, $context);
     }
 
     public function exportActivityLogs(Request $request)

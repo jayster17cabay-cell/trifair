@@ -10,7 +10,45 @@
             'exportLabel' => 'Ratings',
             'exportIcon' => 'bi-star',
             'activeOperators' => $activeOperators,
+            'preservedParams' => array_filter([
+                'date_from' => $dateFrom ?? null,
+                'date_to' => $dateTo ?? null,
+                'operator_id' => $operatorId ?? null,
+            ]),
         ])
+</div>
+
+{{-- Filter bar: search ratings by date range and operator. --}}
+<div class="mb-4 rounded-xl border border-slate-100 bg-white p-3 shadow-sm sm:p-4">
+    <form method="GET" action="{{ route($routePrefix . '.ratings') }}" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+            <label for="date_from" class="mb-1 block text-xs font-semibold text-slate-600">From Date</label>
+            <input type="date" name="date_from" id="date_from" value="{{ $dateFrom ?? '' }}" class="tw-input py-2 text-xs">
+        </div>
+        <div>
+            <label for="date_to" class="mb-1 block text-xs font-semibold text-slate-600">To Date</label>
+            <input type="date" name="date_to" id="date_to" value="{{ $dateTo ?? '' }}" class="tw-input py-2 text-xs">
+        </div>
+        <div>
+            <label for="rating_operator" class="mb-1 block text-xs font-semibold text-slate-600">Operator</label>
+            <select name="operator_id" id="rating_operator" class="tw-select py-2 text-xs">
+                <option value="">All Operators</option>
+                @foreach ($activeOperators as $op)
+                    <option value="{{ $op->id }}" @selected((int) ($operatorId ?? 0) === (int) $op->id)>{{ $op->user->name ?? 'Unknown' }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="flex items-end gap-2">
+            <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy flex-1 justify-center">
+                <i class="bi bi-funnel"></i>Filter
+            </button>
+            @if ($dateFrom || $dateTo || $operatorId)
+                <a href="{{ route($routePrefix . '.ratings') }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Clear filters">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            @endif
+        </div>
+    </form>
 </div>
 
 @php

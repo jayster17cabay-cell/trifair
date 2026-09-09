@@ -128,6 +128,20 @@
                     <span class="ml-auto text-[0.65rem] text-slate-500">{{ $rating->response->created_at->diffForHumans() }}</span>
                 </div>
                 <p class="mb-0 text-sm text-slate-700">{{ $rating->response->message }}</p>
+                @if ($rating->operatorProofs->count() > 0)
+                    <div class="mt-2 border-t border-navy-600/10 pt-2">
+                        <small class="text-[0.65rem] font-bold uppercase tracking-widest text-navy-600"><i class="bi bi-paperclip mr-1"></i>Attached Proof</small>
+                        <div class="mt-1.5 flex flex-wrap gap-2">
+                            @foreach ($rating->operatorProofs as $proof)
+                                <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
+                                   class="inline-flex items-center gap-1.5 rounded-lg border-[1.5px] border-navy-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy-600 transition hover:border-navy-300 hover:bg-navy-50">
+                                    <i class="bi bi-{{ str_contains($proof->file_type ?? '', 'image') ? 'image' : 'file-earmark' }}"></i>
+                                    {{ $proof->original_name }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
         @endif
 

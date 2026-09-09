@@ -108,6 +108,11 @@ class Rating extends Model
         return $this->hasOne(OperatorResponse::class);
     }
 
+    public function operatorProofs()
+    {
+        return $this->hasMany(OperatorProof::class);
+    }
+
     public function scopeIsValid($query)
     {
         return $query->where('is_valid', true);

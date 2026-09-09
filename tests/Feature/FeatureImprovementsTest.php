@@ -2,17 +2,23 @@
 
 namespace Tests\Feature;
 
+use App\Mail\OperatorCredentials;
 use App\Models\ActivityLog;
 use App\Models\Operator;
+use App\Models\OperatorProof;
 use App\Models\Rating;
 use App\Models\RatingProof;
 use App\Models\Toda;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -84,6 +90,19 @@ class FeatureImprovementsTest extends TestCase
         ]);
 
         return $rating;
+    }
+
+    private function makeValidRating(Operator $operator, int $stars = 4): Rating
+    {
+        return Rating::create([
+            'operator_id' => $operator->id,
+            'rating' => $stars,
+            'start_location' => 'Novaliches, Quezon City',
+            'end_location' => 'SM Fairview, Quezon City',
+            'is_valid' => true,
+            'is_reviewed' => false,
+            'is_auto' => false,
+        ]);
     }
 
     public function test_forgot_password_page_is_public()
@@ -423,5 +442,163 @@ class FeatureImprovementsTest extends TestCase
             ->assertSessionHasErrors('email');
 
         $this->assertGuest();
+    }
+
+    public function test_superadmin_can_assign_toda_president_and_demote_previous()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        $first = $this->makeOperator();
+        $first->update(['toda_id' => $toda->id]);
+        $second = $this->makeOperator();
+        $second->update(['toda_id' => $toda->id]);
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $first->id . '/assign-president')
+            ->assertRedirect(route('superadmin.operators'));
+
+        $this->assertSame('operator_president', $first->user->fresh()->role);
+        $this->assertNotNull(ActivityLog::where('action', 'assign_toda_president')->latest()->first());
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $second->id . '/assign-president')
+            ->assertRedirect(route('superadmin.operators'));
+
+        $this->assertSame('operator_president', $second->user->fresh()->role);
+        $this->assertSame('operator', $first->user->fresh()->role);
+        $this->assertSame(1, $toda->president()->count());
+    }
+
+    public function test_officer_can_assign_toda_president()
+    {
+        $officer = $this->makeUser('tfrb_officer');
+        $toda = $this->makeToda();
+        $operator = $this->makeOperator();
+        $operator->update(['toda_id' => $toda->id]);
+
+        $this->actingAs($officer)
+            ->post('/tfrb-officer/operators/' . $operator->id . '/assign-president')
+            ->assertRedirect(route('tfrb-officer.operators'));
+
+        $this->assertSame('operator_president', $operator->user->fresh()->role);
+        $this->assertSame(1, $toda->president()->count());
+    }
+
+    public function test_officer_can_reset_operator_password_and_email_is_sent()
+    {
+        Mail::fake();
+        $officer = $this->makeUser('tfrb_officer');
+        $operator = $this->makeOperator();
+        $operator->user->forceFill(['password' => Hash::make('oldpass123')])->save();
+
+        $this->actingAs($officer)
+            ->post('/tfrb-officer/operators/' . $operator->id . '/reset-password')
+            ->assertRedirect(route('tfrb-officer.operators'))
+            ->assertSessionHas('success');
+
+        $this->assertFalse(Hash::check('oldpass123', $operator->user->fresh()->password));
+        $this->assertNotNull(ActivityLog::where('action', 'reset_operator_password')->latest()->first());
+        Mail::assertSent(OperatorCredentials::class);
+    }
+
+    public function test_superadmin_can_reset_operator_password()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $oldHash = $operator->user->password;
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $operator->id . '/reset-password')
+            ->assertRedirect(route('superadmin.operators'));
+
+        $this->assertNotSame($oldHash, $operator->user->fresh()->password);
+    }
+
+    public function test_ratings_page_filters_by_operator_and_date()
+    {
+        $admin = $this->makeUser('superadmin');
+        $a = $this->makeOperator();
+        $a->user->forceFill(['name' => 'Rating Filter Alpha'])->save();
+        $b = $this->makeOperator();
+        $b->user->forceFill(['name' => 'Rating Filter Beta'])->save();
+        $this->makeValidRating($a);
+        $this->makeValidRating($b);
+
+        $response = $this->actingAs($admin)->get('/superadmin/ratings?operator_id=' . $a->id);
+        $response->assertOk();
+        $this->assertEquals(1, substr_count($response->getContent(), 'data-rating-card'));
+
+        $response = $this->actingAs($admin)->get('/superadmin/ratings?date_from=' . now()->toDateString() . '&date_to=' . now()->toDateString());
+        $response->assertOk();
+        $this->assertEquals(2, substr_count($response->getContent(), 'data-rating-card'));
+    }
+
+    public function test_reports_page_filters_by_toda_and_min_rating()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $this->makeValidComplaint($operator);
+
+        $this->actingAs($admin)
+            ->get('/superadmin/reports?toda_id=' . $operator->toda_id . '&min_rating=3')
+            ->assertOk();
+
+        $this->actingAs($admin)
+            ->get('/superadmin/reports?date_from=2026-01-01&date_to=2026-12-31')
+            ->assertOk();
+    }
+
+    public function test_reports_pdf_export_includes_filter_context()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $this->makeValidComplaint($operator);
+
+        $response = $this->actingAs($admin)->get('/superadmin/reports/export?format=pdf&toda_id=' . $operator->toda_id . '&date_from=2026-01-01&date_to=2026-12-31');
+        $response->assertOk();
+        $this->assertStringContainsString('TODA:', $response->getContent());
+        $this->assertStringContainsString('Period:', $response->getContent());
+    }
+
+    public function test_operator_can_upload_proof_attachment_in_response()
+    {
+        Storage::fake('public');
+        $operator = $this->makeOperator();
+        $rating = $this->makeValidComplaint($operator);
+
+        $this->actingAs($operator->user)
+            ->post('/operator/ratings/' . $rating->id . '/respond', [
+                'message' => 'Here is my proof.',
+                'files' => [UploadedFile::fake()->create('receipt.pdf', 200, 'application/pdf')],
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(1, OperatorProof::count());
+        Storage::disk('public')->assertExists(OperatorProof::first()->file_path);
+    }
+
+    public function test_operator_cannot_respond_to_someone_elses_rating_with_proofs()
+    {
+        Storage::fake('public');
+        $owner = $this->makeOperator();
+        $intruder = $this->makeOperator();
+        $rating = $this->makeValidComplaint($owner);
+
+        $this->actingAs($intruder->user)
+            ->post('/operator/ratings/' . $rating->id . '/respond', [
+                'message' => 'nope',
+                'files' => [UploadedFile::fake()->create('bad.pdf', 100, 'application/pdf')],
+            ]);
+
+        $this->assertSame(0, OperatorProof::count());
+    }
+
+    public function test_database_migrations_can_build_from_scratch()
+    {
+        $exitCode = Artisan::call('migrate:fresh', ['--force' => true]);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('operator_response_proofs'));
     }
 }

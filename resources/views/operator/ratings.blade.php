@@ -94,19 +94,42 @@
                                             <i class="bi bi-chat-dots mr-1"></i> Your Response
                                         </small>
                                         <p class="mb-0 mt-1 text-sm text-slate-700">{{ $rating->response->message }}</p>
-                                        <small class="text-xs text-slate-400">{{ $rating->response->created_at->diffForHumans() }}</small>
+                                        @if ($rating->operatorProofs->count() > 0)
+                                            <div class="mt-2 flex flex-wrap gap-2">
+                                                @foreach ($rating->operatorProofs as $proof)
+                                                    @if (str_starts_with($proof->file_type, 'image'))
+                                                        <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}">
+                                                            <img src="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
+                                                                 alt="{{ $proof->original_name }}"
+                                                                 class="h-14 w-14 rounded-lg border border-slate-200 object-cover">
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}" class="tw-btn tw-btn-sm tw-btn-outline">
+                                                            <i class="bi bi-file-earmark"></i> {{ $proof->original_name }}
+                                                        </a>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        <small class="mt-1 block text-xs text-slate-400">{{ $rating->response->created_at->diffForHumans() }}</small>
                                     </div>
                                 @else
                                     <div class="rounded-xl bg-amber-50 p-3">
                                         <small class="text-[0.7rem] font-bold uppercase tracking-widest text-amber-600">
                                             <i class="bi bi-exclamation-triangle mr-1"></i> This rating needs your response
                                         </small>
-                                        <p class="my-1 text-[0.8rem] text-slate-500">Explain your side to the passenger and TFRB Officer.</p>
-                                        <form action="{{ route('operator.ratings.respond', $rating) }}" method="POST">
+                                        <p class="my-1 text-[0.8rem] text-slate-500">Explain your side to the passenger and TFRB Officer. You may attach proof (images or PDF).</p>
+                                        <form action="{{ route('operator.ratings.respond', $rating) }}" method="POST" enctype="multipart/form-data">
                                             @csrf
                                             <textarea class="tw-textarea text-sm @error('message') is-invalid @enderror"
                                                       name="message" rows="2" placeholder="Write your explanation here..."></textarea>
                                             @error('message') <span class="tw-error-text">{{ $message }}</span> @enderror
+                                            <label class="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-semibold text-slate-500 transition hover:border-navy-500 hover:text-navy-600">
+                                                <i class="bi bi-paperclip"></i> Attach proof (jpg, png, pdf — max 5 files)
+                                                <input type="file" name="files[]" multiple accept="image/*,.pdf" class="sr-only" data-proof-input>
+                                            </label>
+                                            <div class="mt-1 text-[0.7rem] text-slate-400" data-proof-files></div>
+                                            @error('files') <span class="tw-error-text">{{ $message }}</span> @enderror
                                             <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold mt-2">
                                                 <i class="bi bi-send"></i> Submit Response
                                             </button>

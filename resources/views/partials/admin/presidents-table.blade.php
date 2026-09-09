@@ -1,6 +1,7 @@
 {{--
     TODA President table <tbody>. Requires:
     - $presidents  LengthAwarePaginator of App\Models\User (role = operator_president) with 'toda'.
+    - $routePrefix string  'superadmin' | 'tfrb-officer'
 --}}
 <tbody>
     @forelse ($presidents as $president)
@@ -31,7 +32,7 @@
             </td>
             <td class="tw-td">
                 @if ($president->is_active)
-                    <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill mr-1"></i>{{ $verified ? 'Active' : 'Active' }}</span>
+                    <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill mr-1"></i>Active</span>
                 @else
                     <span class="tw-badge tw-badge-gray">Disabled</span>
                 @endif
@@ -44,7 +45,7 @@
                             <i class="bi bi-people"></i>
                         </button>
                     @endif
-                    <form action="{{ route('superadmin.presidents.destroy', $president) }}" method="POST" onsubmit="return confirm('Remove this TODA President? They will lose all system access.')">
+                    <form action="{{ route($routePrefix . '.presidents.destroy', $president) }}" method="POST" onsubmit="return confirm('Remove this TODA President? They will lose all system access.')">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Remove President" aria-label="Remove {{ $president->name }}">
@@ -61,7 +62,7 @@
                     <div class="tw-empty-icon"><i class="bi bi-award"></i></div>
                     <h3 class="tw-empty-title">No Presidents Found</h3>
                     <p class="text-sm text-slate-500">Assign a president to a TODA so they can oversee its members.</p>
-                    <a href="{{ route('superadmin.presidents.create') }}" class="tw-btn tw-btn-sm tw-btn-gold mt-4">
+                    <a href="{{ route($routePrefix . '.presidents.create') }}" class="tw-btn tw-btn-sm tw-btn-gold mt-4">
                         <i class="bi bi-award"></i>Add President
                     </a>
                 </div>

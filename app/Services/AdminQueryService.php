@@ -36,7 +36,7 @@ class AdminQueryService
             $base->where('is_reviewed', false);
         }
 
-        $complaints = $base->with(['operator.user', 'proofs', 'response'])
+        $complaints = $base->with(['operator.user', 'proofs', 'response', 'operatorProofs'])
             ->latest()
             ->paginate(20)
             ->withQueryString();
@@ -44,41 +44,83 @@ class AdminQueryService
         return compact('complaints', 'filter', 'pendingCount', 'reviewedCount', 'totalCount');
     }
 
-    public function ratingsData(): array
+    public function ratingsData(Request $request): array
     {
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+        $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
+
         $base = Rating::isValid()->notComplaint();
+        $this->applyDateRange($base, $dateFrom, $dateTo);
+        if ($operatorId) {
+            $base->where('operator_id', $operatorId);
+        }
 
         $goodCount = (clone $base)->where('rating', '>=', 4)->count();
         $reviewedCount = (clone $base)->where('is_reviewed', true)->count();
         $proofsCount = (clone $base)->has('proofs')->count();
 
         $ratings = (clone $base)
-            ->with(['operator.user', 'proofs', 'response'])
+            ->with(['operator.user', 'proofs', 'response', 'operatorProofs'])
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
-        return compact('ratings', 'goodCount', 'reviewedCount', 'proofsCount');
+        return compact('ratings', 'goodCount', 'reviewedCount', 'proofsCount', 'dateFrom', 'dateTo', 'operatorId');
     }
 
-    public function reportsData(): LengthAwarePaginator
+    public function applyDateRange($query, ?string $dateFrom, ?string $dateTo): void
     {
-        return Operator::with('user')
+        $dateFrom = $dateFrom ? trim($dateFrom) : null;
+        $dateTo = $dateTo ? trim($dateTo) : null;
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', \Illuminate\Support\Carbon::parse($dateFrom));
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', \Illuminate\Support\Carbon::parse($dateTo));
+        }
+    }
+
+    public function reportsData(Request $request): array
+    {
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+        $todaId = $request->query('toda_id') ? (int) $request->query('toda_id') : null;
+        $minRating = $request->query('min_rating') !== null ? (float) $request->query('min_rating') : null;
+
+        $query = Operator::with('user', 'toda')
             ->whereHas('user', function ($u) {
                 $u->where('role', 'operator');
             })
-            ->leftJoin(
-                DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true group by operator_id) as vr'),
-                'vr.operator_id',
-                '=',
-                'operators.id'
-            )
             ->whereNotIn('operators.status', ['pending', 'rejected'])
             ->whereNull('operators.archived_at')
-            ->select('operators.*', 'vr.valid_ratings_avg_rating', 'vr.valid_ratings_count')
-            ->orderByDesc('valid_ratings_count')
+            ->when($todaId, fn ($q) => $q->where('operators.toda_id', $todaId));
+
+        // Average rating across the optional period. The subquery is filtered by
+        // created_at so the computed average matches the selected date range.
+        $periodWhere = '';
+        if ($dateFrom) {
+            $periodWhere .= " and created_at >= " . DB::connection()->getPdo()->quote(\Illuminate\Support\Carbon::parse($dateFrom)->startOfDay());
+        }
+        if ($dateTo) {
+            $periodWhere .= " and created_at <= " . DB::connection()->getPdo()->quote(\Illuminate\Support\Carbon::parse($dateTo)->endOfDay());
+        }
+        $sub = '(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true' . $periodWhere . ' group by operator_id)';
+
+        $query->leftJoin(DB::raw($sub . ' as vr'), 'vr.operator_id', '=', 'operators.id')
+            ->select('operators.*', 'vr.valid_ratings_avg_rating', 'vr.valid_ratings_count');
+
+        if ($minRating !== null) {
+            $query->whereRaw('COALESCE(vr.valid_ratings_avg_rating, 0) >= ?', [$minRating]);
+        }
+
+        $todas = Toda::orderBy('name')->get();
+
+        $operators = $query->orderByDesc('valid_ratings_count')
             ->paginate(25)
             ->withQueryString();
+
+        return compact('operators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating');
     }
 
     /**
@@ -94,7 +136,7 @@ class AdminQueryService
         // Only "true" operators appear in the Operators management list. A TODA
         // president is also given an Operator row (so they can carry their own
         // rating), but presidents are managed under their own Presidents section.
-        $query = Operator::with('user', 'toda')
+        $query = Operator::with('user', 'toda.president')
             ->whereHas('user', function ($u) {
                 $u->where('role', 'operator');
             });
@@ -154,9 +196,11 @@ class AdminQueryService
         return $query->latest()->get();
     }
 
-    public function ratingsForExport(?int $operatorId = null): \Illuminate\Support\Collection
+    public function ratingsForExport(Request $request): \Illuminate\Support\Collection
     {
         $query = Rating::isValid()->notComplaint()->with(['operator.user', 'response']);
+        $this->applyDateRange($query, $request->query('date_from'), $request->query('date_to'));
+        $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
         if ($operatorId) {
             $query->where('operator_id', $operatorId);
         }
@@ -217,6 +261,10 @@ class AdminQueryService
             $operatorId = $request->query('operator_id');
             if ($operatorId) {
                 $query->where('operators.id', $operatorId);
+            }
+            $todaId = $request->query('toda_id');
+            if ($todaId) {
+                $query->where('operators.toda_id', (int) $todaId);
             }
         }
 

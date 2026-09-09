@@ -77,6 +77,8 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::patch('/operators/{operator}/archive', [TfrbOfficerController::class, 'archiveOperator'])->name('operators.archive');
     Route::patch('/operators/{operator}/restore', [TfrbOfficerController::class, 'restoreOperator'])->name('operators.restore');
     Route::patch('/operators/{operator}/toggle-active', [TfrbOfficerController::class, 'toggleActive'])->name('operators.toggleActive');
+    Route::post('/operators/{operator}/assign-president', [TfrbOfficerController::class, 'assignPresident'])->name('operators.assignPresident');
+    Route::post('/operators/{operator}/reset-password', [TfrbOfficerController::class, 'resetPassword'])->name('operators.resetPassword');
     Route::get('/operators/export', [TfrbOfficerController::class, 'exportOperators'])->name('operators.export');
     Route::get('/reports/export', [TfrbOfficerController::class, 'exportReports'])->name('reports.export');
     Route::get('/ratings/export', [TfrbOfficerController::class, 'exportRatings'])->name('ratings.export');
@@ -84,6 +86,10 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::get('/activity-logs/export', [TfrbOfficerController::class, 'exportActivityLogs'])->name('activity-logs.export');
     Route::get('/settings', [TfrbOfficerController::class, 'showSettings'])->name('settings');
     Route::put('/settings/password', [TfrbOfficerController::class, 'updatePassword'])->name('settings.password');
+    Route::get('/presidents', [TfrbOfficerController::class, 'presidents'])->name('presidents');
+    Route::get('/presidents/create', [TfrbOfficerController::class, 'createPresident'])->name('presidents.create');
+    Route::post('/presidents', [TfrbOfficerController::class, 'storePresident'])->name('presidents.store');
+    Route::delete('/presidents/{user}', [TfrbOfficerController::class, 'destroyPresident'])->name('presidents.destroy');
 });
 
 Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')->name('superadmin.')->group(function () {
@@ -126,6 +132,8 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::patch('/operators/{operator}/archive', [SuperadminController::class, 'archiveOperator'])->name('operators.archive');
     Route::patch('/operators/{operator}/restore', [SuperadminController::class, 'restoreOperator'])->name('operators.restore');
     Route::patch('/operators/{operator}/toggle-active', [SuperadminController::class, 'toggleActive'])->name('operators.toggleActive');
+    Route::post('/operators/{operator}/assign-president', [SuperadminController::class, 'assignPresident'])->name('operators.assignPresident');
+    Route::post('/operators/{operator}/reset-password', [SuperadminController::class, 'resetPassword'])->name('operators.resetPassword');
     Route::get('/operators/export', [SuperadminController::class, 'exportOperators'])->name('operators.export');
     Route::get('/reports/export', [SuperadminController::class, 'exportReports'])->name('reports.export');
     Route::get('/ratings/export', [SuperadminController::class, 'exportRatings'])->name('ratings.export');

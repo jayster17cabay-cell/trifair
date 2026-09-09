@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Rating;
 use App\Models\OperatorResponse;
+use App\Models\OperatorProof;
 use App\Models\User;
 use App\Models\Notification;
 use App\Helpers\ActivityLogger;
@@ -61,7 +62,7 @@ class OperatorController extends Controller
     {
         $operator = Auth::user()->operator;
         $ratings = $operator->ratings()->isValid()
-            ->with('proofs', 'response')
+            ->with('proofs', 'response', 'operatorProofs')
             ->latest()
             ->paginate(10);
 
@@ -77,7 +78,7 @@ class OperatorController extends Controller
     {
         $operator = Auth::user()->operator;
 
-        if ($rating->operator_id !== $operator->id) {
+        if ((int) $rating->operator_id !== (int) $operator->id) {
             return back()->with('error', 'Unauthorized.');
         }
 
@@ -90,12 +91,29 @@ class OperatorController extends Controller
 
         $data = $request->validate([
             'message' => 'required|string|max:2000',
+            'files' => 'nullable|array|max:5',
+            'files.*' => 'file|mimes:jpg,jpeg,png,webp,gif,pdf|max:15360',
         ]);
 
         $response = OperatorResponse::updateOrCreate(
             ['rating_id' => $rating->id],
             ['message' => $data['message']]
         );
+
+        // Upload any new proof attachments shared by the operator.
+        if ($request->hasFile('files')) {
+            $rating->operatorProofs()->delete();
+            foreach ($request->file('files') as $file) {
+                /** @var \Illuminate\Http\UploadedFile $file */
+                $path = $file->store('operator-proofs/' . $rating->id, 'public');
+                OperatorProof::create([
+                    'rating_id' => $rating->id,
+                    'file_path' => $path,
+                    'file_type' => $file->getMimeType(),
+                    'original_name' => $file->getClientOriginalName(),
+                ]);
+            }
+        }
 
         $isNew = $response->wasRecentlyCreated;
         ActivityLogger::log(

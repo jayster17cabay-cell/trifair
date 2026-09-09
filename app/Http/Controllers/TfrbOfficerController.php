@@ -13,6 +13,7 @@ use App\Services\RatingAdminService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use App\Helpers\ActivityLogger;
 
 class TfrbOfficerController extends Controller
@@ -94,6 +95,16 @@ class TfrbOfficerController extends Controller
         return app(OperatorAdminService::class)->toggleActive($operator, 'tfrb-officer.operators');
     }
 
+    public function assignPresident(Operator $operator)
+    {
+        return app(OperatorAdminService::class)->assignPresident($operator, 'tfrb-officer.operators');
+    }
+
+    public function resetPassword(Operator $operator)
+    {
+        return app(OperatorAdminService::class)->resetPassword($operator, 'tfrb-officer.operators');
+    }
+
     public function restoreOperator(Operator $operator)
     {
         return app(OperatorAdminService::class)->restore($operator, 'tfrb-officer.operators');
@@ -109,8 +120,7 @@ class TfrbOfficerController extends Controller
 
     public function exportRatings(Request $request)
     {
-        $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
-        $ratings = app(AdminQueryService::class)->ratingsForExport($operatorId);
+        $ratings = app(AdminQueryService::class)->ratingsForExport($request);
         $format = $request->query('format', 'csv');
 
         return app(ExportService::class)->ratingsFormat($ratings, $format);
@@ -129,7 +139,18 @@ class TfrbOfficerController extends Controller
         $reports = app(AdminQueryService::class)->reportsForExport($request);
         $format = $request->query('format', 'csv');
 
-        return app(ExportService::class)->reportsFormat($reports, $format);
+        $context = [];
+        if ($request->query('toda_id')) {
+            $toda = Toda::find((int) $request->query('toda_id'));
+            if ($toda) {
+                $context['toda'] = $toda->name;
+            }
+        }
+        if ($request->query('date_from') || $request->query('date_to')) {
+            $context['period'] = trim(($request->query('date_from') ?? 'start') . ' — ' . ($request->query('date_to') ?? 'today'));
+        }
+
+        return app(ExportService::class)->reportsFormat($reports, $format, $context);
     }
 
     public function exportActivityLogs(Request $request)
@@ -172,20 +193,20 @@ class TfrbOfficerController extends Controller
         return back()->with('success', 'Password updated successfully.');
     }
 
-    public function ratings()
+    public function ratings(Request $request)
     {
-        extract(app(AdminQueryService::class)->ratingsData());
+        extract(app(AdminQueryService::class)->ratingsData($request));
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('tfrb-officer.ratings', compact('ratings', 'activeOperators', 'goodCount', 'reviewedCount', 'proofsCount'));
+        return view('tfrb-officer.ratings', compact('ratings', 'activeOperators', 'goodCount', 'reviewedCount', 'proofsCount', 'dateFrom', 'dateTo', 'operatorId'));
     }
 
-    public function reports()
+    public function reports(Request $request)
     {
-        $operators = app(AdminQueryService::class)->reportsData();
+        extract(app(AdminQueryService::class)->reportsData($request));
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('tfrb-officer.reports', compact('operators', 'activeOperators'));
+        return view('tfrb-officer.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating'));
     }
 
     /**
@@ -240,6 +261,106 @@ class TfrbOfficerController extends Controller
         $data = app(AdminQueryService::class)->activityLogsData($request);
 
         return view('tfrb-officer.activity-logs', $data);
+    }
+
+    public function presidents(Request $request)
+    {
+        $search = $request->query('search');
+
+        $presidents = User::where('role', 'operator_president')
+            ->with('toda')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        if ($request->ajax()) {
+            $html = view('partials.admin.presidents-table', ['presidents' => $presidents, 'routePrefix' => 'tfrb-officer'])->render();
+            return response()->json([
+                'html' => $html,
+                'pagination' => $presidents->links('pagination::tailwind')->render(),
+            ]);
+        }
+
+        $totalPresidents = User::where('role', 'operator_president')->count();
+        $assignedPresidents = User::where('role', 'operator_president')->whereNotNull('toda_id')->count();
+
+        return view('tfrb-officer.presidents', compact('presidents', 'search', 'totalPresidents', 'assignedPresidents'));
+    }
+
+    public function createPresident()
+    {
+        $todas = Toda::orderBy('name')->get();
+        return view('tfrb-officer.presidents-create', compact('todas'));
+    }
+
+    public function storePresident(Request $request)
+    {
+        $request->merge(['email' => strtolower(trim($request->input('email')))]);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8',
+            'phone' => 'nullable|string|max:20',
+            'toda_id' => 'required|exists:todas,id',
+        ]);
+
+        $president = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'phone' => $data['phone'] ?? null,
+        ]);
+
+        $president->forceFill([
+            'role' => 'operator_president',
+            'is_active' => true,
+            'toda_id' => (int) $data['toda_id'],
+        ])->save();
+
+        Operator::updateOrCreate(
+            ['user_id' => $president->id],
+            [
+                'toda_id' => (int) $data['toda_id'],
+                'contact_number' => $data['phone'] ?? null,
+                'address' => null,
+                'qr_code' => Str::random(32),
+                'status' => 'active',
+            ]
+        );
+
+        $president->markEmailAsVerified();
+
+        ActivityLogger::log('create_toda_president', "Created TODA President {$data['name']} ({$data['email']}) for TODA #{$data['toda_id']}", null, 'tfrb_officer');
+
+        app(AdminDashboardService::class)->flush();
+
+        return redirect()->route('tfrb-officer.presidents')
+            ->with('success', 'TODA President created successfully.');
+    }
+
+    public function destroyPresident(User $user)
+    {
+        if ($user->role !== 'operator_president') {
+            return back()->withErrors(['error' => 'User is not a TODA President.']);
+        }
+        if ($user->id === Auth::id()) {
+            return back()->withErrors(['error' => 'You cannot remove your own account.']);
+        }
+        $presidentName = $user->name;
+        $user->delete();
+
+        ActivityLogger::log('delete_toda_president', "Deleted TODA President {$presidentName}", null, 'tfrb_officer');
+
+        app(AdminDashboardService::class)->flush();
+
+        return redirect()->route('tfrb-officer.presidents')->with('success', 'TODA President removed successfully.');
     }
 
     public function todas(Request $request)

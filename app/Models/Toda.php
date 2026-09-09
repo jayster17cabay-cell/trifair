@@ -30,6 +30,11 @@ class Toda extends Model
         return $this->hasMany(Operator::class)->where('status', 'active');
     }
 
+    public function president()
+    {
+        return $this->hasOne(User::class, 'toda_id')->where('role', 'operator_president');
+    }
+
     public function totalRatings()
     {
         return Rating::whereIn('operator_id', $this->operators()->pluck('id'));
