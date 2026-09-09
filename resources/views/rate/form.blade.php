@@ -1071,5 +1071,7 @@
     setTimeout(function () { initMap(); }, 50);
 })();
 </script>
+
+@include('partials.emergency.sos-button', ['sosOperatorId' => $operator->id])
 </body>
 </html>

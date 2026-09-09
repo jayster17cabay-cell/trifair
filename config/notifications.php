@@ -42,6 +42,13 @@ return [
             'border' => 'border-l-red-500',
             'dot' => 'bg-red-500',
         ],
+        'emergency' => [
+            'label' => 'Emergency Alert',
+            'icon' => 'sos',
+            'icon_bg' => 'bg-red-100 text-red-600',
+            'border' => 'border-l-red-600',
+            'dot' => 'bg-red-600',
+        ],
     ],
 
     'default' => [

@@ -223,6 +223,8 @@
     .tw-badge-gray { @apply bg-slate-100 text-slate-600; }
     .tw-badge-sky { @apply bg-sky-50 text-sky-700; }
     .tw-badge-violet { @apply bg-violet-50 text-violet-700; }
+    .tw-badge-orange { @apply bg-orange-50 text-orange-700; }
+    .tw-badge-maroon { @apply bg-red-900/10 text-red-900; }
     .tw-badge-outline { @apply border border-slate-200 bg-white text-slate-600; }
 
     /* ---------- Tables ---------- */

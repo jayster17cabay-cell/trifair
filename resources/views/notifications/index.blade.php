@@ -1,4 +1,4 @@
-@extends(Auth::user()->isSuperadmin() ? 'layouts.superadmin' : 'layouts.tfrb-officer')
+@extends(Auth::user()->isSuperadmin() ? 'layouts.superadmin' : (Auth::user()->isOperatorPresident() ? 'layouts.president' : 'layouts.tfrb-officer'))
 
 @section('title', 'Notifications')
 
@@ -24,6 +24,7 @@
     $tabs = [
         ['key' => 'all', 'label' => 'All', 'icon' => 'bi-bell', 'count' => $counts['all']],
         ['key' => 'unread', 'label' => 'Unread', 'icon' => 'bi-envelope-dash', 'count' => $counts['unread']],
+        ['key' => 'emergency', 'label' => 'Emergencies', 'icon' => 'bi-sos', 'count' => $counts['emergency']],
         ['key' => 'complaint', 'label' => 'Complaints', 'icon' => 'bi-exclamation-triangle', 'count' => $counts['complaint']],
         ['key' => 'new_rating', 'label' => 'New Ratings', 'icon' => 'bi-star-fill', 'count' => $counts['new_rating']],
         ['key' => 'operator_response', 'label' => 'Responses', 'icon' => 'bi-reply-fill', 'count' => $counts['operator_response']],
@@ -37,10 +38,12 @@
             <span class="tw-badge {{ $type === $tab['key'] ? 'tw-badge-gold' : 'tw-badge-gray' }} ml-0.5" data-notif-count="{{ $tab['key'] }}">{{ $tab['count'] }}</span>
         </a>
     @endforeach
-    <a href="{{ route($invalidRoute) }}" class="{{ $invalidActive ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-        <i class="bi bi-x-circle"></i> Invalid
-        <span class="tw-badge {{ $invalidActive ? 'tw-badge-gold' : 'tw-badge-gray' }} ml-0.5" data-notif-count="invalid">{{ $invalidCount }}</span>
-    </a>
+    @if (!Auth::user()->isOperatorPresident())
+        <a href="{{ route($invalidRoute) }}" class="{{ $invalidActive ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+            <i class="bi bi-x-circle"></i> Invalid
+            <span class="tw-badge {{ $invalidActive ? 'tw-badge-gold' : 'tw-badge-gray' }} ml-0.5" data-notif-count="invalid">{{ $invalidCount }}</span>
+        </a>
+    @endif
 </div>
 
 <div class="tw-card overflow-hidden">

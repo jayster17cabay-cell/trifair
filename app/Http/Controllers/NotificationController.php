@@ -13,7 +13,8 @@ class NotificationController extends Controller
     {
         $type = $request->query('type', 'all');
 
-        $base = Notification::forUser(Auth::id());
+        $user = Auth::user();
+        $base = Notification::forUser($user->id);
 
         $counts = [
             'all' => (clone $base)->count(),
@@ -21,21 +22,24 @@ class NotificationController extends Controller
             'complaint' => (clone $base)->where('type', 'complaint')->count(),
             'new_rating' => (clone $base)->where('type', 'new_rating')->count(),
             'operator_response' => (clone $base)->where('type', 'operator_response')->count(),
+            'emergency' => (clone $base)->where('type', 'emergency')->count(),
         ];
 
-        $invalidCount = Rating::where('is_valid', false)->count();
+        $invalidCount = $user->isOperatorPresident() ? 0 : Rating::where('is_valid', false)->count();
 
         $query = clone $base;
 
         if ($type === 'unread') {
             $query->unread();
+        } elseif ($type === 'emergency') {
+            $query->where('type', 'emergency');
         } elseif (in_array($type, ['complaint', 'new_rating', 'operator_response'])) {
             $query->where('type', $type);
         } else {
             $type = 'all';
         }
 
-        $notifications = $query->with('rating.operator.user')
+        $notifications = $query->with('rating.operator.user', 'emergencyAlert')
             ->latest()
             ->paginate(20)
             ->withQueryString();
@@ -68,6 +72,18 @@ class NotificationController extends Controller
         $notification->update(['is_read' => true]);
 
         $user = Auth::user();
+
+        if ($notification->type === 'emergency') {
+            $route = $user->isSuperadmin()
+                ? 'superadmin.alerts'
+                : ($user->isOperatorPresident() ? 'president.alerts' : 'tfrb-officer.alerts');
+            return redirect()->route($route, ['alert' => $notification->emergency_alert_id]);
+        }
+
+        if ($user->isOperatorPresident()) {
+            return redirect()->route('president.dashboard');
+        }
+
         if ($notification->type === 'complaint') {
             $route = $user->isSuperadmin() ? 'superadmin.complaints' : 'tfrb-officer.complaints';
             return redirect()->route($route);

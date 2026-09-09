@@ -11,10 +11,11 @@
     $cfg = config('notifications.types.' . $notification->type) ?? config('notifications.default');
     $rating = $notification->rating;
     $operator = $rating ? $rating->operator : null;
-    $operatorName = $operator && $operator->user ? $operator->user->name : 'Unknown';
+    $alert = $notification->emergencyAlert;
+    $operatorName = $operator && $operator->user ? $operator->user->name : ($alert && $alert->operator && $alert->operator->user ? $alert->operator->user->name : 'Unknown');
     $contact = $rating && $rating->passenger_contact
         ? $rating->passenger_contact
-        : ($operator && $operator->user ? $operator->user->phone : null);
+        : ($alert && $alert->passenger_contact ? $alert->passenger_contact : ($operator && $operator->user ? $operator->user->phone : null));
 @endphp
 
 <div class="border-b border-l-[3px] border-slate-100 transition-colors {{ $cfg['border'] }} {{ $notification->is_read ? '' : 'bg-blue-50/40' }}"
@@ -61,6 +62,23 @@
             </div>
 
             <div class="space-y-4">
+                @if ($alert)
+                    <div>
+                        <div class="tw-stat-label mb-1"><i class="bi mr-1 text-blue-500 {{ $alert->category_icon }}"></i>Category</div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="{{ $alert->category_badge }}">{{ $alert->category_label }}</span>
+                            <span class="{{ $alert->status_badge }}">{{ $alert->status_label }}</span>
+                        </div>
+                    </div>
+                    @if ($alert->location_lat !== null && $alert->location_lng !== null)
+                        <div>
+                            <div class="tw-stat-label mb-1"><i class="bi bi-geo-alt mr-1 text-red-500"></i>Location</div>
+                            <a href="{{ $alert->map_link }}" target="_blank" rel="noopener" class="text-sm font-semibold text-navy-600 hover:underline">
+                                <i class="bi bi-box-arrow-up-right"></i> View on Map
+                            </a>
+                        </div>
+                    @endif
+                @endif
                 <div>
                     <div class="tw-stat-label mb-1"><i class="bi bi-signpost-2 mr-1 text-blue-500"></i>Route</div>
                     @if ($rating && ($rating->start_location || $rating->end_location))
@@ -80,7 +98,7 @@
                             @endif
                         </div>
                     @else
-                        <div class="text-sm text-slate-400">No route data</div>
+                        <div class="text-sm text-slate-400">{{ $alert && $alert->note ? $alert->note : 'No route data' }}</div>
                     @endif
                 </div>
             </div>
@@ -89,7 +107,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/70 px-4 py-3 sm:px-5">
             <span class="text-xs text-slate-400">{{ $notification->created_at->format('M d, Y \a\t h:i A') }}</span>
             <a href="{{ route('notifications.read', $notification) }}" class="tw-btn tw-btn-sm tw-btn-outline">
-                <i class="bi bi-arrow-right"></i> Open report
+                <i class="bi bi-arrow-right"></i> {{ $alert ? 'View alert' : 'Open report' }}
             </a>
         </div>
     </div>

@@ -12,6 +12,7 @@ class Notification extends Model
     protected $fillable = [
         'user_id',
         'rating_id',
+        'emergency_alert_id',
         'type',
         'title',
         'message',
@@ -30,6 +31,11 @@ class Notification extends Model
     public function rating()
     {
         return $this->belongsTo(Rating::class);
+    }
+
+    public function emergencyAlert()
+    {
+        return $this->belongsTo(EmergencyAlert::class);
     }
 
     public function scopeUnread($query)

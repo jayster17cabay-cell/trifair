@@ -23,6 +23,6 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        View::composer(['layouts.tfrb-officer', 'layouts.superadmin', 'notifications.index'], NotificationComposer::class);
+        View::composer(['layouts.tfrb-officer', 'layouts.superadmin', 'layouts.president', 'notifications.index', 'emergency-alerts.index'], NotificationComposer::class);
     }
 }
