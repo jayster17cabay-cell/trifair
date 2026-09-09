@@ -123,6 +123,7 @@
         touch-action: none;
         user-select: none;
         -webkit-user-select: none;
+        -webkit-touch-callout: none;
         box-shadow: 0 12px 32px rgba(220, 38, 38, 0.4);
         font-family: inherit;
     }
@@ -218,7 +219,7 @@
 
     var CONFIRM_HOLD_DURATION_MS = 3000;
     var COOLDOWN_MS = 30000;
-    var GEO_TIMEOUT_MS = 8000;
+    var GEO_TIMEOUT_MS = 2500;
 
     var CATEGORIES = [
         { key: 'general',          label: 'General Emergency', sub: 'Life-threatening or urgent help', color: '#dc2626', icon: 'bi-exclamation-triangle-fill' },
@@ -336,6 +337,11 @@
         e.preventDefault();
         if (!selected || coolingUntil > Date.now()) return;
         if (holding) return;
+        // Keep the pointer attached to the button so a slightly-moving finger
+        // (common on phones) doesn't fire pointerleave and cancel the hold.
+        if (e.pointerId != null && holdBtn.setPointerCapture) {
+            try { holdBtn.setPointerCapture(e.pointerId); } catch (err) {}
+        }
         holding = true;
         holdActive = true;
         holdStart = performance.now();
@@ -349,6 +355,7 @@
                 setHold(100);
                 var el = document.getElementById('sosHoldRing');
                 if (el) el.style.strokeDashoffset = 0;
+                holdPct.textContent = 'Sending…';
                 completeSend();
                 return;
             }
@@ -356,17 +363,24 @@
         }
         holdRaf = requestAnimationFrame(tick);
     }
-    function endHold() { if (holding) cancelHold(); }
+    function endHold(e) {
+        if (e && e.pointerId != null && holdBtn.releasePointerCapture) {
+            try { holdBtn.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+        if (holding) cancelHold();
+    }
 
     function getLocation() {
         return new Promise(function (resolve) {
             if (!('geolocation' in navigator)) return resolve(null);
             var done = false;
             var timer = setTimeout(function () { if (!done) { done = true; resolve(null); } }, GEO_TIMEOUT_MS);
+            // Emergency: prefer a fast fix. Use cached/coarse position so the
+            // alert fires immediately; high accuracy can take many seconds.
             navigator.geolocation.getCurrentPosition(
                 function (pos) { if (!done) { done = true; clearTimeout(timer); resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); } },
                 function () { if (!done) { done = true; clearTimeout(timer); resolve(null); } },
-                { enableHighAccuracy: true, timeout: GEO_TIMEOUT_MS, maximumAge: 30000 }
+                { enableHighAccuracy: false, timeout: GEO_TIMEOUT_MS, maximumAge: 120000 }
             );
         });
     }
