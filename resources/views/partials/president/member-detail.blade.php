@@ -66,7 +66,9 @@
         @endforelse
     </div>
 
-    <div class="mt-3">
-        {{ $ratings->links('pagination::tailwind') }}
-    </div>
+    @if ($ratings->hasPages())
+        <div class="mt-3" data-president-pagination>
+            {{ $ratings->links('pagination::tailwind') }}
+        </div>
+    @endif
 </div>

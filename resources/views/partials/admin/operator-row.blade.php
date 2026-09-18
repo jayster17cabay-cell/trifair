@@ -137,7 +137,7 @@
                         <i class="bi {{ $accountActive ? 'bi-person-dash' : 'bi-person-check' }}"></i>
                     </button>
                 </form>
-                <form action="{{ route($routePrefix . '.operators.resetPassword', $operator) }}" method="POST" onsubmit="return confirm('Reset the password of {{ $operatorName }}? A temporary password will be e-mailed to them.')">
+                <form action="{{ route($routePrefix . '.operators.resetPassword', $operator) }}" method="POST" onsubmit="return confirm(@js('Reset the password of ' . $operatorName . '? A temporary password will be e-mailed to them.'))">
                     @csrf
                     <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reset password" aria-label="Reset password {{ $operatorName }}">
                         <i class="bi bi-key"></i>

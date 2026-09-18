@@ -446,4 +446,98 @@ class DashboardAuditTest extends TestCase
             $this->assertNoDuplicateIds($response->getContent(), $url);
         }
     }
+
+    public function test_president_member_detail_modal_paginates_within_json_payload()
+    {
+        $toda = $this->makeToda();
+        $president = $this->makeUser('operator_president', $toda);
+        $member = $this->makeOperator('active', $toda);
+
+        // 12 ratings => more than one page at 10 per page.
+        for ($i = 0; $i < 12; $i++) {
+            $this->makeRating($member, 5);
+        }
+
+        $first = $this->actingAs($president)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->getJson('/president/members/' . $member->id);
+        $first->assertOk()->assertJsonStructure(['html']);
+        $this->assertStringContainsString('data-president-pagination', $first->json('html'));
+
+        $second = $this->actingAs($president)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->getJson('/president/members/' . $member->id . '?page=2');
+        $second->assertOk()->assertJsonStructure(['html']);
+        $this->assertStringContainsString('data-president-pagination', $second->json('html'));
+
+        // A member with a single page must not render pagination controls.
+        $quiet = $this->makeOperator('active', $toda);
+        $this->makeRating($quiet, 4);
+
+        $single = $this->actingAs($president)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->getJson('/president/members/' . $quiet->id);
+        $single->assertOk()->assertJsonStructure(['html']);
+        $this->assertStringNotContainsString('data-president-pagination', $single->json('html'));
+    }
+
+    public function test_operator_action_buttons_are_safe_for_names_with_quotes()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+        $operator = $this->makeOperator('active', $toda);
+        $operator->user->forceFill(['name' => 'O\'Brien "The Boss" <script>'])->save();
+
+        $response = $this->actingAs($admin)->get('/superadmin/operators');
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertStringNotContainsString('O\'Brien "The Boss" <script>', $html);
+
+        preg_match('/data-operator-view=\'([^\']*)\'/', $html, $matches);
+        $this->assertNotEmpty($matches, 'operator view payload missing');
+        $decoded = json_decode($matches[1], true);
+        $this->assertIsArray($decoded, 'operator view payload is not valid JSON');
+        $this->assertSame('O\'Brien "The Boss" <script>', $decoded['name']);
+
+        $this->assertStringNotContainsString(
+            "confirm('Reset the password of O'Brien",
+            $html,
+            'Reset-password confirm must not embed an unescaped name.'
+        );
+    }
+
+    public function test_every_admin_get_page_renders_including_qrcode_and_settings()
+    {
+        $admin = $this->makeUser('superadmin');
+        $officer = $this->makeUser('tfrb_officer');
+        $toda = $this->makeToda();
+        $operator = $this->makeOperator('active', $toda);
+
+        $cases = [
+            [$admin, [
+                '/superadmin/operators/create',
+                '/superadmin/operators/' . $operator->id . '/edit',
+                '/superadmin/operators/' . $operator->id . '/qrcode',
+                '/superadmin/officers/create',
+                '/superadmin/settings',
+                '/superadmin/todas/create',
+                '/superadmin/todas/' . $toda->id . '/edit',
+            ]],
+            [$officer, [
+                '/tfrb-officer/operators/create',
+                '/tfrb-officer/operators/' . $operator->id . '/edit',
+                '/tfrb-officer/operators/' . $operator->id . '/qrcode',
+                '/tfrb-officer/settings',
+            ]],
+        ];
+
+        foreach ($cases as [$user, $urls]) {
+            foreach ($urls as $url) {
+                $response = $this->actingAs($user)->get($url);
+                $response->assertOk('Admin GET page failed: ' . $url);
+                $this->assertNoDuplicateIds($response->getContent(), $url);
+            }
+        }
+    }
 }

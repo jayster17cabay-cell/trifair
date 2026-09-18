@@ -545,17 +545,10 @@
         if (!backdrop) return;
         var body = document.getElementById('presidentMemberModalBody');
 
-        document.addEventListener('click', function (e) {
-            var btn = e.target.closest('[data-president-member]');
-            if (!btn) return;
-            var id = btn.getAttribute('data-president-member');
-            var url = btn.getAttribute('data-url');
-            if (!id || !url) return;
-
+        function loadMemberDetail(url) {
+            if (!url) return;
             if (body) body.innerHTML = '<div class="flex items-center justify-center gap-2 p-10 text-slate-400"><i class="bi bi-arrow-repeat animate-spin"></i> Loading…</div>';
-            openModal('presidentMemberModal');
-
-            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, credentials: 'same-origin' })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
                     if (body && data.html) body.innerHTML = data.html;
@@ -563,6 +556,26 @@
                 .catch(function () {
                     if (body) body.innerHTML = '<div class="p-8 text-center text-sm text-red-500">Unable to load member details.</div>';
                 });
+        }
+
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-president-member]');
+            if (!btn) return;
+            var id = btn.getAttribute('data-president-member');
+            var url = btn.getAttribute('data-url');
+            if (!id || !url) return;
+
+            openModal('presidentMemberModal');
+            loadMemberDetail(url);
+        });
+
+        // The member-detail endpoint returns JSON, so pagination inside the modal
+        // is loaded in place instead of navigating to the raw JSON response.
+        document.addEventListener('click', function (e) {
+            var link = e.target.closest('#presidentMemberModal [data-president-pagination] a[href]');
+            if (!link) return;
+            e.preventDefault();
+            loadMemberDetail(link.getAttribute('href'));
         });
 
         // The member-detail partial is injected via AJAX after page load, so its
