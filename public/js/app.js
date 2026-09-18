@@ -6,6 +6,7 @@
         initSidebar();
         initModalTriggers();
         initDropdowns();
+        initExportForms();
         initPasswordToggles();
         initCollapsibleCardLists();
         initNotificationCards();
@@ -438,17 +439,23 @@
         }
     }
 
+    function setDropdownState(btn, open) {
+        var menu = document.getElementById(btn.getAttribute('data-tw-dropdown'));
+        if (menu) {
+            menu.classList.toggle('open', open);
+        }
+        btn.setAttribute('aria-expanded', String(open));
+    }
+
     function initDropdowns() {
         document.querySelectorAll('[data-tw-dropdown]').forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 var menu = document.getElementById(btn.getAttribute('data-tw-dropdown'));
                 if (!menu) return;
-                var wasOpen = menu.classList.contains('open');
+                var willOpen = !menu.classList.contains('open');
                 closeAllDropdowns();
-                if (!wasOpen) {
-                    menu.classList.add('open');
-                }
+                setDropdownState(btn, willOpen);
             });
         });
         document.addEventListener('click', function (e) {
@@ -456,11 +463,44 @@
                 closeAllDropdowns();
             }
         });
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            var openBtn = document.querySelector('[data-tw-dropdown][aria-expanded="true"]');
+            if (openBtn) {
+                closeAllDropdowns();
+                openBtn.focus();
+            }
+        });
     }
 
     function closeAllDropdowns() {
         document.querySelectorAll('[data-tw-dropdown-menu]').forEach(function (menu) {
             menu.classList.remove('open');
+        });
+        document.querySelectorAll('[data-tw-dropdown]').forEach(function (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    function initExportForms() {
+        document.querySelectorAll('[data-export-form]').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                var format = form.querySelector('input[name="format"]:checked');
+                form.target = (format && format.value === 'pdf') ? '_blank' : '';
+
+                var btn = form.querySelector('[data-export-submit]');
+                var label = form.querySelector('[data-export-text]');
+                if (!btn) return;
+
+                var original = label ? label.textContent : '';
+                btn.disabled = true;
+                if (label) label.textContent = 'Preparing…';
+
+                window.setTimeout(function () {
+                    btn.disabled = false;
+                    if (label) label.textContent = original;
+                }, 4000);
+            });
         });
     }
 

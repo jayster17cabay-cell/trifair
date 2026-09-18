@@ -29,7 +29,7 @@
             'exportLabel' => 'Operators',
             'exportIcon' => 'bi-people',
             'activeOperators' => $activeOperators ?? collect(),
-            'preservedParams' => array_filter(['search' => $search ?? null, 'status' => $currentStatus ?? null]),
+            'preservedParams' => array_filter(['search' => $search ?? null, 'status' => $currentStatus ?? null, 'account' => $account ?? null]),
         ])
         @if ($currentStatus === 'pending')
             <a href="{{ route($routePrefix . '.operators') }}" class="tw-btn tw-btn-sm tw-btn-outline">

@@ -71,22 +71,60 @@ class AdminQueryService
 
     public function applyDateRange($query, ?string $dateFrom, ?string $dateTo): void
     {
-        $dateFrom = $dateFrom ? trim($dateFrom) : null;
-        $dateTo = $dateTo ? trim($dateTo) : null;
-        if ($dateFrom) {
-            $query->whereDate('created_at', '>=', \Illuminate\Support\Carbon::parse($dateFrom));
+        if ($from = $this->parseDate($dateFrom)) {
+            $query->whereDate('created_at', '>=', $from);
         }
-        if ($dateTo) {
-            $query->whereDate('created_at', '<=', \Illuminate\Support\Carbon::parse($dateTo));
+        if ($to = $this->parseDate($dateTo)) {
+            $query->whereDate('created_at', '<=', $to);
+        }
+    }
+
+    /**
+     * Parse a user-supplied date, returning null for blank or malformed input so
+     * a hand-edited URL can never trigger a 500 from the admin filters.
+     */
+    private function parseDate(?string $value): ?\Illuminate\Support\Carbon
+    {
+        $value = $value ? trim($value) : null;
+        if (! $value) {
+            return null;
+        }
+
+        try {
+            return \Illuminate\Support\Carbon::parse($value);
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 
     public function reportsData(Request $request): array
     {
+        [$query, $filters] = $this->reportsBaseQuery($request);
+
+        $todas = Toda::orderBy('name')->get();
+
+        $operators = $query->orderByDesc('valid_ratings_count')
+            ->paginate(25)
+            ->withQueryString();
+
+        return array_merge(compact('operators', 'todas'), $filters);
+    }
+
+    /**
+     * Shared operator-performance query for the Reports page and its export, so
+     * the downloaded file always matches the TODA / date range / minimum rating
+     * the user selected on screen.
+     *
+     * @return array{0: \Illuminate\Database\Eloquent\Builder, 1: array<string, mixed>}
+     */
+    private function reportsBaseQuery(Request $request): array
+    {
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
         $todaId = $request->query('toda_id') ? (int) $request->query('toda_id') : null;
-        $minRating = $request->query('min_rating') !== null ? (float) $request->query('min_rating') : null;
+        $minRating = ($request->query('min_rating') !== null && $request->query('min_rating') !== '')
+            ? (float) $request->query('min_rating')
+            : null;
 
         $query = Operator::with('user', 'toda')
             ->whereHas('user', function ($u) {
@@ -98,12 +136,14 @@ class AdminQueryService
 
         // Average rating across the optional period. The subquery is filtered by
         // created_at so the computed average matches the selected date range.
+        $from = $this->parseDate($dateFrom);
+        $to = $this->parseDate($dateTo);
         $periodWhere = '';
-        if ($dateFrom) {
-            $periodWhere .= " and created_at >= " . DB::connection()->getPdo()->quote(\Illuminate\Support\Carbon::parse($dateFrom)->startOfDay());
+        if ($from) {
+            $periodWhere .= " and created_at >= " . DB::connection()->getPdo()->quote($from->copy()->startOfDay());
         }
-        if ($dateTo) {
-            $periodWhere .= " and created_at <= " . DB::connection()->getPdo()->quote(\Illuminate\Support\Carbon::parse($dateTo)->endOfDay());
+        if ($to) {
+            $periodWhere .= " and created_at <= " . DB::connection()->getPdo()->quote($to->copy()->endOfDay());
         }
         $sub = '(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true' . $periodWhere . ' group by operator_id)';
 
@@ -114,13 +154,7 @@ class AdminQueryService
             $query->whereRaw('COALESCE(vr.valid_ratings_avg_rating, 0) >= ?', [$minRating]);
         }
 
-        $todas = Toda::orderBy('name')->get();
-
-        $operators = $query->orderByDesc('valid_ratings_count')
-            ->paginate(25)
-            ->withQueryString();
-
-        return compact('operators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating');
+        return [$query, compact('dateFrom', 'dateTo', 'todaId', 'minRating')];
     }
 
     /**
@@ -249,34 +283,24 @@ class AdminQueryService
 
     public function reportsForExport(Request $request = null): \Illuminate\Support\Collection
     {
-        $query = Operator::with('user', 'toda')
-            ->withCount('validRatings')
-            ->whereHas('user', function ($u) {
-                $u->where('role', 'operator');
-            })
-            ->whereNotIn('status', ['pending', 'rejected'])
-            ->whereNull('archived_at');
+        $request = $request ?? request();
 
-        if ($request) {
-            $operatorId = $request->query('operator_id');
-            if ($operatorId) {
-                $query->where('operators.id', $operatorId);
-            }
-            $todaId = $request->query('toda_id');
-            if ($todaId) {
-                $query->where('operators.toda_id', (int) $todaId);
-            }
+        [$query, ] = $this->reportsBaseQuery($request);
+
+        if ($request->query('operator_id')) {
+            $query->where('operators.id', (int) $request->query('operator_id'));
         }
 
-        return $query->get()
+        return $query->orderByDesc('valid_ratings_count')
+            ->get()
             ->map(function ($operator) {
                 return [
                     'name' => $operator->user->name ?? 'Unknown',
                     'toda' => $operator->toda?->name ?? 'Unassigned',
                     'body_number' => $operator->body_number ?? '—',
                     'plate_number' => $operator->plate_number ?? '—',
-                    'total_trips' => $operator->valid_ratings_count,
-                    'avg_rating' => number_format((float) $operator->validRatings()->avg('rating'), 2),
+                    'total_trips' => $operator->valid_ratings_count ?? 0,
+                    'avg_rating' => number_format((float) ($operator->valid_ratings_avg_rating ?? 0), 2),
                     'status' => ucfirst($operator->status),
                 ];
             });

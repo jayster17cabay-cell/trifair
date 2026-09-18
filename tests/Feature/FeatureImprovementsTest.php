@@ -561,6 +561,52 @@ class FeatureImprovementsTest extends TestCase
         $this->assertStringContainsString('Period:', $response->getContent());
     }
 
+    public function test_reports_export_honors_date_range_and_min_rating()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+
+        $rating = Rating::create([
+            'operator_id' => $operator->id,
+            'rating' => 2,
+            'start_location' => 'A',
+            'end_location' => 'B',
+            'is_valid' => true,
+            'is_reviewed' => false,
+            'is_auto' => false,
+        ]);
+        $rating->created_at = '2025-06-01 10:00:00';
+        $rating->save();
+
+        // Period excludes the only rating + minimum rating not met: operator is omitted.
+        $excluded = $this->actingAs($admin)
+            ->get('/superadmin/reports/export?format=csv&date_from=2026-01-01&date_to=2026-12-31&min_rating=4');
+        $excluded->assertOk();
+        $this->assertStringNotContainsString($operator->user->name, $excluded->getContent());
+
+        // Matching period: the operator and its period average are exported.
+        $included = $this->actingAs($admin)
+            ->get('/superadmin/reports/export?format=csv&date_from=2025-01-01&date_to=2025-12-31');
+        $included->assertOk();
+        $this->assertStringContainsString($operator->user->name, $included->getContent());
+        $this->assertStringContainsString('2.00', $included->getContent());
+    }
+
+    public function test_exports_survive_malformed_date_filters()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $this->makeValidComplaint($operator);
+
+        $this->actingAs($admin)
+            ->get('/superadmin/reports/export?date_from=not-a-date&date_to=also-bad')
+            ->assertOk();
+
+        $this->actingAs($admin)
+            ->get('/superadmin/ratings/export?date_from=not-a-date&date_to=also-bad')
+            ->assertOk();
+    }
+
     public function test_operator_can_upload_proof_attachment_in_response()
     {
         Storage::fake('public');

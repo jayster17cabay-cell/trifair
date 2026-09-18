@@ -10,10 +10,11 @@
         'exportLabel' => 'Report',
         'exportIcon' => 'bi-bar-chart-line',
         'exportSub' => 'Operator performance analytics',
-        'activeOperators' => $activeOperators,
         'preservedParams' => array_filter([
             'toda_id' => $todaId ?? null,
             'min_rating' => $minRating ?? null,
+            'date_from' => $dateFrom ?? null,
+            'date_to' => $dateTo ?? null,
         ]),
     ])
 </div>
