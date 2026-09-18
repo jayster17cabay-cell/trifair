@@ -14,8 +14,6 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\GeocodeController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\SosController;
-use App\Http\Controllers\EmergencyAlertController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
@@ -31,9 +29,6 @@ Route::get('/auth/google/callback', [SocialiteController::class, 'callback'])->m
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
-
-// Passenger Emergency (SOS) — public (anonymous passengers), rate limited.
-Route::post('/sos', [SosController::class, 'store'])->middleware('throttle:6,1')->name('sos.store');
 
 Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->middleware('guest')->name('password.request');
 Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware(['guest', 'throttle:6,1'])->name('password.email');
@@ -111,8 +106,6 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::put('/settings/password', [TfrbOfficerController::class, 'updatePassword'])->name('settings.password');
     Route::get('/presidents', [TfrbOfficerController::class, 'presidents'])->name('presidents');
     Route::delete('/presidents/{user}', [TfrbOfficerController::class, 'destroyPresident'])->name('presidents.destroy');
-    Route::get('/alerts', [EmergencyAlertController::class, 'index'])->name('alerts');
-    Route::patch('/alerts/{alert}', [EmergencyAlertController::class, 'update'])->name('alerts.update');
 });
 
 Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')->name('superadmin.')->group(function () {
@@ -163,8 +156,6 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::get('/activity-logs/export', [SuperadminController::class, 'exportActivityLogs'])->name('activity-logs.export');
     Route::get('/settings', [SuperadminController::class, 'showSettings'])->name('settings');
     Route::put('/settings/password', [SuperadminController::class, 'updatePassword'])->name('settings.password');
-    Route::get('/alerts', [EmergencyAlertController::class, 'index'])->name('alerts');
-    Route::patch('/alerts/{alert}', [EmergencyAlertController::class, 'update'])->name('alerts.update');
 });
 
 Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator.')->group(function () {
@@ -190,8 +181,6 @@ Route::middleware(['auth', 'role:operator_president', 'president.active'])->pref
     Route::get('/dashboard', [PresidentController::class, 'dashboard'])->name('dashboard');
     Route::get('/members', [PresidentController::class, 'members'])->name('members');
     Route::get('/members/{member}', [PresidentController::class, 'memberDetail'])->name('members.detail');
-    Route::get('/alerts', [EmergencyAlertController::class, 'index'])->name('alerts');
-    Route::patch('/alerts/{alert}', [EmergencyAlertController::class, 'update'])->name('alerts.update');
 });
 
 // Notification routes (TFRB Officer, Superadmin & TODA President — operators'

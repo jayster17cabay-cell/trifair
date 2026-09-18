@@ -35,7 +35,6 @@
                 'label' => 'Monitoring',
                 'links' => [
                     ['label' => 'Activity Logs', 'icon' => 'bi-clock-history', 'route' => 'superadmin.activity-logs', 'match' => 'superadmin.activity-logs'],
-                    ['label' => 'Emergency Alerts', 'icon' => 'bi-sos', 'route' => 'superadmin.alerts', 'match' => 'superadmin.alerts*', 'gold' => true],
                     ['label' => 'Notifications', 'icon' => 'bi-bell', 'route' => 'notifications.index', 'match' => 'notifications*', 'badge' => $unreadCount],
                 ],
             ],

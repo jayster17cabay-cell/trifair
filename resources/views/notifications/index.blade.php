@@ -24,7 +24,6 @@
     $tabs = [
         ['key' => 'all', 'label' => 'All', 'icon' => 'bi-bell', 'count' => $counts['all']],
         ['key' => 'unread', 'label' => 'Unread', 'icon' => 'bi-envelope-dash', 'count' => $counts['unread']],
-        ['key' => 'emergency', 'label' => 'Emergencies', 'icon' => 'bi-sos', 'count' => $counts['emergency']],
         ['key' => 'complaint', 'label' => 'Complaints', 'icon' => 'bi-exclamation-triangle', 'count' => $counts['complaint']],
         ['key' => 'new_rating', 'label' => 'New Ratings', 'icon' => 'bi-star-fill', 'count' => $counts['new_rating']],
         ['key' => 'operator_response', 'label' => 'Responses', 'icon' => 'bi-reply-fill', 'count' => $counts['operator_response']],

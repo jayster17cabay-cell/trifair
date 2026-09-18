@@ -70,7 +70,7 @@ class AuditFixRegressionTest extends TestCase
     {
         [, $operator] = $this->makeOperatorUser(true, 'active');
 
-        // Simulate the client-side (SOS partial) raw cookie already being set.
+        // Simulate the client-side raw cookie already being set.
         $cookie = 'raw-device-' . Str::random(20);
 
         $this->withUnencryptedCookies(['tf_pid' => $cookie])

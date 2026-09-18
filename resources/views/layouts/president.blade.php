@@ -12,7 +12,6 @@
                 'links' => [
                     ['label' => 'TODA Overview', 'icon' => 'bi-speedometer2', 'route' => 'president.dashboard', 'match' => 'president.dashboard'],
                     ['label' => 'Members', 'icon' => 'bi-people', 'route' => 'president.members', 'match' => 'president.members*'],
-                    ['label' => 'Emergency Alerts', 'icon' => 'bi-sos', 'route' => 'president.alerts', 'match' => 'president.alerts*', 'gold' => true],
                 ],
             ],
             [

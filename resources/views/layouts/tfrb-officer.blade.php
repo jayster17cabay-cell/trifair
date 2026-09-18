@@ -29,7 +29,6 @@
                 'label' => 'Monitoring',
                 'links' => [
                     ['label' => 'Activity Logs', 'icon' => 'bi-clock-history', 'route' => 'tfrb-officer.activity-logs', 'match' => 'tfrb-officer.activity-logs'],
-                    ['label' => 'Emergency Alerts', 'icon' => 'bi-sos', 'route' => 'tfrb-officer.alerts', 'match' => 'tfrb-officer.alerts*', 'gold' => true],
                     ['label' => 'Notifications', 'icon' => 'bi-bell', 'route' => 'notifications.index', 'match' => 'notifications*', 'badge' => $unreadCount],
                 ],
             ],

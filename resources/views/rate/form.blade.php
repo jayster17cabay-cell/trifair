@@ -1058,6 +1058,5 @@
 })();
 </script>
 
-@include('partials.emergency.sos-button', ['sosOperatorId' => $operator->id])
 </body>
 </html>
