@@ -91,33 +91,43 @@
                     data-operator-view='@json($viewData)'>
                 <i class="bi bi-eye"></i>
             </button>
-            @if (request('status') === 'pending')
-                <form action="{{ route($routePrefix . '.operators.approve', $operator) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" title="Approve" onclick="return confirm(@js('Approve ' . $operatorName . '?'))">
-                        <i class="bi bi-check-lg"></i>Approve
-                    </button>
-                </form>
-                <form action="{{ route($routePrefix . '.operators.reject', $operator) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Reject" onclick="return confirm(@js('Reject and delete ' . $operatorName . '?'))">
-                        <i class="bi bi-x-lg"></i>Reject
-                    </button>
-                </form>
-            @elseif (request('status') === 'archived')
-                <form action="{{ route($routePrefix . '.operators.restore', $operator) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" title="Restore" onclick="return confirm(@js('Restore ' . $operatorName . '?'))">
-                        <i class="bi bi-arrow-counterclockwise"></i>Restore
-                    </button>
-                </form>
-            @else
-                <a href="{{ route($routePrefix . '.operators.edit', $operator) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Edit" aria-label="Edit {{ $operatorName }}">
-                    <i class="bi bi-pencil"></i>
-                </a>
+            <div class="relative inline-block text-left">
+                <button type="button"
+                        class="tw-btn tw-btn-sm tw-btn-outline"
+                        title="More actions" aria-label="More actions for {{ $operatorName }}"
+                        aria-haspopup="true" aria-expanded="false"
+                        data-tw-dropdown="operatorActions{{ $operator->id }}">
+                    <i class="bi bi-three-dots"></i>
+                </button>
+                <div id="operatorActions{{ $operator->id }}" data-tw-dropdown-menu
+                     class="tw-dropdown right-0 top-full z-50 mt-1 min-w-[12.5rem] py-1.5">
+                    @if (request('status') === 'pending')
+                        <form action="{{ route($routePrefix . '.operators.approve', $operator) }}" method="POST" data-tw-dropdown-menu-child-form>
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js('Approve ' . $operatorName . '?'))">
+                                <i class="bi bi-check-lg tw-dropdown-item-icon"></i>Approve
+                            </button>
+                        </form>
+                        <form action="{{ route($routePrefix . '.operators.reject', $operator) }}" method="POST" data-tw-dropdown-menu-child-form>
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-dropdown-item tw-dropdown-danger" onclick="return confirm(@js('Reject and remove ' . $operatorName . '?'))">
+                                <i class="bi bi-x-lg tw-dropdown-item-icon"></i>Reject
+                            </button>
+                        </form>
+                    @elseif (request('status') === 'archived')
+                        <form action="{{ route($routePrefix . '.operators.restore', $operator) }}" method="POST" data-tw-dropdown-menu-child-form>
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js('Restore ' . $operatorName . '?'))">
+                                <i class="bi bi-arrow-counterclockwise tw-dropdown-item-icon"></i>Restore
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route($routePrefix . '.operators.edit', $operator) }}" class="tw-dropdown-item">
+                            <i class="bi bi-pencil tw-dropdown-item-icon"></i>Edit
+                        </a>
                 @php
                     $hasPresidentName = $todaPresident && $todaPresident->name !== $operatorName;
                     $assignPrompt = $hasPresidentName
@@ -146,18 +156,13 @@
                 <form action="{{ route($routePrefix . '.operators.archive', $operator) }}" method="POST" onsubmit="return confirm('Archive this operator? They will be hidden from active lists but keep their rating history.')">
                     @csrf
                     @method('PATCH')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Archive" aria-label="Archive {{ $operatorName }}">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Archive" aria-label="Archive {{ $operatorName }}" data-tw-dropdown-menu-child-form-submit>
                         <i class="bi bi-archive"></i>
-                    </button>
-                </form>
-                <form action="{{ route($routePrefix . '.operators.destroy', $operator) }}" method="POST" onsubmit="return confirm('Delete this operator? This action cannot be undone.')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Delete" aria-label="Delete {{ $operatorName }}">
-                        <i class="bi bi-trash"></i>
                     </button>
                 </form>
             @endif
         </div>
+        </div>
+    </div>
     </td>
 </tr>
