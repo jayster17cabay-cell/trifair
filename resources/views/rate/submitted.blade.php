@@ -118,29 +118,35 @@
     @endunless
 
     <div class="auto-close-note" id="closeNote">
-        <i class="bi bi-clock"></i> Page will close in <span id="countdown">3</span>s...
+        @if (auth()->check() && auth()->user()->isPassenger())
+            <i class="bi bi-clipboard-check"></i> Opening your complaints status in <span id="countdown">3</span>s...
+        @else
+            <i class="bi bi-clock"></i> Page will close in <span id="countdown">3</span>s...
+        @endif
     </div>
+
+    @if (auth()->check() && auth()->user()->isPassenger())
+        <a href="{{ route('passenger.dashboard') }}" class="track-btn" id="trackBtn">
+            <i class="bi bi-clipboard-check"></i> View my complaints status
+        </a>
+    @endif
 
     <button class="close-btn" id="closeBtn" onclick="tryClose()">
         <i class="bi bi-x-lg"></i> Close
     </button>
-
-    @if (auth()->check() && auth()->user()->isPassenger())
-        <a href="{{ route('passenger.dashboard') }}" class="track-btn">
-            <i class="bi bi-clipboard-check"></i> View my complaints status
-        </a>
-    @endif
 
     <div class="powered">Powered by <strong>TriFair</strong></div>
 </div>
 
 <script>
 var seconds = 3;
+var trackBtn = document.getElementById('trackBtn');
 var timer = setInterval(function() {
     seconds--;
     document.getElementById('countdown').textContent = seconds;
     if (seconds <= 0) {
         clearInterval(timer);
+        if (trackBtn) { window.location.href = trackBtn.getAttribute('href'); return; }
         tryClose();
     }
 }, 1000);

@@ -1002,31 +1002,7 @@
 
     document.querySelectorAll('.rate-star').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            selectedRating = parseInt(this.getAttribute('data-value'), 10);
-            document.getElementById('ratingValue').value = selectedRating;
-
-            document.querySelectorAll('.rate-star').forEach(function (b, i) {
-                var on = i < selectedRating;
-                b.classList.toggle('selected', on);
-                b.setAttribute('aria-pressed', on ? 'true' : 'false');
-                var icon = b.querySelector('i');
-                icon.classList.toggle('bi-star-fill', on);
-                icon.classList.toggle('bi-star', !on);
-            });
-
-            document.getElementById('feedbackMsg').innerHTML =
-                '<span class="emoji">' + emojis[selectedRating] + '</span> ' + labels[selectedRating];
-
-            document.getElementById('submitBtn').disabled = false;
-            document.getElementById('submitHint').style.display = 'none';
-
-            var cb = document.getElementById('complaintBox');
-            if (selectedRating <= 2) { cb.classList.add('show'); } else { cb.classList.remove('show'); }
-
-            updateGoogleConnect();
-
-            if (navigator.vibrate) navigator.vibrate(15);
-
+            applyStar(parseInt(this.getAttribute('data-value'), 10));
             document.getElementById('starSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
@@ -1074,6 +1050,90 @@
             el.addEventListener('change', updateGoogleConnect);
         }
     });
+
+    /* ---- Draft persistence across the Google sign-in ----
+       Signing in with Google reloads the page, which would wipe the
+       partially-filled complaint form. Save it to localStorage before we
+       leave, and restore it when we come back so the passenger can just
+       press Submit and land on their complaint status list. */
+
+    function applyStar(rating) {
+        selectedRating = rating;
+        document.getElementById('ratingValue').value = selectedRating;
+
+        document.querySelectorAll('.rate-star').forEach(function (b, i) {
+            var on = i < selectedRating;
+            b.classList.toggle('selected', on);
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            var icon = b.querySelector('i');
+            icon.classList.toggle('bi-star-fill', on);
+            icon.classList.toggle('bi-star', !on);
+        });
+
+        document.getElementById('feedbackMsg').innerHTML =
+            '<span class="emoji">' + emojis[selectedRating] + '</span> ' + labels[selectedRating];
+
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitHint').style.display = 'none';
+
+        var cb = document.getElementById('complaintBox');
+        if (selectedRating <= 2) { cb.classList.add('show'); } else { cb.classList.remove('show'); }
+
+        updateGoogleConnect();
+
+        if (navigator.vibrate) navigator.vibrate(15);
+    }
+
+    function saveRateDraft() {
+        var val = function (id) {
+            var el = document.getElementById(id);
+            return (el && el.value != null) ? el.value : '';
+        };
+        var draft = {
+            rating: selectedRating,
+            complaint_type: val('complaintType'),
+            complaint_details: val('complaintDetails'),
+            passenger_name: val('passenger_name'),
+            passenger_contact: val('passenger_contact'),
+            passenger_email: val('passenger_email'),
+            start_location: val('rateMapStart'),
+            end_location: val('rateMapEnd')
+        };
+        try { localStorage.setItem('trifairRateDraft', JSON.stringify(draft)); } catch (e) {}
+    }
+
+    function restoreRateDraft() {
+        var raw;
+        try { raw = localStorage.getItem('trifairRateDraft'); } catch (e) { return; }
+        if (!raw) return;
+        try { localStorage.removeItem('trifairRateDraft'); } catch (e) {}
+        var draft;
+        try { draft = JSON.parse(raw); } catch (e) { return; }
+        if (!draft || typeof draft !== 'object') return;
+
+        if (draft.rating) {
+            applyStar(parseInt(draft.rating, 10));
+        }
+        if (draft.complaint_type) {
+            complaintType.value = draft.complaint_type;
+            document.getElementById('othersBox').style.display = (draft.complaint_type === 'Others') ? 'block' : 'none';
+        }
+        ['complaintDetails', 'passenger_name', 'passenger_contact', 'passenger_email', 'rateMapStart', 'rateMapEnd']
+            .forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el && typeof draft[id] === 'string' && draft[id]) el.value = draft[id];
+            });
+        updateGoogleConnect();
+    }
+
+    var connectBtn = document.querySelector('#googleConnectRow a.rate-connect-btn');
+    if (connectBtn) {
+        connectBtn.addEventListener('click', function () {
+            saveRateDraft();
+        });
+    }
+
+    restoreRateDraft();
 
     /* ---- File upload ---- */
 

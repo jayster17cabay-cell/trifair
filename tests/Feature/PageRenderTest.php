@@ -159,25 +159,16 @@ class PageRenderTest extends TestCase
         $this->get('/rate/' . $operator->qr_code)->assertOk();
     }
 
-    public function test_login_google_button_hidden_when_oauth_not_configured()
-    {
-        config()->set('services.google.client_id', '');
-        config()->set('services.google.client_secret', '');
-
-        $this->get('/login')
-            ->assertOk()
-            ->assertDontSee('Continue with Google')
-            ->assertDontSee('or log in with email');
-    }
-
-    public function test_login_google_button_shown_when_oauth_configured()
+    public function test_login_page_has_no_google_button()
     {
         config()->set('services.google.client_id', 'test-client-id');
         config()->set('services.google.client_secret', 'test-client-secret');
 
+        // Staff log in with email + password (no Google account linked), so the
+        // login page must never offer "Continue with Google".
         $this->get('/login')
             ->assertOk()
-            ->assertSee('Continue with Google')
-            ->assertSee('or log in with email');
+            ->assertDontSee('Continue with Google')
+            ->assertDontSee('or log in with email');
     }
 }

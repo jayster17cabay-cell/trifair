@@ -852,7 +852,9 @@ class DashboardAuditTest extends TestCase
     {
         $op = $this->makeOperator('active');
 
-        // Hidden when OAuth is not configured.
+        // Hidden when OAuth is not configured (reset first — tests share config).
+        config()->set('services.google.client_id', '');
+        config()->set('services.google.client_secret', '');
         $this->get('/rate/' . $op->qr_code)
             ->assertOk()
             ->assertDontSee('Continue with Google');
