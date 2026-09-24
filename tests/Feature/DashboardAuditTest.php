@@ -540,4 +540,80 @@ class DashboardAuditTest extends TestCase
             }
         }
     }
+
+    public function test_complaints_can_be_filtered_by_one_and_two_stars()
+    {
+        $admin = $this->makeUser('superadmin');
+        $officer = $this->makeUser('tfrb_officer');
+        $op = $this->makeOperator();
+
+        $one = $this->makeRating($op, 1, true, true);
+        $two = $this->makeRating($op, 2, true, true);
+        $three = $this->makeRating($op, 3, true, true);
+
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=all&rating=1')
+            ->assertOk()
+            ->assertSee($one->reference_number, false)
+            ->assertDontSee($two->reference_number, false)
+            ->assertDontSee($three->reference_number, false);
+
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=all&rating=2')
+            ->assertOk()
+            ->assertSee($two->reference_number, false)
+            ->assertDontSee($one->reference_number, false);
+
+        $this->actingAs($officer)->get('/tfrb-officer/complaints?filter=all&rating=1')
+            ->assertOk()
+            ->assertSee($one->reference_number, false)
+            ->assertDontSee($two->reference_number, false);
+
+        // Unknown star values must fall back safely instead of erroring.
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=all&rating=999')
+            ->assertOk()
+            ->assertSee($one->reference_number, false);
+    }
+
+    public function test_complaints_keep_status_filter_when_star_filter_is_active()
+    {
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+
+        $pending = $this->makeRating($op, 1, true, true);
+        $reviewed = $this->makeRating($op, 1, true, true);
+        $reviewed->update(['is_reviewed' => true]);
+        $two = $this->makeRating($op, 2, true, true);
+
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=pending&rating=1')
+            ->assertOk()
+            ->assertSee($pending->reference_number, false)
+            ->assertDontSee($reviewed->reference_number, false)
+            ->assertDontSee($two->reference_number, false);
+    }
+
+    public function test_complaint_cards_show_a_reference_number()
+    {
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+        $rating = $this->makeRating($op, 1, true, true);
+
+        $expected = sprintf('TFR-%d-%04d', (int) $rating->created_at->year, $rating->id);
+        $this->assertSame($rating->reference_number, $expected);
+
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=all')
+            ->assertOk()
+            ->assertSee($expected, false)
+            ->assertDontSee('#' . $rating->id, false);
+    }
+
+    public function test_complaints_export_contains_reference_number()
+    {
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+        $rating = $this->makeRating($op, 1, true, true);
+
+        $this->actingAs($admin)->get('/superadmin/complaints/export?format=csv&filter=all')
+            ->assertOk()
+            ->assertSee('Reference', false)
+            ->assertSee($rating->reference_number, false);
+    }
 }

@@ -3,9 +3,20 @@
     - $routePrefix     string             'superadmin' | 'tfrb-officer'
     - $complaints      LengthAwarePaginator of App\Models\Rating
     - $filter          string             'pending' | 'reviewed' | 'all'
+    - $ratingFilter    int|null           star rating filter: 1 | 2 | null
     - $pendingCount, $reviewedCount, $totalCount int
+    - $star1Count, $star2Count           int  (badges on the star chips)
     - $activeOperators Collection          active operators for export filter
 --}}
+
+@php
+    $statusUrl = function ($f) use ($routePrefix, $ratingFilter) {
+        return route($routePrefix . '.complaints', array_filter(['filter' => $f, 'rating' => $ratingFilter], fn ($v) => $v !== null));
+    };
+    $starUrl = function ($r) use ($routePrefix, $filter) {
+        return route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $r], fn ($v) => $v !== null));
+    };
+@endphp
 
 <div class="tw-page-head">
     <div>
@@ -17,7 +28,7 @@
         'exportLabel' => 'Complaints',
         'exportIcon' => 'bi-exclamation-triangle',
         'activeOperators' => $activeOperators,
-        'preservedParams' => ['filter' => $filter],
+        'preservedParams' => array_filter(['filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null),
     ])
 </div>
 
@@ -48,14 +59,27 @@
 
     <div class="mt-3 flex flex-wrap items-center gap-3">
         <div class="flex flex-wrap gap-2">
-            <a href="{{ route($routePrefix . '.complaints', ['filter' => 'all']) }}" class="{{ $filter === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+            <a href="{{ $statusUrl('all') }}" class="{{ $filter === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
                 <i class="bi bi-list-ul"></i> All <span class="tw-badge tw-badge-gray ml-1">{{ $totalCount }}</span>
             </a>
-            <a href="{{ route($routePrefix . '.complaints', ['filter' => 'pending']) }}" class="{{ $filter === 'pending' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+            <a href="{{ $statusUrl('pending') }}" class="{{ $filter === 'pending' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
                 <i class="bi bi-clock-history"></i> Pending <span class="tw-badge tw-badge-amber ml-1">{{ $pendingCount }}</span>
             </a>
-            <a href="{{ route($routePrefix . '.complaints', ['filter' => 'reviewed']) }}" class="{{ $filter === 'reviewed' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+            <a href="{{ $statusUrl('reviewed') }}" class="{{ $filter === 'reviewed' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
                 <i class="bi bi-check-circle"></i> Reviewed <span class="tw-badge tw-badge-green ml-1">{{ $reviewedCount }}</span>
+            </a>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400"><i class="bi bi-stars"></i>Stars</span>
+            <a href="{{ $starUrl(null) }}" class="{{ $ratingFilter === null ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+                All <span class="tw-badge tw-badge-gray ml-1">{{ $totalCount }}</span>
+            </a>
+            <a href="{{ $starUrl(1) }}" class="{{ $ratingFilter === 1 ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+                <i class="bi bi-star-fill"></i> 1 Star <span class="tw-badge tw-badge-red ml-1">{{ $star1Count }}</span>
+            </a>
+            <a href="{{ $starUrl(2) }}" class="{{ $ratingFilter === 2 ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+                <i class="bi bi-star-fill"></i> 2 Stars <span class="tw-badge tw-badge-amber ml-1">{{ $star2Count }}</span>
             </a>
         </div>
 

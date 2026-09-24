@@ -113,6 +113,16 @@ class Rating extends Model
         return $this->hasMany(OperatorProof::class);
     }
 
+    /**
+     * Human-friendly reference number for a rating/complaint ticket, derived
+     * from the row id so it stays stable and unique without a migration.
+     * Example: TFR-2026-0042.
+     */
+    public function getReferenceNumberAttribute(): string
+    {
+        return sprintf('TFR-%d-%04d', $this->created_at ? (int) $this->created_at->format('Y') : (int) date('Y'), (int) $this->id);
+    }
+
     public function scopeIsValid($query)
     {
         return $query->where('is_valid', true);

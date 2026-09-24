@@ -20,12 +20,17 @@ class AdminQueryService
     public function complaintsData(Request $request): array
     {
         $filter = $request->query('filter', 'pending');
+        $ratingKey = $request->query('rating');
+        $allowStar = ['1', '2'];
+        $ratingFilter = in_array($ratingKey, $allowStar, true) ? (int) $ratingKey : null;
 
         $base = Rating::isValid()->isComplaint();
 
         $pendingCount = (clone $base)->where('is_reviewed', false)->count();
         $reviewedCount = (clone $base)->where('is_reviewed', true)->count();
         $totalCount = (clone $base)->count();
+        $star1Count = (clone $base)->where('rating', 1)->count();
+        $star2Count = (clone $base)->where('rating', 2)->count();
 
         if ($filter === 'pending') {
             $base->where('is_reviewed', false);
@@ -36,12 +41,16 @@ class AdminQueryService
             $base->where('is_reviewed', false);
         }
 
+        if ($ratingFilter) {
+            $base->where('rating', $ratingFilter);
+        }
+
         $complaints = $base->with(['operator.user', 'proofs', 'response', 'operatorProofs'])
             ->latest()
             ->paginate(20)
             ->withQueryString();
 
-        return compact('complaints', 'filter', 'pendingCount', 'reviewedCount', 'totalCount');
+        return compact('complaints', 'filter', 'ratingFilter', 'pendingCount', 'reviewedCount', 'totalCount', 'star1Count', 'star2Count');
     }
 
     public function ratingsData(Request $request): array
@@ -256,7 +265,11 @@ class AdminQueryService
     {
         $filter = $request->query('filter', 'pending');
         $operatorId = $request->query('operator_id');
+        $ratingKey = $request->query('rating');
         $base = Rating::isValid()->isComplaint();
+        if (in_array($ratingKey, ['1', '2'], true)) {
+            $base->where('rating', (int) $ratingKey);
+        }
         if ($filter === 'reviewed') {
             $base->where('is_reviewed', true);
         } elseif ($filter !== 'all') {
@@ -272,6 +285,7 @@ class AdminQueryService
             ->map(function ($complaint) {
                 return [
                     'id' => $complaint->id,
+                    'reference' => $complaint->reference_number,
                     'operator' => $complaint->operator->user->name ?? 'Unknown',
                     'rating' => $complaint->rating,
                     'complaint' => $complaint->complaint_details ?? '',

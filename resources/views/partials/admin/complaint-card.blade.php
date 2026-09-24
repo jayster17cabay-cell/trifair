@@ -25,11 +25,11 @@
 
 <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
     <div class="flex cursor-pointer select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:px-5" data-complaint-toggle role="button" tabindex="0" aria-expanded="false">
-        <input type="checkbox" class="tw-check complaint-check" value="{{ $rating->id }}" data-complaint-check aria-label="Select complaint #{{ $rating->id }}">
+        <input type="checkbox" class="tw-check complaint-check" value="{{ $rating->id }}" data-complaint-check aria-label="Select complaint {{ $rating->reference_number }}">
         <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <span class="truncate text-sm font-bold text-slate-800">{{ $operatorName }}</span>
-                <span class="text-xs font-semibold text-slate-400">#{{ $rating->id }}</span>
+                <span class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.7rem] font-semibold text-navy-600">{{ $rating->reference_number }}</span>
                 @if ($bodyNumber)
                     <span class="text-xs text-slate-400">B#{{ $bodyNumber }}</span>
                 @endif

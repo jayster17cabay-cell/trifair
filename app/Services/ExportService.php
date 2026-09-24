@@ -85,7 +85,7 @@ class ExportService
 
     public function complaintsFormat(\Illuminate\Support\Collection $complaints, string $format): Response
     {
-        $headers = ['ID', 'Operator', 'Rating', 'Complaint', 'Status', 'Date'];
+        $headers = ['ID', 'Reference', 'Operator', 'Rating', 'Complaint', 'Status', 'Date'];
         $rows = $complaints->all();
 
         return $this->dispatch('complaints', $headers, $rows, $format);
