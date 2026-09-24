@@ -243,25 +243,27 @@
                                 <label for="passenger_email" class="rate-label">Email (for status updates)</label>
                                 <input type="email" name="passenger_email" id="passenger_email" class="rate-field" placeholder="juan@gmail.com">
                                 @if (config('services.google.client_id') && config('services.google.client_secret'))
-                                    @if (auth()->check() && auth()->user()->isPassenger())
-                                        <div class="rate-connect" style="margin-top:0.7rem;">
-                                            <div class="rate-connect-done">
-                                                <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
-                                                <span>Connected as <strong>{{ auth()->user()->email }}</strong> — makikita tuwing magl-log in ka ang status ng iyong complaint.</span>
+                                    <div id="googleConnectRow" style="display:none;">
+                                        @if (auth()->check() && auth()->user()->isPassenger())
+                                            <div class="rate-connect" style="margin-top:0.7rem;">
+                                                <div class="rate-connect-done">
+                                                    <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
+                                                    <span>Connected as <strong>{{ auth()->user()->email }}</strong> — makikita tuwing magl-log in ka ang status ng iyong complaint.</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    @elseif (!auth()->check())
-                                        <div class="rate-connect" style="margin-top:0.7rem;">
-                                            <a href="{{ route('login.google', ['intended' => request()->path()]) }}" class="rate-connect-btn">
-                                                <i class="bi bi-google"></i> Continue with Google
-                                                <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
-                                            </a>
-                                            <p class="rate-connect-note" style="margin-top:0.55rem;">
-                                                <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
-                                                <span><strong>Walang makakakita ng iyong identity.</strong> HINDI makikita ng driver ang iyong pangalan, email, o contact number — ang iyong mga detalye ay para lang sa TriFair/TFRB para sa status updates at imbestigasyon.</span>
-                                            </p>
-                                        </div>
-                                    @endif
+                                        @elseif (!auth()->check())
+                                            <div class="rate-connect" style="margin-top:0.7rem;">
+                                                <a href="{{ route('login.google', ['intended' => request()->path()]) }}" class="rate-connect-btn">
+                                                    <i class="bi bi-google"></i> Continue with Google
+                                                    <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
+                                                </a>
+                                                <p class="rate-connect-note" style="margin-top:0.55rem;">
+                                                    <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+                                                    <span><strong>Walang makakakita ng iyong identity.</strong> HINDI makikita ng driver ang iyong pangalan, email, o contact number — ang iyong mga detalye ay para lang sa TriFair/TFRB para sa status updates at imbestigasyon.</span>
+                                                </p>
+                                            </div>
+                                        @endif
+                                    </div>
                                 @endif
                             </div>
                             <div class="rate-upload" id="uploadZone">
@@ -796,6 +798,7 @@
         if (sb) sb.disabled = true;
         var sh = document.getElementById('submitHint');
         if (sh) sh.style.display = '';
+        updateGoogleConnect();
     }
 
     function revealStars() {
@@ -1020,6 +1023,8 @@
             var cb = document.getElementById('complaintBox');
             if (selectedRating <= 2) { cb.classList.add('show'); } else { cb.classList.remove('show'); }
 
+            updateGoogleConnect();
+
             if (navigator.vibrate) navigator.vibrate(15);
 
             document.getElementById('starSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1032,8 +1037,43 @@
     if (complaintType) {
         complaintType.addEventListener('change', function () {
             document.getElementById('othersBox').style.display = (this.value === 'Others') ? 'block' : 'none';
+            updateGoogleConnect();
         });
     }
+
+    /* ---- Google connect reveal ----
+       The account link only appears while filing a complaint (1-2 stars)
+       and only once the required complaint fields are filled, i.e. right
+       before the passenger hits submit. Never for 3-5 star ratings. */
+
+    function complaintConnectFieldsReady() {
+        var type = document.getElementById('complaintType');
+        if (!type || !type.value) return false;
+        if (type.value === 'Others') {
+            var det = document.getElementById('complaintDetails');
+            if (!det || !det.value.trim()) return false;
+        }
+        var name = document.getElementById('passenger_name');
+        var contact = document.getElementById('passenger_contact');
+        if (!name || !name.value.trim()) return false;
+        if (!contact || !contact.value.trim()) return false;
+        return true;
+    }
+
+    function updateGoogleConnect() {
+        var row = document.getElementById('googleConnectRow');
+        if (!row) return;
+        var show = selectedRating >= 1 && selectedRating <= 2 && complaintConnectFieldsReady();
+        row.style.display = show ? '' : 'none';
+    }
+
+    ['complaintType', 'complaintDetails', 'passenger_name', 'passenger_contact'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updateGoogleConnect);
+            el.addEventListener('change', updateGoogleConnect);
+        }
+    });
 
     /* ---- File upload ---- */
 
