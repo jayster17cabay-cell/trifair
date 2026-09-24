@@ -74,6 +74,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'operator_president';
     }
 
+    public function isPassenger()
+    {
+        return $this->role === 'passenger';
+    }
+
     /**
      * The TODA this president governs. Uses the dedicated users.toda_id when
      * set, otherwise falls back to the president's own operator record's TODA

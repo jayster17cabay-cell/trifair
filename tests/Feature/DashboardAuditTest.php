@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ComplaintStatus;
 use App\Models\ActivityLog;
 use App\Models\Notification;
 use App\Models\Operator;
@@ -11,7 +12,9 @@ use App\Models\Toda;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Mockery;
 use Tests\TestCase;
 
 /**
@@ -147,6 +150,7 @@ class DashboardAuditTest extends TestCase
             '/superadmin/complaints',
             '/superadmin/complaints?filter=all',
             '/superadmin/complaints?filter=reviewed',
+            '/superadmin/complaints?filter=solved',
             '/superadmin/complaints?filter=bogus',
             '/superadmin/reports',
             '/superadmin/reports?toda_id=' . $toda->id . '&min_rating=1&date_from=2020-01-01&date_to=2030-12-31',
@@ -203,6 +207,7 @@ class DashboardAuditTest extends TestCase
             '/tfrb-officer/ratings?date_from=bogus&date_to=bogus&operator_id=999999',
             '/tfrb-officer/complaints',
             '/tfrb-officer/complaints?filter=all',
+            '/tfrb-officer/complaints?filter=solved',
             '/tfrb-officer/complaints?filter=bogus',
             '/tfrb-officer/reports',
             '/tfrb-officer/reports?toda_id=' . $toda->id . '&min_rating=bogus',
@@ -615,5 +620,271 @@ class DashboardAuditTest extends TestCase
             ->assertOk()
             ->assertSee('Reference', false)
             ->assertSee($rating->reference_number, false);
+    }
+
+    public function test_marking_complaint_reviewed_emails_the_passenger()
+    {
+        Mail::fake();
+        $officer = $this->makeUser('tfrb_officer');
+        $op = $this->makeOperator();
+        $rating = $this->makeRating($op, 1, true, true);
+        $rating->update(['passenger_email' => 'passenger@example.com']);
+
+        $this->actingAs($officer)
+            ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
+            ->assertRedirect();
+
+        Mail::assertSent(ComplaintStatus::class, function ($mail) use ($rating) {
+            $mail->build();
+
+            return $mail->hasTo('passenger@example.com')
+                && $mail->status === 'reviewed'
+                && str_contains($mail->subject, $rating->reference_number);
+        });
+
+        // Re-reviewing must not spam the passenger a second time.
+        $this->actingAs($officer)
+            ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
+            ->assertRedirect();
+
+        Mail::assertSent(ComplaintStatus::class, 1);
+    }
+
+    public function test_marking_complaint_solved_emails_the_passenger_once()
+    {
+        Mail::fake();
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+        $rating = $this->makeRating($op, 2, true, true);
+        $rating->update(['passenger_email' => 'passenger@example.com']);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $rating->id . '/solve')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $rating->refresh();
+        $this->assertTrue($rating->is_reviewed);
+        $this->assertTrue($rating->is_solved);
+        $this->assertNotNull($rating->solved_at);
+
+        Mail::assertSent(ComplaintStatus::class, function ($mail) {
+            return $mail->hasTo('passenger@example.com') && $mail->status === 'solved';
+        });
+
+        // Solving an already-solved complaint must not send a second email.
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $rating->id . '/solve')
+            ->assertRedirect();
+
+        Mail::assertSent(ComplaintStatus::class, 1);
+    }
+
+    public function test_reopening_a_complaint_unsolves_it_and_stays_reviewed()
+    {
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+        $rating = $this->makeRating($op, 1, true, true);
+        $rating->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $rating->id . '/reopen')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $rating->refresh();
+        $this->assertTrue($rating->is_reviewed);
+        $this->assertFalse($rating->is_solved);
+        $this->assertNull($rating->solved_at);
+    }
+
+    public function test_solving_a_complaint_without_email_skips_the_mail()
+    {
+        Mail::fake();
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+        $rating = $this->makeRating($op, 1, true, true);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $rating->id . '/solve')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_complaints_can_be_filtered_by_solved_status()
+    {
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+
+        $pending = $this->makeRating($op, 1, true, true);
+        $reviewed = $this->makeRating($op, 2, true, true);
+        $reviewed->update(['is_reviewed' => true]);
+        $solved = $this->makeRating($op, 1, true, true);
+        $solved->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
+
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=solved')
+            ->assertOk()
+            ->assertSee($solved->reference_number, false)
+            ->assertDontSee($pending->reference_number, false)
+            ->assertDontSee($reviewed->reference_number, false);
+
+        // Reviewed filter excludes solved complaints; pending excludes reviewed+solved.
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=reviewed')
+            ->assertOk()
+            ->assertSee($reviewed->reference_number, false)
+            ->assertDontSee($solved->reference_number, false);
+
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=pending')
+            ->assertOk()
+            ->assertSee($pending->reference_number, false)
+            ->assertDontSee($reviewed->reference_number, false)
+            ->assertDontSee($solved->reference_number, false);
+
+        $solvedPage = $this->actingAs($admin)->get('/superadmin/complaints?filter=solved')->getContent();
+        $this->assertStringContainsString('Solved', $solvedPage);
+    }
+
+    public function test_solved_status_is_exported_with_solved_label()
+    {
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+        $solved = $this->makeRating($op, 1, true, true);
+        $solved->update(['is_reviewed' => true, 'is_solved' => true]);
+
+        $content = $this->actingAs($admin)
+            ->get('/superadmin/complaints/export?format=csv&filter=all')
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('Solved', $content);
+    }
+
+    public function test_passenger_google_callback_creates_account_and_signs_in()
+    {
+        $googleUser = new \Laravel\Socialite\Two\User();
+        $googleUser->id = 'google-abc-123';
+        $googleUser->name = 'Juan Dela Cruz';
+        $googleUser->email = 'passenger@example.com';
+        $googleUser->user = ['email_verified' => true];
+
+        $provider = Mockery::mock();
+        $provider->shouldReceive('user')->andReturn($googleUser);
+        \Laravel\Socialite\Facades\Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $this->withSession([
+            'google_connect_mode' => true,
+            'google_connect_intended' => '/rate/ABC123',
+        ])->get('/auth/google/callback')->assertRedirect('/rate/ABC123');
+
+        $user = User::where('email', 'passenger@example.com')->first();
+        $this->assertNotNull($user, 'Passenger account was not created.');
+        $this->assertSame('passenger', $user->role);
+        $this->assertTrue((bool) $user->is_active);
+        $this->assertSame('google', $user->provider);
+        $this->assertSame('google-abc-123', $user->provider_id);
+        $this->assertTrue($user->hasVerifiedEmail());
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_passenger_google_callback_rejects_staff_accounts()
+    {
+        $staff = $this->makeUser('tfrb_officer');
+
+        $googleUser = new \Laravel\Socialite\Two\User();
+        $googleUser->id = 'google-staff-id';
+        $googleUser->name = 'Staff';
+        $googleUser->email = $staff->email;
+        $googleUser->user = ['email_verified' => true];
+
+        $provider = Mockery::mock();
+        $provider->shouldReceive('user')->andReturn($googleUser);
+        \Laravel\Socialite\Facades\Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $this->withSession([
+            'google_connect_mode' => true,
+            'google_connect_intended' => '/rate/ABC123',
+        ])->get('/auth/google/callback')->assertRedirect('/login');
+
+        $this->assertNull(User::where('email', $staff->email)->where('role', 'passenger')->first());
+        $this->assertSame('tfrb_officer', $staff->fresh()->role);
+    }
+
+    public function test_passenger_dashboard_shows_only_own_complaints()
+    {
+        $passenger = $this->makeUser('passenger');
+        $other = $this->makeUser('passenger');
+        $op = $this->makeOperator();
+
+        $own = $this->makeRating($op, 1, true, true);
+        $own->update(['passenger_user_id' => $passenger->id]);
+        $theirs = $this->makeRating($op, 2, true, true);
+        $theirs->update(['passenger_user_id' => $other->id]);
+
+        $this->actingAs($passenger)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee('Walang makakakita ng iyong identity', false)
+            ->assertSee($own->reference_number, false)
+            ->assertDontSee($theirs->reference_number, false);
+    }
+
+    public function test_rate_submission_links_to_authenticated_passenger_account()
+    {
+        $passenger = $this->makeUser('passenger');
+        $op = $this->makeOperator('active');
+
+        $this->actingAs($passenger)->post('/rate/' . $op->qr_code, [
+            'rating' => 1,
+            'start_location' => 'Novaliches, Quezon City',
+            'end_location' => 'SM Fairview, Quezon City',
+            'complaint_type' => 'Rude Driver',
+            'complaint_details' => 'Rude to passenger',
+        ])->assertRedirect();
+
+        $rating = Rating::where('operator_id', $op->id)->latest()->first();
+        $this->assertNotNull($rating);
+        $this->assertSame($passenger->id, (int) $rating->passenger_user_id);
+        $this->assertSame($passenger->email, $rating->passenger_email);
+    }
+
+    public function test_rate_form_shows_google_connect_and_reassurance_when_configured()
+    {
+        $op = $this->makeOperator('active');
+
+        // Hidden when OAuth is not configured.
+        $this->get('/rate/' . $op->qr_code)
+            ->assertOk()
+            ->assertDontSee('Continue with Google');
+
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+
+        $this->get('/rate/' . $op->qr_code)
+            ->assertOk()
+            ->assertSee('Continue with Google', false)
+            ->assertSee('Walang makakakita ng iyong identity', false);
+    }
+
+    public function test_solved_status_notifies_linked_passenger_in_app()
+    {
+        $passenger = $this->makeUser('passenger');
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+        $rating = $this->makeRating($op, 1, true, true);
+        $rating->update(['passenger_user_id' => $passenger->id]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $rating->id . '/solve')
+            ->assertRedirect();
+
+        $this->assertNotNull(Notification::where('user_id', $passenger->id)
+            ->where('rating_id', $rating->id)
+            ->where('title', 'Complaint Solved')
+            ->first());
+
+        $this->actingAs($passenger)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee('Complaint Solved', false);
     }
 }

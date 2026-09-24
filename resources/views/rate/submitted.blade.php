@@ -73,6 +73,13 @@
             transition: all 0.2s;
         }
         .close-btn:active { transform: scale(0.97); }
+        .track-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.8rem 2.5rem; border-radius: 14px; text-decoration: none;
+            background: var(--primary); color: white; font-size: 0.95rem; font-weight: 800;
+            font-family: inherit; margin-top: 0.75rem; transition: all 0.2s;
+        }
+        .track-btn:active { transform: scale(0.97); }
         .powered { font-size: 0.7rem; color: var(--gray-500); margin-top: 1.5rem; }
         .powered strong { color: var(--primary); font-weight: 700; }
 
@@ -117,6 +124,12 @@
     <button class="close-btn" id="closeBtn" onclick="tryClose()">
         <i class="bi bi-x-lg"></i> Close
     </button>
+
+    @if (auth()->check() && auth()->user()->isPassenger())
+        <a href="{{ route('passenger.dashboard') }}" class="track-btn">
+            <i class="bi bi-clipboard-check"></i> View my complaints status
+        </a>
+    @endif
 
     <div class="powered">Powered by <strong>TriFair</strong></div>
 </div>

@@ -106,6 +106,11 @@ class LoginController extends Controller
                 }
             }
 
+            if ($user->isPassenger()) {
+                ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
+                return redirect()->route('passenger.dashboard');
+            }
+
             // Unknown/legacy role (e.g. the old `driver` default): don't send the
             // user into the role-gated operator dashboard (which would 403) — log
             // them out and ask them to contact support.

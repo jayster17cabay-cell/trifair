@@ -4,11 +4,14 @@ namespace App\Services;
 
 use App\Helpers\ActivityLogger;
 use App\Helpers\SupabaseStorage;
+use App\Mail\ComplaintStatus;
 use App\Models\Notification;
 use App\Models\Rating;
 use App\Services\AdminDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Review-side rating operations shared by the Superadmin and TFRB Officer
@@ -30,12 +33,49 @@ class RatingAdminService
 
     public function complaintsMarkReviewed(Rating $rating): RedirectResponse
     {
+        $wasReviewed = (bool) $rating->is_reviewed;
         $rating->update(['is_reviewed' => true]);
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('mark_reviewed', "Marked complaint #{$rating->id} as reviewed (operator: {$rating->operator->user->name})", $rating, 'review');
 
+        if (!$wasReviewed) {
+            $this->notifyComplaintStatus($rating, 'reviewed');
+            $this->notifyPassengerInApp($rating, 'Complaint Reviewed', 'Your complaint has been reviewed by the TFRB.');
+        }
+
         return back()->with('success', 'Complaint marked as reviewed.');
+    }
+
+    /**
+     * Mark a complaint as solved. Solving also implies the complaint has been
+     * reviewed. Always notifies the passenger (only when transitioning out of
+     * the solved state) so a re-solve does not spam their inbox.
+     */
+    public function complaintsMarkSolved(Rating $rating): RedirectResponse
+    {
+        $wasSolved = (bool) $rating->is_solved;
+        $rating->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log('mark_solved', "Marked complaint #{$rating->id} as solved (operator: {$rating->operator->user->name})", $rating, 'review');
+
+        if (!$wasSolved) {
+            $this->notifyComplaintStatus($rating, 'solved');
+            $this->notifyPassengerInApp($rating, 'Complaint Solved', 'Your complaint has been marked as solved.');
+        }
+
+        return back()->with('success', 'Complaint marked as solved.');
+    }
+
+    public function complaintsReopen(Rating $rating): RedirectResponse
+    {
+        $rating->update(['is_solved' => false, 'solved_at' => null]);
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log('reopen_complaint', "Reopened complaint #{$rating->id} (operator: {$rating->operator->user->name})", $rating, 'review');
+
+        return back()->with('success', 'Complaint reopened.');
     }
 
     public function complaintsBulkReview(Request $request): RedirectResponse
@@ -61,6 +101,7 @@ class RatingAdminService
             ->each(function ($rating) use (&$count) {
                 $rating->update(['is_reviewed' => true]);
                 ActivityLogger::log('mark_reviewed', "Marked complaint #{$rating->id} as reviewed (bulk, operator: {$rating->operator->user->name})", $rating, 'review');
+                $this->notifyComplaintStatus($rating, 'reviewed');
                 $count++;
             });
 
@@ -69,6 +110,44 @@ class RatingAdminService
         return back()->with('success', $count > 0
             ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' marked as reviewed.'
             : 'No pending complaints were marked.');
+    }
+
+    /**
+     * Email the passenger the moment their complaint changes status, but only if
+     * they left an email address. A delivery failure must never break the admin
+     * action, so the send is guarded and the error is logged instead.
+     */
+    private function notifyComplaintStatus(Rating $rating, string $status): void
+    {
+        $email = $rating->passenger_email;
+        if (!$email) {
+            return;
+        }
+
+        try {
+            Mail::to($email)->send(new ComplaintStatus($rating, $status));
+        } catch (\Throwable $e) {
+            Log::error('Complaint status email failed: ' . get_class($e) . ': ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * In-app notification for a linked passenger account so they see the status
+     * change on their dashboard without relying on email delivery.
+     */
+    private function notifyPassengerInApp(Rating $rating, string $title, string $message): void
+    {
+        if (!$rating->passenger_user_id) {
+            return;
+        }
+
+        Notification::create([
+            'user_id' => $rating->passenger_user_id,
+            'rating_id' => $rating->id,
+            'type' => 'complaint_status',
+            'title' => $title,
+            'message' => $message,
+        ]);
     }
 
     public function ratingsBulkReview(Request $request): RedirectResponse

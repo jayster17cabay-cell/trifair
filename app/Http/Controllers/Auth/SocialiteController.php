@@ -11,8 +11,18 @@ use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteController extends Controller
 {
-    public function redirect()
+    /**
+     * Remember where the passenger wants to return after linking Google, so the
+     * callback knows it is a passenger "connect" flow (not the staff login) and
+     * can land them back at the complaint form they were filling out.
+     */
+    public function redirect(Request $request)
     {
+        if ($intended = trim((string) $request->query('intended'))) {
+            $request->session()->put('google_connect_intended', $intended);
+            $request->session()->put('google_connect_mode', true);
+        }
+
         return Socialite::driver('google')->redirect();
     }
 
@@ -35,26 +45,39 @@ class SocialiteController extends Controller
             : false;
 
         if (!$emailVerified) {
-            return redirect()->route('login')->withErrors([
-                'email' => 'Your Google account email is not verified. Please verify it with Google first, then try again.',
-            ]);
+            return $this->backWithError($request, 'Your Google account email is not verified. Please verify it with Google first, then try again.');
         }
 
         $email = strtolower(trim($googleUser->getEmail()));
 
         if ($email === '') {
-            return redirect()->route('login')->withErrors([
-                'email' => 'Your Google account has no email address.',
-            ]);
+            return $this->backWithError($request, 'Your Google account has no email address.');
         }
+
+        $isConnect = $request->session()->pull('google_connect_mode');
+        $intended = $request->session()->pull('google_connect_intended');
 
         $user = User::where('email', $email)->first();
 
-        // Only allow accounts that already exist in TriFair (superadmin, tfrb_officer, or operator).
-        if (!$user) {
-            return redirect()->route('login')->withErrors([
-                'email' => 'This Google account is not linked to any TriFair account. Please log in with your email and password.',
-            ]);
+        // Passenger "Continue with Google" flow: a matching Google email is NOT
+        // required, a brand-new passenger account is created on first connect.
+        if ($isConnect) {
+            if ($user && $user->role !== 'passenger') {
+                return $this->backWithError($request, 'This Google account belongs to a TriFair staff account. Please use the staff sign-in page instead.');
+            }
+            if ($user && !$user->is_active) {
+                return $this->backWithError($request, 'Your account is currently disabled. Please contact support.');
+            }
+            if (!$user) {
+                $user = $this->createPassengerAccount($email, $googleUser);
+            }
+        } else {
+            // Only allow accounts that already exist in TriFair (original behavior).
+            if (!$user) {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'This Google account is not linked to any TriFair account. Please log in with your email and password.',
+                ]);
+            }
         }
 
         if (!$user->is_active) {
@@ -73,6 +96,11 @@ class SocialiteController extends Controller
         Auth::login($user, true);
 
         $request->session()->regenerate();
+
+        if ($isConnect) {
+            ActivityLogger::log('login', "{$user->name} ({$user->email}) connected via Google as passenger", null, 'auth');
+            return redirect()->to($this->validIntended($intended));
+        }
 
         if ($user->isSuperadmin()) {
             ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
@@ -145,6 +173,43 @@ class SocialiteController extends Controller
             return redirect()->route('operator.dashboard');
         }
 
+        if ($user->isPassenger()) {
+            ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
+            return redirect()->route('passenger.dashboard');
+        }
+
         return redirect()->route('login');
+    }
+
+    private function createPassengerAccount(string $email, $googleUser): User
+    {
+        $user = new User();
+        $user->forceFill([
+            'name' => $googleUser->getName() ?: ucfirst(strstr($email, '@', true) ?: 'Passenger'),
+            'email' => $email,
+            'password' => \Illuminate\Support\Str::random(32),
+            'email_verified_at' => now(),
+            'provider' => 'google',
+            'provider_id' => (string) $googleUser->getId(),
+        ]);
+        $user->forceFill(['role' => 'passenger', 'is_active' => true])->save();
+
+        ActivityLogger::log('register', "Passenger account created for {$email} via Google", $user, 'auth');
+
+        return $user;
+    }
+
+    private function backWithError(Request $request, string $message)
+    {
+        return redirect()->route('login')->withErrors(['email' => $message]);
+    }
+
+    private function validIntended(?string $intended): string
+    {
+        $intended = trim((string) $intended);
+        if ($intended === '' || str_starts_with($intended, '//') || str_contains($intended, '://')) {
+            return '/';
+        }
+        return '/' . ltrim($intended, '/');
     }
 }

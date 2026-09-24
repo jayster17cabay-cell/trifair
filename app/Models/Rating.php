@@ -79,8 +79,12 @@ class Rating extends Model
         'passenger_ip',
         'client_id',
         'passenger_contact',
+        'passenger_email',
+        'passenger_user_id',
         'passenger_name',
         'is_reviewed',
+        'is_solved',
+        'solved_at',
         'is_auto',
         'is_valid',
         'start_location',
@@ -89,6 +93,8 @@ class Rating extends Model
 
     protected $casts = [
         'is_reviewed' => 'boolean',
+        'is_solved' => 'boolean',
+        'solved_at' => 'datetime',
         'is_auto' => 'boolean',
         'is_valid' => 'boolean',
     ];
@@ -111,6 +117,11 @@ class Rating extends Model
     public function operatorProofs()
     {
         return $this->hasMany(OperatorProof::class);
+    }
+
+    public function passenger()
+    {
+        return $this->belongsTo(User::class, 'passenger_user_id');
     }
 
     /**
@@ -141,6 +152,11 @@ class Rating extends Model
     public function scopeIsComplaint($query)
     {
         return $query->whereNotNull('complaint_type');
+    }
+
+    public function scopeIsSolved($query)
+    {
+        return $query->where('is_solved', true);
     }
 
     /**

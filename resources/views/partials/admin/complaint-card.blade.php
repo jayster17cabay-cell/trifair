@@ -48,7 +48,9 @@
                     @endfor
                 </span>
             </div>
-            @if ($rating->is_reviewed)
+            @if ($rating->is_solved)
+                <span class="tw-badge tw-badge-navy"><i class="bi bi-patch-check-fill"></i> Solved</span>
+            @elseif ($rating->is_reviewed)
                 <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Reviewed</span>
             @else
                 <span class="tw-badge tw-badge-amber"><i class="bi bi-clock-fill"></i> Pending</span>
@@ -73,6 +75,9 @@
                         {{ $rating->passenger_name ?: 'Anonymous' }}
                         @if ($rating->passenger_contact)
                             &middot; <a href="tel:{{ $rating->passenger_contact }}" class="font-semibold text-navy-600 hover:underline">{{ $rating->passenger_contact }}</a>
+                        @endif
+                        @if ($rating->passenger_email)
+                            &middot; <a href="mailto:{{ $rating->passenger_email }}" class="font-semibold text-navy-600 hover:underline">{{ $rating->passenger_email }}</a>
                         @endif
                     </div>
                 </div>
@@ -158,6 +163,23 @@
                         @method('PATCH')
                         <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold">
                             <i class="bi bi-check-lg"></i>Mark Reviewed
+                        </button>
+                    </form>
+                @endif
+                @if ($rating->is_solved)
+                    <form action="{{ route($routePrefix . '.complaints.reopen', $rating) }}" method="POST" onsubmit="return confirm('Reopen this complaint?')">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reopen complaint">
+                            <i class="bi bi-arrow-counterclockwise"></i>Reopen
+                        </button>
+                    </form>
+                @else
+                    <form action="{{ route($routePrefix . '.complaints.solve', $rating) }}" method="POST" onsubmit="return confirm('Mark this complaint as solved? The passenger will be notified via email.')">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy" title="Mark complaint as solved">
+                            <i class="bi bi-patch-check"></i>Solved
                         </button>
                     </form>
                 @endif

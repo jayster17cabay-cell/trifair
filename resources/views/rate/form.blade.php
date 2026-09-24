@@ -239,6 +239,31 @@
                                     <input type="tel" name="passenger_contact" id="passenger_contact" class="rate-field" placeholder="09171234567" inputmode="numeric">
                                 </div>
                             </div>
+                            <div style="margin-top:0.6rem;">
+                                <label for="passenger_email" class="rate-label">Email (for status updates)</label>
+                                <input type="email" name="passenger_email" id="passenger_email" class="rate-field" placeholder="juan@gmail.com">
+                                @if (config('services.google.client_id') && config('services.google.client_secret'))
+                                    @if (auth()->check() && auth()->user()->isPassenger())
+                                        <div class="rate-connect" style="margin-top:0.7rem;">
+                                            <div class="rate-connect-done">
+                                                <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
+                                                <span>Connected as <strong>{{ auth()->user()->email }}</strong> — makikita tuwing magl-log in ka ang status ng iyong complaint.</span>
+                                            </div>
+                                        </div>
+                                    @elseif (!auth()->check())
+                                        <div class="rate-connect" style="margin-top:0.7rem;">
+                                            <a href="{{ route('login.google', ['intended' => request()->path()]) }}" class="rate-connect-btn">
+                                                <i class="bi bi-google"></i> Continue with Google
+                                                <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
+                                            </a>
+                                            <p class="rate-connect-note" style="margin-top:0.55rem;">
+                                                <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+                                                <span><strong>Walang makakakita ng iyong identity.</strong> HINDI makikita ng driver ang iyong pangalan, email, o contact number — ang iyong mga detalye ay para lang sa TriFair/TFRB para sa status updates at imbestigasyon.</span>
+                                            </p>
+                                        </div>
+                                    @endif
+                                @endif
+                            </div>
                             <div class="rate-upload" id="uploadZone">
                                 <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
                                 <div class="main-text">Upload evidence</div>
@@ -248,7 +273,7 @@
                             <div class="rate-file-chips" id="fileChips"></div>
                             <div class="rate-note">
                                 <i class="bi bi-info-circle" aria-hidden="true" style="margin-top:0.05rem;"></i>
-                                <span>A TFRB Officer may contact you for additional information.</span>
+                                <span>A TFRB Officer may contact you for additional information. You may receive an email once your complaint is reviewed or resolved.</span>
                             </div>
                         </div>
 

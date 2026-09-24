@@ -97,6 +97,7 @@ class RatingController extends Controller
             'end_location' => 'nullable|string|max:500',
             'passenger_name' => 'nullable|string|max:100',
             'passenger_contact' => 'nullable|string|max:20',
+            'passenger_email' => 'nullable|email|max:255',
             'complaint_type' => 'nullable|string|max:100',
             'complaint_details' => 'nullable|string|max:2000',
         ];
@@ -108,7 +109,10 @@ class RatingController extends Controller
 
         $data = $request->validate($rules);
 
-        $rating = DB::transaction(function () use ($request, $operator, $clientId, $data) {
+        $passengerUser = $request->user() && $request->user()->isPassenger() ? $request->user() : null;
+        $passengerEmail = $data['passenger_email'] ?? ($passengerUser ? $passengerUser->email : null);
+
+        $rating = DB::transaction(function () use ($request, $operator, $clientId, $data, $passengerUser, $passengerEmail) {
             // Re-check inside the transaction (with a row lock) so two
             // simultaneous submissions cannot both pass the dedup check.
             $existing = $this->existingRatingFor($operator, (string) $request->ip(), $clientId, true);
@@ -126,6 +130,8 @@ class RatingController extends Controller
                 'start_location' => Rating::normalizeAddress($data['start_location'] ?? null),
                 'end_location' => Rating::normalizeAddress($data['end_location'] ?? null),
                 'passenger_contact' => $data['passenger_contact'] ?? null,
+                'passenger_email' => $passengerEmail,
+                'passenger_user_id' => $passengerUser ? $passengerUser->id : null,
                 'passenger_name' => $data['passenger_name'] ?? null,
                 'passenger_ip' => $request->ip(),
                 'client_id' => $clientId,

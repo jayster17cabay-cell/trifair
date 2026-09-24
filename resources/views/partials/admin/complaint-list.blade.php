@@ -2,9 +2,9 @@
     Reusable complaints list. Requires:
     - $routePrefix     string             'superadmin' | 'tfrb-officer'
     - $complaints      LengthAwarePaginator of App\Models\Rating
-    - $filter          string             'pending' | 'reviewed' | 'all'
+    - $filter          string             'pending' | 'reviewed' | 'solved' | 'all'
     - $ratingFilter    int|null           star rating filter: 1 | 2 | null
-    - $pendingCount, $reviewedCount, $totalCount int
+    - $pendingCount, $reviewedCount, $solvedCount, $totalCount int
     - $star1Count, $star2Count           int  (badges on the star chips)
     - $activeOperators Collection          active operators for export filter
 --}}
@@ -68,18 +68,8 @@
             <a href="{{ $statusUrl('reviewed') }}" class="{{ $filter === 'reviewed' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
                 <i class="bi bi-check-circle"></i> Reviewed <span class="tw-badge tw-badge-green ml-1">{{ $reviewedCount }}</span>
             </a>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-            <span class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400"><i class="bi bi-stars"></i>Stars</span>
-            <a href="{{ $starUrl(null) }}" class="{{ $ratingFilter === null ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                All <span class="tw-badge tw-badge-gray ml-1">{{ $totalCount }}</span>
-            </a>
-            <a href="{{ $starUrl(1) }}" class="{{ $ratingFilter === 1 ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                <i class="bi bi-star-fill"></i> 1 Star <span class="tw-badge tw-badge-red ml-1">{{ $star1Count }}</span>
-            </a>
-            <a href="{{ $starUrl(2) }}" class="{{ $ratingFilter === 2 ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                <i class="bi bi-star-fill"></i> 2 Stars <span class="tw-badge tw-badge-amber ml-1">{{ $star2Count }}</span>
+            <a href="{{ $statusUrl('solved') }}" class="{{ $filter === 'solved' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+                <i class="bi bi-patch-check-fill"></i> Solved <span class="tw-badge tw-badge-navy ml-1">{{ $solvedCount }}</span>
             </a>
         </div>
 
@@ -99,11 +89,39 @@
     </div>
 </div>
 
+{{-- Star rating filter: a compact segmented control in its own row (not part of
+     the sticky bar) so the toolbar stays clean and the severity filter is easy
+     to scan and toggle. --}}
+<div class="mb-4 flex flex-wrap items-center gap-3">
+    <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400">
+        <i class="bi bi-stars text-gold"></i>Severity
+    </span>
+    <div class="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <a href="{{ $starUrl(null) }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold transition {{ $ratingFilter === null ? 'bg-navy-600 text-white' : 'text-slate-600 hover:bg-slate-50' }}">
+            All stars
+        </a>
+        <a href="{{ $starUrl(1) }}" class="inline-flex items-center gap-1.5 border-l border-slate-200 px-3.5 py-1.5 text-xs font-semibold transition {{ $ratingFilter === 1 ? 'bg-navy-600 text-white' : 'text-slate-600 hover:bg-slate-50' }}">
+            <i class="bi bi-star-fill {{ $ratingFilter === 1 ? '' : 'text-amber-400' }}"></i>1 Star
+            <span class="{{ $ratingFilter === 1 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }} rounded px-1 text-[0.65rem] font-bold">{{ $star1Count }}</span>
+        </a>
+        <a href="{{ $starUrl(2) }}" class="inline-flex items-center gap-1.5 border-l border-slate-200 px-3.5 py-1.5 text-xs font-semibold transition {{ $ratingFilter === 2 ? 'bg-navy-600 text-white' : 'text-slate-600 hover:bg-slate-50' }}">
+            <i class="bi bi-star-fill {{ $ratingFilter === 2 ? '' : 'text-amber-400' }}"></i>2 Stars
+            <span class="{{ $ratingFilter === 2 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }} rounded px-1 text-[0.65rem] font-bold">{{ $star2Count }}</span>
+        </a>
+    </div>
+    @if ($ratingFilter !== null)
+        <a href="{{ $starUrl(null) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Clear star filter">
+            <i class="bi bi-x-lg"></i>Clear
+        </a>
+    @endif
+</div>
+
 @php
     $emptyTitle = 'No Complaints';
     $emptyMsg = 'All operators are doing great! No complaints filed.';
     if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for review. Keep it up!'; }
     elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints you mark as reviewed will appear here.'; }
+    elseif ($filter === 'solved') { $emptyTitle = 'No Solved Complaints'; $emptyMsg = 'Complaints you mark as solved will appear here.'; }
 @endphp
 
 @forelse ($complaints as $rating)

@@ -14,6 +14,7 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\GeocodeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PassengerController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
@@ -83,6 +84,8 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::post('/ratings/bulk-review', [TfrbOfficerController::class, 'ratingsBulkReview'])->name('ratings.bulkReview');
     Route::get('/complaints', [TfrbOfficerController::class, 'complaints'])->name('complaints');
     Route::patch('/complaints/{rating}/review', [TfrbOfficerController::class, 'complaintsMarkReviewed'])->name('complaints.review');
+    Route::patch('/complaints/{rating}/solve', [TfrbOfficerController::class, 'complaintsMarkSolved'])->name('complaints.solve');
+    Route::patch('/complaints/{rating}/reopen', [TfrbOfficerController::class, 'complaintsReopen'])->name('complaints.reopen');
     Route::delete('/complaints/{rating}', [TfrbOfficerController::class, 'destroyComplaint'])->name('complaints.destroy');
     Route::post('/complaints/bulk-review', [TfrbOfficerController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
     Route::get('/activity-logs', [TfrbOfficerController::class, 'activityLogs'])->name('activity-logs');
@@ -125,6 +128,8 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::delete('/presidents/{user}', [SuperadminController::class, 'destroyPresident'])->name('presidents.destroy');
     Route::get('/complaints', [SuperadminController::class, 'complaints'])->name('complaints');
         Route::patch('/complaints/{rating}/review', [SuperadminController::class, 'complaintsMarkReviewed'])->name('complaints.review');
+    Route::patch('/complaints/{rating}/solve', [SuperadminController::class, 'complaintsMarkSolved'])->name('complaints.solve');
+    Route::patch('/complaints/{rating}/reopen', [SuperadminController::class, 'complaintsReopen'])->name('complaints.reopen');
     Route::delete('/complaints/{rating}', [SuperadminController::class, 'destroyComplaint'])->name('complaints.destroy');
     Route::post('/complaints/bulk-review', [SuperadminController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
     Route::get('/ratings', [SuperadminController::class, 'ratings'])->name('ratings');
@@ -315,6 +320,10 @@ Route::post('/setup', function () {
 Route::get('/rate/{qrCode}', [RatingController::class, 'showRateForm'])->name('rate.operator');
 Route::post('/rate/{qrCode}', [RatingController::class, 'submitRating'])->name('rate.submit')->middleware('throttle:30,1');
 Route::get('/rate/{qrCode}/submitted', [RatingController::class, 'showSubmitted'])->name('rate.submitted');
+
+Route::group(['prefix' => 'passenger', 'middleware' => ['auth', 'role:passenger']], function () {
+    Route::get('/dashboard', [PassengerController::class, 'dashboard'])->name('passenger.dashboard');
+});
 
 // Server-side route lookup for the passenger map (cached)
 Route::get('/route', [RouteController::class, 'fetch'])->middleware('throttle:60,1');

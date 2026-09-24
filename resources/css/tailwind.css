@@ -1358,6 +1358,62 @@
         color: #64748b;
         margin-top: 0.7rem;
     }
+    .rate-connect-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #1f2937;
+        font-size: 0.85rem;
+        font-weight: 700;
+        font-family: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .rate-connect-btn:hover {
+        border-color: #0A2A5E;
+        box-shadow: 0 0 0 3px rgba(10, 42, 94, 0.1);
+    }
+    .rate-connect-btn .bi-google {
+        font-size: 1rem;
+        color: #ea4335;
+    }
+    .rate-connect-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+        font-size: 0.72rem;
+        line-height: 1.45;
+        color: #475569;
+        margin: 0;
+    }
+    .rate-connect-note .bi-shield-lock-fill {
+        color: #059669;
+        margin-top: 0.1rem;
+        font-size: 0.8rem;
+    }
+    .rate-connect-done {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.45rem;
+        font-size: 0.75rem;
+        line-height: 1.45;
+        color: #334155;
+        background: #ecfdf5;
+        border: 1px solid rgba(5, 150, 105, 0.25);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+    }
+    .rate-connect-done .bi-check-circle-fill {
+        margin-top: 0.1rem;
+        font-size: 0.8rem;
+    }
     .rate-submit {
         width: 100%;
         padding: 0.9rem;
