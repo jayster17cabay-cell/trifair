@@ -339,6 +339,7 @@
     var trackingWatchId = null;
     var lastFromAccuracy = Infinity;
     var lastFromGeocodeTime = 0;
+    var lastFromGeocodeLatLng = null;
     var mapLastInteracted = 0;
     var locationCancelled = false;
 
@@ -571,9 +572,11 @@
                 followMarker(latlng);
             }
 
-            if (lastFromAccuracy === Infinity || now - lastFromGeocodeTime > 2500 || acc < lastFromAccuracy) {
+            var moved = lastFromGeocodeLatLng ? latlng.distanceTo(lastFromGeocodeLatLng) : Infinity;
+            if (lastFromAccuracy === Infinity || now - lastFromGeocodeTime > 2500 || moved > 25 || acc < lastFromAccuracy) {
                 if (lastFromAccuracy === Infinity || acc < lastFromAccuracy) lastFromAccuracy = acc;
                 lastFromGeocodeTime = now;
+                lastFromGeocodeLatLng = latlng;
                 reverseGeocode(latlng, 'rateMapStart');
             }
             updateLocStatus('Tracking active. Accuracy: ~' + Math.round(acc) + 'm', 'ok');
@@ -900,6 +903,12 @@
 
     function forwardGeocode(query) {
 
+        // Pad the strict service box by ~0.003° (~300 m) for search results
+        // only. Nominatim often returns coordinates a few dozen metres past
+        // the polygon edge, so this keeps real places near Solano from being
+        // wrongly rejected as "No matching place".
+        var searchArea = serviceBounds.pad(0.003);
+
         function fetchResults(q) {
             return fetch('/geocode/search?q=' + encodeURIComponent(q)).then(function (r) { return r.json(); });
         }
@@ -917,7 +926,7 @@
             results.forEach(function (item) {
                 var latlng = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
                 if (!latlng.lat || !latlng.lng || isNaN(latlng.lat) || isNaN(latlng.lng)) return;
-                if (serviceBounds.contains(latlng)) inside.push({ item: item, latlng: latlng });
+                if (searchArea.contains(latlng)) inside.push({ item: item, latlng: latlng });
             });
 
             if (inside.length === 0) {
@@ -950,7 +959,7 @@
             if (!results || results.length === 0) return false;
             return results.some(function (item) {
                 var ll = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
-                return ll.lat && ll.lng && !isNaN(ll.lat) && !isNaN(ll.lng) && serviceBounds.contains(ll);
+                return ll.lat && ll.lng && !isNaN(ll.lat) && !isNaN(ll.lng) && searchArea.contains(ll);
             });
         }
 
@@ -1039,7 +1048,7 @@
     function updateGoogleConnect() {
         var row = document.getElementById('googleConnectRow');
         if (!row) return;
-        var show = selectedRating >= 1 && selectedRating <= 2 && complaintConnectFieldsReady();
+        var show = selectedRating >= 1 && selectedRating <= 2;
         row.style.display = show ? '' : 'none';
     }
 
@@ -1118,7 +1127,7 @@
             complaintType.value = draft.complaint_type;
             document.getElementById('othersBox').style.display = (draft.complaint_type === 'Others') ? 'block' : 'none';
         }
-        ['complaintDetails', 'passenger_name', 'passenger_contact', 'passenger_email', 'rateMapStart', 'rateMapEnd']
+        ['complaintDetails', 'passenger_name', 'passenger_contact', 'passenger_email', 'rateMapEnd']
             .forEach(function (id) {
                 var el = document.getElementById(id);
                 if (el && typeof draft[id] === 'string' && draft[id]) el.value = draft[id];
@@ -1178,6 +1187,14 @@
     };
     window.retryLocation = retryLocation;
     window.skipLocation = skipLocation;
+
+    /* ---- Session keepalive (prevents 419 on long-open form) ----
+       The complaint form can sit open while the map/GPS warms up. Ping a
+       lightweight endpoint every minute so the session (and its CSRF token)
+       does not expire into a 419 before the passenger presses Submit. */
+    setInterval(function () {
+        fetch('/rate/keepalive', { method: 'GET', credentials: 'same-origin' }).catch(function () {});
+    }, 60000);
 
     setTimeout(function () { initMap(); }, 50);
 })();

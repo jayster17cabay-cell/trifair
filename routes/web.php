@@ -321,6 +321,13 @@ Route::get('/rate/{qrCode}', [RatingController::class, 'showRateForm'])->name('r
 Route::post('/rate/{qrCode}', [RatingController::class, 'submitRating'])->name('rate.submit')->middleware('throttle:30,1');
 Route::get('/rate/{qrCode}/submitted', [RatingController::class, 'showSubmitted'])->name('rate.submitted');
 
+// Session keepalive — a passenger can leave the rate form open while the
+// map loads and the GPS warms up. Touching the session keeps the CSRF token
+// fresh so the final POST does not expire into a 419 mid-submit.
+Route::get('/rate/keepalive', function () {
+    return response('', 204);
+})->name('rate.keepalive');
+
 Route::group(['prefix' => 'passenger', 'middleware' => ['auth', 'role:passenger']], function () {
     Route::get('/dashboard', [PassengerController::class, 'dashboard'])->name('passenger.dashboard');
 });

@@ -78,11 +78,6 @@
     <td class="tw-td">
         <div class="flex flex-wrap items-center gap-1">
             <span class="tw-badge {{ $statusClass }}"><i class="bi {{ $statusIcon }}"></i>{{ $statusLabel }}</span>
-            @if (!$operator->isArchived())
-                <span class="tw-badge {{ $accountActive ? 'tw-badge-green' : 'tw-badge-gray' }}" title="Account {{ $accountActive ? 'enabled' : 'disabled' }}">
-                    <i class="bi {{ $accountActive ? 'bi-person-check' : 'bi-person-dash' }}"></i>{{ $accountActive ? 'Account Active' : 'Account Inactive' }}
-                </span>
-            @endif
         </div>
     </td>
     <td class="tw-td text-right">
