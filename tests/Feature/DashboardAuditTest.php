@@ -184,6 +184,31 @@ class DashboardAuditTest extends TestCase
             ->assertOk()->assertJsonStructure(['html', 'pagination']);
     }
 
+    public function test_complaints_search_by_reference_number()
+    {
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator('active');
+        $first = $this->makeRating($op, 1, true, true);
+        $second = $this->makeRating($op, 2, true, true);
+
+        // Exact reference number shows only that complaint.
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=all&search=' . $first->reference_number)
+            ->assertOk()
+            ->assertSee($first->reference_number, false)
+            ->assertDontSee($second->reference_number);
+
+        // Case-insensitive: lowercase reference still matches.
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=all&search=' . strtolower($first->reference_number))
+            ->assertOk()
+            ->assertSee($first->reference_number, false)
+            ->assertDontSee($second->reference_number);
+
+        // No match shows the friendly empty state (and stays on the page).
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=all&search=NO-SUCH-REF')
+            ->assertOk()
+            ->assertSee('No complaints found', false);
+    }
+
     public function test_officer_pages_searches_and_ajax_render()
     {
         $officer = $this->makeUser('tfrb_officer');
@@ -620,6 +645,35 @@ class DashboardAuditTest extends TestCase
             ->assertOk()
             ->assertSee('Reference', false)
             ->assertSee($rating->reference_number, false);
+    }
+
+    public function test_complaints_export_filters_stars_status_date_and_includes_reason()
+    {
+        $admin = $this->makeUser('superadmin');
+        $op = $this->makeOperator();
+
+        $pending = $this->makeRating($op, 1, true, true);
+        $solved = $this->makeRating($op, 2, true, true);
+        $solved->update(['is_reviewed' => true, 'is_solved' => true]);
+
+        // Status + star filters narrow the export.
+        $this->actingAs($admin)->get('/superadmin/complaints/export?format=csv&filter=solved&rating=2')
+            ->assertOk()
+            ->assertSee($solved->reference_number, false)
+            ->assertDontSee($pending->reference_number);
+
+        // Date range excludes complaints outside the window.
+        $this->actingAs($admin)->get('/superadmin/complaints/export?format=csv&filter=all&date_from=2000-01-01&date_to=2000-12-31')
+            ->assertOk()
+            ->assertDontSee($pending->reference_number);
+
+        // The reason (complaint type) is included even when free-text details are empty.
+        $bare = $this->makeRating($op, 1, true, true);
+        $bare->update(['complaint_details' => null]);
+        $this->actingAs($admin)->get('/superadmin/complaints/export?format=csv&filter=all')
+            ->assertOk()
+            ->assertSee('Complaint Type', false)
+            ->assertSee('Rude Driver', false);
     }
 
     public function test_marking_complaint_reviewed_emails_the_passenger()

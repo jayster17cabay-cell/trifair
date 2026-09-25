@@ -11,11 +11,12 @@
 --}}
 
 @php
-    $statusUrl = function ($f) use ($routePrefix, $ratingFilter) {
-        return route($routePrefix . '.complaints', array_filter(['filter' => $f, 'rating' => $ratingFilter], fn ($v) => $v !== null));
+    $search = trim((string) ($search ?? request('search', '')));
+    $statusUrl = function ($f) use ($routePrefix, $ratingFilter, $search) {
+        return route($routePrefix . '.complaints', array_filter(['filter' => $f, 'rating' => $ratingFilter, 'search' => $search], fn ($v) => $v !== null && $v !== ''));
     };
-    $starUrl = function ($r) use ($routePrefix, $filter) {
-        return route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $r], fn ($v) => $v !== null));
+    $starUrl = function ($r) use ($routePrefix, $filter, $search) {
+        return route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $r, 'search' => $search], fn ($v) => $v !== null && $v !== ''));
     };
 @endphp
 
@@ -29,7 +30,16 @@
         'exportLabel' => 'Complaints',
         'exportIcon' => 'bi-exclamation-triangle',
         'activeOperators' => $activeOperators,
-        'preservedParams' => array_filter(['filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null),
+        'exportFilters' => [
+            ['type' => 'select', 'name' => 'filter', 'label' => 'Status', 'options' => [
+                '' => 'All', 'pending' => 'Pending', 'reviewed' => 'Reviewed', 'solved' => 'Solved',
+            ], 'value' => $filter],
+            ['type' => 'select', 'name' => 'rating', 'label' => 'Stars', 'options' => [
+                '' => 'All stars', '1' => '1 Star', '2' => '2 Stars',
+            ], 'value' => $ratingFilter ?? ''],
+            ['type' => 'daterange', 'prefix' => 'date', 'from' => request('date_from'), 'to' => request('date_to')],
+        ],
+        'preservedParams' => array_filter(['search' => $search], fn ($v) => $v !== null && $v !== ''),
     ])
 </div>
 
@@ -75,6 +85,24 @@
         </div>
 
         <div class="ml-auto flex flex-wrap items-center gap-3">
+            <form action="{{ route($routePrefix . '.complaints') }}" method="GET" class="flex items-center gap-2">
+                <input type="hidden" name="filter" value="{{ $filter }}">
+                @if ($ratingFilter !== null)
+                    <input type="hidden" name="rating" value="{{ $ratingFilter }}">
+                @endif
+                <input type="text" name="search" value="{{ $search }}" placeholder="Search by reference number"
+                       class="tw-input py-2" style="max-width: 16rem;" aria-label="Search complaint by reference number">
+                <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Search">
+                    <i class="bi bi-search"></i><span class="hidden sm:inline">Search</span>
+                </button>
+                @if ($search !== '')
+                    <a href="{{ route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null)) }}"
+                       class="tw-btn tw-btn-sm tw-btn-ghost" title="Clear search">
+                        <i class="bi bi-x-lg"></i><span class="hidden sm:inline">Clear</span>
+                    </a>
+                @endif
+            </form>
+            <span class="h-5 w-px bg-slate-200" aria-hidden="true"></span>
             <label class="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600">
                 <input type="checkbox" class="tw-check" data-complaint-select-all>
                 Select all
@@ -118,11 +146,19 @@
 </div>
 
 @php
-    $emptyTitle = 'No Complaints';
-    $emptyMsg = 'All operators are doing great! No complaints filed.';
-    if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for review. Keep it up!'; }
-    elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints you mark as reviewed will appear here.'; }
-    elseif ($filter === 'solved') { $emptyTitle = 'No Solved Complaints'; $emptyMsg = 'Complaints you mark as solved will appear here.'; }
+    if ($search !== '') {
+        $emptyTitle = 'No complaints found';
+        $emptyMsg = 'Nothing matches "' . $search . '". Try the full reference number, e.g. TFR-2026-0001.';
+        if ($filter !== 'all') {
+            $emptyMsg = 'No ' . $filter . ' complaint matches "' . $search . '". Try the full reference number, e.g. TFR-2026-0001.';
+        }
+    } else {
+        $emptyTitle = 'No Complaints';
+        $emptyMsg = 'All operators are doing great! No complaints filed.';
+        if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for review. Keep it up!'; }
+        elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints you mark as reviewed will appear here.'; }
+        elseif ($filter === 'solved') { $emptyTitle = 'No Solved Complaints'; $emptyMsg = 'Complaints you mark as solved will appear here.'; }
+    }
 @endphp
 
 @forelse ($complaints as $rating)

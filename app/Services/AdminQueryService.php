@@ -23,6 +23,7 @@ class AdminQueryService
         $ratingKey = $request->query('rating');
         $allowStar = ['1', '2'];
         $ratingFilter = in_array($ratingKey, $allowStar, true) ? (int) $ratingKey : null;
+        $search = trim((string) $request->query('search'));
 
         $base = Rating::isValid()->isComplaint();
 
@@ -56,12 +57,31 @@ class AdminQueryService
             $base->where('rating', $ratingFilter);
         }
 
+        if ($search !== '') {
+            $this->applyReferenceSearch($base, $search);
+        }
+
         $complaints = $base->with(['operator.user', 'proofs', 'response', 'operatorProofs'])
             ->latest()
             ->paginate(20)
             ->withQueryString();
 
-        return compact('complaints', 'filter', 'ratingFilter', 'pendingCount', 'reviewedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal');
+        return compact('complaints', 'filter', 'ratingFilter', 'search', 'pendingCount', 'reviewedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal');
+    }
+
+    /**
+     * The reference number (TFR-2026-0042) is a computed accessor, not a real
+     * column, so it cannot be searched with SQL directly. Instead the input is
+     * resolved to the underlying rating id: a full reference, a bare ticket
+     * number, or any string ending in a number all map to that row id.
+     */
+    private function applyReferenceSearch($query, string $search): void
+    {
+        if (preg_match('/(\d+)$/', $search, $m)) {
+            $query->where('id', (int) $m[1]);
+        } else {
+            $query->whereRaw('1 = 0');
+        }
     }
 
     public function ratingsData(Request $request): array
@@ -278,6 +298,7 @@ class AdminQueryService
         $filter = $request->query('filter', 'pending');
         $operatorId = $request->query('operator_id');
         $ratingKey = $request->query('rating');
+        $search = trim((string) $request->query('search'));
         $base = Rating::isValid()->isComplaint();
         if (in_array($ratingKey, ['1', '2'], true)) {
             $base->where('rating', (int) $ratingKey);
@@ -292,6 +313,10 @@ class AdminQueryService
         if ($operatorId) {
             $base->where('operator_id', $operatorId);
         }
+        if ($search !== '') {
+            $this->applyReferenceSearch($base, $search);
+        }
+        $this->applyDateRange($base, $request->query('date_from'), $request->query('date_to'));
 
         return $base->with(['operator.user', 'response'])
             ->latest()
@@ -301,8 +326,11 @@ class AdminQueryService
                     'id' => $complaint->id,
                     'reference' => $complaint->reference_number,
                     'operator' => $complaint->operator->user->name ?? 'Unknown',
+                    'body_number' => $complaint->operator->body_number ?? '',
+                    'plate_number' => $complaint->operator->plate_number ?? '',
                     'rating' => $complaint->rating,
-                    'complaint' => $complaint->complaint_details ?? '',
+                    'type' => $complaint->complaint_type ?? '',
+                    'details' => $complaint->complaint_details ?? '',
                     'status' => $complaint->is_solved ? 'Solved' : ($complaint->is_reviewed ? 'Reviewed' : 'Pending'),
                     'date' => $complaint->created_at?->format('Y-m-d H:i'),
                 ];

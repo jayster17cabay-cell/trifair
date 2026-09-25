@@ -19,6 +19,7 @@
     // If the page already scopes to one operator, carry it silently instead of
     // showing a second (conflicting) operator selector inside this form.
     $scopedOperatorId = $preservedParams['operator_id'] ?? null;
+        $exportFilters = $exportFilters ?? [];
 @endphp
 
 <div class="relative inline-block text-left">
@@ -61,6 +62,34 @@
                                 <option value="{{ $op->id }}">{{ $op->user->name ?? 'Unknown' }}</option>
                             @endforeach
                         </select>
+                    </div>
+                @endif
+
+                @if ($exportFilters)
+                    <div class="mb-3 space-y-3">
+                        @foreach ($exportFilters as $field)
+                            @if (($field['type'] ?? '') === 'daterange')
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label for="{{ $dropdownId }}_df" class="mb-1 block text-xs font-semibold text-slate-600">From</label>
+                                        <input type="date" id="{{ $dropdownId }}_df" name="{{ $field['prefix'] }}_from" value="{{ $field['from'] ?? '' }}" class="tw-select py-2 text-xs">
+                                    </div>
+                                    <div>
+                                        <label for="{{ $dropdownId }}_dt" class="mb-1 block text-xs font-semibold text-slate-600">To</label>
+                                        <input type="date" id="{{ $dropdownId }}_dt" name="{{ $field['prefix'] }}_to" value="{{ $field['to'] ?? '' }}" class="tw-select py-2 text-xs">
+                                    </div>
+                                </div>
+                            @else
+                                <div>
+                                    <label for="{{ $dropdownId }}_{{ $field['name'] }}" class="mb-1 block text-xs font-semibold text-slate-600">{{ $field['label'] }}</label>
+                                    <select id="{{ $dropdownId }}_{{ $field['name'] }}" name="{{ $field['name'] }}" class="tw-select py-2 text-xs">
+                                        @foreach ($field['options'] as $val => $lbl)
+                                            <option value="{{ $val }}" {{ (string) ($field['value'] ?? '') === (string) $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                        @endforeach
                     </div>
                 @endif
 
