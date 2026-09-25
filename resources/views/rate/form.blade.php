@@ -232,27 +232,10 @@
                             <div style="margin-top:0.6rem;">
                                 <label for="passenger_email" class="rate-label"><i class="bi bi-envelope" style="color:#4f46e5;"></i> Email (for status updates)</label>
                                 <input type="email" name="passenger_email" id="passenger_email" class="rate-field" placeholder="juan@gmail.com" value="{{ auth()->check() && auth()->user()->isPassenger() ? auth()->user()->email : '' }}">
-                                @if (config('services.google.client_id') && config('services.google.client_secret'))
-                                    @if (auth()->check() && auth()->user()->isPassenger())
-                                        <div class="rate-connect">
-                                            <div class="rate-connect-done">
-                                                <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
-                                                <span>Connected as <strong>{{ auth()->user()->email }}</strong> — makikita sa iyong Google (Gmail) ang updates ng iyong complaint.</span>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <div class="rate-connect">
-                                            <a href="{{ route('login.google', ['intended' => request()->path()]) }}" class="rate-connect-btn" id="googleConnectBtn">
-                                                <i class="bi bi-google"></i> Continue with Google
-                                                <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
-                                            </a>
-                                            <p class="rate-connect-note" style="margin-top:0.55rem;">
-                                                <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
-                                                <span><strong>Walang makakakita ng iyong identity.</strong> HINDI makikita ng driver ang iyong pangalan, email, o contact number — ang iyong mga detalye ay para lang sa TriFair/TFRB para sa status updates at imbestigasyon. Hindi mo na kailangang mag-type ng email — mag-log in ka lang gamit ang Google.</span>
-                                            </p>
-                                        </div>
-                                    @endif
-                                @endif
+                                <p class="rate-connect-note" style="margin-top:0.55rem;">
+                                    <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+                                    <span><strong>Walang makakakita ng iyong identity.</strong> HINDI makikita ng driver ang iyong pangalan, email, o contact number — ang iyong mga detalye ay para lang sa TriFair/TFRB para sa status updates at imbestigasyon.</span>
+                                </p>
                             </div>
                             <div class="rate-upload" id="uploadZone">
                                 <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
@@ -1064,58 +1047,8 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="bi bi-hourglass-split" aria-hidden="true"></i> Submitting...';
         }
-        setTimeout(function () { form.submit(); }, 350);
+setTimeout(function () { form.submit(); }, 350);
     }
-
-    function saveRateDraft() {
-        var val = function (id) {
-            var el = document.getElementById(id);
-            return (el && el.value != null) ? el.value : '';
-        };
-        var draft = {
-            rating: selectedRating,
-            complaint_type: val('complaintType'),
-            complaint_details: val('complaintDetails'),
-            passenger_name: val('passenger_name'),
-            passenger_contact: val('passenger_contact'),
-            passenger_email: val('passenger_email'),
-            start_location: val('rateMapStart'),
-            end_location: val('rateMapEnd')
-        };
-        try { localStorage.setItem('trifairRateDraft', JSON.stringify(draft)); } catch (e) {}
-    }
-
-    function restoreRateDraft() {
-        var raw;
-        try { raw = localStorage.getItem('trifairRateDraft'); } catch (e) { return; }
-        if (!raw) return;
-        try { localStorage.removeItem('trifairRateDraft'); } catch (e) {}
-        var draft;
-        try { draft = JSON.parse(raw); } catch (e) { return; }
-        if (!draft || typeof draft !== 'object') return;
-
-        if (draft.rating && draft.rating <= 2) {
-            applyStar(parseInt(draft.rating, 10));
-        }
-        if (draft.complaint_type) {
-            complaintType.value = draft.complaint_type;
-            document.getElementById('othersBox').style.display = (draft.complaint_type === 'Others') ? 'block' : 'none';
-        }
-        ['complaintDetails', 'passenger_name', 'passenger_contact', 'passenger_email', 'rateMapEnd']
-            .forEach(function (id) {
-                var el = document.getElementById(id);
-                if (el && typeof draft[id] === 'string' && draft[id]) el.value = draft[id];
-            });
-    }
-
-    var connectBtn = document.getElementById('googleConnectBtn');
-    if (connectBtn) {
-        connectBtn.addEventListener('click', function () {
-            saveRateDraft();
-        });
-    }
-
-    restoreRateDraft();
 
     /* ---- File upload ---- */
 

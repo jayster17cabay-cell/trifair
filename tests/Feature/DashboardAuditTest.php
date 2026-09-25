@@ -890,24 +890,15 @@ class DashboardAuditTest extends TestCase
         });
     }
 
-    public function test_rate_form_shows_google_connect_and_reassurance_when_configured()
+    public function test_rate_form_shows_email_field_with_privacy_reassurance()
     {
         $op = $this->makeOperator('active');
 
-        // Hidden when OAuth is not configured (reset first — tests share config).
-        config()->set('services.google.client_id', '');
-        config()->set('services.google.client_secret', '');
         $this->get('/rate/' . $op->qr_code)
             ->assertOk()
+            ->assertSee('Email (for status updates)', false)
+            ->assertSee('Walang makakakita ng iyong identity', false)
             ->assertDontSee('Continue with Google');
-
-        config()->set('services.google.client_id', 'test-client-id');
-        config()->set('services.google.client_secret', 'test-client-secret');
-
-        $this->get('/rate/' . $op->qr_code)
-            ->assertOk()
-            ->assertSee('Continue with Google', false)
-            ->assertSee('Walang makakakita ng iyong identity', false);
     }
 
     public function test_solved_status_notifies_linked_passenger_in_app()
