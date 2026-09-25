@@ -29,10 +29,9 @@ class RegisterController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'contact_number' => 'required|string|max:20',
-            'license_number' => 'required|string|max:50',
             'plate_number' => 'required|string|max:20|unique:operators,plate_number',
             'body_number' => 'required|string|max:20|unique:operators,body_number',
-            'motorcycle_model' => 'nullable|string|max:100',
+            'motorcycle_model' => 'required|string|max:100',
             'toda_id' => 'nullable|exists:todas,id',
             'password' => 'required|string|min:8|confirmed',
         ], [
@@ -54,10 +53,9 @@ class RegisterController extends Controller
             'user_id' => $user->id,
             'toda_id' => $data['toda_id'] ?? null,
             'contact_number' => $data['contact_number'],
-            'license_number' => $data['license_number'],
             'plate_number' => $data['plate_number'],
             'body_number' => $data['body_number'],
-            'motorcycle_model' => $data['motorcycle_model'] ?? null,
+            'motorcycle_model' => $data['motorcycle_model'],
             'qr_code' => Str::random(32),
             'status' => 'pending',
         ]);

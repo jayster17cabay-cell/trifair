@@ -57,11 +57,6 @@
             @error('motorcycle_model') <div class="tw-error-text">{{ $message }}</div> @enderror
         </div>
         <div>
-            <label for="license_number" class="tw-label">License Number</label>
-            <input type="text" class="tw-input @error('license_number') is-invalid @enderror" id="license_number" name="license_number" value="{{ old('license_number') }}" placeholder="Enter license number">
-            @error('license_number') <div class="tw-error-text">{{ $message }}</div> @enderror
-        </div>
-        <div>
             <label for="contact_number" class="tw-label">Contact Number</label>
             <input type="text" class="tw-input @error('contact_number') is-invalid @enderror" id="contact_number" name="contact_number" value="{{ old('contact_number') }}" placeholder="Enter contact number">
             @error('contact_number') <div class="tw-error-text">{{ $message }}</div> @enderror

@@ -56,20 +56,9 @@
                             <label for="contact_number" class="tw-label">Contact Number</label>
                             <div class="tw-input-group">
                                 <span class="tw-input-group-icon"><i class="bi bi-phone"></i></span>
-                                <input id="contact_number" type="text" class="tw-input @error('contact_number') is-invalid @enderror" name="contact_number" value="{{ old('contact_number') }}" placeholder="e.g. 0917 123 4567">
+                                <input id="contact_number" type="text" class="tw-input @error('contact_number') is-invalid @enderror" name="contact_number" value="{{ old('contact_number') }}" required placeholder="e.g. 0917 123 4567">
                             </div>
                             @error('contact_number')
-                                <span class="tw-error-text" role="alert">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="tw-auth-field">
-                            <label for="license_number" class="tw-label">License Number</label>
-                            <div class="tw-input-group">
-                                <span class="tw-input-group-icon"><i class="bi bi-card-text"></i></span>
-                                <input id="license_number" type="text" class="tw-input @error('license_number') is-invalid @enderror" name="license_number" value="{{ old('license_number') }}" placeholder="Enter your license number">
-                            </div>
-                            @error('license_number')
                                 <span class="tw-error-text" role="alert">{{ $message }}</span>
                             @enderror
                         </div>
@@ -78,7 +67,7 @@
                             <label for="plate_number" class="tw-label">Plate Number</label>
                             <div class="tw-input-group">
                                 <span class="tw-input-group-icon"><i class="bi bi-upc-scan"></i></span>
-                                <input id="plate_number" type="text" class="tw-input @error('plate_number') is-invalid @enderror" name="plate_number" value="{{ old('plate_number') }}" placeholder="e.g. AB-1234">
+                                <input id="plate_number" type="text" class="tw-input @error('plate_number') is-invalid @enderror" name="plate_number" value="{{ old('plate_number') }}" required placeholder="e.g. AB-1234">
                             </div>
                             @error('plate_number')
                                 <span class="tw-error-text" role="alert">{{ $message }}</span>
@@ -89,7 +78,7 @@
                             <label for="body_number" class="tw-label">Body Number</label>
                             <div class="tw-input-group">
                                 <span class="tw-input-group-icon"><i class="bi bi-123"></i></span>
-                                <input id="body_number" type="text" class="tw-input @error('body_number') is-invalid @enderror" name="body_number" value="{{ old('body_number') }}" placeholder="Enter your body number">
+                                <input id="body_number" type="text" class="tw-input @error('body_number') is-invalid @enderror" name="body_number" value="{{ old('body_number') }}" required placeholder="Enter your body number">
                             </div>
                             @error('body_number')
                                 <span class="tw-error-text" role="alert">{{ $message }}</span>
@@ -100,7 +89,7 @@
                             <label for="motorcycle_model" class="tw-label">Motorcycle Model</label>
                             <div class="tw-input-group">
                                 <span class="tw-input-group-icon"><i class="bi bi-bicycle"></i></span>
-                                <input id="motorcycle_model" type="text" class="tw-input @error('motorcycle_model') is-invalid @enderror" name="motorcycle_model" value="{{ old('motorcycle_model') }}" placeholder="e.g. Honda Wave 125">
+                                <input id="motorcycle_model" type="text" class="tw-input @error('motorcycle_model') is-invalid @enderror" name="motorcycle_model" value="{{ old('motorcycle_model') }}" required placeholder="e.g. Honda Wave 125">
                             </div>
                             @error('motorcycle_model')
                                 <span class="tw-error-text" role="alert">{{ $message }}</span>
