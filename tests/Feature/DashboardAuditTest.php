@@ -897,8 +897,25 @@ class DashboardAuditTest extends TestCase
         $this->get('/rate/' . $op->qr_code)
             ->assertOk()
             ->assertSee('Email (for status updates)', false)
-            ->assertSee('Walang makakakita ng iyong identity', false)
+            ->assertSee('Walang makakakita ng iyong identity', false);
+    }
+
+    public function test_rate_form_shows_google_connect_when_configured()
+    {
+        $op = $this->makeOperator('active');
+
+        config()->set('services.google.client_id', '');
+        config()->set('services.google.client_secret', '');
+        $this->get('/rate/' . $op->qr_code)
+            ->assertOk()
             ->assertDontSee('Continue with Google');
+
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+
+        $this->get('/rate/' . $op->qr_code)
+            ->assertOk()
+            ->assertSee('Continue with Google', false);
     }
 
     public function test_solved_status_notifies_linked_passenger_in_app()
