@@ -4,9 +4,10 @@
 --}}
 <div class="tw-modal-head">
     <div class="flex items-center gap-3">
-        <div class="tw-avatar tw-avatar-md bg-gold text-navy-800">{{ strtoupper(substr($member->user->name, 0, 1)) }}</div>
+        @php $memberName = $member->user ? $member->user->name : 'Unknown'; @endphp
+        <div class="tw-avatar tw-avatar-md bg-gold text-navy-800">{{ strtoupper(substr($memberName, 0, 1)) }}</div>
         <div>
-            <h5 class="text-base font-bold text-slate-900">{{ $member->user->name }}</h5>
+            <h5 class="text-base font-bold text-slate-900">{{ $memberName }}</h5>
             <p class="text-xs text-slate-500">Body #{{ $member->body_number }} · {{ $member->plate_number }}</p>
         </div>
     </div>

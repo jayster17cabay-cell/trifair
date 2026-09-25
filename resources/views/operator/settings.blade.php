@@ -22,9 +22,14 @@
 
                 <div class="mb-4">
                     <label for="current_password" class="tw-label">Current Password</label>
-                    <input type="password" name="current_password" id="current_password"
-                        class="tw-input @error('current_password') is-invalid @enderror"
-                        placeholder="Enter current password" required>
+                    <div class="tw-input-group">
+                        <input type="password" name="current_password" id="current_password"
+                            class="tw-input @error('current_password') is-invalid @enderror"
+                            placeholder="Enter current password" required>
+                        <button type="button" data-pw-toggle="#current_password" class="inline-flex items-center px-3.5 text-slate-400 transition hover:text-navy-600" tabindex="-1" aria-label="Toggle password visibility">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                     @error('current_password')
                         <span class="tw-error-text">{{ $message }}</span>
                     @enderror
@@ -32,9 +37,14 @@
 
                 <div class="mb-4">
                     <label for="new_password" class="tw-label">New Password</label>
-                    <input type="password" name="new_password" id="new_password"
-                        class="tw-input @error('new_password') is-invalid @enderror"
-                        placeholder="At least 8 characters" required>
+                    <div class="tw-input-group">
+                        <input type="password" name="new_password" id="new_password"
+                            class="tw-input @error('new_password') is-invalid @enderror"
+                            placeholder="At least 8 characters" required>
+                        <button type="button" data-pw-toggle="#new_password" class="inline-flex items-center px-3.5 text-slate-400 transition hover:text-navy-600" tabindex="-1" aria-label="Toggle password visibility">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                     @error('new_password')
                         <span class="tw-error-text">{{ $message }}</span>
                     @enderror
@@ -42,9 +52,14 @@
 
                 <div class="mb-4">
                     <label for="new_password_confirmation" class="tw-label">Confirm New Password</label>
-                    <input type="password" name="new_password_confirmation" id="new_password_confirmation"
-                        class="tw-input"
-                        placeholder="Re-enter new password" required>
+                    <div class="tw-input-group">
+                        <input type="password" name="new_password_confirmation" id="new_password_confirmation"
+                            class="tw-input"
+                            placeholder="Re-enter new password" required>
+                        <button type="button" data-pw-toggle="#new_password_confirmation" class="inline-flex items-center px-3.5 text-slate-400 transition hover:text-navy-600" tabindex="-1" aria-label="Toggle password visibility">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="tw-btn tw-btn-gold w-full tw-btn-lg">

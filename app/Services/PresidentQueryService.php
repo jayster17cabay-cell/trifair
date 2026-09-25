@@ -125,7 +125,7 @@ class PresidentQueryService
     {
         $memberIds = $this->todaOperators($toda)->pluck('id');
 
-        $rows = Operator::query()
+        $members = Operator::query()
             ->whereIn('id', $memberIds)
             ->whereHas('user')
             ->with('user')
@@ -135,14 +135,21 @@ class PresidentQueryService
             ])
             ->get();
 
-        return $rows->map(function (Operator $op) {
-            $avg = $op->ratings()->isValid()->avg('rating');
+        $avgs = Rating::query()
+            ->whereIn('operator_id', $memberIds)
+            ->isValid()
+            ->selectRaw('operator_id, AVG(rating) as avg_rating')
+            ->groupBy('operator_id')
+            ->pluck('avg_rating', 'operator_id');
+
+        return $members->map(function (Operator $op) use ($avgs) {
+            $avg = (float) ($avgs[$op->id] ?? 0);
             return (object) [
                 'id' => $op->id,
-                'name' => $op->user->name,
+                'name' => $op->user ? $op->user->name : 'Unknown',
                 'body_number' => $op->body_number,
                 'status' => $op->status,
-                'average' => $avg ? round((float) $avg, 1) : 0,
+                'average' => $avg ? round($avg, 1) : 0,
                 'total_ratings' => $op->ratings_count,
                 'complaints' => $op->complaint_count,
             ];
@@ -172,7 +179,7 @@ class PresidentQueryService
         }
         return $member->ratings()
             ->isValid()
-            ->with('response')
+            ->with('response', 'proofs')
             ->latest()
             ->paginate(10);
     }

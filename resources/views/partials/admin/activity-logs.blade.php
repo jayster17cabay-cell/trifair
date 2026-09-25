@@ -21,6 +21,7 @@
         'operator' => 'Operators',
         'tfrb_officer' => 'Officers',
         'review' => 'Reviews',
+        'system' => 'System',
     ];
     $categoryColors = [
         'auth' => 'text-blue-600',

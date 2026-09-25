@@ -10,7 +10,7 @@
 
 {{-- KPI cards --}}
 <div class="mb-4 grid grid-cols-2 gap-2.5 md:grid-cols-4">
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#ownRatings', 'icon' => 'bi-award', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating', 'live' => 'ownAvg']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#ownRatings', 'icon' => 'bi-award', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => '#membersSection', 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
     @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-bar-chart', 'value' => number_format($summary['avgMemberRating'], 1), 'label' => 'TODA Avg']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => '#membersSection', 'icon' => 'bi-flag', 'value' => $summary['pendingComplaints'], 'label' => 'Complaints']])

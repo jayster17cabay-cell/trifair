@@ -62,7 +62,7 @@ class AdminDashboardService
         }
 
         if ($options['includePendingReview'] ?? false) {
-            $data['pendingReview'] = Rating::isValid()->where('is_reviewed', false)->count();
+            $data['pendingReview'] = Rating::isValid()->isComplaint()->where('is_reviewed', false)->count();
         }
 
         $data['recentRatings'] = Rating::isValid()->with(['operator.user', 'operator.toda'])

@@ -112,6 +112,8 @@ class PresidentController extends Controller
             abort(403);
         }
 
+        $member->load('user', 'toda');
+
         $ratings = $this->query->memberRatings($toda, $member);
 
         $html = view('partials.president.member-detail', [

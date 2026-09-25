@@ -15,7 +15,7 @@
     $exportLabel = $exportLabel ?? 'Data';
     $exportIcon = $exportIcon ?? 'bi-download';
     $exportSub = $exportSub ?? 'Save a copy of this data.';
-    $hasScope = collect($preservedParams)->filter()->isNotEmpty() || ($activeOperators ?? null);
+    $hasScope = collect($preservedParams)->filter()->isNotEmpty();
     // If the page already scopes to one operator, carry it silently instead of
     // showing a second (conflicting) operator selector inside this form.
     $scopedOperatorId = $preservedParams['operator_id'] ?? null;

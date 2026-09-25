@@ -7,6 +7,7 @@
     - $pendingCount, $reviewedCount, $solvedCount, $totalCount int
     - $star1Count, $star2Count           int  (badges on the star chips)
     - $activeOperators Collection          active operators for export filter
+    - $proofsTotal    int|null         (optional) global proof count across all complaints
 --}}
 
 @php
@@ -52,7 +53,7 @@
         </div>
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-paperclip"></i></div>
-            <div class="tw-stat-num">{{ $complaints->sum(fn($r) => $r->proofs->count()) }}</div>
+            <div class="tw-stat-num">{{ $proofsTotal ?? $complaints->sum(fn($r) => $r->proofs->count()) }}</div>
             <div class="tw-stat-label">Proofs</div>
         </div>
     </div>

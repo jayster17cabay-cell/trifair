@@ -35,6 +35,7 @@
     <div class="op-stack">
         @include('partials.operator.qr-code-card', ['operator' => $operator])
         @include('partials.operator.rating-breakdown-card', ['ratingCounts' => $ratingCounts, 'totalRatings' => $totalRatings])
+        @include('partials.operator.recent-feedback-card', ['recentRatings' => $recentRatings])
     </div>
 </div>
 

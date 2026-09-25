@@ -8,6 +8,7 @@
         initDropdowns();
         initExportForms();
         initPasswordToggles();
+        initProofInputs();
         initCollapsibleCardLists();
         initNotificationCards();
         initNotificationLive();
@@ -290,10 +291,11 @@
 
     function updateUnreadBadges(count) {
         var show = count > 0;
-        var bell = document.getElementById('unreadBellBadge');
-        var side = document.getElementById('unreadSideBadge');
-        if (bell) bell.style.display = show ? '' : 'none';
-        if (side) side.style.display = show ? '' : 'none';
+        var badges = document.querySelectorAll('[data-unread-badge]');
+        for (var i = 0; i < badges.length; i++) {
+            badges[i].textContent = count;
+            badges[i].style.display = show ? '' : 'none';
+        }
     }
 
     function initNotificationLive() {
@@ -347,6 +349,33 @@
                 var show = input.type === 'password';
                 input.type = show ? 'text' : 'password';
                 btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        });
+    }
+
+    function initProofInputs() {
+        var MAX = 5;
+        document.querySelectorAll('input[data-proof-input]').forEach(function (input) {
+            var form = input.closest('form');
+            var list = form ? form.querySelector('[data-proof-files]') : null;
+            input.addEventListener('change', function () {
+                if (!list) return;
+                var files = Array.prototype.slice.call(input.files || []);
+                if (files.length === 0) {
+                    list.textContent = '';
+                    return;
+                }
+                var shown = files.slice(0, MAX);
+                var names = shown.map(function (f) { return f.name; }).join(', ');
+                var extra = files.length - shown.length;
+                var note = names + (extra > 0 ? ' (+' + extra + ' more — only ' + MAX + ' files can be uploaded)' : '');
+                list.textContent = '';
+                var span = document.createElement('span');
+                span.className = 'inline-flex items-center gap-1 text-emerald-600';
+                span.innerHTML = '<i class="bi bi-paperclip"></i>';
+                span.appendChild(document.createTextNode(' ' + note));
+                if (extra > 0) span.className = 'inline-flex items-center gap-1 text-amber-600';
+                list.appendChild(span);
             });
         });
     }

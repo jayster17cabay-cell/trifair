@@ -61,15 +61,25 @@
 </div>
 
 <div class="mb-4 flex flex-wrap gap-2">
-    <a href="{{ route($routePrefix . '.operators', array_filter(['account' => 'all'])) }}" class="{{ $account === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+    <a href="{{ route($routePrefix . '.operators', array_filter(['status' => $currentStatus, 'account' => 'all'])) }}" class="{{ $account === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-people"></i> All
     </a>
-    <a href="{{ route($routePrefix . '.operators', ['account' => 'active']) }}" class="{{ $account === 'active' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+    <a href="{{ route($routePrefix . '.operators', array_filter(['status' => $currentStatus, 'account' => 'active'])) }}" class="{{ $account === 'active' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-person-check"></i> Active <span class="tw-badge tw-badge-green ml-1">{{ $accountsActiveCount }}</span>
     </a>
-    <a href="{{ route($routePrefix . '.operators', ['account' => 'inactive']) }}" class="{{ $account === 'inactive' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+    <a href="{{ route($routePrefix . '.operators', array_filter(['status' => $currentStatus, 'account' => 'inactive'])) }}" class="{{ $account === 'inactive' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-person-dash"></i> Inactive <span class="tw-badge tw-badge-gray ml-1">{{ $accountsInactiveCount }}</span>
     </a>
+    @if (!empty($archivedCount))
+        <a href="{{ route($routePrefix . '.operators', ['status' => 'archived']) }}" class="{{ $currentStatus === 'archived' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+            <i class="bi bi-archive"></i> Archived <span class="tw-badge tw-badge-gray ml-1">{{ $archivedCount }}</span>
+        </a>
+    @endif
+    @if (!empty($pendingCount))
+        <a href="{{ route($routePrefix . '.operators', ['status' => 'pending']) }}" class="{{ $currentStatus === 'pending' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+            <i class="bi bi-hourglass-split"></i> Pending Approvals <span class="tw-badge tw-badge-amber ml-1">{{ $pendingCount }}</span>
+        </a>
+    @endif
 </div>
 
 <div class="mb-4 max-w-md">
@@ -118,6 +128,7 @@
         searchTimeout = setTimeout(() => {
             const url = new URL(window.location.href);
             url.searchParams.set('search', val);
+            url.searchParams.delete('page');
             fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(d => {

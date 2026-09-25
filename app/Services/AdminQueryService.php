@@ -33,6 +33,14 @@ class AdminQueryService
         $star1Count = (clone $base)->where('rating', 1)->count();
         $star2Count = (clone $base)->where('rating', 2)->count();
 
+        // Global count of proof files attached to valid complaints (not just the
+        // current page) so the stats bar stays accurate across pagination.
+        $proofsTotal = (int) DB::table('ratings')
+            ->join('rating_proofs', 'rating_proofs.rating_id', '=', 'ratings.id')
+            ->where('ratings.is_valid', true)
+            ->whereNotNull('ratings.complaint_type')
+            ->count();
+
         if ($filter === 'pending') {
             $base->where('is_reviewed', false)->where('is_solved', false);
         } elseif ($filter === 'reviewed') {
@@ -53,7 +61,7 @@ class AdminQueryService
             ->paginate(20)
             ->withQueryString();
 
-        return compact('complaints', 'filter', 'ratingFilter', 'pendingCount', 'reviewedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count');
+        return compact('complaints', 'filter', 'ratingFilter', 'pendingCount', 'reviewedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal');
     }
 
     public function ratingsData(Request $request): array
@@ -223,11 +231,12 @@ class AdminQueryService
         $account = $request->query('account', 'all');
 
         $archivedCount = Operator::archived()->count();
+        $pendingCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator'))->where('status', 'pending')->count();
         $activeOperatorsCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator'))->where('status', 'active')->count();
         $accountsActiveCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator')->where('is_active', true))->count();
         $accountsInactiveCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator')->where('is_active', false))->count();
 
-        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'activeOperatorsCount', 'accountsActiveCount', 'accountsInactiveCount');
+        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'activeOperatorsCount', 'accountsActiveCount', 'accountsInactiveCount');
     }
 
     public function operatorsForExport(Request $request)

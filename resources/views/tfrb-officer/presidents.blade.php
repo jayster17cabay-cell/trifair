@@ -68,6 +68,7 @@
         presidentSearchTimeout = setTimeout(() => {
             const url = new URL(window.location.href);
             url.searchParams.set('search', val);
+            url.searchParams.delete('page');
             fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(d => {

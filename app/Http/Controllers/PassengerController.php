@@ -14,7 +14,8 @@ class PassengerController extends Controller
 
         $base = Rating::query()
             ->where('passenger_user_id', $user->id)
-            ->with(['operator.user', 'response']);
+            ->whereNotNull('complaint_type')
+            ->with(['operator.user', 'response', 'proofs']);
 
         $totalCount = (clone $base)->count();
         $pendingCount = (clone $base)->where('is_reviewed', false)->where('is_solved', false)->count();

@@ -120,7 +120,11 @@
                     <div>
                         <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">QR Code</label>
                         <p class="font-semibold text-slate-800">
-                            <code class="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{{ $operator->qr_code }}</code>
+                            @if ($operator->qr_code)
+                                <code class="rounded bg-slate-100 px-2 py-1 text-xs text-slate-600">{{ $operator->qr_code }}</code>
+                            @else
+                                <span class="text-sm text-slate-400">Not yet assigned — contact your TFRB Officer.</span>
+                            @endif
                         </p>
                     </div>
                 </div>

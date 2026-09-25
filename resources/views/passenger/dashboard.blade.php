@@ -143,6 +143,28 @@
                         <p class="mt-3 text-sm italic leading-relaxed text-slate-500">"{{ $rating->complaint_details }}"</p>
                     @endif
 
+                    @if ($rating->proofs->count() > 0)
+                        <div class="mt-3">
+                            <div class="mb-1 text-[0.7rem] font-bold uppercase tracking-widest text-slate-400">Attached evidence ({{ $rating->proofs->count() }} file(s))</div>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($rating->proofs as $proof)
+                                    @if (str_starts_with($proof->file_type, 'image'))
+                                        <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}">
+                                            <img src="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
+                                                 alt="{{ $proof->original_name }}"
+                                                 class="h-16 w-16 rounded-lg border border-slate-200 object-cover">
+                                        </a>
+                                    @else
+                                        <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
+                                           class="tw-btn tw-btn-sm tw-btn-outline">
+                                            <i class="bi bi-file-earmark"></i> {{ $proof->original_name }}
+                                        </a>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
                     @if ($rating->response)
                         <div class="mt-3 rounded-xl bg-navy-600/10 px-4 py-3">
                             <div class="mb-1 flex items-center gap-1.5">

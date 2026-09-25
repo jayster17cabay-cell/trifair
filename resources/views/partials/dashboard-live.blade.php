@@ -140,7 +140,6 @@
                     var pr = document.getElementById('pendingReviewText');
                     if (pr) pr.textContent = data.pendingReview + ' complaint' + (data.pendingReview !== 1 ? 's' : '') + ' pending review';
                 }
-                if (typeof data.totalRatings !== 'undefined') setVisibility('operatorNoRatingsBanner', data.totalRatings > 0);
                 if (typeof data.totalRatings !== 'undefined') {
                     var cap = document.querySelector('[data-live="ratingCaption"]');
                     if (cap) {
@@ -150,8 +149,11 @@
                 }
                 if (typeof data.unreadCount !== 'undefined') {
                     setVisibility('unreadBanner', data.unreadCount > 0);
-                    setVisibility('unreadBellBadge', data.unreadCount > 0);
-                    setVisibility('unreadSideBadge', data.unreadCount > 0);
+                    var badges = document.querySelectorAll('[data-unread-badge]');
+                    for (var i = 0; i < badges.length; i++) {
+                        badges[i].textContent = data.unreadCount;
+                        badges[i].style.display = data.unreadCount > 0 ? '' : 'none';
+                    }
                     var t = document.getElementById('unreadCountText');
                     if (t) t.textContent = data.unreadCount + ' unread notification' + (data.unreadCount !== 1 ? 's' : '');
                 }
