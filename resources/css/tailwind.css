@@ -90,7 +90,7 @@
 
     /* ---------- Buttons ---------- */
     .tw-btn {
-        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150 select-none;
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150 select-none active:scale-[0.97] active:opacity-90;
     }
     .tw-btn:disabled {
         @apply cursor-not-allowed opacity-50;
@@ -102,31 +102,31 @@
         @apply tw-btn bg-gold text-navy-900 font-bold shadow-[0_2px_12px_rgba(245,184,0,0.35)] hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(245,184,0,0.45)] hover:bg-gold-dark focus:outline-none focus:ring-4 focus:ring-gold/40;
     }
     .tw-btn-danger {
-        @apply tw-btn bg-red-600 text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-600/20;
+        @apply tw-btn bg-red-600 text-white shadow-sm hover:-translate-y-px hover:bg-red-700 hover:shadow-[0_4px_12px_rgba(220,38,38,0.25)] focus:outline-none focus:ring-4 focus:ring-red-600/20;
     }
     .tw-btn-success {
-        @apply tw-btn bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/20;
+        @apply tw-btn bg-emerald-600 text-white shadow-sm hover:-translate-y-px hover:bg-emerald-700 hover:shadow-[0_4px_12px_rgba(5,150,105,0.25)] focus:outline-none focus:ring-4 focus:ring-emerald-600/20;
     }
     .tw-btn-outline {
-        @apply tw-btn border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50;
+        @apply tw-btn border border-slate-300 bg-white text-slate-700 hover:-translate-y-px hover:border-slate-400 hover:bg-slate-50 hover:shadow-sm focus:outline-none focus:ring-4 focus:ring-slate-300/40;
     }
     .tw-btn-outline-navy {
-        @apply tw-btn border border-navy-600/30 bg-navy-50 text-navy-600 hover:bg-navy-100;
+        @apply tw-btn border border-navy-600/30 bg-navy-50 text-navy-600 hover:-translate-y-px hover:bg-navy-100 hover:shadow-sm focus:outline-none focus:ring-4 focus:ring-navy-600/20;
     }
     .tw-btn-outline-gold {
-        @apply tw-btn border border-gold/60 bg-gold-50 text-gold-800 hover:bg-gold-100;
+        @apply tw-btn border border-gold/60 bg-gold-50 text-gold-800 hover:-translate-y-px hover:bg-gold-100 hover:shadow-sm focus:outline-none focus:ring-4 focus:ring-gold/40;
     }
     .tw-btn-outline-danger {
-        @apply tw-btn border border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50;
+        @apply tw-btn border border-red-200 bg-white text-red-600 hover:-translate-y-px hover:border-red-300 hover:bg-red-50 hover:shadow-sm focus:outline-none focus:ring-4 focus:ring-red-600/20;
     }
     .tw-btn-ghost {
-        @apply tw-btn text-slate-500 hover:bg-slate-100 hover:text-slate-700;
+        @apply tw-btn text-slate-500 hover:-translate-y-px hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-4 focus:ring-slate-300/40;
     }
     .tw-btn-dashed {
-        @apply tw-btn border-2 border-dashed border-slate-300 bg-white text-slate-600 hover:border-navy-500 hover:bg-slate-50 hover:text-navy-700;
+        @apply tw-btn border-2 border-dashed border-slate-300 bg-white text-slate-600 hover:-translate-y-px hover:border-navy-500 hover:bg-slate-50 hover:text-navy-700 focus:outline-none focus:ring-4 focus:ring-navy-600/20;
     }
     .tw-btn-link {
-        @apply tw-btn text-navy-600 underline-offset-2 hover:underline;
+        @apply tw-btn -translate-y-0 text-navy-600 underline-offset-2 transition-all hover:underline focus:outline-none focus-visible:ring-4 focus-visible:ring-navy-600/20;
     }
     .tw-btn-sm {
         @apply px-3 py-1.5 text-xs;
