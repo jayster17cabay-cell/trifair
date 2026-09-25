@@ -11,8 +11,10 @@ use Illuminate\Support\Facades\Http;
  *
  * The browser cannot reliably call the public Nominatim instance from mobile
  * networks (CORS, rate limits, and it rejects requests that look like scrapers),
- * so the app proxies both reverse ("what place is at this coordinate?") and
- * forward ("search for destination name") lookups through the server, cached.
+ * and cloud hosts such as Render get their IP blocks by Nominatim's anti-abuse
+ * rules, so the app proxies lookups through the server. Photon (komoot) is
+ * tried first because it tolerates datacenter IPs; Nominatim runs as a fallback
+ * for when Photon is unavailable. Responses are cached aggressively.
  */
 class GeocodeController extends Controller
 {
@@ -28,10 +30,31 @@ class GeocodeController extends Controller
             return response()->json(['error' => 'invalid coordinates'], 422);
         }
 
-        $cacheKey = 'revgeo_' . round($lat, 4) . '_' . round($lng, 4);
+        $cacheKey = 'revgeo3_' . round($lat, 4) . '_' . round($lng, 4);
         $cached = Cache::get($cacheKey);
         if ($cached !== null) {
-            return response()->json($cached);
+            return $this->reply($cached);
+        }
+
+        // Photon first (cloud-friendly), Nominatim as fallback.
+        try {
+            $resp = Http::timeout(6)->acceptJson()
+                ->get('https://photon.komoot.io/reverse', [
+                    'lat' => $lat,
+                    'lon' => $lng,
+                ]);
+
+            if ($resp->ok()) {
+                $feature = array_values((array) $resp->json('features', []))[0] ?? null;
+                $name = $feature ? $this->photonLabel($feature['properties'] ?? []) : null;
+                if ($name) {
+                    $result = ['display_name' => $name];
+                    Cache::put($cacheKey, $result, 60 * 60 * 24 * 30);
+                    return $this->reply($result);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fall through to Nominatim.
         }
 
         try {
@@ -44,19 +67,17 @@ class GeocodeController extends Controller
                     'addressdetails' => 1,
                 ]);
 
-            if (!$resp->ok()) {
-                return response()->json(['error' => 'geocode failed'], 502);
+            if ($resp->ok()) {
+                $data = $resp->json();
+                $result = ['display_name' => $data['display_name'] ?? null];
+                Cache::put($cacheKey, $result, 60 * 60 * 24 * 30);
+                return $this->reply($result);
             }
-
-            $data = $resp->json();
-            $result = ['display_name' => $data['display_name'] ?? null];
-
-            Cache::put($cacheKey, $result, 60 * 60 * 24 * 30);
-
-            return response()->json($result);
         } catch (\Throwable $e) {
-            return response()->json(['error' => 'geocode unavailable'], 502);
+            // Fall through.
         }
+
+        return response()->json(['error' => 'geocode unavailable'], 502);
     }
 
     /**
@@ -70,70 +91,158 @@ class GeocodeController extends Controller
         }
         $q = mb_strtolower($qRaw);
 
-        $cacheKey = 'fwdgeo_v2_' . substr(md5($q), 0, 16);
+        $cacheKey = 'fwdgeo_v3_' . substr(md5($q), 0, 16);
         $cached = Cache::get($cacheKey);
         if ($cached !== null) {
-            return response()->json($cached);
+            return $this->reply($cached);
         }
 
-        // Solano service-area viewport (left, top, right, bottom). Passing it
-        // as a hint (bounded=0) makes local places rank first, so a passenger
-        // typing a town/street in Nueva Vizcaya gets the right match on top.
-        $viewbox = '121.10,16.63,121.33,16.42';
+        // Solano center so matches in the service area rank first.
+        $lat = 16.52;
+        $lon = 121.22;
 
+        $results = $this->photonSearch($qRaw, $lat, $lon);
+        if ($results === null) {
+            $results = $this->nominatimSearch($qRaw);
+        }
+
+        if ($results === null) {
+            return response()->json(['error' => 'geocode unavailable'], 502);
+        }
+
+        $list = $this->filterResults($results, $qRaw);
+        Cache::put($cacheKey, $list, 60 * 60 * 24 * 30);
+
+        return $this->reply($list);
+    }
+
+    /**
+     * @return array<int, array{lat: string, lon: string, display_name: string}>|null
+     */
+    private function photonSearch(string $q, float $lat, float $lon): ?array
+    {
+        try {
+            $resp = Http::timeout(6)->acceptJson()
+                ->get('https://photon.komoot.io/api/', [
+                    'q' => $q,
+                    'limit' => 12,
+                    'lat' => $lat,
+                    'lon' => $lon,
+                ]);
+
+            if (!$resp->ok()) {
+                return null;
+            }
+
+            $out = [];
+            foreach ($resp->json('features', []) as $feature) {
+                $props = $feature['properties'] ?? [];
+                $geo = $feature['geometry'] ?? [];
+                $coords = $geo['coordinates'] ?? null;
+                if (!is_array($coords) || count($coords) < 2) {
+                    continue;
+                }
+                $out[] = [
+                    'lat' => (string) $coords[1],
+                    'lon' => (string) $coords[0],
+                    'display_name' => $this->photonLabel($props),
+                ];
+            }
+
+            return $out;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return array<int, array{lat: string, lon: string, display_name: string}>|null
+     */
+    private function nominatimSearch(string $q): ?array
+    {
         try {
             $resp = Http::timeout(6)->withHeaders(['User-Agent' => 'TriFair/1.0 (passenger trip rating)'])
                 ->get('https://nominatim.openstreetmap.org/search', [
                     'format' => 'json',
-                    'q' => $qRaw,
+                    'q' => $q,
                     'countrycodes' => 'ph',
                     'limit' => 14,
                     'addressdetails' => 1,
-                    'viewbox' => $viewbox,
-                    'bounded' => 0,
                 ]);
 
             if (!$resp->ok()) {
-                return response()->json(['error' => 'geocode failed'], 502);
+                return null;
             }
 
-            // Keep only results whose name actually contains the query (or at
-            // least one meaningful query token). Nominatim's free-text search
-            // is fuzzy, so drop hits that have nothing to do with the message.
-            $tokens = array_values(array_filter(preg_split('/\s+/u', $q), function ($t) {
-                return mb_strlen($t) >= 3;
-            }));
-
-            $results = array_values(array_filter($resp->json(), function ($item) use ($q, $tokens) {
-                if (!isset($item['lat'], $item['lon'], $item['display_name'])) {
-                    return false;
-                }
-                $name = mb_strtolower($item['display_name']);
-                if (mb_strpos($name, $q) !== false) {
-                    return true;
-                }
-                foreach ($tokens as $t) {
-                    if (mb_strpos($name, $t) !== false) {
-                        return true;
-                    }
-                }
-                return false;
-            }));
-
-            $list = array_slice(array_map(function ($item) {
+            return array_values(array_map(function ($item) {
                 return [
                     'lat' => (string) $item['lat'],
                     'lon' => (string) $item['lon'],
                     'display_name' => $item['display_name'],
                 ];
-            }, $results), 0, 8);
-
-            Cache::put($cacheKey, $list, 60 * 60 * 24 * 30);
-
-            return response()->json($list);
+            }, $resp->json() ?: []));
         } catch (\Throwable $e) {
-            return response()->json(['error' => 'geocode unavailable'], 502);
+            return null;
         }
+    }
+
+    /**
+     * Drop hits whose label has nothing to do with the query, then cap the list.
+     *
+     * @param array<int, array{lat: string, lon: string, display_name: string}> $results
+     * @return array<int, array{lat: string, lon: string, display_name: string}>
+     */
+    private function filterResults(array $results, string $query): array
+    {
+        $q = mb_strtolower(trim($query));
+        $tokens = array_values(array_filter(preg_split('/\s+/u', $q), function ($t) {
+            return mb_strlen($t) >= 3;
+        }));
+
+        $accepted = array_values(array_filter($results, function ($item) use ($q, $tokens) {
+            $name = mb_strtolower($item['display_name']);
+            if (mb_strpos($name, $q) !== false) {
+                return true;
+            }
+            foreach ($tokens as $t) {
+                if (mb_strpos($name, $t) !== false) {
+                    return true;
+                }
+            }
+            return false;
+        }));
+
+        return array_slice($accepted, 0, 8);
+    }
+
+    /**
+     * Build a compact human label from Photon's structured fields,
+     * e.g. "J. P. Rizal Street, Solano, Nueva Vizcaya, Philippines".
+     */
+    private function photonLabel(array $p): string
+    {
+        $name = (string) ($p['name'] ?? '');
+        $street = (string) ($p['street'] ?? '');
+        $postcode = (string) ($p['postcode'] ?? '');
+
+        $area = [];
+        foreach (['district', 'city', 'county', 'state', 'country'] as $k) {
+            $v = (string) ($p[$k] ?? '');
+            if ($v !== '' && !in_array($v, $area, true)) {
+                $area[] = $v;
+            }
+        }
+
+        $leading = $name;
+        if ($street !== '' && $street !== $name) {
+            $leading = trim($name . ', ' . $street, ', ');
+        }
+
+        if ($postcode !== '' && $postcode !== end($area)) {
+            $area[] = $postcode;
+        }
+
+        return trim(implode(', ', array_values(array_filter(array_merge([$leading], $area)))), ' ,');
     }
 
     private function coord($value, float $max): ?float
@@ -146,5 +255,18 @@ class GeocodeController extends Controller
             return null;
         }
         return $f;
+    }
+
+    /**
+     * Normalize responses: an empty list (search finds nothing valid) must be
+     * sent as `[]`, and a null display_name as null — never `["error"]`, which
+     * the map JS would otherwise misinterpret.
+     */
+    private function reply($payload)
+    {
+        if (is_array($payload) && isset($payload['display_name']) && $payload['display_name'] === null) {
+            return response()->json(['display_name' => null]);
+        }
+        return response()->json($payload);
     }
 }
