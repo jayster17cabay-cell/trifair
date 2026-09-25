@@ -306,6 +306,7 @@
     'use strict';
 
     var selectedRating = 0;
+    var autoSubmitting = false;
     var emojis = ['', '😞', '😐', '🙂', '😊', '🤩'];
     var labels = ['', 'Not great', 'Below average', 'It was okay', 'Good ride!', 'Excellent ride!'];
 
@@ -768,6 +769,7 @@
     /* ---- Rating reveal / block ---- */
 
     function blockRating() {
+        autoSubmitting = false;
         selectedRating = 0;
         document.getElementById('ratingValue').value = '';
         var sec = document.getElementById('starSection');
@@ -1076,11 +1078,33 @@
         document.getElementById('submitHint').style.display = 'none';
 
         var cb = document.getElementById('complaintBox');
-        if (selectedRating <= 2) { cb.classList.add('show'); } else { cb.classList.remove('show'); }
+        if (selectedRating <= 2) {
+            cb.classList.add('show');
+            document.getElementById('submitBtn').innerHTML = '<i class="bi bi-send-fill" aria-hidden="true"></i> Submit Rating';
+            setTimeout(function () {
+                cb.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 200);
+        } else {
+            cb.classList.remove('show');
+            submitRatingAutomatic();
+        }
 
         updateGoogleConnect();
 
         if (navigator.vibrate) navigator.vibrate(15);
+    }
+
+    function submitRatingAutomatic() {
+        if (autoSubmitting) return;
+        autoSubmitting = true;
+        var form = document.getElementById('rateForm');
+        if (!form) return;
+        var btn = document.getElementById('submitBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split" aria-hidden="true"></i> Submitting...';
+        }
+        setTimeout(function () { form.submit(); }, 350);
     }
 
     function saveRateDraft() {
@@ -1110,7 +1134,7 @@
         try { draft = JSON.parse(raw); } catch (e) { return; }
         if (!draft || typeof draft !== 'object') return;
 
-        if (draft.rating) {
+        if (draft.rating && draft.rating <= 2) {
             applyStar(parseInt(draft.rating, 10));
         }
         if (draft.complaint_type) {
