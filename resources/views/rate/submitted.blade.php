@@ -65,14 +65,16 @@
             padding: 0.5rem 0.75rem; background: var(--gray-50); border-radius: 10px;
         }
         .close-btn {
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            padding: 0.8rem 2.5rem; border: none; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            width: 100%; max-width: 300px;
+            padding: 1rem 2rem; border: none; border-radius: 14px;
             background: linear-gradient(135deg, var(--gold), #e0a800);
-            color: white; font-size: 0.95rem; font-weight: 800;
-            font-family: inherit; cursor: pointer; margin-top: 1.5rem;
+            color: white; font-size: 1rem; font-weight: 800;
+            font-family: inherit; cursor: pointer; margin-top: 1.25rem;
             transition: all 0.2s;
         }
         .close-btn:active { transform: scale(0.97); }
+        .close-btn:disabled { opacity: 0.7; cursor: default; }
         .powered { font-size: 0.7rem; color: var(--gray-500); margin-top: 1.5rem; }
         .powered strong { color: var(--primary); font-weight: 700; }
 
@@ -118,7 +120,7 @@
     @endif
 
     <div class="auto-close-note" id="closeNote">
-        <i class="bi bi-clock"></i> Page will close in <span id="countdown">3</span>s...
+        <i class="bi bi-x-circle"></i> Tap <strong>Close</strong> below to exit this page.
     </div>
 
     <button class="close-btn" id="closeBtn" onclick="tryClose()">
@@ -129,22 +131,37 @@
 </div>
 
 <script>
-var seconds = 3;
-var timer = setInterval(function() {
-    seconds--;
-    document.getElementById('countdown').textContent = seconds;
-    if (seconds <= 0) {
-        clearInterval(timer);
-        tryClose();
-    }
-}, 1000);
+var timer = null;
+var closed = false;
+
+function doClose() {
+    clearInterval(timer);
+    closed = true;
+    var btn = document.getElementById('closeBtn');
+    var note = document.getElementById('closeNote');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-x-lg"></i> Closing...'; }
+    if (note) { note.innerHTML = '<i class="bi bi-check-circle"></i> Closing this page...'; }
+    try { self.close(); } catch(e) {}
+    try { window.close(); } catch(e) {}
+    try { top.close(); } catch(e) {}
+    setTimeout(function () {
+        if (document.hidden) return;
+        // Still visible: the browser blocked the close (most browsers only
+        // let script-created tabs be closed). Re-enable so the passenger
+        // can retry or manually dismiss the tab.
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-x-lg"></i> Close'; }
+        if (note) {
+            note.innerHTML = '<i class="bi bi-x-circle"></i> If this does not close, swipe the tab away or tap the X in your browser.';
+        }
+    }, 1200);
+}
 
 function tryClose() {
-    clearInterval(timer);
-    try { window.close(); } catch(e) {}
-    document.getElementById('closeNote').innerHTML = '<i class="bi bi-check-circle"></i> Thank you! You can close this tab manually.';
-    document.getElementById('closeBtn').style.display = 'none';
+    if (closed) return;
+    doClose();
 }
+
+tryClose();
 </script>
 </body>
 </html>
