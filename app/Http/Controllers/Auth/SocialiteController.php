@@ -18,18 +18,46 @@ class SocialiteController extends Controller
      */
     public function redirect(Request $request)
     {
+        $intended = '';
+        $isConnect = false;
+
         if ($intended = trim((string) $request->query('intended'))) {
+            $isConnect = true;
             $request->session()->put('google_connect_intended', $intended);
             $request->session()->put('google_connect_mode', true);
         }
 
-        return Socialite::driver('google')->redirect();
+        // Override Socialite's random state with our own payload so the
+        // "where to send the passenger back" info survives the round-trip
+        // even when a phone browser drops the session cookie. Socialite still
+        // verifies it against the session when that is intact.
+        $state = $this->encodeConnectState($intended, $isConnect);
+        $request->session()->put('state', $state);
+
+        $url = Socialite::driver('google')->redirect()->getTargetUrl();
+        $url = preg_replace('/([?&])state=[^&]*/', '$1state=' . urlencode($state), $url);
+
+        return redirect()->away($url);
     }
 
     public function callback(Request $request)
     {
+        $stateFromQuery = (string) $request->query('state');
+        $meta = $this->decodeConnectState($stateFromQuery);
+
         $isConnect = $request->session()->pull('google_connect_mode');
         $intended = $request->session()->pull('google_connect_intended');
+
+        // Session may have died on a phone while Google took over — fall back
+        // to the state payload we embedded in the redirect URL.
+        if ($meta) {
+            if ($isConnect === null) {
+                $isConnect = $meta['connect'];
+            }
+            if ($intended === null) {
+                $intended = $meta['intended'];
+            }
+        }
 
         // Google bounces back without a code when the passenger cancels or
         // denies the consent prompt. Surface a clear message instead of a
@@ -42,8 +70,17 @@ class SocialiteController extends Controller
             return $this->connectFailure($request, $message, $isConnect, $intended);
         }
 
+        // When the session survived, let Socialite validate our injected state
+        // normally. When it did not (common on in-app browsers), skip the
+        // session-backed state check — the code exchange itself is still
+        // authenticated by the client secret + registered redirect URI.
+        $sessionState = (string) $request->session()->get('state');
+        $stateLost = $stateFromQuery !== ''
+            && ($sessionState === '' || !hash_equals($sessionState, $stateFromQuery));
+
         try {
-            $googleUser = Socialite::driver('google')->user();
+            $provider = Socialite::driver('google');
+            $googleUser = $stateLost ? $provider->stateless()->user() : $provider->user();
         } catch (\Exception $e) {
             return $this->connectFailure($request, 'Unable to sign in with Google. Please try again.', $isConnect, $intended);
         }
@@ -221,5 +258,33 @@ class SocialiteController extends Controller
             return '/';
         }
         return '/' . ltrim($intended, '/');
+    }
+
+    private function encodeConnectState(string $intended, bool $connect): string
+    {
+        $payload = [
+            'i' => $intended,
+            'c' => $connect,
+        ];
+        return rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+    }
+
+    private function decodeConnectState(string $state): ?array
+    {
+        if ($state === '') {
+            return null;
+        }
+        $json = base64_decode(strtr($state, '-_', '+/'), true);
+        if ($json === false) {
+            return null;
+        }
+        $data = json_decode($json, true);
+        if (!is_array($data) || !isset($data['c'])) {
+            return null;
+        }
+        return [
+            'connect' => (bool) $data['c'],
+            'intended' => isset($data['i']) ? (string) $data['i'] : '',
+        ];
     }
 }

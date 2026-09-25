@@ -920,4 +920,40 @@ class DashboardAuditTest extends TestCase
             ->assertOk()
             ->assertSee('Complaint Solved', false);
     }
+
+    public function test_rate_submit_is_csrf_exempt_for_public_form()
+    {
+        $op = $this->makeOperator('active');
+
+        // No _token on a phone in-app browser repeatedly produced a 419
+        // "Page Expired" — the public form is intentionally CSRF-exempt and is
+        // only bounded by throttle + the per-operator-per-day dedup. A request
+        // without a token must reach validation (error: rating required),
+        // NOT the 419 page.
+        $this->post('/rate/' . $op->qr_code, [])
+            ->assertSessionHasErrors('rating');
+    }
+
+    public function test_google_callback_uses_state_payload_when_session_is_lost()
+    {
+        // Cookies dropped mid-trip: the session keys are gone, so the callback
+        // must recover the intended complaint URL and connect mode from the
+        // state payload embedded in the OAuth redirect.
+        $googleUser = new \Laravel\Socialite\Two\User();
+        $googleUser->id = 'google-state-1';
+        $googleUser->name = 'State Passenger';
+        $googleUser->email = 'state-passenger@example.com';
+        $googleUser->user = ['email_verified' => true];
+
+        $provider = Mockery::mock();
+        $provider->shouldReceive('stateless')->andReturnSelf();
+        $provider->shouldReceive('user')->andReturn($googleUser);
+        \Laravel\Socialite\Facades\Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $state = rtrim(strtr(base64_encode(json_encode(['i' => '/rate/ABC123', 'c' => true])), '+/', '-_'), '=');
+        $this->get('/auth/google/callback?state=' . urlencode($state))
+            ->assertRedirect('/rate/ABC123');
+
+        $this->assertNotNull(User::where('email', 'state-passenger@example.com')->where('role', 'passenger')->first());
+    }
 }

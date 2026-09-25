@@ -334,8 +334,8 @@
     var mapLastInteracted = 0;
     var locationCancelled = false;
 
-    var SOLANO_CENTER = window.TripRouteMap.SOLANO_CENTER;
-    var serviceBounds = window.TripRouteMap.serviceBounds;
+    var SOLANO_CENTER = (window.TripRouteMap && window.TripRouteMap.SOLANO_CENTER) || [16.5241, 121.2192];
+    var serviceBounds = window.TripRouteMap && window.TripRouteMap.serviceBounds || null;
 
     var solanoPolygon = [
         [16.552472, 121.121654],
