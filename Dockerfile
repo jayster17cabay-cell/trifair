@@ -1,9 +1,9 @@
-# v5 - force rebuild: trim addresses feature
+# v6 - force rebuild + fileinfo extension (proof MIME validation)
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
     libpng-dev libonig-dev libxml2-dev libzip-dev libsqlite3-dev libpq-dev zip unzip \
-    && docker-php-ext-install pdo pdo_mysql pdo_sqlite pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip \
+    && docker-php-ext-install pdo pdo_mysql pdo_sqlite pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip fileinfo \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 

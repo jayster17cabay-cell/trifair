@@ -90,40 +90,58 @@ A web application for rating motorcycle drivers. Passengers scan a QR code on th
 
 ## Default Accounts
 
-After running `php artisan db:seed`, three accounts are created. Passwords come from
-`.env` (`SUPERADMIN_PASSWORD`, `TFRB_OFFICER_PASSWORD`, `OPERATOR_PASSWORD`) or are
-generated randomly and printed to the console — nothing hardcoded in the repo.
+After running `php artisan db:seed`, five accounts are created. Passwords come from
+`.env` (`SEED_SUPERADMIN_PASSWORD`, `SEED_OFFICER_PASSWORD`,
+`SEED_OPERATOR_PASSWORD`, `SEED_PRESIDENT_PASSWORD`) or are generated randomly and
+printed to the console — nothing hardcoded in the repo.
 
 | Role | Email |
 |------|-------|
 | Superadmin | superadmin@trifair.com |
 | TFRB Officer | tfrbofficer@trifair.com |
 | Operator | jayster@trifair.com |
+| Operator | marcos@trifair.com |
+| Operator | pedro@trifair.com |
+| TODA President | president@trifair.com |
 
 ## Production Deployment
 
-1. Set environment variables in `.env`:
+1. Set environment variables in `.env` (see `.env.example`):
    ```
    APP_ENV=production
    APP_DEBUG=false
    APP_URL=https://your-domain.com
    DB_CONNECTION=pgsql
-   DB_DATABASE=your-db
-   DB_USERNAME=your-user
-   DB_PASSWORD=your-secure-password
+   PGSQL_HOST=...
+   PGSQL_PORT=...
+   PGSQL_DATABASE=...
+   PGSQL_USERNAME=...
+   PGSQL_PASSWORD=your-secure-password
+   PGSQL_SSLMODE=require
    ```
 
-2. Configure SMTP mail settings in `.env`:
+2. Configure mail via Brevo HTTP API in `.env` (SMTP ports are blocked on the
+   Render free tier; the app uses the Sendinblue driver):
    ```
-   MAIL_MAILER=smtp
-   MAIL_HOST=smtp.gmail.com
-   MAIL_PORT=587
-   MAIL_USERNAME=your-email@gmail.com
-   MAIL_PASSWORD=your-app-password
-   MAIL_ENCRYPTION=tls
+   MAIL_MAILER=sendinblue
+   SENDINBLUE_KEY=your-brevo-api-key
+   MAIL_FROM_ADDRESS=your-verified-brevo-sender@example.com
+   MAIL_FROM_NAME=TriFair
+   ```
+   The sender address must be a verified sender in the Brevo dashboard or sends
+   will be rejected. See `config/mail.php` for the sender address used by worker
+   notifications.
+
+3. Google OAuth (optional — superadmin / TFRB Officer "Sign in with Google"):
+   create credentials in the Google Cloud Console and add the redirect URI to
+   the authorized list, then set in `.env`:
+   ```
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   GOOGLE_REDIRECT_URI=https://your-domain.com/auth/google/callback
    ```
 
-3. Run production commands:
+4. Run production commands:
    ```bash
    composer install --optimize-autoloader --no-dev
    npm install && npm run build
@@ -135,13 +153,13 @@ generated randomly and printed to the console — nothing hardcoded in the repo.
    php artisan storage:link
    ```
 
-4. Set file permissions (Linux):
+5. Set file permissions (Linux):
    ```bash
    chmod -R 775 storage/ bootstrap/cache/
    chown -R www-data:www-data storage/ bootstrap/cache/
    ```
 
-5. Configure Apache virtual host:
+6. Configure Apache virtual host:
    ```apache
    <VirtualHost *:80>
        ServerName your-domain.com

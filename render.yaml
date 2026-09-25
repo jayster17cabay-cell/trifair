@@ -54,6 +54,13 @@ services:
       - key: SENDINBLUE_KEY
         sync: false
       - key: MAIL_FROM_ADDRESS
-        value: your-verified-brevo-sender@example.com
+        value: jayster17cabay@gmail.com
       - key: MAIL_FROM_NAME
         value: TriFair
+      # Google OAuth (superadmin / TFRB Officer "Sign in with Google")
+      - key: GOOGLE_CLIENT_ID
+        value: 877167041441-rnahjnhl7ke6ru7m5i3654gs2c6rtf95.apps.googleusercontent.com
+      - key: GOOGLE_REDIRECT_URI
+        value: https://trifair.onrender.com/auth/google/callback
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
