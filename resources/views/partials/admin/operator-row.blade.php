@@ -65,13 +65,6 @@
             @else
                 <span class="tw-badge tw-badge-gray">Unassigned</span>
             @endif
-            @if ($todaPresident)
-                <div class="flex items-center gap-1 text-xs text-slate-500" title="President of {{ $todaName }}">
-                    <i class="bi bi-award text-gold"></i>
-                    <span class="font-semibold text-gold-700">President:</span>
-                    <span class="truncate">{{ $todaPresident->name }}</span>
-                </div>
-            @endif
         </div>
     </td>
     <td class="tw-td hidden text-sm text-slate-500 md:table-cell">{{ $operator->contact_number ?? '—' }}</td>
