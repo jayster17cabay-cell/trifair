@@ -306,20 +306,7 @@ class TfrbOfficerController extends Controller
 
     public function destroyPresident(User $user)
     {
-        if ($user->role !== 'operator_president') {
-            return back()->withErrors(['error' => 'User is not a TODA President.']);
-        }
-        if ($user->id === Auth::id()) {
-            return back()->withErrors(['error' => 'You cannot remove your own account.']);
-        }
-        $presidentName = $user->name;
-        $user->delete();
-
-        ActivityLogger::log('delete_toda_president', "Deleted TODA President {$presidentName}", null, 'tfrb_officer');
-
-        app(AdminDashboardService::class)->flush();
-
-        return redirect()->route('tfrb-officer.presidents')->with('success', 'TODA President removed successfully.');
+        return app(OperatorAdminService::class)->removePresident($user, 'tfrb-officer.presidents');
     }
 
     public function todas(Request $request)

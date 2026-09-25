@@ -12,6 +12,7 @@ use App\Models\Toda;
 use App\Services\AdminDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -206,10 +207,10 @@ class OperatorAdminService
     }
 
     /**
-     * Assign the operator as the President of their TODA. If the TODA already
-     * has a president, the previous one is demoted back to a regular operator
-     * (their Operator row and rating history are kept). Presidents keep their
-     * own Operator row so they can still receive ratings.
+     * Assign the operator as the President of their TODA. A TODA can have only
+     * one president at a time: if the TODA already has a president, the
+     * assignment is blocked and the current president must be removed first.
+     * Presidents keep their own Operator row so they can still receive ratings.
      */
     public function assignPresident(Operator $operator, string $redirectRoute): RedirectResponse
     {
@@ -222,18 +223,14 @@ class OperatorAdminService
             return redirect()->route($redirectRoute)->with('error', 'Assign this operator to a TODA first.');
         }
 
-        $previous = User::where('role', 'operator_president')
+        $current = User::where('role', 'operator_president')
             ->where('toda_id', $operator->toda_id)
             ->where('id', '!=', $operator->user_id)
             ->first();
 
-        // Demote the previous president so the TODA has exactly one leader.
-        if ($previous) {
-            $previous->forceFill(['role' => 'operator', 'toda_id' => $operator->toda_id])->save();
-            Operator::updateOrCreate(
-                ['user_id' => $previous->id],
-                ['toda_id' => $operator->toda_id, 'status' => 'active']
-            );
+        if ($current) {
+            return redirect()->route($redirectRoute)
+                ->with('error', "This TODA already has a president ({$current->name}). Remove them as President first before assigning a new one.");
         }
 
         $operator->user->forceFill([
@@ -251,13 +248,51 @@ class OperatorAdminService
 
         ActivityLogger::log(
             'assign_toda_president',
-            ($previous ? 'Replaced president and promoted ' : 'Promoted ') . "{$operator->user->name} as President of TODA #{$operator->toda_id}",
+            "Promoted {$operator->user->name} as President of TODA #{$operator->toda_id}",
             $operator,
             'tfrb_officer'
         );
 
         return redirect()->route($redirectRoute)
             ->with('success', "{$operator->user->name} is now the President of {$operator->toda->name}.");
+    }
+
+    /**
+     * Remove a TODA President without deleting the account: their role goes back
+     * to regular operator and they keep their Operator row + TODA, so they stay a
+     * ratable member. They lose members access because the president routes are
+     * gated on the operator_president role.
+     */
+    public function removePresident(User $user, string $redirectRoute): RedirectResponse
+    {
+        if ($user->role !== 'operator_president') {
+            return redirect()->route($redirectRoute)->with('error', 'User is not a TODA President.');
+        }
+        if ($user->id === Auth::id()) {
+            return redirect()->route($redirectRoute)->with('error', 'You cannot remove your own account.');
+        }
+
+        $presidentName = $user->name;
+
+        $user->forceFill(['role' => 'operator'])->save();
+
+        // Keep the Operator row so the demoted president stays a regular, ratable operator.
+        Operator::updateOrCreate(
+            ['user_id' => $user->id],
+            ['toda_id' => $user->toda_id, 'status' => 'active']
+        );
+
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log(
+            'remove_toda_president',
+            "Removed {$presidentName} as TODA President; account reverted to regular operator",
+            Operator::where('user_id', $user->id)->first(),
+            'tfrb_officer'
+        );
+
+        return redirect()->route($redirectRoute)
+            ->with('success', "{$presidentName} is no longer a TODA President and is back to being a regular operator.");
     }
 
     /**

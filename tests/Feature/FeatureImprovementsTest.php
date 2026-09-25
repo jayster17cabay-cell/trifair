@@ -444,7 +444,7 @@ class FeatureImprovementsTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_superadmin_can_assign_toda_president_and_demote_previous()
+    public function test_superadmin_can_only_assign_one_president_per_toda_after_removing_current()
     {
         $admin = $this->makeUser('superadmin');
         $toda = $this->makeToda();
@@ -460,6 +460,25 @@ class FeatureImprovementsTest extends TestCase
 
         $this->assertSame('operator_president', $first->user->fresh()->role);
         $this->assertNotNull(ActivityLog::where('action', 'assign_toda_president')->latest()->first());
+
+        // A TODA that already has a president cannot be assigned another one.
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $second->id . '/assign-president')
+            ->assertRedirect(route('superadmin.operators'))
+            ->assertSessionHas('error');
+
+        $this->assertSame('operator', $second->user->fresh()->role);
+        $this->assertSame('operator_president', $first->user->fresh()->role);
+        $this->assertSame(1, $toda->president()->count());
+
+        // Remove the current president first, then the same TODA can get a new president.
+        $this->actingAs($admin)
+            ->delete('/superadmin/presidents/' . $first->user_id)
+            ->assertRedirect(route('superadmin.presidents'))
+            ->assertSessionHas('success');
+
+        $this->assertSame('operator', $first->user->fresh()->role);
+        $this->assertDatabaseHas('users', ['id' => $first->user_id, 'role' => 'operator']);
 
         $this->actingAs($admin)
             ->post('/superadmin/operators/' . $second->id . '/assign-president')

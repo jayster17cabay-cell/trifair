@@ -75,16 +75,28 @@ class PresidentManagementTest extends TestCase
         $this->assertNotNull($operator->presidentToda());
     }
 
-    public function test_superadmin_can_delete_president()
+    public function test_superadmin_can_remove_president_and_revert_account_to_operator()
     {
         $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
         $president = $this->makeUser('operator_president');
+        $president->forceFill(['toda_id' => $toda->id])->save();
+        $operatorRecord = Operator::create([
+            'user_id' => $president->id,
+            'toda_id' => $toda->id,
+            'qr_code' => Str::random(32),
+            'contact_number' => '09170000000',
+            'status' => 'active',
+        ]);
 
         $this->actingAs($admin)
             ->delete('/superadmin/presidents/' . $president->id)
-            ->assertRedirect(route('superadmin.presidents'));
+            ->assertRedirect(route('superadmin.presidents'))
+            ->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('users', ['id' => $president->id]);
+        $this->assertDatabaseHas('users', ['id' => $president->id, 'role' => 'operator']);
+        $this->assertSame('operator', $president->fresh()->role);
+        $this->assertDatabaseHas('operators', ['id' => $operatorRecord->id]);
     }
 
     public function test_non_superadmin_cannot_manage_presidents()

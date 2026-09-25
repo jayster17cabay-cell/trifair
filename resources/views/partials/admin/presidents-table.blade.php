@@ -45,11 +45,11 @@
                             <i class="bi bi-people"></i>
                         </button>
                     @endif
-                    <form action="{{ route($routePrefix . '.presidents.destroy', $president) }}" method="POST" onsubmit="return confirm('Remove this TODA President? They will lose all system access.')">
+                    <form action="{{ route($routePrefix . '.presidents.destroy', $president) }}" method="POST" onsubmit="return confirm('Remove ' . @js($president->name) . ' as TODA President? Their account will go back to being a regular operator.')">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Remove President" aria-label="Remove {{ $president->name }}">
-                            <i class="bi bi-trash"></i>
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Remove as President" aria-label="Remove {{ $president->name }} as President">
+                            <i class="bi bi-person-x"></i>
                         </button>
                     </form>
                 </div>

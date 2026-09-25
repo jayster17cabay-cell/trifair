@@ -118,15 +118,23 @@
                         </a>
                 @php
                     $hasPresidentName = $todaPresident && $todaPresident->name !== $operatorName;
-                    $assignPrompt = $hasPresidentName
-                        ? 'Assign ' . $operatorName . ' as President of ' . $todaName . '? This will REPLACE the current president ' . $todaPresident->name . '.'
-                        : 'Assign ' . $operatorName . ' as President of ' . ($todaName ?? 'this TODA') . '? They will oversee all members of that TODA.';
+                    if ($hasPresidentName) {
+                        $assignPrompt = 'This TODA already has a president (' . $todaPresident->name . '). Remove them as President first before assigning a new one.';
+                    } else {
+                        $assignPrompt = 'Assign ' . $operatorName . ' as President of ' . ($todaName ?? 'this TODA') . '? They will oversee all members of that TODA.';
+                    }
                 @endphp
                 <form action="{{ route($routePrefix . '.operators.assignPresident', $operator) }}" method="POST">
                     @csrf
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-gold" title="{{ $todaPresident ? 'Replace ' . $todaPresident->name : 'Assign as President' }}" onclick="return confirm(@js($assignPrompt))">
-                        <i class="bi {{ $todaPresident ? 'bi-person-fill-gear' : 'bi-award' }}"></i>
-                    </button>
+                    @if ($hasPresidentName)
+                        <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" title="{{ $assignPrompt }}" aria-label="President already assigned" disabled style="opacity:.45;cursor:not-allowed">
+                            <i class="bi bi-person-fill-gear"></i>
+                        </button>
+                    @else
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-gold" title="Assign as President" onclick="return confirm(@js($assignPrompt))">
+                            <i class="bi bi-award"></i>
+                        </button>
+                    @endif
                 </form>
                 <form action="{{ route($routePrefix . '.operators.toggleActive', $operator) }}" method="POST">
                     @csrf
