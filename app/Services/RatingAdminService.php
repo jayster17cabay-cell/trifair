@@ -119,7 +119,9 @@ class RatingAdminService
      */
     private function notifyComplaintStatus(Rating $rating, string $status): void
     {
-        $email = $rating->passenger_email;
+        // Prefer the address stored on the complaint, which for connected
+        // passengers is their linked Google account email.
+        $email = $rating->passenger_email ?: ($rating->passenger_user ? $rating->passenger_user->email : null);
         if (!$email) {
             return;
         }

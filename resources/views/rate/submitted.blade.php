@@ -73,13 +73,6 @@
             transition: all 0.2s;
         }
         .close-btn:active { transform: scale(0.97); }
-        .track-btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-            padding: 0.8rem 2.5rem; border-radius: 14px; text-decoration: none;
-            background: var(--primary); color: white; font-size: 0.95rem; font-weight: 800;
-            font-family: inherit; margin-top: 0.75rem; transition: all 0.2s;
-        }
-        .track-btn:active { transform: scale(0.97); }
         .powered { font-size: 0.7rem; color: var(--gray-500); margin-top: 1.5rem; }
         .powered strong { color: var(--primary); font-weight: 700; }
 
@@ -117,19 +110,16 @@
     </div>
     @endunless
 
-    <div class="auto-close-note" id="closeNote">
-        @if (auth()->check() && auth()->user()->isPassenger())
-            <i class="bi bi-clipboard-check"></i> Opening your complaints status in <span id="countdown">3</span>s...
-        @else
-            <i class="bi bi-clock"></i> Page will close in <span id="countdown">3</span>s...
-        @endif
-    </div>
-
-    @if (auth()->check() && auth()->user()->isPassenger())
-        <a href="{{ route('passenger.dashboard') }}" class="track-btn" id="trackBtn">
-            <i class="bi bi-clipboard-check"></i> View my complaints status
-        </a>
+    @if (session('rating_value') !== null && (int) session('rating_value') <= 2)
+        <p style="font-size: 0.85rem; color: var(--gray-600); line-height: 1.5; margin: 0.75rem auto 0; max-width: 280px;">
+            <i class="bi bi-envelope-check" aria-hidden="true"></i>
+            A confirmation will be sent to your email or Google (Gmail) account. Doon mo makikita ang updates ng iyong complaint.
+        </p>
     @endif
+
+    <div class="auto-close-note" id="closeNote">
+        <i class="bi bi-clock"></i> Page will close in <span id="countdown">3</span>s...
+    </div>
 
     <button class="close-btn" id="closeBtn" onclick="tryClose()">
         <i class="bi bi-x-lg"></i> Close
@@ -140,13 +130,11 @@
 
 <script>
 var seconds = 3;
-var trackBtn = document.getElementById('trackBtn');
 var timer = setInterval(function() {
     seconds--;
     document.getElementById('countdown').textContent = seconds;
     if (seconds <= 0) {
         clearInterval(timer);
-        if (trackBtn) { window.location.href = trackBtn.getAttribute('href'); return; }
         tryClose();
     }
 }, 1000);

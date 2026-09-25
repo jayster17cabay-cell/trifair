@@ -17,8 +17,13 @@
                     </tr>
                     <tr>
                         <td style="padding:30px 32px;">
+                            @php
+                                $statusLabel = $status === 'solved' ? 'Solved' : ($status === 'submitted' ? 'Received' : 'Reviewed');
+                                $statusVerb = $status === 'solved' ? 'solved' : ($status === 'submitted' ? 'received' : 'reviewed');
+                                $statusColor = $status === 'solved' ? '#059669' : '#0f172a';
+                            @endphp
                             <h1 style="margin:0 0 10px;font-size:18px;color:#0f172a;">
-                                Your complaint {{ $rating->reference_number }} has been {{ $status === 'solved' ? 'solved' : 'reviewed' }}
+                                Your complaint {{ $rating->reference_number }} has been {{ $statusVerb }}
                             </h1>
                             <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#334155;">
                                 Good day{{ $rating->passenger_name ? ', ' . $rating->passenger_name : '' }}! This is an update
@@ -49,8 +54,8 @@
                                                 <td style="font-size:13px;color:#64748b;padding:4px 0;">Current Status</td>
                                             </tr>
                                             <tr>
-                                                <td style="font-size:15px;font-weight:700;color:{{ $status === 'solved' ? '#059669' : '#0f172a' }};padding:0;">
-                                                    {{ $status === 'solved' ? 'Solved' : 'Reviewed' }}
+                                                <td style="font-size:15px;font-weight:700;color:{{ $statusColor }};padding:0;">
+                                                    {{ $statusLabel }}
                                                 </td>
                                             </tr>
                                         </table>
@@ -61,6 +66,10 @@
                                 @if ($status === 'solved')
                                     The concerning parties have been notified and the matter has been resolved. Thank you for
                                     helping us keep our transport services safe and accountable.
+                                @elseif ($status === 'submitted')
+                                    We have received your complaint. A TFRB officer will review it shortly, and you will
+                                    receive a notification here once it is reviewed or resolved. Keep this reference number
+                                    for tracking your complaint.
                                 @else
                                     Your complaint has been reviewed by the TFRB. You will receive another notification once
                                     the complaint is resolved. Thank you for your patience.

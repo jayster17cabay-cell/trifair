@@ -110,7 +110,10 @@ class RatingController extends Controller
         $data = $request->validate($rules);
 
         $passengerUser = $request->user() && $request->user()->isPassenger() ? $request->user() : null;
-        $passengerEmail = $data['passenger_email'] ?? ($passengerUser ? $passengerUser->email : null);
+        // Notifications (including status emails) go to the passenger's linked
+        // Google account when they are signed in, so their complaint lands in
+        // their own inbox. The typed field is only a fallback for guests.
+        $passengerEmail = $passengerUser ? $passengerUser->email : ($data['passenger_email'] ?? null);
 
         $rating = DB::transaction(function () use ($request, $operator, $clientId, $data, $passengerUser, $passengerEmail) {
             // Re-check inside the transaction (with a row lock) so two
@@ -205,6 +208,19 @@ class RatingController extends Controller
             // check — treat it the same as a regular duplicate submission.
             return redirect()->route('rate.submitted', $operator->qr_code)
                 ->with('alreadyRated', true);
+        }
+
+        // Instant confirmation email: the moment a valid complaint lands, the
+        // passenger gets notified on the same address they will later receive
+        // the "reviewed" and "solved" updates on. A delivery failure must never
+        // break the submission, so the send is guarded.
+        if ((int) $data['rating'] <= 2 && $passengerEmail) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($passengerEmail)
+                    ->send(new \App\Mail\ComplaintStatus($rating, 'submitted'));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Complaint submitted email failed: ' . get_class($e) . ': ' . $e->getMessage());
+            }
         }
 
         app(\App\Services\AdminDashboardService::class)->flush();

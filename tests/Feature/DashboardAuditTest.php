@@ -862,6 +862,7 @@ class DashboardAuditTest extends TestCase
 
     public function test_rate_submission_links_to_authenticated_passenger_account()
     {
+        Mail::fake();
         $passenger = $this->makeUser('passenger');
         $op = $this->makeOperator('active');
 
@@ -871,12 +872,22 @@ class DashboardAuditTest extends TestCase
             'end_location' => 'SM Fairview, Quezon City',
             'complaint_type' => 'Rude Driver',
             'complaint_details' => 'Rude to passenger',
-        ])->assertRedirect();
+        ])->assertRedirect(route('rate.submitted', $op->qr_code));
 
         $rating = Rating::where('operator_id', $op->id)->latest()->first();
         $this->assertNotNull($rating);
         $this->assertSame($passenger->id, (int) $rating->passenger_user_id);
         $this->assertSame($passenger->email, $rating->passenger_email);
+
+        // The passenger gets an instant confirmation email to their Google
+        // account; the Thank You view no longer offers a link to the dashboard.
+        Mail::assertSent(ComplaintStatus::class, function ($mail) use ($rating, $passenger) {
+            $mail->build();
+
+            return $mail->hasTo($passenger->email)
+                && $mail->status === 'submitted'
+                && str_contains($mail->subject, $rating->reference_number);
+        });
     }
 
     public function test_rate_form_shows_google_connect_and_reassurance_when_configured()

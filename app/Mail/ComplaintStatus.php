@@ -24,9 +24,11 @@ class ComplaintStatus extends Mailable
 
     public function build()
     {
-        $subject = $this->status === 'solved'
-            ? "Your complaint {$this->rating->reference_number} has been solved"
-            : "Your complaint {$this->rating->reference_number} has been reviewed";
+        $subject = match ($this->status) {
+            'solved' => "Your complaint {$this->rating->reference_number} has been solved",
+            'submitted' => "Your complaint {$this->rating->reference_number} was received",
+            default => "Your complaint {$this->rating->reference_number} has been reviewed",
+        };
 
         return $this
             ->subject($subject)
