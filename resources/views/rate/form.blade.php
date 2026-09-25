@@ -229,21 +229,8 @@
                                 <label for="complaintDetails" class="rate-label" style="margin-top:0.6rem;"><i class="bi bi-pencil-square" style="color:#dc2626;"></i> Describe your complaint</label>
                                 <textarea name="complaint_details" id="complaintDetails" class="rate-field" rows="3" placeholder="Please describe your complaint..."></textarea>
                             </div>
-                            <div class="rate-field-grid">
-                                <div>
-                                    <label for="passenger_name" class="rate-label">Your Name</label>
-                                    <input type="text" name="passenger_name" id="passenger_name" class="rate-field" placeholder="Juan Dela Cruz">
-                                </div>
-                                <div>
-                                    <label for="passenger_contact" class="rate-label">Contact No.</label>
-                                    <input type="tel" name="passenger_contact" id="passenger_contact" class="rate-field" placeholder="09171234567" inputmode="numeric">
-                                </div>
-                            </div>
-                            <div style="margin-top:0.6rem;">
-                                <label for="passenger_email" class="rate-label">Email (for status updates)</label>
-                                <input type="email" name="passenger_email" id="passenger_email" class="rate-field" placeholder="juan@gmail.com">
-                                @if (config('services.google.client_id') && config('services.google.client_secret'))
-                                    <div id="googleConnectRow" style="display:none;">
+                            @if (config('services.google.client_id') && config('services.google.client_secret'))
+                                <div id="googleConnectRow" style="display:none;">
                                         @if (auth()->check() && auth()->user()->isPassenger())
                                             <div class="rate-connect" style="margin-top:0.7rem;">
                                                 <div class="rate-connect-done">
@@ -265,6 +252,9 @@
                                         @endif
                                     </div>
                                 @endif
+                            <div style="margin-top:0.6rem;">
+                                <label for="passenger_email" class="rate-label">Email (for status updates)</label>
+                                <input type="email" name="passenger_email" id="passenger_email" class="rate-field" placeholder="juan@gmail.com">
                             </div>
                             <div class="rate-upload" id="uploadZone">
                                 <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
