@@ -28,12 +28,24 @@ class SocialiteController extends Controller
 
     public function callback(Request $request)
     {
+        $isConnect = $request->session()->pull('google_connect_mode');
+        $intended = $request->session()->pull('google_connect_intended');
+
+        // Google bounces back without a code when the passenger cancels or
+        // denies the consent prompt. Surface a clear message instead of a
+        // generic failure, and keep them on the complaint form they were on.
+        $oauthError = trim((string) $request->query('error'));
+        if ($oauthError !== '') {
+            $message = $oauthError === 'access_denied'
+                ? 'Kinansela mo ang Google sign-in. Pwede mong subukan muli gamit ang form sa ibaba.'
+                : 'Hindi natuloy ang Google sign-in. Pakisubukan muli.';
+            return $this->connectFailure($request, $message, $isConnect, $intended);
+        }
+
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Exception $e) {
-            return redirect()->route('login')->withErrors([
-                'email' => 'Unable to sign in with Google. Please try again.',
-            ]);
+            return $this->connectFailure($request, 'Unable to sign in with Google. Please try again.', $isConnect, $intended);
         }
 
         // Google's own email-verified flag must be true (account email confirmed by Google).
@@ -45,17 +57,14 @@ class SocialiteController extends Controller
             : false;
 
         if (!$emailVerified) {
-            return $this->backWithError($request, 'Your Google account email is not verified. Please verify it with Google first, then try again.');
+            return $this->connectFailure($request, 'Your Google account email is not verified. Please verify it with Google first, then try again.', $isConnect, $intended);
         }
 
         $email = strtolower(trim($googleUser->getEmail()));
 
         if ($email === '') {
-            return $this->backWithError($request, 'Your Google account has no email address.');
+            return $this->connectFailure($request, 'Your Google account has no email address.', $isConnect, $intended);
         }
-
-        $isConnect = $request->session()->pull('google_connect_mode');
-        $intended = $request->session()->pull('google_connect_intended');
 
         $user = User::where('email', $email)->first();
 
@@ -63,10 +72,10 @@ class SocialiteController extends Controller
         // required, a brand-new passenger account is created on first connect.
         if ($isConnect) {
             if ($user && $user->role !== 'passenger') {
-                return $this->backWithError($request, 'This Google account belongs to a TriFair staff account. Please use the staff sign-in page instead.');
+                return $this->connectFailure($request, 'This Google account belongs to a TriFair staff account. Please use the staff sign-in page instead.', $isConnect, $intended);
             }
             if ($user && !$user->is_active) {
-                return $this->backWithError($request, 'Your account is currently disabled. Please contact support.');
+                return $this->connectFailure($request, 'Your account is currently disabled. Please contact support.', $isConnect, $intended);
             }
             if (!$user) {
                 $user = $this->createPassengerAccount($email, $googleUser);
@@ -81,9 +90,7 @@ class SocialiteController extends Controller
         }
 
         if (!$user->is_active) {
-            return redirect()->route('login')->withErrors([
-                'email' => 'Your account is currently disabled. Please contact support.',
-            ]);
+            return $this->connectFailure($request, 'Your account is currently disabled. Please contact support.', $isConnect, $intended);
         }
 
         $user->forceFill([
@@ -199,8 +206,11 @@ class SocialiteController extends Controller
         return $user;
     }
 
-    private function backWithError(Request $request, string $message)
+    private function connectFailure(Request $request, string $message, $isConnect, ?string $intended)
     {
+        if ($isConnect && $intended) {
+            return redirect($this->validIntended($intended))->withErrors(['email' => $message]);
+        }
         return redirect()->route('login')->withErrors(['email' => $message]);
     }
 

@@ -805,10 +805,41 @@ class DashboardAuditTest extends TestCase
         $this->withSession([
             'google_connect_mode' => true,
             'google_connect_intended' => '/rate/ABC123',
-        ])->get('/auth/google/callback')->assertRedirect('/login');
+        ])->get('/auth/google/callback')->assertRedirect('/rate/ABC123');
 
         $this->assertNull(User::where('email', $staff->email)->where('role', 'passenger')->first());
         $this->assertSame('tfrb_officer', $staff->fresh()->role);
+        $this->assertNotNull(session('errors'), 'Passenger should get a flash error back on the form.');
+    }
+
+    public function test_google_callback_cancel_returns_to_intended_with_message()
+    {
+        $this->withSession([
+            'google_connect_mode' => true,
+            'google_connect_intended' => '/rate/ABC123',
+        ])->get('/auth/google/callback?error=access_denied')
+            ->assertRedirect('/rate/ABC123');
+
+        $errors = session('errors');
+        $this->assertTrue($errors->has('email'));
+        $this->assertStringContainsString('Kinansela', $errors->first('email'));
+    }
+
+    public function test_google_callback_connect_exception_returns_to_intended_with_message()
+    {
+        $provider = Mockery::mock();
+        $provider->shouldReceive('user')->andThrow(new \Exception('google down'));
+        \Laravel\Socialite\Facades\Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $this->withSession([
+            'google_connect_mode' => true,
+            'google_connect_intended' => '/rate/ABC123',
+        ])->get('/auth/google/callback')
+            ->assertRedirect('/rate/ABC123');
+
+        $errors = session('errors');
+        $this->assertTrue($errors->has('email'));
+        $this->assertStringContainsString('Unable to sign in with Google', $errors->first('email'));
     }
 
     public function test_passenger_dashboard_shows_only_own_complaints()
