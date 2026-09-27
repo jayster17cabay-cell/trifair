@@ -38,15 +38,14 @@
             </button>
         </div>
         <form id="presidentMemberFilter" class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center" method="GET" action="{{ route('president.dashboard') }}">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name, body #, plate…"
+            <input type="text" id="presidentMemberSearch" name="search" value="{{ request('search') }}" placeholder="Search name, body #, plate…"
                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold sm:w-56">
-            <select name="status" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
+            <select id="presidentMemberStatus" name="status" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
                 <option value="">All statuses</option>
                 @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $val => $label)
-                    <option value="{{ $val }}" @selected(request('status') === $val)>{{ $label }}</option>
+                    <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
             </select>
-            <button type="submit" class="tw-btn tw-btn-gold px-4 py-2 text-sm"><i class="bi bi-search mr-1"></i> Search</button>
         </form>
     </div>
 </div>
@@ -74,6 +73,30 @@
         chevron.classList.toggle('bi-chevron-up', hidden);
         if (hidden) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+
+    (function () {
+        var form = document.getElementById('presidentMemberFilter');
+        var searchInput = document.getElementById('presidentMemberSearch');
+        var statusSelect = document.getElementById('presidentMemberStatus');
+        if (!form || !searchInput || !statusSelect) return;
+        var timer = null;
+        var fireSearch = function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { form.submit(); }, 400);
+        };
+        searchInput.addEventListener('input', fireSearch);
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.keyCode === 13) {
+                e.preventDefault();
+                clearTimeout(timer);
+                form.submit();
+            }
+        });
+        statusSelect.addEventListener('change', function () {
+            clearTimeout(timer);
+            form.submit();
+        });
+    })();
 
     @if ($membersActive)
         document.addEventListener('DOMContentLoaded', function () {

@@ -27,9 +27,6 @@
     <div class="tw-input-group">
         <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
         <input type="text" id="presidentSearchInput" class="tw-input" placeholder="Search presidents by name or email..." value="{{ $search ?? '' }}" oninput="livePresidentSearch(this.value)" aria-label="Search presidents by name or email">
-        <button type="button" class="tw-btn tw-btn-gold shrink-0 px-4" onclick="livePresidentSearch(document.getElementById('presidentSearchInput').value)" aria-label="Search">
-            <i class="bi bi-search"></i>
-        </button>
         @if ($search)
             <a href="{{ route('tfrb-officer.presidents') }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700" aria-label="Clear search">
                 <i class="bi bi-x-lg"></i>

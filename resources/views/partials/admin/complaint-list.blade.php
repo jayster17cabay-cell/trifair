@@ -91,10 +91,8 @@
                     <input type="hidden" name="rating" value="{{ $ratingFilter }}">
                 @endif
                 <input type="text" name="search" value="{{ $search }}" placeholder="Search by reference number"
-                       class="tw-input py-2" style="max-width: 16rem;" aria-label="Search complaint by reference number">
-                <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Search">
-                    <i class="bi bi-search"></i><span class="hidden sm:inline">Search</span>
-                </button>
+                       class="tw-input py-2" style="max-width: 16rem;" aria-label="Search complaint by reference number"
+                       data-complaint-live-search>
                 @if ($search !== '')
                     <a href="{{ route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null)) }}"
                        class="tw-btn tw-btn-sm tw-btn-ghost" title="Clear search">
@@ -176,3 +174,22 @@
         {{ $complaints->links('pagination::tailwind') }}
     </div>
 @endif
+
+<script>
+    (function () {
+        var input = document.querySelector('input[data-complaint-live-search]');
+        if (!input || !input.form) return;
+        var timer = null;
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { input.form.submit(); }, 400);
+        });
+        input.addEventListener('keydown', function (e) {
+            if (e.keyCode === 13) {
+                e.preventDefault();
+                clearTimeout(timer);
+                input.form.submit();
+            }
+        });
+    })();
+</script>

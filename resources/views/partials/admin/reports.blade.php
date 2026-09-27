@@ -24,41 +24,38 @@
     <form method="GET" action="{{ route($routePrefix . '.reports') }}" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div>
             <label for="report_toda" class="mb-1 block text-xs font-semibold text-slate-600">TODA</label>
-            <select name="toda_id" id="report_toda" class="tw-select py-2 text-xs">
+            <select name="toda_id" id="report_toda" class="tw-select py-2 text-xs" onchange="this.form.submit()">
                 <option value="">All TODAs</option>
                 @foreach ($todas as $toda)
-                    <option value="{{ $toda->id }}" @selected((int) ($todaId ?? 0) === (int) $toda->id)>{{ $toda->name }}</option>
+                    <option value="{{ $toda->id }}" {{ (int) ($todaId ?? 0) === (int) $toda->id ? 'selected' : '' }}>{{ $toda->name }}</option>
                 @endforeach
             </select>
         </div>
         <div>
             <label for="report_from" class="mb-1 block text-xs font-semibold text-slate-600">From Date</label>
-            <input type="date" name="date_from" id="report_from" value="{{ $dateFrom ?? '' }}" class="tw-input py-2 text-xs">
+            <input type="date" name="date_from" id="report_from" value="{{ $dateFrom ?? '' }}" class="tw-input py-2 text-xs" onchange="this.form.submit()">
         </div>
         <div>
             <label for="report_to" class="mb-1 block text-xs font-semibold text-slate-600">To Date</label>
-            <input type="date" name="date_to" id="report_to" value="{{ $dateTo ?? '' }}" class="tw-input py-2 text-xs">
+            <input type="date" name="date_to" id="report_to" value="{{ $dateTo ?? '' }}" class="tw-input py-2 text-xs" onchange="this.form.submit()">
         </div>
         <div>
             <label for="report_min" class="mb-1 block text-xs font-semibold text-slate-600">Min. Average Rating</label>
-            <select name="min_rating" id="report_min" class="tw-select py-2 text-xs">
+            <select name="min_rating" id="report_min" class="tw-select py-2 text-xs" onchange="this.form.submit()">
                 <option value="">Any</option>
                 @foreach ([1, 2, 3, 4, 5] as $v)
-                    <option value="{{ $v }}" @selected((float) ($minRating ?? 0) === (float) $v)>&ge; {{ $v }}.0</option>
+                    <option value="{{ $v }}" {{ (float) ($minRating ?? 0) === (float) $v ? 'selected' : '' }}>&ge; {{ $v }}.0</option>
                 @endforeach
             </select>
             <p class="mt-1 text-[0.7rem] text-slate-400">Rating average is computed within the selected period.</p>
         </div>
         <div class="flex items-end gap-2 lg:col-span-4">
-            <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy">
-                <i class="bi bi-funnel"></i>Apply Filters
-            </button>
             @if ($dateFrom || $dateTo || $todaId || $minRating)
                 <a href="{{ route($routePrefix . '.reports') }}" class="tw-btn tw-btn-sm tw-btn-outline">
                     <i class="bi bi-x-lg"></i>Clear
                 </a>
             @endif
-            <p class="ml-auto hidden text-xs text-slate-400 lg:block">Tip: use the Download button to generate a printable PDF with the current filters.</p>
+            <p class="ml-auto hidden text-xs text-slate-400 lg:block">Results update automatically. Tip: use the Download button to generate a printable PDF with the current filters.</p>
         </div>
     </form>
 </div>

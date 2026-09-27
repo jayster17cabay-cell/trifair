@@ -86,9 +86,6 @@
     <div class="tw-input-group">
         <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
         <input type="text" id="searchInput" class="tw-input" placeholder="Search operators..." value="{{ $search ?? '' }}" oninput="liveSearch(this.value)" aria-label="Search operators">
-        <button type="button" class="tw-btn tw-btn-gold shrink-0 px-4" onclick="liveSearch(document.getElementById('searchInput').value)" aria-label="Search">
-            <i class="bi bi-search"></i>
-        </button>
         @if ($search)
             <a href="{{ route($routePrefix . '.operators') }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700" aria-label="Clear search">
                 <i class="bi bi-x-lg"></i>
