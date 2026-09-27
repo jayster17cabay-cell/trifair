@@ -83,6 +83,11 @@ class OperatorAdminService
 
     public function update(Request $request, Operator $operator, string $redirectRoute): RedirectResponse
     {
+        $operator->load('user');
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be edited here.');
+        }
+
         $request->merge(['email' => strtolower(trim($request->input('email')))]);
 
         $data = $request->validate([
@@ -133,6 +138,11 @@ class OperatorAdminService
 
     public function destroy(Operator $operator, string $redirectRoute): RedirectResponse
     {
+        $operator->load('user');
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be deleted here.');
+        }
+
         if ($operator->ratings()->exists()) {
             return redirect()->back()
                 ->with('error', 'Cannot delete operator with existing rating history. Deactivate the account instead.');
@@ -151,6 +161,11 @@ class OperatorAdminService
 
     public function archive(Operator $operator, string $redirectRoute): RedirectResponse
     {
+        $operator->load('user');
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be archived.');
+        }
+
         if ($operator->isArchived()) {
             return redirect()->back()->with('error', 'Operator is already archived.');
         }
@@ -166,6 +181,11 @@ class OperatorAdminService
 
     public function restore(Operator $operator, string $redirectRoute): RedirectResponse
     {
+        $operator->load('user');
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be restored.');
+        }
+
         if (!$operator->isArchived()) {
             return redirect()->back()->with('error', 'Operator is not archived.');
         }
@@ -193,6 +213,17 @@ class OperatorAdminService
 
         $target = !$operator->user->is_active;
         $operator->user->forceFill(['is_active' => $target])->save();
+
+        // Mirror the account state onto the approval status so a deactivated
+        // operator's live session is dropped by the OperatorActive middleware
+        // (which logs out status = inactive) instead of lingering with their
+        // approval row still marked active.
+        if ($target && $operator->status === 'inactive') {
+            $operator->update(['status' => 'active']);
+        } elseif (!$target && $operator->status === 'active') {
+            $operator->update(['status' => 'inactive']);
+        }
+
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log(
@@ -222,10 +253,22 @@ class OperatorAdminService
         if (!$operator->toda_id) {
             return redirect()->route($redirectRoute)->with('error', 'Assign this operator to a TODA first.');
         }
+        if ($operator->isArchived()) {
+            return redirect()->route($redirectRoute)->with('error', 'Archived operators cannot be assigned as president.');
+        }
+        if ($operator->status !== 'active') {
+            return redirect()->route($redirectRoute)->with('error', 'Only active operators can be assigned as president.');
+        }
 
+        // One president per TODA. Presidents are referenced primarily by
+        // users.toda_id, but legacy presidents (or a manual state) may only
+        // carry the TODA on their Operator row — so both paths are checked.
         $current = User::where('role', 'operator_president')
-            ->where('toda_id', $operator->toda_id)
             ->where('id', '!=', $operator->user_id)
+            ->where(function ($q) use ($operator) {
+                $q->where('toda_id', $operator->toda_id)
+                    ->orWhereHas('operator', fn ($o) => $o->where('toda_id', $operator->toda_id));
+            })
             ->first();
 
         if ($current) {
@@ -238,11 +281,21 @@ class OperatorAdminService
             'toda_id' => $operator->toda_id,
         ])->save();
 
-        // Ensure the president can still receive their own ratings.
-        Operator::updateOrCreate(
-            ['user_id' => $operator->user_id],
-            ['toda_id' => $operator->toda_id, 'status' => 'active']
-        );
+        // Ensure the president can still receive their own ratings. The row
+        // normally already exists (they were an operator first); the fallback
+        // only covers a legacy/missing row and always supplies a qr_code so the
+        // NOT NULL column can never blow up the promotion.
+        $existing = Operator::where('user_id', $operator->user_id)->first();
+        if ($existing) {
+            $existing->update(['toda_id' => $operator->toda_id, 'status' => 'active']);
+        } else {
+            Operator::create([
+                'user_id' => $operator->user_id,
+                'toda_id' => $operator->toda_id,
+                'status' => 'active',
+                'qr_code' => (string) Str::random(32),
+            ]);
+        }
 
         app(AdminDashboardService::class)->flush();
 
@@ -276,11 +329,21 @@ class OperatorAdminService
 
         $user->forceFill(['role' => 'operator'])->save();
 
-        // Keep the Operator row so the demoted president stays a regular, ratable operator.
-        Operator::updateOrCreate(
-            ['user_id' => $user->id],
-            ['toda_id' => $user->toda_id, 'status' => 'active']
-        );
+        // Keep the Operator row so the demoted president stays a regular, ratable
+        // operator — but never force-reactivate it. If the row went missing for
+        // some reason, recreate it WITH a qr_code (the column is NOT NULL) so the
+        // demotion can never 500.
+        $row = Operator::where('user_id', $user->id)->first();
+        if ($row) {
+            $row->update(['toda_id' => $user->toda_id]);
+        } else {
+            Operator::create([
+                'user_id' => $user->id,
+                'toda_id' => $user->toda_id,
+                'status' => 'active',
+                'qr_code' => (string) Str::random(32),
+            ]);
+        }
 
         app(AdminDashboardService::class)->flush();
 
@@ -332,6 +395,14 @@ class OperatorAdminService
     public function approve(Operator $operator, string $redirectRoute): RedirectResponse
     {
         $operator->load('user');
+
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be approved.');
+        }
+        if ($operator->isArchived()) {
+            return redirect()->route($redirectRoute)->with('error', 'Archived operators cannot be approved. Restore them first.');
+        }
+
         $operator->update(['status' => 'active']);
         $operator->user->forceFill(['is_active' => true])->save();
         app(AdminDashboardService::class)->flush();
@@ -345,6 +416,11 @@ class OperatorAdminService
     public function reject(Operator $operator, string $redirectRoute): RedirectResponse
     {
         $operator->load('user');
+
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be rejected.');
+        }
+
         $operatorName = $operator->user->name;
         $operatorEmail = $operator->user->email;
 

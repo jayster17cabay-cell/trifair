@@ -164,7 +164,7 @@
                         </button>
                     </form>
                 @endif
-                @if ($showDelete && !$rating->is_reviewed)
+                @if ($showDelete && !$rating->is_reviewed && $rating->complaint_type)
                     <form action="{{ route($routePrefix . '.complaints.destroy', $rating) }}" method="POST" onsubmit="return confirm('Delete this complaint?')">
                         @csrf
                         @method('DELETE')

@@ -14,7 +14,7 @@ class ExportService
         fputs($handle, "\xEF\xBB\xBF");
         fputcsv($handle, $headers);
         foreach ($rows as $row) {
-            fputcsv($handle, array_values($row));
+            fputcsv($handle, array_map([$this, 'csvSafe'], array_values($row)));
         }
         rewind($handle);
         $content = stream_get_contents($handle);
@@ -24,6 +24,21 @@ class ExportService
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
+    }
+
+    /**
+     * Neutralize spreadsheet formula injection: a cell whose raw value starts
+     * with =, +, -, @ (or a tab/newline/CR spawned from it) would otherwise be
+     * executed as a formula by Excel / Google Sheets when the file is opened.
+     */
+    private function csvSafe($value): string
+    {
+        $value = (string) ($value ?? '');
+        $first = substr($value, 0, 1);
+        if (in_array($first, ['=', '+', '-', '@'], true) || in_array($first, ["\t", "\r", "\n"], true)) {
+            $value = "'" . $value;
+        }
+        return $value;
     }
 
     /* ──────────────── Word (HTML with .doc ext) ─────────────── */

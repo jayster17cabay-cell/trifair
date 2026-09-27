@@ -102,7 +102,10 @@ class RatingController extends Controller
             'complaint_details' => 'nullable|string|max:2000',
         ];
 
-        if ($request->has('rating') && (int) $request->input('rating') <= 2) {
+        // Validate proof files whenever they are actually uploaded (any star
+        // rating), so the rules always match the upload loop below and a crafted
+        // 3-5 star POST can no longer sneak unvalidated files into storage.
+        if ($request->hasFile('proofs')) {
             $rules['proofs'] = 'nullable|array|max:3';
             $rules['proofs.*'] = 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov,pdf,doc,docx|max:20480';
         }

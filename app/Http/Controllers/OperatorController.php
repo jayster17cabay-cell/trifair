@@ -100,12 +100,29 @@ class OperatorController extends Controller
             ['message' => $data['message']]
         );
 
-        // Upload any new proof attachments shared by the operator.
+        // Upload any new proof attachments shared by the operator. Mirror the
+        // passenger flow: store on Supabase when configured so the files are
+        // reachable from the public app (the local 'public' disk is ephemeral
+        // on the Render host), falling back to local storage when not available.
         if ($request->hasFile('files')) {
             $rating->operatorProofs()->delete();
             foreach ($request->file('files') as $file) {
-                /** @var \Illuminate\Http\UploadedFile $file */
-                $path = $file->store('operator-proofs/' . $rating->id, 'public');
+                if (!$file || !$file->isValid()) continue;
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $remotePath = 'operator-proofs/' . $rating->id . '/' . $filename;
+
+                $saved = false;
+                $path = $remotePath;
+                if (class_exists(\App\Helpers\SupabaseStorage::class)) {
+                    $result = \App\Helpers\SupabaseStorage::upload($file, $remotePath);
+                    $saved = (bool) $result;
+                }
+
+                if (!$saved) {
+                    $file->storeAs('operator-proofs/' . $rating->id, $filename, 'public');
+                    $path = 'operator-proofs/' . $rating->id . '/' . $filename;
+                }
+
                 OperatorProof::create([
                     'rating_id' => $rating->id,
                     'file_path' => $path,

@@ -477,20 +477,25 @@
     }
 
     function initDropdowns() {
-        document.querySelectorAll('[data-tw-dropdown]').forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                var menu = document.getElementById(btn.getAttribute('data-tw-dropdown'));
-                if (!menu) return;
-                var willOpen = !menu.classList.contains('open');
-                closeAllDropdowns();
-                setDropdownState(btn, willOpen);
-            });
-        });
+        // Event delegation: the operators live-search replaces the <tbody>
+        // (and its [data-tw-dropdown] buttons) on every keystroke, so the
+        // toggle is bound here on the document instead of per-button at init.
+        // This keeps the grouped actions (Edit/Approve/Assign/Archive…) working
+        // on freshly re-rendered rows.
         document.addEventListener('click', function (e) {
-            if (!e.target.closest('[data-tw-dropdown]') && !e.target.closest('[data-tw-dropdown-menu]')) {
-                closeAllDropdowns();
+            var btn = e.target.closest ? e.target.closest('[data-tw-dropdown]') : null;
+            if (!btn) {
+                if (!e.target.closest('[data-tw-dropdown-menu]')) {
+                    closeAllDropdowns();
+                }
+                return;
             }
+            e.stopPropagation();
+            var menu = document.getElementById(btn.getAttribute('data-tw-dropdown'));
+            if (!menu) return;
+            var willOpen = !menu.classList.contains('open');
+            closeAllDropdowns();
+            setDropdownState(btn, willOpen);
         });
         document.addEventListener('keydown', function (e) {
             if (e.key !== 'Escape') return;

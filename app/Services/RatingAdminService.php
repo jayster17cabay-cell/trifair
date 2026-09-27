@@ -33,6 +33,10 @@ class RatingAdminService
 
     public function complaintsMarkReviewed(Rating $rating): RedirectResponse
     {
+        if (!$rating->complaint_type) {
+            return back()->withErrors(['error' => 'Only complaints with a complaint type can be marked reviewed here.']);
+        }
+
         $wasReviewed = (bool) $rating->is_reviewed;
         $rating->update(['is_reviewed' => true]);
         app(AdminDashboardService::class)->flush();
@@ -54,6 +58,10 @@ class RatingAdminService
      */
     public function complaintsMarkSolved(Rating $rating): RedirectResponse
     {
+        if (!$rating->complaint_type) {
+            return back()->withErrors(['error' => 'Only complaints with a complaint type can be marked solved here.']);
+        }
+
         $wasSolved = (bool) $rating->is_solved;
         $rating->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
         app(AdminDashboardService::class)->flush();
@@ -70,7 +78,14 @@ class RatingAdminService
 
     public function complaintsReopen(Rating $rating): RedirectResponse
     {
-        $rating->update(['is_solved' => false, 'solved_at' => null]);
+        if (!$rating->complaint_type) {
+            return back()->withErrors(['error' => 'Only complaints with a complaint type can be reopened.']);
+        }
+
+        // Reopening sends it back into the pending queue, so the reviewed flag
+        // must be cleared too — otherwise it is invisible to admins and the
+        // "Mark Reviewed" action never comes back on the card.
+        $rating->update(['is_solved' => false, 'solved_at' => null, 'is_reviewed' => false]);
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('reopen_complaint', "Reopened complaint #{$rating->id} (operator: {$rating->operator->user->name})", $rating, 'review');
@@ -186,6 +201,14 @@ class RatingAdminService
 
     public function destroyComplaint(Rating $rating, string $noun = 'complaint'): RedirectResponse
     {
+        // The superadmin ratings page reuses this endpoint's button, but that
+        // page lists regular (3-5 star, no complaint type) ratings. Hard-deleting
+        // those here without a complaint type would erase legitimate feedback, so
+        // the endpoint is restricted to real complaints.
+        if (!$rating->complaint_type) {
+            return back()->withErrors(['error' => 'Only complaints can be deleted here.']);
+        }
+
         $operatorName = $rating->operator->user->name ?? 'Unknown';
 
         foreach ($rating->proofs as $proof) {

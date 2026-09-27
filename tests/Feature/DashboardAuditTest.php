@@ -734,7 +734,7 @@ class DashboardAuditTest extends TestCase
         Mail::assertSent(ComplaintStatus::class, 1);
     }
 
-    public function test_reopening_a_complaint_unsolves_it_and_stays_reviewed()
+    public function test_reopening_a_complaint_unsolves_it_and_returns_to_pending()
     {
         $admin = $this->makeUser('superadmin');
         $op = $this->makeOperator();
@@ -747,7 +747,9 @@ class DashboardAuditTest extends TestCase
             ->assertSessionHas('success');
 
         $rating->refresh();
-        $this->assertTrue($rating->is_reviewed);
+        // Reopening sends the complaint back into the pending queue, so both
+        // the solved and reviewed flags are cleared.
+        $this->assertFalse($rating->is_reviewed);
         $this->assertFalse($rating->is_solved);
         $this->assertNull($rating->solved_at);
     }

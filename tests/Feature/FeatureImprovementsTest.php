@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
@@ -631,6 +632,11 @@ class FeatureImprovementsTest extends TestCase
         Storage::fake('public');
         $operator = $this->makeOperator();
         $rating = $this->makeValidComplaint($operator);
+
+        // Simulate the remote proof bucket being unreachable so the operator
+        // upload falls back to the local 'public' disk — keeping the test
+        // hermetic (no real network round-trips against Supabase).
+        Http::fake(['*' => Http::response('', 500)]);
 
         $this->actingAs($operator->user)
             ->post('/operator/ratings/' . $rating->id . '/respond', [

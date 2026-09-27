@@ -89,7 +89,15 @@
                 </button>
                 <div id="operatorActions{{ $operator->id }}" data-tw-dropdown-menu
                      class="tw-dropdown right-0 top-full z-50 mt-1 min-w-[12.5rem] py-1.5">
-                    @if (request('status') === 'pending')
+                    @if ($operator->isArchived())
+                        <form action="{{ route($routePrefix . '.operators.restore', $operator) }}" method="POST" data-tw-dropdown-menu-child-form>
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js('Restore ' . $operatorName . '?'))">
+                                <i class="bi bi-arrow-counterclockwise tw-dropdown-item-icon"></i>Restore
+                            </button>
+                        </form>
+                    @elseif (in_array($operator->status, ['pending', 'rejected'], true))
                         <form action="{{ route($routePrefix . '.operators.approve', $operator) }}" method="POST" data-tw-dropdown-menu-child-form>
                             @csrf
                             @method('PATCH')
@@ -102,14 +110,6 @@
                             @method('PATCH')
                             <button type="submit" class="tw-dropdown-item tw-dropdown-danger" onclick="return confirm(@js('Reject and remove ' . $operatorName . '?'))">
                                 <i class="bi bi-x-lg tw-dropdown-item-icon"></i>Reject
-                            </button>
-                        </form>
-                    @elseif (request('status') === 'archived')
-                        <form action="{{ route($routePrefix . '.operators.restore', $operator) }}" method="POST" data-tw-dropdown-menu-child-form>
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js('Restore ' . $operatorName . '?'))">
-                                <i class="bi bi-arrow-counterclockwise tw-dropdown-item-icon"></i>Restore
                             </button>
                         </form>
                     @else

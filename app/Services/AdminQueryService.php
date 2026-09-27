@@ -48,7 +48,7 @@ class AdminQueryService
             $base->where('is_reviewed', true)->where('is_solved', false);
         } elseif ($filter === 'solved') {
             $base->isSolved();
-        } elseif ($filter !== 'all') {
+        } elseif (!in_array($filter, ['', 'all'], true)) {
             $filter = 'pending';
             $base->where('is_reviewed', false)->where('is_solved', false);
         }
@@ -143,7 +143,7 @@ class AdminQueryService
 
         $todas = Toda::orderBy('name')->get();
 
-        $operators = $query->orderByDesc('valid_ratings_count')
+        $operators = $query->orderByRaw('COALESCE(vr.valid_ratings_count, 0) DESC')
             ->paginate(25)
             ->withQueryString();
 
@@ -295,7 +295,9 @@ class AdminQueryService
 
     public function complaintsForExport(Request $request): \Illuminate\Support\Collection
     {
-        $filter = $request->query('filter', 'pending');
+        // "All" is submitted as an empty string by the dropdown, which must NOT
+        // fall through to the pending filter (that would export pending only).
+        $filter = trim((string) $request->query('filter', 'pending'));
         $operatorId = $request->query('operator_id');
         $ratingKey = $request->query('rating');
         $search = trim((string) $request->query('search'));
@@ -307,7 +309,7 @@ class AdminQueryService
             $base->where('is_reviewed', true)->where('is_solved', false);
         } elseif ($filter === 'solved') {
             $base->isSolved();
-        } elseif ($filter !== 'all') {
+        } elseif (!in_array($filter, ['', 'all'], true)) {
             $base->where('is_reviewed', false)->where('is_solved', false);
         }
         if ($operatorId) {
@@ -347,7 +349,7 @@ class AdminQueryService
             $query->where('operators.id', (int) $request->query('operator_id'));
         }
 
-        return $query->orderByDesc('valid_ratings_count')
+        return $query->orderByRaw('COALESCE(vr.valid_ratings_count, 0) DESC')
             ->get()
             ->map(function ($operator) {
                 return [
@@ -444,6 +446,10 @@ class AdminQueryService
     {
         return $toda->operators()
             ->with('user')
+            // Presidents are also operators (they keep their own ratable row),
+            // but they are managed under the Presidents section — never from the
+            // TODA members modal, where they could be edited/deleted/rejected.
+            ->whereHas('user', fn ($u) => $u->where('role', 'operator'))
             ->whereNull('archived_at')
             ->get();
     }
@@ -454,7 +460,12 @@ class AdminQueryService
      */
     public function reportTripsData(Operator $operator): array
     {
-        abort_unless(in_array($operator->status, ['active', 'inactive'], true), 404);
+        abort_unless(
+            in_array($operator->status, ['active', 'inactive'], true)
+            && $operator->user?->role === 'operator'
+            && !$operator->isArchived(),
+            404
+        );
 
         $totalTrips = $operator->validRatings()->count();
         $operator->load(['validRatings' => function ($query) {
