@@ -122,6 +122,11 @@
     <div class="auto-close-note" id="closeNote">
         <i class="bi bi-x-circle"></i> Tap <strong>Close</strong> below to exit this page.
     </div>
+    <noscript>
+        <div class="auto-close-note">
+            <i class="bi bi-x-circle"></i> Naitala na ang iyong rating — maaari mo nang isara ang tab na ito.
+        </div>
+    </noscript>
 
     <button class="close-btn" id="closeBtn" onclick="tryClose()">
         <i class="bi bi-x-lg"></i> Close
@@ -131,37 +136,52 @@
 </div>
 
 <script>
-var timer = null;
 var closed = false;
 
 function doClose() {
-    clearInterval(timer);
+    if (closed) return;
     closed = true;
     var btn = document.getElementById('closeBtn');
     var note = document.getElementById('closeNote');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-x-lg"></i> Closing...'; }
     if (note) { note.innerHTML = '<i class="bi bi-check-circle"></i> Closing this page...'; }
-    try { self.close(); } catch(e) {}
-    try { window.close(); } catch(e) {}
-    try { top.close(); } catch(e) {}
+
+    // Browsers only let JS close script-opened tabs. Try every technique,
+    // then fall back to leaving the flow gracefully when it is blocked.
+    try { window.open('', '_self'); window.close(); } catch (e) {}
+    try { self.close(); } catch (e) {}
+    try { window.close(); } catch (e) {}
+    try { top.close(); } catch (e) {}
+
     setTimeout(function () {
-        if (document.hidden) return;
-        // Still visible: the browser blocked the close (most browsers only
-        // let script-created tabs be closed). Re-enable so the passenger
-        // can retry or manually dismiss the tab.
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-x-lg"></i> Close'; }
-        if (note) {
-            note.innerHTML = '<i class="bi bi-x-circle"></i> If this does not close, swipe the tab away or tap the X in your browser.';
-        }
-    }, 1200);
+        if (document.hidden) return; // actually closed
+        exitFlow();
+    }, 900);
 }
 
-function tryClose() {
-    if (closed) return;
+function exitFlow() {
+    closed = false;
+    var btn = document.getElementById('closeBtn');
+    var note = document.getElementById('closeNote');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Done';
+        btn.title = 'Take me back to TriFair';
+        btn.onclick = window.exitVia;
+    }
+    if (note) {
+        note.innerHTML = 'This browser does not allow auto-close. Tap <strong>Done</strong> to finish.';
+    }
+    if (navigator.vibrate) navigator.vibrate(50);
+}
+
+window.tryClose = function () {
     doClose();
-}
+};
 
-tryClose();
+window.exitVia = function () {
+    window.location.replace('/');
+};
 </script>
 </body>
 </html>

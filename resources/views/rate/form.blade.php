@@ -158,6 +158,12 @@
     </style>
 </head>
 <body>
+<noscript>
+    <div class="rate-alert" style="margin:1rem auto;max-width:640px;">
+        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+        <div><strong>JavaScript is disabled.</strong> Kailangan mong i-enable ang JavaScript sa iyong browser para makapag-rate. Pindutin ang tatlong tuldok at piliin ang "Enable JavaScript" o buksan ito sa ibang browser.</div>
+    </div>
+</noscript>
 
 @include('partials.rate.rating-page-header')
 
@@ -457,7 +463,7 @@
             reverseGeocode(fallback, 'rateMapStart');
             detectLocation();
         } catch (e) {
-            document.getElementById('rateMap').innerHTML = '<div style="text-align:center;padding:2rem;color:#94a3b8;"><i class="bi bi-map" style="font-size:1.5rem;"></i><br><small>Map unavailable</small></div>';
+            mapNotAvailable();
         }
     }
 
@@ -800,6 +806,30 @@
         }, 250);
     }
 
+    /* ---- Map-free fallback ---- */
+
+    function mapNotAvailable() {
+        // Hiding the interactive map never blocks the rating: the server treats
+        // start/end locations as optional, so a broken CDN, blocked tile host,
+        // or an old device webview must not prevent the passenger from rating.
+        var shell = document.querySelector('.map-shell');
+        if (shell) shell.style.display = 'none';
+        var endInput = document.getElementById('rateMapEnd');
+        if (endInput) {
+            endInput.disabled = true;
+            endInput.placeholder = 'Map unavailable on this device';
+        }
+        var startInput = document.getElementById('rateMapStart');
+        if (startInput) startInput.value = 'Your trip';
+        var note = document.getElementById('rateMapNote');
+        if (note) {
+            note.hidden = false;
+            note.className = 'map-note';
+            note.innerHTML = '<i class="bi bi-info-circle" aria-hidden="true"></i> Map could not load here — you can still tap a star below to rate your trip.';
+        }
+        revealStars();
+    }
+
     /* ---- Status / summary / notes ---- */
 
     function updateLocStatus(msg, state) {
@@ -1046,23 +1076,10 @@
             }, 200);
         } else {
             cb.classList.remove('show');
-            submitRatingAutomatic();
+            document.getElementById('submitBtn').innerHTML = '<i class="bi bi-send-fill" aria-hidden="true"></i> Submit Rating';
         }
 
         if (navigator.vibrate) navigator.vibrate(15);
-    }
-
-    function submitRatingAutomatic() {
-        if (autoSubmitting) return;
-        autoSubmitting = true;
-        var form = document.getElementById('rateForm');
-        if (!form) return;
-        var btn = document.getElementById('submitBtn');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split" aria-hidden="true"></i> Submitting...';
-        }
-setTimeout(function () { form.submit(); }, 350);
     }
 
     function saveRateDraft() {
@@ -1127,7 +1144,9 @@ setTimeout(function () { form.submit(); }, 350);
     if (proofInput) {
         proofInput.addEventListener('change', function () {
             var chips = document.getElementById('fileChips');
-            var files = Array.from(this.files);
+            var files = [];
+            var fl = this.files;
+            for (var fi = 0; fi < fl.length; fi++) { files.push(fl[fi]); }
             var MAX_FILES = 3;
             var MAX_SIZE = 20 * 1024 * 1024;
             var oversized = files.filter(function (f) { return f.size > MAX_SIZE; });
@@ -1159,6 +1178,25 @@ setTimeout(function () { form.submit(); }, 350);
     window.retryLocation = retryLocation;
     window.skipLocation = skipLocation;
 
+    /* ---- Double-submit guard ----
+       Tap on Submit twice quickly (or slow-device retries) must not create
+       two ratings. Once the first submit fires, the button is locked and
+       further submits are ignored. */
+    var rateFormEl = document.getElementById('rateForm');
+    if (rateFormEl) {
+        rateFormEl.addEventListener('submit', function () {
+            if (autoSubmitting) {
+                return false;
+            }
+            autoSubmitting = true;
+            var btn = document.getElementById('submitBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split" aria-hidden="true"></i> Submitting...';
+            }
+        });
+    }
+
     /* ---- Session keepalive (prevents 419 on long-open form) ----
        The complaint form can sit open while the map/GPS warms up. Ping a
        lightweight endpoint every minute so the session (and its CSRF token)
@@ -1168,6 +1206,17 @@ setTimeout(function () { form.submit(); }, 350);
     }, 60000);
 
     setTimeout(function () { initMap(); }, 50);
+
+    // Watchdog: if the Leaflet/map bundle never registered (blocked CDN, very
+    // old webview), make sure the passenger can still rate instead of waiting
+    // on a map that will never appear.
+    setTimeout(function () {
+        if (!window.TripRouteMap || !window.L) {
+            mapNotAvailable();
+        } else if (map && typeof map.invalidateSize === 'function') {
+            map.invalidateSize();
+        }
+    }, 4500);
 })();
 </script>
 
