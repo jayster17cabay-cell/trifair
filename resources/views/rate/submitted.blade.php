@@ -120,7 +120,7 @@
     @endif
 
     <div class="auto-close-note" id="closeNote">
-        <i class="bi bi-x-circle"></i> Tap <strong>Close</strong> below to exit this page.
+        <i class="bi bi-x-circle"></i> Tap <strong>Close</strong> below to go back to TriFair.
     </div>
     <noscript>
         <div class="auto-close-note">
@@ -146,41 +146,23 @@ function doClose() {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-x-lg"></i> Closing...'; }
     if (note) { note.innerHTML = '<i class="bi bi-check-circle"></i> Closing this page...'; }
 
-    // Browsers only let JS close script-opened tabs. Try every technique,
-    // then fall back to leaving the flow gracefully when it is blocked.
-    try { window.open('', '_self'); window.close(); } catch (e) {}
-    try { self.close(); } catch (e) {}
+    // Browsers only let JS close script-opened tabs (in-app browser overlays).
+    // window.open('', '_self') is deliberately NOT used: on mobile WebViews it
+    // reloads/duplicates the page, so pressing Close appeared to do nothing.
     try { window.close(); } catch (e) {}
+    try { self.close(); } catch (e) {}
     try { top.close(); } catch (e) {}
 
-    setTimeout(function () {
+    // If we are still here the tab could not be closed — take the visitor to a
+    // useful destination instead (their complaints dashboard when signed in).
+    window.setTimeout(function () {
         if (document.hidden) return; // actually closed
-        exitFlow();
-    }, 900);
-}
-
-function exitFlow() {
-    closed = false;
-    var btn = document.getElementById('closeBtn');
-    var note = document.getElementById('closeNote');
-    if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Done';
-        btn.title = 'Take me back to TriFair';
-        btn.onclick = window.exitVia;
-    }
-    if (note) {
-        note.innerHTML = 'This browser does not allow auto-close. Tap <strong>Done</strong> to finish.';
-    }
-    if (navigator.vibrate) navigator.vibrate(50);
+        window.location.replace('{{ $exitUrl }}');
+    }, 350);
 }
 
 window.tryClose = function () {
     doClose();
-};
-
-window.exitVia = function () {
-    window.location.replace('/');
 };
 </script>
 </body>

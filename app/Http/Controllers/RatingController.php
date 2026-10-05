@@ -239,7 +239,13 @@ class RatingController extends Controller
             ->where('qr_code', $qrCode)
             ->firstOrFail();
 
-        return response()->view('rate.submitted', compact('operator'))
+        // Where the Close button on the thank-you page should take the user:
+        // signed-in passengers go straight back to "My Complaints".
+        $exitUrl = auth()->check() && auth()->user()->isPassenger()
+            ? route('passenger.dashboard')
+            : '/';
+
+        return response()->view('rate.submitted', compact('operator', 'exitUrl'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }

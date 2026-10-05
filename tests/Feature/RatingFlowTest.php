@@ -154,4 +154,35 @@ class RatingFlowTest extends TestCase
 
         $this->get('/rate/' . $operator->qr_code)->assertNotFound();
     }
+
+    public function test_thank_you_close_sends_guests_to_landing_page()
+    {
+        $operator = $this->makeActiveOperator();
+
+        $this->get(route('rate.submitted', $operator->qr_code))
+            ->assertOk()
+            ->assertSee("window.location.replace('/')", false);
+    }
+
+    public function test_thank_you_close_sends_signed_in_passenger_to_their_dashboard()
+    {
+        $operator = $this->makeActiveOperator();
+
+        $passenger = new User();
+        $passenger->forceFill([
+            'name' => 'Test Passenger',
+            'email' => 'passenger_' . Str::random(6) . '@example.com',
+            'password' => Hash::make('password123'),
+            'email_verified_at' => now(),
+            'role' => 'passenger',
+            'is_active' => true,
+            'phone' => '09171234567',
+        ]);
+        $passenger->save();
+
+        $this->actingAs($passenger)
+            ->get(route('rate.submitted', $operator->qr_code))
+            ->assertOk()
+            ->assertSee(route('passenger.dashboard'), false);
+    }
 }
