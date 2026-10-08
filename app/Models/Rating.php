@@ -99,6 +99,22 @@ class Rating extends Model
         'is_valid' => 'boolean',
     ];
 
+    /**
+     * The complaint form always posts both fields, even when the complaint box
+     * is hidden (star ratings 3-5). Convert the empty strings to real nulls so
+     * the scopes below keep working: a positive rating must never come back as
+     * a "complaint" just because the select submitted an empty value.
+     */
+    public function setComplaintTypeAttribute($value)
+    {
+        $this->attributes['complaint_type'] = $value === '' ? null : $value;
+    }
+
+    public function setComplaintDetailsAttribute($value)
+    {
+        $this->attributes['complaint_details'] = $value === '' ? null : $value;
+    }
+
     public function operator()
     {
         return $this->belongsTo(Operator::class);

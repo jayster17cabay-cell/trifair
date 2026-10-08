@@ -83,6 +83,18 @@ class RatingTest extends TestCase
         $this->assertTrue($rating->evaluateValidity());
     }
 
+    public function test_evaluate_validity_low_rating_requires_both_location_and_proof()
+    {
+        $rating = new Rating(['rating' => 2, 'start_location' => null, 'end_location' => null]);
+        $rating->setRelation('proofs', collect([(object) ['id' => 1]]));
+
+        $this->assertFalse($rating->evaluateValidity());
+
+        $rating->start_location = 'A';
+        $rating->end_location = 'B';
+        $this->assertTrue($rating->evaluateValidity());
+    }
+
     public function test_evaluate_validity_low_rating_requires_proof()
     {
         $rating = new Rating(['rating' => 2, 'start_location' => 'A', 'end_location' => 'B']);
@@ -92,5 +104,15 @@ class RatingTest extends TestCase
 
         $rating->setRelation('proofs', collect([(object) ['id' => 1]]));
         $this->assertTrue($rating->evaluateValidity());
+    }
+
+    public function test_empty_complaint_fields_are_normalized_to_null()
+    {
+        $rating = new Rating(['complaint_type' => '', 'complaint_details' => '']);
+
+        $this->assertNull($rating->complaint_type);
+        $this->assertNull($rating->complaint_details);
+        $this->assertNull($rating->getAttributes()['complaint_type']);
+        $this->assertNull($rating->getAttributes()['complaint_details']);
     }
 }

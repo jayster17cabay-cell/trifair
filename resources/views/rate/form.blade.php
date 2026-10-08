@@ -665,6 +665,7 @@
         if (dw) dw.classList.remove('show');
         setEndMarker(latlng);
         setTimeout(fitBothMarkers, 150);
+        refreshSubmitAvailability();
     }
 
     /* ---- Route drawing ---- */
@@ -794,7 +795,10 @@
         var sb = document.getElementById('submitBtn');
         if (sb) sb.disabled = true;
         var sh = document.getElementById('submitHint');
-        if (sh) sh.style.display = '';
+        if (sh) {
+            sh.style.display = '';
+            sh.textContent = 'Tap a star above to rate';
+        }
     }
 
     function revealStars() {
@@ -809,25 +813,70 @@
     /* ---- Map-free fallback ---- */
 
     function mapNotAvailable() {
-        // Hiding the interactive map never blocks the rating: the server treats
-        // start/end locations as optional, so a broken CDN, blocked tile host,
-        // or an old device webview must not prevent the passenger from rating.
+        // A broken map must never let a rating through without a trip, so the
+        // passenger still has to fill in From and To by hand here.
         var shell = document.querySelector('.map-shell');
         if (shell) shell.style.display = 'none';
         var endInput = document.getElementById('rateMapEnd');
         if (endInput) {
-            endInput.disabled = true;
-            endInput.placeholder = 'Map unavailable on this device';
+            endInput.disabled = false;
+            endInput.placeholder = 'Type your destination';
         }
         var startInput = document.getElementById('rateMapStart');
-        if (startInput) startInput.value = 'Your trip';
+        if (startInput) {
+            startInput.readOnly = false;
+            startInput.value = '';
+            startInput.placeholder = 'Where did you board?';
+            startInput.addEventListener('input', refreshSubmitAvailability);
+        }
         var note = document.getElementById('rateMapNote');
         if (note) {
             note.hidden = false;
             note.className = 'map-note';
-            note.innerHTML = '<i class="bi bi-info-circle" aria-hidden="true"></i> Map could not load here — you can still tap a star below to rate your trip.';
+            note.innerHTML = '<i class="bi bi-info-circle" aria-hidden="true"></i> The map could not load here — i-type mo pa rin ang iyong From at To (trip) para makapag-rate.';
         }
         revealStars();
+    }
+
+    /* ---- Trip requirement (From/To) ----
+       A rating must belong to an actual trip: the passenger has to have a
+       From and a To before Submit becomes available. This mirrors the server
+       validity rule (both route locations required), so a 3-5 star tap can
+       never slip through as an empty, uncounted rating. */
+
+    function startLocationReady() {
+        var s = document.getElementById('rateMapStart');
+        if (!s) return true;
+        var v = (s.value || '').trim();
+        return v !== '' && v !== 'Detecting location...' && v !== 'Your trip';
+    }
+
+    function endLocationReady() {
+        var e = document.getElementById('rateMapEnd');
+        var v = (e ? (e.value || '').trim() : '');
+        return v !== '';
+    }
+
+    function tripReady() {
+        return startLocationReady() && endLocationReady();
+    }
+
+    function refreshSubmitAvailability() {
+        var btn = document.getElementById('submitBtn');
+        var hint = document.getElementById('submitHint');
+        var ready = tripReady();
+        if (btn) btn.disabled = !ready;
+        if (hint) {
+            if (selectedRating === 0) {
+                hint.style.display = '';
+                hint.textContent = 'Tap a star above to rate';
+            } else if (!ready) {
+                hint.style.display = '';
+                hint.textContent = 'Pumili ka muna ng From at To (trip) bago i-submit.';
+            } else {
+                hint.style.display = 'none';
+            }
+        }
     }
 
     /* ---- Status / summary / notes ---- */
@@ -904,6 +953,7 @@
     var searchTimeout = null;
 
     endInput.addEventListener('input', function () {
+        refreshSubmitAvailability();
         var q = this.value.trim();
         if (q.length < 1) { searchResults.innerHTML = ''; return; }
         clearTimeout(searchTimeout);
@@ -991,7 +1041,7 @@
     }
 
     function reverseGeocode(latlng, inputId) {
-        var timer = setTimeout(function () { fallbackName(inputId); }, 6000);
+        var timer = setTimeout(function () { fallbackName(inputId); refreshSubmitAvailability(); }, 6000);
         fetch('/geocode/reverse?lat=' + latlng.lat + '&lng=' + latlng.lng)
             .then(function (r) { return r.json(); })
             .then(function (d) {
@@ -1001,9 +1051,11 @@
                 } else {
                     fallbackName(inputId);
                 }
+                refreshSubmitAvailability();
             }).catch(function () {
                 clearTimeout(timer);
                 fallbackName(inputId);
+                refreshSubmitAvailability();
             });
     }
 
@@ -1011,6 +1063,7 @@
         var el = document.getElementById(inputId);
         if (!el || (el.value && el.value !== 'Detecting location...')) return;
         el.value = 'Current location, Solano';
+        refreshSubmitAvailability();
     }
 
     function trimAddress(addr) {
@@ -1064,8 +1117,7 @@
         document.getElementById('feedbackMsg').innerHTML =
             '<span class="emoji">' + emojis[selectedRating] + '</span> ' + labels[selectedRating];
 
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitHint').style.display = 'none';
+        refreshSubmitAvailability();
 
         var cb = document.getElementById('complaintBox');
         if (selectedRating <= 2) {
@@ -1184,8 +1236,24 @@
        further submits are ignored. */
     var rateFormEl = document.getElementById('rateForm');
     if (rateFormEl) {
-        rateFormEl.addEventListener('submit', function () {
+        rateFormEl.addEventListener('submit', function (e) {
             if (autoSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+            if (!selectedRating || !tripReady()) {
+                e.preventDefault();
+                var hint = document.getElementById('submitHint');
+                if (hint) {
+                    hint.style.display = '';
+                    hint.textContent = selectedRating
+                        ? 'Pumili ka muna ng From at To (trip) bago i-submit.'
+                        : 'Tap a star above to rate';
+                }
+                var tripCard = document.querySelector('.rate-card.trip-card');
+                if (tripCard && tripCard.scrollIntoView) {
+                    tripCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
                 return false;
             }
             autoSubmitting = true;

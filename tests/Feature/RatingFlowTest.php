@@ -8,6 +8,8 @@ use App\Models\Rating;
 use App\Models\Toda;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -112,6 +114,38 @@ class RatingFlowTest extends TestCase
         $rating = Rating::first();
         $this->assertNotNull($rating);
         $this->assertFalse((bool) $rating->is_valid);
+    }
+
+    public function test_empty_complaint_fields_migration_cleans_legacy_data()
+    {
+        $operator = $this->makeActiveOperator();
+
+        // Simulate the legacy bug: positive ratings stored with an empty-string
+        // complaint type/details, which misclassified them as "complaints".
+        DB::table('ratings')->insert([
+            'operator_id' => $operator->id,
+            'rating' => 5,
+            'complaint_type' => '',
+            'complaint_details' => '',
+            'is_valid' => false,
+            'is_auto' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $goodId = (int) DB::getPdo()->lastInsertId();
+
+        DB::table('migrations')
+            ->where('migration', '2026_10_08_000001_normalize_empty_complaint_fields')
+            ->delete();
+
+        Artisan::call('migrate', ['--force' => true]);
+
+        $good = Rating::find($goodId);
+
+        $this->assertNull($good->complaint_type);
+        $this->assertNull($good->complaint_details);
+        // A rating without a From/To trip is still invalid — the trip is required.
+        $this->assertFalse((bool) $good->is_valid);
     }
 
     public function test_out_of_range_rating_is_rejected()
