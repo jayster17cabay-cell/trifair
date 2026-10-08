@@ -127,4 +127,24 @@ class AuthTest extends TestCase
             'password_confirmation' => 'password123',
         ])->assertSessionHasErrors('plate_number');
     }
+
+    public function test_logout_and_rate_form_are_csrf_exempt_for_sessionless_browsers()
+    {
+        // Smartphone in-app browsers frequently drop/block the session cookie,
+        // which used to throw 419 on the passenger Sign out POST. Verify only
+        // the logout action (and the public rate form) are exempted, while
+        // every other sensitive POST route keeps full CSRF protection.
+        $middleware = $this->app->make(\App\Http\Middleware\VerifyCsrfToken::class);
+
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $exempt = $property->getValue($middleware);
+
+        $this->assertIsArray($exempt);
+        $this->assertContains('logout', $exempt);
+        $this->assertContains('rate/*', $exempt);
+        $this->assertNotContains('login', $exempt);
+        $this->assertNotContains('register', $exempt);
+    }
 }

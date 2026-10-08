@@ -152,25 +152,36 @@ class RatingController extends Controller
                     $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
                     $remotePath = $operator->qr_code . '/' . $filename;
 
-                    $saved = false;
-                    if (class_exists(\App\Helpers\SupabaseStorage::class)) {
-                        $result = \App\Helpers\SupabaseStorage::upload($file, $remotePath);
-                        if ($result) {
-                            $saved = true;
-                            $path = $remotePath;
+                    $path = null;
+                    try {
+                        if (class_exists(\App\Helpers\SupabaseStorage::class)) {
+                            $saved = \App\Helpers\SupabaseStorage::upload($file, $remotePath);
+                            if ($saved) {
+                                $path = $remotePath;
+                            }
                         }
+
+                        if (!$path) {
+                            $dir = 'proofs/' . $operator->qr_code;
+                            $file->storeAs($dir, $filename, 'public');
+                            $path = $dir . '/' . $filename;
+                        }
+                    } catch (\Throwable $e) {
+                        // A storage outage (Supabase down, disk full on the
+                        // host) must never fail the complaint submission —
+                        // same "guarded" policy as the confirmation email.
+                        \Illuminate\Support\Facades\Log::error('Complaint proof save failed: ' . get_class($e) . ': ' . $e->getMessage(), ['path' => $remotePath]);
+                        $path = null;
                     }
 
-                    if (!$saved) {
-                        $dir = 'proofs/' . $operator->qr_code;
-                        $file->storeAs($dir, $filename, 'public');
-                        $path = $dir . '/' . $filename;
+                    if (!$path) {
+                        continue;
                     }
 
                     RatingProof::create([
                         'rating_id' => $rating->id,
                         'file_path' => $path,
-                        'file_type' => $file->getMimeType(),
+                        'file_type' => (string) ($file->getMimeType() ?: 'application/octet-stream'),
                         'original_name' => $file->getClientOriginalName(),
                     ]);
                 }

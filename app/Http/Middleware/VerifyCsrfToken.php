@@ -19,5 +19,12 @@ class VerifyCsrfToken extends Middleware
         // RatingController::existingRatingFor(). All admin/auth routes keep
         // full CSRF protection.
         'rate/*',
+        // Same underlying cause: in the in-app browsers that drop/block the
+        // session cookie mid-flow, the Sign out POST loses its session and its
+        // CSRF token, so the passenger is stuck with a 419 every logout.
+        // Exempting only the logout action lets them sign out cleanly; the only
+        // risk of a missing token here is a forced sign-out (benign), never a
+        // data change. All other auth/admin routes keep full CSRF protection.
+        'logout',
     ];
 }
