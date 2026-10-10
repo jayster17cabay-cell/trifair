@@ -11,6 +11,7 @@ use App\Models\RatingProof;
 use App\Models\Toda;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -928,6 +929,7 @@ class DashboardAuditTest extends TestCase
             'end_location' => 'SM Fairview, Quezon City',
             'complaint_type' => 'Rude Driver',
             'complaint_details' => 'Rude to passenger',
+            'proofs' => [UploadedFile::fake()->create('proof.jpg', 100, 'image/jpeg')],
         ])->assertRedirect(route('rate.submitted', $op->qr_code));
 
         $rating = Rating::where('operator_id', $op->id)->latest()->first();

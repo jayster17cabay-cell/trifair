@@ -861,18 +861,38 @@
         return startLocationReady() && endLocationReady();
     }
 
+    function complaintReady() {
+        if (!selectedRating || selectedRating > 2) return true;
+        var typeEl = document.getElementById('complaintType');
+        if (!typeEl || !typeEl.value) return false;
+        if (typeEl.value === 'Others') {
+            var detailsEl = document.getElementById('complaintDetails');
+            if (!detailsEl || !detailsEl.value.trim()) return false;
+        }
+        var mailEl = document.getElementById('passenger_email');
+        if (!mailEl || !mailEl.value.trim()) return false;
+        var filesEl = document.getElementById('proofInput');
+        if (!filesEl || !filesEl.files || filesEl.files.length < 1) return false;
+        return true;
+    }
+
     function refreshSubmitAvailability() {
         var btn = document.getElementById('submitBtn');
         var hint = document.getElementById('submitHint');
-        var ready = tripReady();
+        var tripOk = tripReady();
+        var complaintOk = complaintReady();
+        var ready = tripOk && complaintOk;
         if (btn) btn.disabled = !ready;
         if (hint) {
             if (selectedRating === 0) {
                 hint.style.display = '';
                 hint.textContent = 'Tap a star above to rate';
-            } else if (!ready) {
+            } else if (!tripOk) {
                 hint.style.display = '';
                 hint.textContent = 'Pumili ka muna ng From at To (trip) bago i-submit.';
+            } else if (!complaintOk) {
+                hint.style.display = '';
+                hint.textContent = 'Kumpletuhin mo muna ang complaint form — kasama ang evidence (photo/video/file) — bago i-submit.';
             } else {
                 hint.style.display = 'none';
             }
@@ -1092,7 +1112,16 @@
     if (complaintType) {
         complaintType.addEventListener('change', function () {
             document.getElementById('othersBox').style.display = (this.value === 'Others') ? 'block' : 'none';
+            refreshSubmitAvailability();
         });
+    }
+    var complaintDetails = document.getElementById('complaintDetails');
+    if (complaintDetails) {
+        complaintDetails.addEventListener('input', refreshSubmitAvailability);
+    }
+    var emailInput = document.getElementById('passenger_email');
+    if (emailInput) {
+        emailInput.addEventListener('input', refreshSubmitAvailability);
     }
 
     /* ---- Draft persistence across the Google sign-in ----
@@ -1173,6 +1202,7 @@
                 var el = document.getElementById(id);
                 if (el && typeof draft[id] === 'string' && draft[id]) el.value = draft[id];
             });
+        refreshSubmitAvailability();
     }
 
     var connectBtn = document.getElementById('googleConnectBtn');
@@ -1207,16 +1237,19 @@
             if (files.length > MAX_FILES) {
                 chips.innerHTML = '<span class="rate-file-chip" style="background:#fef2f2;color:#dc2626;"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Up to 3 files only — ' + files.length + ' selected</span>';
                 this.value = '';
+                refreshSubmitAvailability();
                 return;
             }
             if (oversized.length > 0) {
                 chips.innerHTML = '<span class="rate-file-chip" style="background:#fef2f2;color:#dc2626;"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> "' + escHtml(oversized[0].name) + '" is over 20MB</span>';
                 this.value = '';
+                refreshSubmitAvailability();
                 return;
             }
             files.forEach(function (f) {
                 chips.innerHTML += '<span class="rate-file-chip"><i class="bi bi-file-earmark" aria-hidden="true"></i> ' + escHtml(f.name) + '</span>';
             });
+            refreshSubmitAvailability();
         });
     }
 
@@ -1241,14 +1274,16 @@
                 e.preventDefault();
                 return false;
             }
-            if (!selectedRating || !tripReady()) {
+            if (!selectedRating || !tripReady() || !complaintReady()) {
                 e.preventDefault();
                 var hint = document.getElementById('submitHint');
                 if (hint) {
                     hint.style.display = '';
-                    hint.textContent = selectedRating
-                        ? 'Pumili ka muna ng From at To (trip) bago i-submit.'
-                        : 'Tap a star above to rate';
+                    hint.textContent = !selectedRating
+                        ? 'Tap a star above to rate'
+                        : !tripReady()
+                            ? 'Pumili ka muna ng From at To (trip) bago i-submit.'
+                            : 'Kumpletuhin mo muna ang complaint form — kasama ang evidence (photo/video/file) — bago i-submit.';
                 }
                 var tripCard = document.querySelector('.rate-card.trip-card');
                 if (tripCard && tripCard.scrollIntoView) {

@@ -102,17 +102,33 @@ class RatingController extends Controller
             'complaint_details' => 'nullable|string|max:2000',
         ];
 
-        // Validate proof files whenever they are actually uploaded (any star
-        // rating), so the rules always match the upload loop below and a crafted
-        // 3-5 star POST can no longer sneak unvalidated files into storage.
-        if ($request->hasFile('proofs')) {
+        $passengerUser = $request->user() && $request->user()->isPassenger() ? $request->user() : null;
+
+        // A complaint (1-2 stars) must be fully filled in before it can be
+        // submitted: type, an explanation when "Others" is chosen, a contact
+        // email (unless the signed-in Google account already provides one) and
+        // at least one proof file. Incomplete complaints used to slip straight
+        // into the admin queue, so the form-level rules are enforced here too.
+        $isComplaint = (int) $request->input('rating') >= 1 && (int) $request->input('rating') <= 2;
+
+        if ($isComplaint) {
+            $rules['complaint_type'] = 'required|string|max:100';
+            $rules['complaint_details'] = 'required_if:complaint_type,Others|string|max:2000';
+            $rules['proofs'] = 'required|array|min:1|max:3';
+            $rules['proofs.*'] = 'file|mimes:jpg,jpeg,png,gif,mp4,avi,mov,pdf,doc,docx|max:20480';
+
+            if (!$passengerUser || !$passengerUser->email) {
+                $rules['passenger_email'] = 'required|email|max:255';
+            }
+        } elseif ($request->hasFile('proofs')) {
+            // Validate proof files whenever they are actually uploaded (any star
+            // rating), so the rules always match the upload loop below and a crafted
+            // 3-5 star POST can no longer sneak unvalidated files into storage.
             $rules['proofs'] = 'nullable|array|max:3';
             $rules['proofs.*'] = 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov,pdf,doc,docx|max:20480';
         }
 
         $data = $request->validate($rules);
-
-        $passengerUser = $request->user() && $request->user()->isPassenger() ? $request->user() : null;
         // Notifications (including status emails) go to the passenger's linked
         // Google account when they are signed in, so their complaint lands in
         // their own inbox. The typed field is only a fallback for guests.

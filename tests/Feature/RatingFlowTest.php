@@ -8,6 +8,7 @@ use App\Models\Rating;
 use App\Models\Toda;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -86,21 +87,42 @@ class RatingFlowTest extends TestCase
         $this->assertEquals(2, Notification::count());
     }
 
-    public function test_low_rating_without_proof_is_invalid_and_sends_no_notification()
+    public function test_incomplete_complaint_submission_is_rejected()
     {
         $this->makeOfficer('superadmin');
+        $operator = $this->makeActiveOperator();
+
+        // A complaint missing its type/details/email/proof must not go through.
+        $this->post('/rate/' . $operator->qr_code, [
+            'rating' => 2,
+            'start_location' => 'A',
+            'end_location' => 'B',
+        ])->assertSessionHasErrors(['complaint_type', 'passenger_email', 'proofs']);
+
+        $this->assertEquals(0, Rating::count());
+    }
+
+    public function test_complete_complaint_submission_is_accepted_and_notifies_officers()
+    {
+        $this->makeOfficer('superadmin');
+        $this->makeOfficer('tfrb_officer');
         $operator = $this->makeActiveOperator();
 
         $this->post('/rate/' . $operator->qr_code, [
             'rating' => 2,
             'start_location' => 'A',
             'end_location' => 'B',
+            'complaint_type' => 'Rude Driver',
+            'passenger_email' => 'passenger@example.com',
+            'proofs' => [UploadedFile::fake()->create('proof.jpg', 100, 'image/jpeg')],
         ])->assertRedirect(route('rate.submitted', $operator->qr_code));
 
         $rating = Rating::first();
         $this->assertNotNull($rating);
-        $this->assertFalse((bool) $rating->is_valid);
-        $this->assertEquals(0, Notification::count());
+        $this->assertTrue((bool) $rating->is_valid);
+        $this->assertEquals('Rude Driver', $rating->complaint_type);
+        $this->assertSame(1, $rating->proofs()->count());
+        $this->assertEquals(2, Notification::count());
     }
 
     public function test_rating_without_locations_is_invalid()
