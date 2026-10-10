@@ -45,7 +45,9 @@
                     <div class="tw-auth-field">
                         <div class="mb-1 flex items-center justify-between">
                             <label for="password" class="tw-label mb-0">Password</label>
-                            <a href="{{ route('password.request') }}" class="text-xs font-semibold text-navy-600 transition hover:text-navy-700 hover:underline">Forgot Password?</a>
+                            <a href="{{ route('password.request') }}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-600 transition hover:text-gold-dark hover:underline" title="Reset your password">
+                                <i class="bi bi-unlock"></i> Forgot Password?
+                            </a>
                         </div>
                         <div class="tw-input-group">
                             <span class="tw-input-group-icon"><i class="bi bi-lock"></i></span>

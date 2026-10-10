@@ -1,10 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetOtpController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\TfrbOfficerController;
 use App\Http\Controllers\SuperadminController;
@@ -31,10 +30,10 @@ Route::get('/auth/google/callback', [SocialiteController::class, 'callback'])->m
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
 
-Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->middleware('guest')->name('password.request');
-Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware(['guest', 'throttle:6,1'])->name('password.email');
-Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->middleware('guest')->name('password.reset');
-Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->middleware(['guest', 'throttle:6,1'])->name('password.update');
+Route::get('/forgot-password', [PasswordResetOtpController::class, 'showRequestForm'])->middleware('guest')->name('password.request');
+Route::post('/forgot-password', [PasswordResetOtpController::class, 'sendOtp'])->middleware(['guest', 'throttle:6,1'])->name('password.email');
+Route::get('/forgot-password/verify', [PasswordResetOtpController::class, 'showVerifyForm'])->middleware('guest')->name('password.otp');
+Route::post('/forgot-password/verify', [PasswordResetOtpController::class, 'verifyAndReset'])->middleware(['guest', 'throttle:6,1'])->name('password.otp.verify');
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');

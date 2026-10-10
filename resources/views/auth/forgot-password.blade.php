@@ -4,13 +4,15 @@
 
 @section('content')
 @include('auth.partials.auth-shell-open')
-                <div class="mb-6">
+                <div class="mb-6 text-center">
                     <div class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-gold-dark">
                         <i class="bi bi-key"></i> Account Recovery
                     </div>
                     <h4 class="text-2xl font-extrabold tracking-tight text-navy-700">Forgot Password</h4>
-                    <p class="mt-1 text-sm text-slate-500">Enter your email and we'll send you a reset link.</p>
+                    <p class="mt-1.5 text-sm text-slate-500">Enter the email you used when you created your account, and we'll email you a one-time code to reset your password.</p>
                 </div>
+
+                <div class="mb-5 h-1 w-16 rounded-full bg-gradient-to-r from-gold to-navy-600"></div>
 
                 @if (session('status'))
                     <div class="tw-alert tw-alert-success mt-4">
@@ -33,7 +35,7 @@
                         <label for="email" class="tw-label">Email Address</label>
                         <div class="tw-input-group">
                             <span class="tw-input-group-icon"><i class="bi bi-envelope"></i></span>
-                            <input id="email" type="email" class="tw-input @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autofocus placeholder="Enter your email">
+                            <input id="email" type="email" class="tw-input @error('email') is-invalid @enderror" name="email" value="{{ old('email', request('email')) }}" required autofocus placeholder="you@example.com">
                         </div>
                         @error('email')
                             <span class="tw-error-text" role="alert">{{ $message }}</span>
@@ -41,7 +43,7 @@
                     </div>
 
                     <button type="submit" class="tw-btn tw-btn-gold w-full tw-btn-lg">
-                        <i class="bi bi-envelope-arrow-up"></i> Send Reset Link
+                        <i class="bi bi-envelope-check"></i> Send One-Time Code
                     </button>
                 </form>
 

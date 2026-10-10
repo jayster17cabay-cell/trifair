@@ -109,7 +109,7 @@ class StructureAuditTest extends TestCase
 
     public function test_public_pages_structure()
     {
-        foreach (['/', '/login', '/register', '/password/reset'] as $path) {
+        foreach (['/', '/login', '/register', '/forgot-password'] as $path) {
             $this->audit($path);
         }
         $this->assertTrue(true);

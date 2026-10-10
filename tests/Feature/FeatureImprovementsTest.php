@@ -3,22 +3,21 @@
 namespace Tests\Feature;
 
 use App\Mail\OperatorCredentials;
+use App\Mail\PasswordResetOtp;
 use App\Models\ActivityLog;
 use App\Models\Operator;
 use App\Models\OperatorProof;
+use App\Models\PasswordResetCode;
 use App\Models\Rating;
 use App\Models\RatingProof;
 use App\Models\Toda;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -108,39 +107,50 @@ class FeatureImprovementsTest extends TestCase
 
     public function test_forgot_password_page_is_public()
     {
-        $this->get('/password/reset')->assertOk()->assertSee('Forgot Password');
+        $this->get('/forgot-password')->assertOk()->assertSee('Forgot Password');
     }
 
-    public function test_forgot_password_sends_reset_link()
+    public function test_forgot_password_sends_otp()
     {
-        Notification::fake();
+        Mail::fake();
         $user = $this->makeUser('operator');
 
-        $this->post('/password/email', ['email' => $user->email])
-            ->assertRedirect()
-            ->assertSessionHas('status');
+        $this->post('/forgot-password', ['email' => $user->email])
+            ->assertRedirect(route('password.otp', ['email' => $user->email]))
+            ->assertSessionHas('reset_email');
 
-        Notification::assertSentTo($user, ResetPassword::class);
+        Mail::assertSent(PasswordResetOtp::class, function ($mail) use ($user) {
+            return $mail->hasTo($user->email);
+        });
+
+        $this->assertDatabaseHas('password_reset_codes', ['email' => $user->email]);
     }
 
     public function test_forgot_password_does_not_reveal_unknown_email()
     {
-        $this->post('/password/email', ['email' => 'nobody@example.com'])
-            ->assertSessionHasErrors('email');
+        Mail::fake();
+
+        $this->post('/forgot-password', ['email' => 'nobody@example.com'])
+            ->assertRedirect(route('password.otp', ['email' => 'nobody@example.com']))
+            ->assertSessionMissing('errors');
+
+        Mail::assertNothingSent();
+        $this->assertDatabaseMissing('password_reset_codes', ['email' => 'nobody@example.com']);
     }
 
-    public function test_password_reset_flow_changes_password()
+    public function test_password_reset_with_otp_changes_password()
     {
         $user = $this->makeUser('operator');
-        $token = Password::broker()->createToken($user);
 
-        $this->get('/password/reset/' . $token . '?email=' . $user->email)
-            ->assertOk()
-            ->assertSee('Reset Password');
-
-        $this->post('/password/reset', [
-            'token' => $token,
+        PasswordResetCode::create([
             'email' => $user->email,
+            'code' => Hash::make('123456'),
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        $this->post('/forgot-password/verify', [
+            'email' => $user->email,
+            'otp' => '123456',
             'password' => 'brandnewpass123',
             'password_confirmation' => 'brandnewpass123',
         ])->assertRedirect(route('login'))
@@ -148,6 +158,28 @@ class FeatureImprovementsTest extends TestCase
 
         $this->assertTrue(Hash::check('brandnewpass123', $user->fresh()->password));
         $this->assertFalse(Hash::check('password123', $user->fresh()->password));
+        $this->assertNotNull(PasswordResetCode::where('email', $user->email)->first()->used_at);
+    }
+
+    public function test_password_reset_with_wrong_otp_is_rejected()
+    {
+        $user = $this->makeUser('operator');
+
+        PasswordResetCode::create([
+            'email' => $user->email,
+            'code' => Hash::make('123456'),
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        $this->post('/forgot-password/verify', [
+            'email' => $user->email,
+            'otp' => '999999',
+            'password' => 'brandnewpass123',
+            'password_confirmation' => 'brandnewpass123',
+        ])->assertSessionHasErrors('otp');
+
+        $this->assertFalse(Hash::check('brandnewpass123', $user->fresh()->password));
+        $this->assertSame(1, PasswordResetCode::where('email', $user->email)->first()->attempts);
     }
 
     public function test_superadmin_can_change_own_password()
