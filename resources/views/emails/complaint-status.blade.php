@@ -18,12 +18,12 @@
                     <tr>
                         <td style="padding:30px 32px;">
                             @php
-                                $statusLabel = $status === 'solved' ? 'Solved' : ($status === 'submitted' ? 'Received' : 'Reviewed');
-                                $statusVerb = $status === 'solved' ? 'solved' : ($status === 'submitted' ? 'received' : 'reviewed');
-                                $statusColor = $status === 'solved' ? '#059669' : '#0f172a';
+                                $statusLabel = $status === 'solved' ? 'Solved' : ($status === 'accepted' ? 'Accepted' : ($status === 'rejected' ? 'Rejected' : ($status === 'submitted' ? 'Received' : 'Reviewed')));
+                                $heading = $status === 'solved' ? 'has been solved' : ($status === 'accepted' ? 'has been accepted' : ($status === 'rejected' ? 'was not accepted after review' : ($status === 'submitted' ? 'was received' : 'has been reviewed')));
+                                $statusColor = in_array($status, ['solved', 'accepted'], true) ? '#059669' : ($status === 'rejected' ? '#dc2626' : '#0f172a');
                             @endphp
                             <h1 style="margin:0 0 10px;font-size:18px;color:#0f172a;">
-                                Your complaint {{ $rating->reference_number }} has been {{ $statusVerb }}
+                                Your complaint {{ $rating->reference_number }} {{ $heading }}
                             </h1>
                             <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#334155;">
                                 Good day{{ $rating->passenger_name ? ', ' . $rating->passenger_name : '' }}! This is an update
@@ -66,6 +66,14 @@
                                 @if ($status === 'solved')
                                     The concerning parties have been notified and the matter has been resolved. Thank you for
                                     helping us keep our transport services safe and accountable.
+                                @elseif ($status === 'accepted')
+                                    After reviewing the evidence, a TFRB officer has verified and accepted your complaint.
+                                    It will now be counted against the reported operator's record. Thank you for helping us
+                                    keep our transport services safe and accountable.
+                                @elseif ($status === 'rejected')
+                                    A TFRB officer has reviewed your complaint. Based on the available information it could
+                                    not be verified as a valid violation, so it will not be counted against the operator's
+                                    record. If you have additional evidence, you may file a new complaint.
                                 @elseif ($status === 'submitted')
                                     We have received your complaint. A TFRB officer will review it shortly, and you will
                                     receive a notification here once it is reviewed or resolved. Keep this reference number

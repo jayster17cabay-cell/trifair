@@ -87,6 +87,7 @@ class Rating extends Model
         'solved_at',
         'is_auto',
         'is_valid',
+        'is_accepted',
         'start_location',
         'end_location',
     ];
@@ -97,6 +98,7 @@ class Rating extends Model
         'solved_at' => 'datetime',
         'is_auto' => 'boolean',
         'is_valid' => 'boolean',
+        'is_accepted' => 'boolean',
     ];
 
     /**
@@ -183,6 +185,39 @@ class Rating extends Model
     public function scopeNotComplaint($query)
     {
         return $query->whereNull('complaint_type');
+    }
+
+    /**
+     * Rows allowed to influence an operator's star average. A plain rating
+     * (no complaint type) always counts; a complaint counts only once an
+     * officer has explicitly accepted it. Pending and rejected complaints
+     * are ignored so fake complaints can never drag an operator's rating
+     * down before they are reviewed.
+     */
+    public function scopeCountsTowardRating($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('complaint_type')->orWhere('is_accepted', true);
+        });
+    }
+
+    /**
+     * Combined review status shown on complaint badges, filters and exports:
+     * Solved > Accepted > Rejected > Pending.
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        if ($this->is_solved) {
+            return 'Solved';
+        }
+        if ($this->is_accepted === true) {
+            return 'Accepted';
+        }
+        if ($this->is_accepted === false) {
+            return 'Rejected';
+        }
+
+        return 'Pending';
     }
 
     public static function paddedComplaintStats($stats)

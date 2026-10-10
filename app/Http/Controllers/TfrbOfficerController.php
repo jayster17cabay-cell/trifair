@@ -242,9 +242,19 @@ class TfrbOfficerController extends Controller
         return view('tfrb-officer.complaints', $data);
     }
 
-    public function complaintsMarkReviewed(Rating $rating)
+    public function complaintsAccept(Rating $rating)
     {
-        return app(RatingAdminService::class)->complaintsMarkReviewed($rating);
+        return app(RatingAdminService::class)->complaintsAccept($rating);
+    }
+
+    public function complaintsReject(Rating $rating)
+    {
+        return app(RatingAdminService::class)->complaintsReject($rating);
+    }
+
+    public function complaintsResetReview(Rating $rating)
+    {
+        return app(RatingAdminService::class)->complaintsResetReview($rating);
     }
 
     public function complaintsMarkSolved(Rating $rating)

@@ -47,20 +47,26 @@ class PresidentQueryService
 
         $memberRatingAgg = Rating::query()
             ->whereIn('operator_id', $memberIds)
-            ->isValid()
-            ->selectRaw('COUNT(*) as total, AVG(rating) as avg, SUM(CASE WHEN complaint_type IS NOT NULL AND is_reviewed = FALSE THEN 1 ELSE 0 END) as complaints')
+            ->countsTowardRating()
+            ->selectRaw('COUNT(*) as total, AVG(rating) as avg')
             ->first();
 
         $avgMemberRating = $memberRatingAgg && $memberRatingAgg->total > 0
             ? round((float) $memberRatingAgg->avg, 1)
             : 0;
 
-        $pendingComplaints = (int) ($memberRatingAgg->complaints ?? 0);
+        $pendingComplaints = Rating::query()
+            ->whereIn('operator_id', $memberIds)
+            ->isValid()
+            ->isComplaint()
+            ->whereNull('is_accepted')
+            ->where('is_solved', false)
+            ->count();
 
         $ownAvg = $ownOperator
-            ? round((float) $ownOperator->ratings()->isValid()->avg('rating'), 1)
+            ? round((float) $ownOperator->countableRatings()->avg('rating'), 1)
             : 0;
-        $ownTotal = $ownOperator ? $ownOperator->ratings()->isValid()->count() : 0;
+        $ownTotal = $ownOperator ? $ownOperator->countableRatings()->count() : 0;
 
         return [
             'totalMembers' => $totalMembers,
@@ -137,7 +143,7 @@ class PresidentQueryService
 
         $avgs = Rating::query()
             ->whereIn('operator_id', $memberIds)
-            ->isValid()
+            ->countsTowardRating()
             ->selectRaw('operator_id, AVG(rating) as avg_rating')
             ->groupBy('operator_id')
             ->pluck('avg_rating', 'operator_id');

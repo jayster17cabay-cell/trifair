@@ -53,7 +53,7 @@
             </div>
         </div>
 
-        <div class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <div class="tw-stat">
                 <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-list-ul"></i></div>
                 <div class="tw-stat-num">{{ $totalCount }}</div>
@@ -66,8 +66,13 @@
             </div>
             <div class="tw-stat">
                 <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-check-circle"></i></div>
-                <div class="tw-stat-num">{{ $reviewedCount }}</div>
-                <div class="tw-stat-label">Reviewed</div>
+                <div class="tw-stat-num">{{ $acceptedCount }}</div>
+                <div class="tw-stat-label">Accepted</div>
+            </div>
+            <div class="tw-stat">
+                <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-x-circle"></i></div>
+                <div class="tw-stat-num">{{ $rejectedCount }}</div>
+                <div class="tw-stat-label">Rejected</div>
             </div>
             <div class="tw-stat">
                 <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-patch-check"></i></div>
@@ -126,10 +131,12 @@
                     </div>
 
                     <div class="mt-2 flex flex-wrap items-center gap-2">
-                        @if ($rating->is_solved)
+                        @if ($rating->status_label === 'Solved')
                             <span class="tw-badge tw-badge-navy"><i class="bi bi-patch-check-fill"></i> Solved</span>
-                        @elseif ($rating->is_reviewed)
-                            <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Reviewed</span>
+                        @elseif ($rating->status_label === 'Accepted')
+                            <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Accepted</span>
+                        @elseif ($rating->status_label === 'Rejected')
+                            <span class="tw-badge tw-badge-red"><i class="bi bi-x-circle-fill"></i> Rejected</span>
                         @else
                             <span class="tw-badge tw-badge-amber"><i class="bi bi-clock-fill"></i> Pending</span>
                         @endif
@@ -173,7 +180,7 @@
                             </div>
                             <p class="mb-0 text-sm text-slate-700">{{ $rating->response->message }}</p>
                         </div>
-                    @elseif ($rating->is_solved || $rating->is_reviewed)
+                    @elseif ($rating->is_accepted === true)
                         <p class="mt-3 text-xs text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response from the operator yet.</p>
                     @endif
                 </div>

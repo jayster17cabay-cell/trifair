@@ -51,8 +51,10 @@ class AdminDashboardService
         $data = [
             'totalOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->count(),
             'activeOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'active')->count(),
-            'totalRatings' => Rating::isValid()->count(),
-            'averageRating' => Rating::isValid()->avg('rating'),
+            'totalRatings' => Rating::isValid()->countsTowardRating()->count(),
+            // Averages only consider accepted complaints so pending/rejected
+            // complaints can never drag an operator's score down.
+            'averageRating' => Rating::isValid()->countsTowardRating()->avg('rating'),
             'totalComplaints' => Rating::isValid()->isComplaint()->count(),
             'totalTodas' => Toda::count(),
         ];
@@ -62,7 +64,7 @@ class AdminDashboardService
         }
 
         if ($options['includePendingReview'] ?? false) {
-            $data['pendingReview'] = Rating::isValid()->isComplaint()->where('is_reviewed', false)->count();
+            $data['pendingReview'] = Rating::isValid()->isComplaint()->whereNull('is_accepted')->where('is_solved', false)->count();
         }
 
         $data['recentRatings'] = Rating::isValid()->with(['operator.user', 'operator.toda'])
@@ -105,7 +107,7 @@ class AdminDashboardService
             ->whereNull('operators.archived_at')
             ->whereHas('user', fn ($q) => $q->where('role', 'operator'))
             ->leftJoin(
-                DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true group by operator_id) as vr'),
+                DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true and (complaint_type is null or is_accepted = true) group by operator_id) as vr'),
                 'vr.operator_id',
                 '=',
                 'operators.id'
@@ -126,6 +128,7 @@ class AdminDashboardService
         ])->get();
 
         $todaAverages = Rating::isValid()
+            ->countsTowardRating()
             ->join('operators', 'ratings.operator_id', '=', 'operators.id')
             ->select('operators.toda_id', DB::raw('avg(ratings.rating) as avg_rating'))
             ->whereIn('operators.toda_id', $todaStats->pluck('id'))

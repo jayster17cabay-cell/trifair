@@ -48,10 +48,12 @@
                     @endfor
                 </span>
             </div>
-            @if ($rating->is_solved)
+            @if ($rating->status_label === 'Solved')
                 <span class="tw-badge tw-badge-navy"><i class="bi bi-patch-check-fill"></i> Solved</span>
-            @elseif ($rating->is_reviewed)
-                <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Reviewed</span>
+            @elseif ($rating->status_label === 'Accepted')
+                <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Accepted</span>
+            @elseif ($rating->status_label === 'Rejected')
+                <span class="tw-badge tw-badge-red"><i class="bi bi-x-circle-fill"></i> Rejected</span>
             @else
                 <span class="tw-badge tw-badge-amber"><i class="bi bi-clock-fill"></i> Pending</span>
             @endif
@@ -156,17 +158,41 @@
             @else
                 <span class="text-xs text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response yet</span>
             @endif
-            <div class="flex shrink-0 gap-1.5">
-                @if (!$rating->is_reviewed)
-                    <form action="{{ route($routePrefix . '.complaints.review', $rating) }}" method="POST">
+            <div class="flex shrink-0 flex-wrap gap-1.5">
+                @if ($rating->status_label === 'Pending')
+                    <form action="{{ route($routePrefix . '.complaints.accept', $rating) }}" method="POST" onsubmit="return confirm('Accept this complaint? It will count towards the operator\'s rating.')">
                         @csrf
                         @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold">
-                            <i class="bi bi-check-lg"></i>Mark Reviewed
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" title="Accept complaint">
+                            <i class="bi bi-check-lg"></i>Accept
+                        </button>
+                    </form>
+                    <form action="{{ route($routePrefix . '.complaints.reject', $rating) }}" method="POST" onsubmit="return confirm('Reject this complaint? It will NOT count towards the operator\'s rating.')">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reject complaint">
+                            <i class="bi bi-x-lg"></i>Reject
+                        </button>
+                    </form>
+                @elseif ($rating->status_label === 'Accepted')
+                    <form action="{{ route($routePrefix . '.complaints.reject', $rating) }}" method="POST" onsubmit="return confirm('Reject this complaint? It will stop counting towards the operator\'s rating.')">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reject complaint">
+                            <i class="bi bi-x-lg"></i>Reject
+                        </button>
+                    </form>
+                @elseif ($rating->status_label === 'Rejected')
+                    <form action="{{ route($routePrefix . '.complaints.reset', $rating) }}" method="POST" onsubmit="return confirm('Undo rejection and return this complaint to pending review?')">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Undo rejection">
+                            <i class="bi bi-arrow-counterclockwise"></i>Undo Reject
                         </button>
                     </form>
                 @endif
-                @if ($rating->is_solved)
+
+                @if ($rating->status_label === 'Solved')
                     <form action="{{ route($routePrefix . '.complaints.reopen', $rating) }}" method="POST" onsubmit="return confirm('Reopen this complaint?')">
                         @csrf
                         @method('PATCH')
@@ -174,7 +200,7 @@
                             <i class="bi bi-arrow-counterclockwise"></i>Reopen
                         </button>
                     </form>
-                @else
+                @elseif ($rating->status_label === 'Accepted')
                     <form action="{{ route($routePrefix . '.complaints.solve', $rating) }}" method="POST" onsubmit="return confirm('Mark this complaint as solved? The passenger will be notified via email.')">
                         @csrf
                         @method('PATCH')
@@ -183,6 +209,7 @@
                         </button>
                     </form>
                 @endif
+
                 <form action="{{ route($routePrefix . '.complaints.destroy', $rating) }}" method="POST" onsubmit="return confirm('Delete this complaint?')">
                     @csrf
                     @method('DELETE')

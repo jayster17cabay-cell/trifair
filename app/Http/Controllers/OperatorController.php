@@ -19,7 +19,7 @@ class OperatorController extends Controller
         $operator = Auth::user()->operator;
         $base = $operator->ratings()->isValid();
 
-        $agg = (clone $base)
+        $agg = $operator->countableRatings()
             ->selectRaw('COUNT(*) as total_ratings, AVG(rating) as avg_rating')
             ->selectRaw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as r1')
             ->selectRaw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as r2')
@@ -66,8 +66,8 @@ class OperatorController extends Controller
             ->latest()
             ->paginate(10);
 
-        $averageRating = $operator->ratings()->isValid()->avg('rating');
-        $totalRatings = $operator->ratings()->isValid()->count();
+        $averageRating = $operator->countableRatings()->avg('rating');
+        $totalRatings = $operator->countableRatings()->count();
 
         return view('operator.ratings', compact(
             'operator', 'ratings', 'averageRating', 'totalRatings'
@@ -160,8 +160,8 @@ class OperatorController extends Controller
     {
         $operator = Auth::user()->operator->load('user', 'toda');
         $stats = [
-            'totalRatings' => $operator->ratings()->isValid()->count(),
-            'averageRating' => $operator->ratings()->isValid()->avg('rating'),
+            'totalRatings' => $operator->countableRatings()->count(),
+            'averageRating' => $operator->countableRatings()->avg('rating'),
             'totalComplaints' => $operator->ratings()->isValid()->isComplaint()->count(),
             'responseRate' => $operator->ratings()->isValid()->whereHas('response')->count(),
         ];

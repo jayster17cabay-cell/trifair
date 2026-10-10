@@ -2,9 +2,9 @@
     Reusable complaints list. Requires:
     - $routePrefix     string             'superadmin' | 'tfrb-officer'
     - $complaints      LengthAwarePaginator of App\Models\Rating
-    - $filter          string             'pending' | 'reviewed' | 'solved' | 'all'
+    - $filter          string             'pending' | 'accepted' | 'rejected' | 'solved' | 'all'
     - $ratingFilter    int|null           star rating filter: 1 | 2 | null
-    - $pendingCount, $reviewedCount, $solvedCount, $totalCount int
+    - $pendingCount, $acceptedCount, $rejectedCount, $solvedCount, $totalCount int
     - $star1Count, $star2Count           int  (badges on the star chips)
     - $activeOperators Collection          active operators for export filter
     - $proofsTotal    int|null         (optional) global proof count across all complaints
@@ -32,7 +32,7 @@
         'activeOperators' => $activeOperators,
         'exportFilters' => [
             ['type' => 'select', 'name' => 'filter', 'label' => 'Status', 'options' => [
-                '' => 'All', 'pending' => 'Pending', 'reviewed' => 'Reviewed', 'solved' => 'Solved',
+                '' => 'All', 'pending' => 'Pending', 'accepted' => 'Accepted', 'rejected' => 'Rejected', 'solved' => 'Solved',
             ], 'value' => $filter],
             ['type' => 'select', 'name' => 'rating', 'label' => 'Stars', 'options' => [
                 '' => 'All stars', '1' => '1 Star', '2' => '2 Stars',
@@ -45,24 +45,34 @@
 
 {{-- Sticky summary + filter bar: stays pinned below the topbar while the list scrolls. --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 bg-slate-50/95 px-4 pb-4 pt-2 shadow-[0_4px_10px_-8px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-amber"><i class="bi bi-exclamation-circle"></i></div>
+            <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-exclamation-circle"></i></div>
             <div class="tw-stat-num">{{ $totalCount }}</div>
             <div class="tw-stat-label">Total</div>
         </div>
         <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-clock-history"></i></div>
+            <div class="tw-stat-icon tw-stat-icon-amber"><i class="bi bi-clock-history"></i></div>
             <div class="tw-stat-num">{{ $pendingCount }}</div>
             <div class="tw-stat-label">Pending</div>
         </div>
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-check-circle"></i></div>
-            <div class="tw-stat-num">{{ $reviewedCount }}</div>
-            <div class="tw-stat-label">Reviewed</div>
+            <div class="tw-stat-num">{{ $acceptedCount }}</div>
+            <div class="tw-stat-label">Accepted</div>
         </div>
         <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-paperclip"></i></div>
+            <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-x-circle"></i></div>
+            <div class="tw-stat-num">{{ $rejectedCount }}</div>
+            <div class="tw-stat-label">Rejected</div>
+        </div>
+        <div class="tw-stat">
+            <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-patch-check-fill"></i></div>
+            <div class="tw-stat-num">{{ $solvedCount }}</div>
+            <div class="tw-stat-label">Solved</div>
+        </div>
+        <div class="tw-stat">
+            <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-paperclip"></i></div>
             <div class="tw-stat-num">{{ $proofsTotal ?? $complaints->sum(fn($r) => $r->proofs->count()) }}</div>
             <div class="tw-stat-label">Proofs</div>
         </div>
@@ -76,8 +86,11 @@
             <a href="{{ $statusUrl('pending') }}" class="{{ $filter === 'pending' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
                 <i class="bi bi-clock-history"></i> Pending <span class="tw-badge tw-badge-amber ml-1">{{ $pendingCount }}</span>
             </a>
-            <a href="{{ $statusUrl('reviewed') }}" class="{{ $filter === 'reviewed' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                <i class="bi bi-check-circle"></i> Reviewed <span class="tw-badge tw-badge-green ml-1">{{ $reviewedCount }}</span>
+            <a href="{{ $statusUrl('accepted') }}" class="{{ $filter === 'accepted' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+                <i class="bi bi-check-circle"></i> Accepted <span class="tw-badge tw-badge-green ml-1">{{ $acceptedCount }}</span>
+            </a>
+            <a href="{{ $statusUrl('rejected') }}" class="{{ $filter === 'rejected' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+                <i class="bi bi-x-circle"></i> Rejected <span class="tw-badge tw-badge-red ml-1">{{ $rejectedCount }}</span>
             </a>
             <a href="{{ $statusUrl('solved') }}" class="{{ $filter === 'solved' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
                 <i class="bi bi-patch-check-fill"></i> Solved <span class="tw-badge tw-badge-navy ml-1">{{ $solvedCount }}</span>
@@ -108,8 +121,8 @@
             <form id="complaintBulkReviewForm" action="{{ route($routePrefix . '.complaints.bulkReview') }}" method="POST">
                 @csrf
                 <input type="hidden" name="ids" id="complaintBulkReviewIds">
-                <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" data-complaint-bulk-review disabled>
-                    <i class="bi bi-check2-all"></i>Mark Reviewed <span data-complaint-bulk-count>0</span>
+                <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" data-complaint-bulk-review disabled title="Accept all selected pending complaints">
+                    <i class="bi bi-check2-all"></i>Accept <span data-complaint-bulk-count>0</span>
                 </button>
             </form>
         </div>
@@ -154,7 +167,8 @@
         $emptyTitle = 'No Complaints';
         $emptyMsg = 'All operators are doing great! No complaints filed.';
         if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for review. Keep it up!'; }
-        elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints you mark as reviewed will appear here.'; }
+        elseif ($filter === 'accepted') { $emptyTitle = 'No Accepted Complaints'; $emptyMsg = 'Complaints accepted by an officer will appear here.'; }
+        elseif ($filter === 'rejected') { $emptyTitle = 'No Rejected Complaints'; $emptyMsg = 'Complaints rejected after review will appear here.'; }
         elseif ($filter === 'solved') { $emptyTitle = 'No Solved Complaints'; $emptyMsg = 'Complaints you mark as solved will appear here.'; }
     }
 @endphp

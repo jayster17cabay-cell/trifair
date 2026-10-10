@@ -83,7 +83,9 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::patch('/ratings/{rating}/review', [TfrbOfficerController::class, 'markReviewed'])->name('ratings.review');
     Route::post('/ratings/bulk-review', [TfrbOfficerController::class, 'ratingsBulkReview'])->name('ratings.bulkReview');
     Route::get('/complaints', [TfrbOfficerController::class, 'complaints'])->name('complaints');
-    Route::patch('/complaints/{rating}/review', [TfrbOfficerController::class, 'complaintsMarkReviewed'])->name('complaints.review');
+    Route::patch('/complaints/{rating}/accept', [TfrbOfficerController::class, 'complaintsAccept'])->name('complaints.accept');
+    Route::patch('/complaints/{rating}/reject', [TfrbOfficerController::class, 'complaintsReject'])->name('complaints.reject');
+    Route::patch('/complaints/{rating}/reset', [TfrbOfficerController::class, 'complaintsResetReview'])->name('complaints.reset');
     Route::patch('/complaints/{rating}/solve', [TfrbOfficerController::class, 'complaintsMarkSolved'])->name('complaints.solve');
     Route::patch('/complaints/{rating}/reopen', [TfrbOfficerController::class, 'complaintsReopen'])->name('complaints.reopen');
     Route::delete('/complaints/{rating}', [TfrbOfficerController::class, 'destroyComplaint'])->name('complaints.destroy');
@@ -127,7 +129,9 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::get('/presidents', [SuperadminController::class, 'presidents'])->name('presidents');
     Route::delete('/presidents/{user}', [SuperadminController::class, 'destroyPresident'])->name('presidents.destroy');
     Route::get('/complaints', [SuperadminController::class, 'complaints'])->name('complaints');
-        Route::patch('/complaints/{rating}/review', [SuperadminController::class, 'complaintsMarkReviewed'])->name('complaints.review');
+        Route::patch('/complaints/{rating}/accept', [SuperadminController::class, 'complaintsAccept'])->name('complaints.accept');
+        Route::patch('/complaints/{rating}/reject', [SuperadminController::class, 'complaintsReject'])->name('complaints.reject');
+        Route::patch('/complaints/{rating}/reset', [SuperadminController::class, 'complaintsResetReview'])->name('complaints.reset');
     Route::patch('/complaints/{rating}/solve', [SuperadminController::class, 'complaintsMarkSolved'])->name('complaints.solve');
     Route::patch('/complaints/{rating}/reopen', [SuperadminController::class, 'complaintsReopen'])->name('complaints.reopen');
     Route::delete('/complaints/{rating}', [SuperadminController::class, 'destroyComplaint'])->name('complaints.destroy');

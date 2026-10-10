@@ -31,24 +31,72 @@ class RatingAdminService
         return back()->with('success', 'Rating marked as reviewed.');
     }
 
-    public function complaintsMarkReviewed(Rating $rating): RedirectResponse
+    /**
+     * Accept a complaint: the officer has reviewed it and considers it a real,
+     * legitimate report. Only accepted 1-2 star complaints count towards the
+     * operator's star average, so accepting is what makes the rating "land".
+     */
+    public function complaintsAccept(Rating $rating): RedirectResponse
     {
         if (!$rating->complaint_type) {
-            return back()->withErrors(['error' => 'Only complaints with a complaint type can be marked reviewed here.']);
+            return back()->withErrors(['error' => 'Only complaints with a complaint type can be reviewed here.']);
         }
 
-        $wasReviewed = (bool) $rating->is_reviewed;
-        $rating->update(['is_reviewed' => true]);
+        $wasAccepted = $rating->is_accepted === true;
+        $rating->update(['is_reviewed' => true, 'is_accepted' => true]);
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('mark_reviewed', "Marked complaint #{$rating->id} as reviewed (operator: {$rating->operator->user->name})", $rating, 'review');
+        ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (operator: {$rating->operator->user->name})", $rating, 'review');
 
-        if (!$wasReviewed) {
-            $this->notifyComplaintStatus($rating, 'reviewed');
-            $this->notifyPassengerInApp($rating, 'Complaint Reviewed', 'Your complaint has been reviewed by the TFRB.');
+        if (!$wasAccepted) {
+            $this->notifyComplaintStatus($rating, 'accepted');
+            $this->notifyPassengerInApp($rating, 'Complaint Accepted', 'Your complaint has been verified and accepted by the TFRB. Thank you for helping keep our transport services safe.');
         }
 
-        return back()->with('success', 'Complaint marked as reviewed.');
+        return back()->with('success', 'Complaint accepted. It now counts towards the operator\'s rating.');
+    }
+
+    /**
+     * Reject a complaint: the officer has reviewed it and found it is not a
+     * valid report (e.g. fake or unverifiable). A rejected complaint is a dead
+     * end — it is never solved and never counts towards the operator's rating.
+     */
+    public function complaintsReject(Rating $rating): RedirectResponse
+    {
+        if (!$rating->complaint_type) {
+            return back()->withErrors(['error' => 'Only complaints with a complaint type can be reviewed here.']);
+        }
+
+        $wasRejected = $rating->is_accepted === false;
+        $rating->update(['is_reviewed' => true, 'is_accepted' => false, 'is_solved' => false, 'solved_at' => null]);
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log('reject_complaint', "Rejected complaint #{$rating->id} (operator: {$rating->operator->user->name})", $rating, 'review');
+
+        if (!$wasRejected) {
+            $this->notifyComplaintStatus($rating, 'rejected');
+            $this->notifyPassengerInApp($rating, 'Complaint Rejected', 'After review, your complaint was not validated and will not affect the operator\'s record. Thank you for your report.');
+        }
+
+        return back()->with('success', 'Complaint rejected. It will not count towards the operator\'s rating.');
+    }
+
+    /**
+     * Undo a review decision and return the complaint to the pending queue so
+     * it can be reviewed again.
+     */
+    public function complaintsResetReview(Rating $rating): RedirectResponse
+    {
+        if (!$rating->complaint_type) {
+            return back()->withErrors(['error' => 'Only complaints with a complaint type can be reset here.']);
+        }
+
+        $rating->update(['is_reviewed' => false, 'is_accepted' => null, 'is_solved' => false, 'solved_at' => null]);
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log('reset_complaint', "Returned complaint #{$rating->id} to pending review (operator: {$rating->operator->user->name})", $rating, 'review');
+
+        return back()->with('success', 'Complaint returned to pending review.');
     }
 
     /**
@@ -63,7 +111,9 @@ class RatingAdminService
         }
 
         $wasSolved = (bool) $rating->is_solved;
-        $rating->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
+        // Solving implies the complaint was legitimate, so it is accepted too:
+        // a resolved complaint must always count towards the operator's record.
+        $rating->update(['is_reviewed' => true, 'is_accepted' => true, 'is_solved' => true, 'solved_at' => now()]);
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('mark_solved', "Marked complaint #{$rating->id} as solved (operator: {$rating->operator->user->name})", $rating, 'review');
@@ -110,21 +160,22 @@ class RatingAdminService
         Rating::whereIn('id', $ids)
             ->isValid()
             ->whereNotNull('complaint_type')
-            ->where('is_reviewed', false)
+            ->whereNull('is_accepted')
             ->with('operator.user')
             ->get()
             ->each(function ($rating) use (&$count) {
-                $rating->update(['is_reviewed' => true]);
-                ActivityLogger::log('mark_reviewed', "Marked complaint #{$rating->id} as reviewed (bulk, operator: {$rating->operator->user->name})", $rating, 'review');
-                $this->notifyComplaintStatus($rating, 'reviewed');
+                $rating->update(['is_reviewed' => true, 'is_accepted' => true]);
+                ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (bulk, operator: {$rating->operator->user->name})", $rating, 'review');
+                $this->notifyComplaintStatus($rating, 'accepted');
+                $this->notifyPassengerInApp($rating, 'Complaint Accepted', 'Your complaint has been verified and accepted by the TFRB. Thank you for helping keep our transport services safe.');
                 $count++;
             });
 
         app(AdminDashboardService::class)->flush();
 
         return back()->with('success', $count > 0
-            ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' marked as reviewed.'
-            : 'No pending complaints were marked.');
+            ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' accepted.'
+            : 'No pending complaints were accepted.');
     }
 
     /**

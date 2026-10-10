@@ -63,13 +63,22 @@ class Operator extends Model
         return $this->hasMany(Rating::class)->where('is_valid', true);
     }
 
+    /**
+     * Only accepted complaints (plus every plain rating) influence the
+     * operator's average; pending/rejected complaints are excluded.
+     */
+    public function countableRatings()
+    {
+        return $this->hasMany(Rating::class)->isValid()->countsTowardRating();
+    }
+
     public function averageRating()
     {
-        return $this->ratings()->isValid()->avg('rating');
+        return $this->countableRatings()->avg('rating');
     }
 
     public function totalRatings()
     {
-        return $this->ratings()->isValid()->count();
+        return $this->countableRatings()->count();
     }
 }

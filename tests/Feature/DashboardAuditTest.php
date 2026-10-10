@@ -610,7 +610,7 @@ class DashboardAuditTest extends TestCase
 
         $pending = $this->makeRating($op, 1, true, true);
         $reviewed = $this->makeRating($op, 1, true, true);
-        $reviewed->update(['is_reviewed' => true]);
+        $reviewed->update(['is_reviewed' => true, 'is_accepted' => true]);
         $two = $this->makeRating($op, 2, true, true);
 
         $this->actingAs($admin)->get('/superadmin/complaints?filter=pending&rating=1')
@@ -676,7 +676,7 @@ class DashboardAuditTest extends TestCase
             ->assertSee('Rude Driver', false);
     }
 
-    public function test_marking_complaint_reviewed_emails_the_passenger()
+    public function test_marking_complaint_accepted_emails_the_passenger()
     {
         Mail::fake();
         $officer = $this->makeUser('tfrb_officer');
@@ -685,20 +685,20 @@ class DashboardAuditTest extends TestCase
         $rating->update(['passenger_email' => 'passenger@example.com']);
 
         $this->actingAs($officer)
-            ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
+            ->patch('/tfrb-officer/complaints/' . $rating->id . '/accept')
             ->assertRedirect();
 
         Mail::assertSent(ComplaintStatus::class, function ($mail) use ($rating) {
             $mail->build();
 
             return $mail->hasTo('passenger@example.com')
-                && $mail->status === 'reviewed'
+                && $mail->status === 'accepted'
                 && str_contains($mail->subject, $rating->reference_number);
         });
 
-        // Re-reviewing must not spam the passenger a second time.
+        // Re-accepting must not spam the passenger a second time.
         $this->actingAs($officer)
-            ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
+            ->patch('/tfrb-officer/complaints/' . $rating->id . '/accept')
             ->assertRedirect();
 
         Mail::assertSent(ComplaintStatus::class, 1);
@@ -776,9 +776,9 @@ class DashboardAuditTest extends TestCase
 
         $pending = $this->makeRating($op, 1, true, true);
         $reviewed = $this->makeRating($op, 2, true, true);
-        $reviewed->update(['is_reviewed' => true]);
+        $reviewed->update(['is_reviewed' => true, 'is_accepted' => true]);
         $solved = $this->makeRating($op, 1, true, true);
-        $solved->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
+        $solved->update(['is_reviewed' => true, 'is_accepted' => true, 'is_solved' => true, 'solved_at' => now()]);
 
         $this->actingAs($admin)->get('/superadmin/complaints?filter=solved')
             ->assertOk()
@@ -786,8 +786,8 @@ class DashboardAuditTest extends TestCase
             ->assertDontSee($pending->reference_number, false)
             ->assertDontSee($reviewed->reference_number, false);
 
-        // Reviewed filter excludes solved complaints; pending excludes reviewed+solved.
-        $this->actingAs($admin)->get('/superadmin/complaints?filter=reviewed')
+        // Accepted filter excludes solved complaints; pending excludes accepted+solved.
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=accepted')
             ->assertOk()
             ->assertSee($reviewed->reference_number, false)
             ->assertDontSee($solved->reference_number, false);

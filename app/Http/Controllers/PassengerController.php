@@ -18,8 +18,9 @@ class PassengerController extends Controller
             ->with(['operator.user', 'response', 'proofs']);
 
         $totalCount = (clone $base)->count();
-        $pendingCount = (clone $base)->where('is_reviewed', false)->where('is_solved', false)->count();
-        $reviewedCount = (clone $base)->where('is_reviewed', true)->where('is_solved', false)->count();
+        $pendingCount = (clone $base)->whereNull('is_accepted')->where('is_solved', false)->count();
+        $acceptedCount = (clone $base)->where('is_accepted', true)->where('is_solved', false)->count();
+        $rejectedCount = (clone $base)->where('is_accepted', false)->count();
         $solvedCount = (clone $base)->isSolved()->count();
 
         $complaints = (clone $base)->latest()->paginate(15)->withQueryString();
@@ -30,6 +31,6 @@ class PassengerController extends Controller
             ->limit(10)
             ->get();
 
-        return view('passenger.dashboard', compact('complaints', 'totalCount', 'pendingCount', 'reviewedCount', 'solvedCount', 'notifications'));
+        return view('passenger.dashboard', compact('complaints', 'totalCount', 'pendingCount', 'acceptedCount', 'rejectedCount', 'solvedCount', 'notifications'));
     }
 }

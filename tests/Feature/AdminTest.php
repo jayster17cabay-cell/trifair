@@ -279,15 +279,44 @@ class AdminTest extends TestCase
         $this->assertNull(User::find($userId));
     }
 
-    public function test_mark_reviewed_marks_rating()
+    public function test_marking_complaint_accepted_counts_toward_rating()
     {
         $admin = $this->makeUser('superadmin');
         $rating = $this->makeValidComplaint($this->makeOperator());
 
-        $this->actingAs($admin)->patch('/superadmin/complaints/' . $rating->id . '/review')
+        $this->actingAs($admin)->patch('/superadmin/complaints/' . $rating->id . '/accept')
             ->assertRedirect();
 
-        $this->assertTrue((bool) $rating->fresh()->is_reviewed);
+        $fresh = $rating->fresh();
+        $this->assertTrue((bool) $fresh->is_reviewed);
+        $this->assertTrue($fresh->is_accepted);
+    }
+
+    public function test_marking_complaint_rejected_does_not_count()
+    {
+        $admin = $this->makeUser('superadmin');
+        $rating = $this->makeValidComplaint($this->makeOperator());
+
+        $this->actingAs($admin)->patch('/superadmin/complaints/' . $rating->id . '/reject')
+            ->assertRedirect();
+
+        $fresh = $rating->fresh();
+        $this->assertTrue((bool) $fresh->is_reviewed);
+        $this->assertFalse($fresh->is_accepted);
+    }
+
+    public function test_complaint_review_can_be_reset_to_pending()
+    {
+        $admin = $this->makeUser('superadmin');
+        $rating = $this->makeValidComplaint($this->makeOperator());
+        $rating->update(['is_reviewed' => true, 'is_accepted' => false]);
+
+        $this->actingAs($admin)->patch('/superadmin/complaints/' . $rating->id . '/reset')
+            ->assertRedirect();
+
+        $fresh = $rating->fresh();
+        $this->assertFalse((bool) $fresh->is_reviewed);
+        $this->assertNull($fresh->is_accepted);
     }
 
     public function test_superadmin_can_bulk_review_complaints()
@@ -302,7 +331,9 @@ class AdminTest extends TestCase
         ])->assertRedirect()->assertSessionHas('success');
 
         $this->assertTrue((bool) $a->fresh()->is_reviewed);
+        $this->assertTrue($a->fresh()->is_accepted);
         $this->assertTrue((bool) $b->fresh()->is_reviewed);
+        $this->assertTrue($b->fresh()->is_accepted);
     }
 
     public function test_officer_can_bulk_review_complaints()
@@ -317,7 +348,9 @@ class AdminTest extends TestCase
         ])->assertRedirect()->assertSessionHas('success');
 
         $this->assertTrue((bool) $a->fresh()->is_reviewed);
+        $this->assertTrue($a->fresh()->is_accepted);
         $this->assertTrue((bool) $b->fresh()->is_reviewed);
+        $this->assertTrue($b->fresh()->is_accepted);
     }
 
     public function test_operators_page_renders_compact_table_and_modal()

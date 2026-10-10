@@ -27,8 +27,9 @@ class AdminQueryService
 
         $base = Rating::isValid()->isComplaint();
 
-        $pendingCount = (clone $base)->where('is_reviewed', false)->where('is_solved', false)->count();
-        $reviewedCount = (clone $base)->where('is_reviewed', true)->where('is_solved', false)->count();
+        $pendingCount = (clone $base)->whereNull('is_accepted')->where('is_solved', false)->count();
+        $acceptedCount = (clone $base)->where('is_accepted', true)->where('is_solved', false)->count();
+        $rejectedCount = (clone $base)->where('is_accepted', false)->count();
         $solvedCount = (clone $base)->isSolved()->count();
         $totalCount = (clone $base)->count();
         $star1Count = (clone $base)->where('rating', 1)->count();
@@ -43,14 +44,18 @@ class AdminQueryService
             ->count();
 
         if ($filter === 'pending') {
-            $base->where('is_reviewed', false)->where('is_solved', false);
-        } elseif ($filter === 'reviewed') {
-            $base->where('is_reviewed', true)->where('is_solved', false);
+            $base->whereNull('is_accepted')->where('is_solved', false);
+        } elseif ($filter === 'accepted' || $filter === 'reviewed') {
+            // 'reviewed' is kept as a backwards-compatible alias for accepted.
+            $filter = 'accepted';
+            $base->where('is_accepted', true)->where('is_solved', false);
+        } elseif ($filter === 'rejected') {
+            $base->where('is_accepted', false);
         } elseif ($filter === 'solved') {
             $base->isSolved();
         } elseif (!in_array($filter, ['', 'all'], true)) {
             $filter = 'pending';
-            $base->where('is_reviewed', false)->where('is_solved', false);
+            $base->whereNull('is_accepted')->where('is_solved', false);
         }
 
         if ($ratingFilter) {
@@ -66,7 +71,7 @@ class AdminQueryService
             ->paginate(20)
             ->withQueryString();
 
-        return compact('complaints', 'filter', 'ratingFilter', 'search', 'pendingCount', 'reviewedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal');
+        return compact('complaints', 'filter', 'ratingFilter', 'search', 'pendingCount', 'acceptedCount', 'rejectedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal');
     }
 
     /**
@@ -185,7 +190,9 @@ class AdminQueryService
         if ($to) {
             $periodWhere .= " and created_at <= " . DB::connection()->getPdo()->quote($to->copy()->endOfDay());
         }
-        $sub = '(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true' . $periodWhere . ' group by operator_id)';
+        // Only accepted complaints influence an operator's average; pending and
+        // rejected complaints never count.
+        $sub = '(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true and (complaint_type is null or is_accepted = true)' . $periodWhere . ' group by operator_id)';
 
         $query->leftJoin(DB::raw($sub . ' as vr'), 'vr.operator_id', '=', 'operators.id')
             ->select('operators.*', 'vr.valid_ratings_avg_rating', 'vr.valid_ratings_count');
@@ -305,12 +312,15 @@ class AdminQueryService
         if (in_array($ratingKey, ['1', '2'], true)) {
             $base->where('rating', (int) $ratingKey);
         }
-        if ($filter === 'reviewed') {
-            $base->where('is_reviewed', true)->where('is_solved', false);
+        if ($filter === 'accepted' || $filter === 'reviewed') {
+            $filter = 'accepted';
+            $base->where('is_accepted', true)->where('is_solved', false);
+        } elseif ($filter === 'rejected') {
+            $base->where('is_accepted', false);
         } elseif ($filter === 'solved') {
             $base->isSolved();
         } elseif (!in_array($filter, ['', 'all'], true)) {
-            $base->where('is_reviewed', false)->where('is_solved', false);
+            $base->whereNull('is_accepted')->where('is_solved', false);
         }
         if ($operatorId) {
             $base->where('operator_id', $operatorId);
@@ -333,7 +343,7 @@ class AdminQueryService
                     'rating' => $complaint->rating,
                     'type' => $complaint->complaint_type ?? '',
                     'details' => $complaint->complaint_details ?? '',
-                    'status' => $complaint->is_solved ? 'Solved' : ($complaint->is_reviewed ? 'Reviewed' : 'Pending'),
+                    'status' => $complaint->status_label,
                     'date' => $complaint->created_at?->format('Y-m-d H:i'),
                 ];
             });
