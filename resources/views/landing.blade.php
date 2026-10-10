@@ -409,7 +409,7 @@
         </div>
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div class="anim rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur transition-all hover:-translate-y-1 hover:border-gold/30 hover:bg-white/10 hover:shadow-lift">
-                <div class="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-2 ring-gold/40">
+                <div class="relative mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-2 ring-gold/40">
                     <img src="{{ asset('images/developers/jayster.jpg') }}" alt="Jayster Rey E. Cabay"
                          class="h-full w-full rounded-full object-cover"
                          loading="lazy">
@@ -418,7 +418,7 @@
                 <p class="text-xs font-semibold uppercase tracking-widest text-gold">Developer</p>
             </div>
             <div class="anim anim-d1 rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur transition-all hover:-translate-y-1 hover:border-gold/30 hover:bg-white/10 hover:shadow-lift">
-                <div class="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-2 ring-gold/40">
+                <div class="relative mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-2 ring-gold/40">
                     <img src="{{ asset('images/developers/jelyn.jpg') }}" alt="Jelyn Monte"
                          class="h-full w-full rounded-full object-cover"
                          loading="lazy">
@@ -427,7 +427,7 @@
                 <p class="text-xs font-semibold uppercase tracking-widest text-gold">Developer</p>
             </div>
             <div class="anim anim-d2 rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur transition-all hover:-translate-y-1 hover:border-gold/30 hover:bg-white/10 hover:shadow-lift">
-                <div class="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-2 ring-gold/40">
+                <div class="relative mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-2 ring-gold/40">
                     <img src="{{ asset('images/developers/johnloyd.jpg') }}" alt="John Loyd Sumawang"
                          class="h-full w-full rounded-full object-cover"
                          loading="lazy">
