@@ -397,6 +397,54 @@
     </div>
 </section>
 
+{{-- DEVELOPERS --}}
+<section id="developers" class="relative overflow-hidden bg-[linear-gradient(155deg,#060e1a_0%,#0f2b4a_40%,#1e3a5f_80%,#2a4a7a_100%)] px-6 py-16 md:px-8 md:py-20">
+    <div class="pointer-events-none absolute inset-0 lp-bg-grid"></div>
+    <div class="pointer-events-none absolute -left-24 -top-[20%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(245,184,0,0.10)_0%,transparent_65%)]"></div>
+    <div class="relative z-10 mx-auto max-w-6xl">
+        <div class="mb-10 text-center">
+            <div class="mb-3 inline-flex items-center gap-1.5 rounded-full border border-gold/25 bg-gold/10 px-3.5 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-gold"><i class="bi bi-code-slash"></i> The Team</div>
+            <h2 class="mb-2.5 text-3xl font-extrabold tracking-tight text-white md:text-4xl">Meet the Developers</h2>
+            <p class="mx-auto max-w-[540px] text-[0.95rem] leading-relaxed text-white/60">The students behind TriFair — building a fairer, more accountable motorcycle ride for the community.</p>
+        </div>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="anim rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur transition-all hover:-translate-y-1 hover:border-gold/30 hover:bg-white/10 hover:shadow-lift">
+                <div class="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+                    <img src="{{ asset('images/developers/jayster.jpg') }}" alt="Jayster Rey E. Cabay"
+                         class="absolute inset-0 h-full w-full rounded-full object-cover ring-4 ring-gold/40"
+                         loading="lazy"
+                         onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                    <span class="hidden h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark text-2xl font-black text-navy-800 shadow-lift">JRC</span>
+                </div>
+                <h4 class="mb-1 text-[0.95rem] font-bold text-white">Jayster Rey E. Cabay</h4>
+                <p class="text-xs font-semibold uppercase tracking-widest text-gold">Developer</p>
+            </div>
+            <div class="anim anim-d1 rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur transition-all hover:-translate-y-1 hover:border-gold/30 hover:bg-white/10 hover:shadow-lift">
+                <div class="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+                    <img src="{{ asset('images/developers/jelyn.jpg') }}" alt="Jelyn Monte"
+                         class="absolute inset-0 h-full w-full rounded-full object-cover ring-4 ring-gold/40"
+                         loading="lazy"
+                         onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                    <span class="hidden h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark text-2xl font-black text-navy-800 shadow-lift">JM</span>
+                </div>
+                <h4 class="mb-1 text-[0.95rem] font-bold text-white">Jelyn Monte</h4>
+                <p class="text-xs font-semibold uppercase tracking-widest text-gold">Developer</p>
+            </div>
+            <div class="anim anim-d2 rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur transition-all hover:-translate-y-1 hover:border-gold/30 hover:bg-white/10 hover:shadow-lift">
+                <div class="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+                    <img src="{{ asset('images/developers/johnloyd.jpg') }}" alt="John Loyd Sumawang"
+                         class="absolute inset-0 h-full w-full rounded-full object-cover ring-4 ring-gold/40"
+                         loading="lazy"
+                         onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                    <span class="hidden h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark text-2xl font-black text-navy-800 shadow-lift">JLS</span>
+                </div>
+                <h4 class="mb-1 text-[0.95rem] font-bold text-white">John Loyd Sumawang</h4>
+                <p class="text-xs font-semibold uppercase tracking-widest text-gold">Developer</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 {{-- FOOTER --}}
 <footer class="bg-slate-900 px-6 pb-8 pt-14 md:px-8">
     <div class="mx-auto max-w-6xl">
