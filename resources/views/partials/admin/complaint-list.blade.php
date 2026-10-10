@@ -18,6 +18,15 @@
     $starUrl = function ($r) use ($routePrefix, $filter, $search) {
         return route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $r, 'search' => $search], fn ($v) => $v !== null && $v !== ''));
     };
+
+    $statItems = [
+        ['num' => $totalCount, 'label' => 'Total', 'icon' => 'bi-exclamation-circle', 'chip' => 'bg-blue-50 text-navy-600'],
+        ['num' => $pendingCount, 'label' => 'Pending', 'icon' => 'bi-clock-history', 'chip' => 'bg-amber-50 text-amber-600'],
+        ['num' => $acceptedCount, 'label' => 'Accepted', 'icon' => 'bi-check-circle', 'chip' => 'bg-emerald-50 text-emerald-600'],
+        ['num' => $rejectedCount, 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600'],
+        ['num' => $solvedCount, 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600'],
+        ['num' => $proofsTotal ?? $complaints->sum(fn($r) => $r->proofs->count()), 'label' => 'Proofs', 'icon' => 'bi-paperclip', 'chip' => 'bg-slate-100 text-slate-500'],
+    ];
 @endphp
 
 <div class="tw-page-head">
@@ -43,57 +52,38 @@
     ])
 </div>
 
-{{-- Sticky summary + filter bar: stays pinned below the topbar while the list scrolls. --}}
-<div class="sticky top-[70px] z-20 -mx-4 mb-5 bg-slate-50/95 px-4 pb-4 pt-2 shadow-[0_4px_10px_-8px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-exclamation-circle"></i></div>
-            <div class="tw-stat-num">{{ $totalCount }}</div>
-            <div class="tw-stat-label">Total</div>
-        </div>
-        <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-amber"><i class="bi bi-clock-history"></i></div>
-            <div class="tw-stat-num">{{ $pendingCount }}</div>
-            <div class="tw-stat-label">Pending</div>
-        </div>
-        <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-check-circle"></i></div>
-            <div class="tw-stat-num">{{ $acceptedCount }}</div>
-            <div class="tw-stat-label">Accepted</div>
-        </div>
-        <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-x-circle"></i></div>
-            <div class="tw-stat-num">{{ $rejectedCount }}</div>
-            <div class="tw-stat-label">Rejected</div>
-        </div>
-        <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-patch-check-fill"></i></div>
-            <div class="tw-stat-num">{{ $solvedCount }}</div>
-            <div class="tw-stat-label">Solved</div>
-        </div>
-        <div class="tw-stat">
-            <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-paperclip"></i></div>
-            <div class="tw-stat-num">{{ $proofsTotal ?? $complaints->sum(fn($r) => $r->proofs->count()) }}</div>
-            <div class="tw-stat-label">Proofs</div>
-        </div>
+{{-- Sticky summary + filter panel: stays pinned below the topbar while the list scrolls. --}}
+<div class="sticky top-[70px] z-20 -mx-4 mb-5 border-b border-slate-100 bg-white/95 px-4 pb-4 pt-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    {{-- Summary stats --}}
+    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+        @foreach ($statItems as $stat)
+            <div class="flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $stat['chip'] }}"><i class="bi {{ $stat['icon'] }}"></i></span>
+                <div class="min-w-0">
+                    <div class="text-base font-extrabold leading-none text-slate-800">{{ $stat['num'] }}</div>
+                    <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ $stat['label'] }}</div>
+                </div>
+            </div>
+        @endforeach
     </div>
 
-    <div class="mt-3 flex flex-wrap items-center gap-3">
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ $statusUrl('all') }}" class="{{ $filter === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                <i class="bi bi-list-ul"></i> All <span class="tw-badge tw-badge-gray ml-1">{{ $totalCount }}</span>
+    {{-- Status filters + search/bulk actions --}}
+    <div class="mt-3.5 flex flex-wrap items-center gap-3">
+        <div class="inline-flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1">
+            <a href="{{ $statusUrl('all') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'all' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
+                <i class="bi bi-list-ul"></i> All <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'all' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $totalCount }}</span>
             </a>
-            <a href="{{ $statusUrl('pending') }}" class="{{ $filter === 'pending' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                <i class="bi bi-clock-history"></i> Pending <span class="tw-badge tw-badge-amber ml-1">{{ $pendingCount }}</span>
+            <a href="{{ $statusUrl('pending') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'pending' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
+                <i class="bi bi-clock-history"></i> Pending <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'pending' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $pendingCount }}</span>
             </a>
-            <a href="{{ $statusUrl('accepted') }}" class="{{ $filter === 'accepted' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                <i class="bi bi-check-circle"></i> Accepted <span class="tw-badge tw-badge-green ml-1">{{ $acceptedCount }}</span>
+            <a href="{{ $statusUrl('accepted') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'accepted' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
+                <i class="bi bi-check-circle"></i> Accepted <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'accepted' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $acceptedCount }}</span>
             </a>
-            <a href="{{ $statusUrl('rejected') }}" class="{{ $filter === 'rejected' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                <i class="bi bi-x-circle"></i> Rejected <span class="tw-badge tw-badge-red ml-1">{{ $rejectedCount }}</span>
+            <a href="{{ $statusUrl('rejected') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'rejected' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
+                <i class="bi bi-x-circle"></i> Rejected <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'rejected' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $rejectedCount }}</span>
             </a>
-            <a href="{{ $statusUrl('solved') }}" class="{{ $filter === 'solved' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-                <i class="bi bi-patch-check-fill"></i> Solved <span class="tw-badge tw-badge-navy ml-1">{{ $solvedCount }}</span>
+            <a href="{{ $statusUrl('solved') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'solved' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
+                <i class="bi bi-patch-check-fill"></i> Solved <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'solved' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $solvedCount }}</span>
             </a>
         </div>
 
@@ -103,9 +93,12 @@
                 @if ($ratingFilter !== null)
                     <input type="hidden" name="rating" value="{{ $ratingFilter }}">
                 @endif
-                <input type="text" name="search" value="{{ $search }}" placeholder="Search by reference number"
-                       class="tw-input py-2" style="max-width: 16rem;" aria-label="Search complaint by reference number"
-                       data-complaint-live-search>
+                <div class="tw-input-group">
+                    <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" value="{{ $search }}" placeholder="Search by reference #"
+                           class="tw-input py-2" style="width: min(14rem, 100%);" aria-label="Search complaint by reference number"
+                           data-complaint-live-search>
+                </div>
                 @if ($search !== '')
                     <a href="{{ route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null)) }}"
                        class="tw-btn tw-btn-sm tw-btn-ghost" title="Clear search">
@@ -113,7 +106,7 @@
                     </a>
                 @endif
             </form>
-            <span class="h-5 w-px bg-slate-200" aria-hidden="true"></span>
+            <span class="h-5 w-px bg-slate-100" aria-hidden="true"></span>
             <label class="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600">
                 <input type="checkbox" class="tw-check" data-complaint-select-all>
                 Select all
@@ -127,33 +120,31 @@
             </form>
         </div>
     </div>
-</div>
 
-{{-- Star rating filter: a compact segmented control in its own row (not part of
-     the sticky bar) so the toolbar stays clean and the severity filter is easy
-     to scan and toggle. --}}
-<div class="mb-4 flex flex-wrap items-center gap-3">
-    <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400">
-        <i class="bi bi-stars text-gold"></i>Severity
-    </span>
-    <div class="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <a href="{{ $starUrl(null) }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold transition {{ $ratingFilter === null ? 'bg-navy-600 text-white' : 'text-slate-600 hover:bg-slate-50' }}">
-            All stars
-        </a>
-        <a href="{{ $starUrl(1) }}" class="inline-flex items-center gap-1.5 border-l border-slate-200 px-3.5 py-1.5 text-xs font-semibold transition {{ $ratingFilter === 1 ? 'bg-navy-600 text-white' : 'text-slate-600 hover:bg-slate-50' }}">
-            <i class="bi bi-star-fill {{ $ratingFilter === 1 ? '' : 'text-amber-400' }}"></i>1 Star
-            <span class="{{ $ratingFilter === 1 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }} rounded px-1 text-[0.65rem] font-bold">{{ $star1Count }}</span>
-        </a>
-        <a href="{{ $starUrl(2) }}" class="inline-flex items-center gap-1.5 border-l border-slate-200 px-3.5 py-1.5 text-xs font-semibold transition {{ $ratingFilter === 2 ? 'bg-navy-600 text-white' : 'text-slate-600 hover:bg-slate-50' }}">
-            <i class="bi bi-star-fill {{ $ratingFilter === 2 ? '' : 'text-amber-400' }}"></i>2 Stars
-            <span class="{{ $ratingFilter === 2 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }} rounded px-1 text-[0.65rem] font-bold">{{ $star2Count }}</span>
-        </a>
+    {{-- Star rating (severity) filter: compact segmented control in its own row. --}}
+    <div class="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
+        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+            <i class="bi bi-stars text-gold"></i>Severity
+        </span>
+        <div class="inline-flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
+            <a href="{{ $starUrl(null) }}" class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition {{ $ratingFilter === null ? 'bg-navy-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50' }}">
+                All stars
+            </a>
+            <a href="{{ $starUrl(1) }}" class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition {{ $ratingFilter === 1 ? 'bg-navy-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50' }}">
+                <i class="bi bi-star-fill {{ $ratingFilter === 1 ? '' : 'text-amber-400' }}"></i>1 Star
+                <span class="{{ $ratingFilter === 1 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }} rounded px-1 text-[10px] font-bold">{{ $star1Count }}</span>
+            </a>
+            <a href="{{ $starUrl(2) }}" class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition {{ $ratingFilter === 2 ? 'bg-navy-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50' }}">
+                <i class="bi bi-star-fill {{ $ratingFilter === 2 ? '' : 'text-amber-400' }}"></i>2 Stars
+                <span class="{{ $ratingFilter === 2 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }} rounded px-1 text-[10px] font-bold">{{ $star2Count }}</span>
+            </a>
+        </div>
+        @if ($ratingFilter !== null)
+            <a href="{{ $starUrl(null) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Clear star filter">
+                <i class="bi bi-x-lg"></i>Clear
+            </a>
+        @endif
     </div>
-    @if ($ratingFilter !== null)
-        <a href="{{ $starUrl(null) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Clear star filter">
-            <i class="bi bi-x-lg"></i>Clear
-        </a>
-    @endif
 </div>
 
 @php
