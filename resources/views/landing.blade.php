@@ -409,34 +409,28 @@
         </div>
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div class="anim rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur transition-all hover:-translate-y-1 hover:border-gold/30 hover:bg-white/10 hover:shadow-lift">
-                <div class="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+                <div class="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-4 ring-gold/40">
                     <img src="{{ asset('images/developers/jayster.jpg') }}" alt="Jayster Rey E. Cabay"
-                         class="absolute inset-0 h-full w-full rounded-full object-cover ring-4 ring-gold/40"
-                         loading="lazy"
-                         onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-                    <span class="hidden h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark text-2xl font-black text-navy-800 shadow-lift">JRC</span>
+                         class="h-full w-full rounded-full object-cover"
+                         loading="lazy">
                 </div>
                 <h4 class="mb-1 text-[0.95rem] font-bold text-white">Jayster Rey E. Cabay</h4>
                 <p class="text-xs font-semibold uppercase tracking-widest text-gold">Developer</p>
             </div>
             <div class="anim anim-d1 rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur transition-all hover:-translate-y-1 hover:border-gold/30 hover:bg-white/10 hover:shadow-lift">
-                <div class="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+                <div class="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-4 ring-gold/40">
                     <img src="{{ asset('images/developers/jelyn.jpg') }}" alt="Jelyn Monte"
-                         class="absolute inset-0 h-full w-full rounded-full object-cover ring-4 ring-gold/40"
-                         loading="lazy"
-                         onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-                    <span class="hidden h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark text-2xl font-black text-navy-800 shadow-lift">JM</span>
+                         class="h-full w-full rounded-full object-cover"
+                         loading="lazy">
                 </div>
                 <h4 class="mb-1 text-[0.95rem] font-bold text-white">Jelyn Monte</h4>
                 <p class="text-xs font-semibold uppercase tracking-widest text-gold">Developer</p>
             </div>
             <div class="anim anim-d2 rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur transition-all hover:-translate-y-1 hover:border-gold/30 hover:bg-white/10 hover:shadow-lift">
-                <div class="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+                <div class="relative mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-4 ring-gold/40">
                     <img src="{{ asset('images/developers/johnloyd.jpg') }}" alt="John Loyd Sumawang"
-                         class="absolute inset-0 h-full w-full rounded-full object-cover ring-4 ring-gold/40"
-                         loading="lazy"
-                         onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-                    <span class="hidden h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark text-2xl font-black text-navy-800 shadow-lift">JLS</span>
+                         class="h-full w-full rounded-full object-cover"
+                         loading="lazy">
                 </div>
                 <h4 class="mb-1 text-[0.95rem] font-bold text-white">John Loyd Sumawang</h4>
                 <p class="text-xs font-semibold uppercase tracking-widest text-gold">Developer</p>
