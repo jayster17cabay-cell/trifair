@@ -272,7 +272,13 @@ class RatingController extends Controller
             ? route('passenger.dashboard')
             : '/';
 
-        return response()->view('rate.submitted', compact('operator', 'exitUrl'))
+        // Signed-in passengers get an extra "View All My Ratings" action that
+        // opens the same complaints dashboard, where they can close the tab.
+        $viewAllUrl = auth()->check() && auth()->user()->isPassenger()
+            ? route('passenger.dashboard')
+            : null;
+
+        return response()->view('rate.submitted', compact('operator', 'exitUrl', 'viewAllUrl'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }

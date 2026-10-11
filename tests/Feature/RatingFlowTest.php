@@ -241,4 +241,30 @@ class RatingFlowTest extends TestCase
             ->assertOk()
             ->assertSee(route('passenger.dashboard'), false);
     }
+
+    public function test_thank_you_view_all_button_only_for_signed_in_passenger()
+    {
+        $operator = $this->makeActiveOperator();
+
+        $this->get(route('rate.submitted', $operator->qr_code))
+            ->assertOk()
+            ->assertDontSee('View All My Ratings');
+
+        $passenger = new User();
+        $passenger->forceFill([
+            'name' => 'Test Passenger',
+            'email' => 'passenger_' . Str::random(6) . '@example.com',
+            'password' => Hash::make('password123'),
+            'email_verified_at' => now(),
+            'role' => 'passenger',
+            'is_active' => true,
+            'phone' => '09171234567',
+        ]);
+        $passenger->save();
+
+        $this->actingAs($passenger)
+            ->get(route('rate.submitted', $operator->qr_code))
+            ->assertOk()
+            ->assertSee('View All My Ratings');
+    }
 }

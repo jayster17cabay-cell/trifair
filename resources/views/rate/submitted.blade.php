@@ -70,10 +70,18 @@
             padding: 1rem 2rem; border: none; border-radius: 14px;
             background: linear-gradient(135deg, var(--gold), #e0a800);
             color: white; font-size: 1rem; font-weight: 800;
-            font-family: inherit; cursor: pointer; margin-top: 1.25rem;
+            font-family: inherit; cursor: pointer;
             transition: all 0.2s;
         }
-        .close-btn:active { transform: scale(0.97); }
+        .view-btn {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            width: 100%; max-width: 300px;
+            padding: 1rem 2rem; border: 2px solid var(--primary); border-radius: 14px;
+            background: #ffffff; color: var(--primary); font-size: 1rem; font-weight: 800;
+            font-family: inherit; cursor: pointer; text-decoration: none;
+            transition: all 0.2s;
+        }
+        .view-btn:active, .close-btn:active { transform: scale(0.97); }
         .close-btn:disabled { opacity: 0.7; cursor: default; }
         .powered { font-size: 0.7rem; color: var(--gray-500); margin-top: 1.5rem; }
         .powered strong { color: var(--primary); font-weight: 700; }
@@ -120,7 +128,7 @@
     @endif
 
     <div class="auto-close-note" id="closeNote">
-        <i class="bi bi-x-circle"></i> Tap <strong>Close</strong> below to go back to TriFair.
+        <i class="bi bi-x-circle"></i> Tap <strong>Close</strong> below to close this page.
     </div>
     <noscript>
         <div class="auto-close-note">
@@ -128,9 +136,20 @@
         </div>
     </noscript>
 
-    <button class="close-btn" id="closeBtn" onclick="tryClose()">
-        <i class="bi bi-x-lg"></i> Close
-    </button>
+    @if($viewAllUrl)
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; max-width: 300px; margin: 1.5rem auto 0;">
+            <a href="{{ $viewAllUrl }}" class="view-btn" id="viewAllBtn">
+                <i class="bi bi-list-check"></i> View All My Ratings
+            </a>
+            <button class="close-btn" id="closeBtn" onclick="tryClose()" style="margin-top: 0;">
+                <i class="bi bi-x-lg"></i> Close
+            </button>
+        </div>
+    @else
+        <button class="close-btn" id="closeBtn" onclick="tryClose()">
+            <i class="bi bi-x-lg"></i> Close
+        </button>
+    @endif
 
     <div class="powered">Powered by <strong>TriFair</strong></div>
 </div>

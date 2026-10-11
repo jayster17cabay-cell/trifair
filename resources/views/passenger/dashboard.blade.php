@@ -40,6 +40,9 @@
             <a href="/" class="tw-btn tw-btn-sm tw-btn-outline">
                 <i class="bi bi-qr-code-scan"></i> Scan a QR code
             </a>
+            <button type="button" onclick="tryClose()" class="tw-btn tw-btn-sm tw-btn-outline">
+                <i class="bi bi-x-lg"></i> Close
+            </button>
         </div>
 
         <div class="mb-6 flex items-start gap-3 rounded-2xl border border-navy-200 bg-navy-600/5 px-4 py-3.5">
@@ -203,5 +206,23 @@
             TriFair — Passenger Feedback System. Ang iyong identity ay nananatiling pribado mula sa mga driver.
         </p>
     </main>
+
+    <script>
+        var closed = false;
+
+        function tryClose() {
+            if (closed) return;
+            closed = true;
+            // Browsers only let JS close scripts-opened tabs (the QR-code scan
+            // flow). Kapag hindi nagsara ang tab, dalhin na lang sa homepage.
+            try { window.close(); } catch (e) {}
+            try { self.close(); } catch (e) {}
+            try { top.close(); } catch (e) {}
+            window.setTimeout(function () {
+                if (document.hidden) return;
+                window.location.replace('/');
+            }, 350);
+        }
+    </script>
 </body>
 </html>
