@@ -138,6 +138,38 @@ class FeatureImprovementsTest extends TestCase
         $this->assertDatabaseMissing('password_reset_codes', ['email' => 'nobody@example.com']);
     }
 
+    public function test_forgot_password_sends_otp_to_staff_accounts()
+    {
+        Mail::fake();
+
+        foreach (['superadmin', 'tfrb_officer', 'operator_president'] as $role) {
+            $user = $this->makeUser($role);
+
+            $this->post('/forgot-password', ['email' => $user->email])
+                ->assertRedirect(route('password.otp', ['email' => $user->email]))
+                ->assertSessionHas('reset_email');
+
+            Mail::assertSent(PasswordResetOtp::class, function ($mail) use ($user) {
+                return $mail->hasTo($user->email);
+            });
+
+            $this->assertDatabaseHas('password_reset_codes', ['email' => $user->email]);
+        }
+    }
+
+    public function test_forgot_password_does_not_apply_to_passenger_accounts()
+    {
+        Mail::fake();
+        $passenger = $this->makeUser('passenger');
+
+        $this->post('/forgot-password', ['email' => $passenger->email])
+            ->assertRedirect(route('password.otp', ['email' => $passenger->email]))
+            ->assertSessionMissing('errors');
+
+        Mail::assertNothingSent();
+        $this->assertDatabaseMissing('password_reset_codes', ['email' => $passenger->email]);
+    }
+
     public function test_password_reset_with_otp_changes_password()
     {
         $user = $this->makeUser('operator');

@@ -40,7 +40,7 @@ class PasswordResetOtpController extends Controller
 
         $user = User::where('email', $email)->first();
 
-        if ($user) {
+        if ($user && !$user->isPassenger()) {
             $otp = (string) random_int(100000, 999999);
 
             PasswordResetCode::create([
@@ -106,7 +106,7 @@ class PasswordResetOtpController extends Controller
 
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (!$user || $user->isPassenger()) {
             $code->delete();
             return $fail('No account was found for that email.');
         }
