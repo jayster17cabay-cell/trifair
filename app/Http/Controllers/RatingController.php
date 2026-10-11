@@ -71,7 +71,12 @@ class RatingController extends Controller
                 ->with('alreadyRated', true);
         }
 
-        return view('rate.form', compact('operator'));
+        // A signed-in operator/staff account is not a passenger — surface a
+        // clear notice instead of letting them (or their Gmail) rate.
+        $user = $request->user();
+        $staffBlocked = $user && !$user->isPassenger();
+
+        return view('rate.form', compact('operator', 'staffBlocked'));
     }
 
     public function submitRating(Request $request, $qrCode)
@@ -80,6 +85,14 @@ class RatingController extends Controller
             ->where('status', 'active')
             ->notArchived()
             ->firstOrFail();
+
+        // Operator and staff accounts can never submit a passenger rating, even
+        // when they are signed in — the rest of the flow would otherwise treat
+        // them as guests and their feedback would pollute the passenger data.
+        $authUser = $request->user();
+        if ($authUser && !$authUser->isPassenger()) {
+            return back()->withErrors(['email' => 'Operator and staff accounts cannot submit passenger ratings. Please sign out first.']);
+        }
 
         $clientId = $this->getOrCreateClientId($request);
         $existing = $this->existingRatingFor($operator, (string) $request->ip(), $clientId);

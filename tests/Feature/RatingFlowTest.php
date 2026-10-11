@@ -267,4 +267,28 @@ class RatingFlowTest extends TestCase
             ->assertOk()
             ->assertSee('View All My Ratings');
     }
+
+    public function test_operator_account_cannot_submit_rating()
+    {
+        $operator = $this->makeActiveOperator();
+
+        $this->actingAs($operator->user)
+            ->post('/rate/' . $operator->qr_code, [
+                'rating' => 5,
+                'start_location' => 'A',
+                'end_location' => 'B',
+            ])->assertSessionHasErrors('email');
+
+        $this->assertEquals(0, Rating::count());
+    }
+
+    public function test_operator_rate_form_shows_blocked_notice()
+    {
+        $operator = $this->makeActiveOperator();
+
+        $this->actingAs($operator->user)
+            ->get('/rate/' . $operator->qr_code)
+            ->assertOk()
+            ->assertSee('Operator/Staff account');
+    }
 }

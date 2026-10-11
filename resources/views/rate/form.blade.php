@@ -184,6 +184,25 @@
             </div>
         @endif
 
+        @if ($staffBlocked)
+            <div class="rate-alert">
+                <i class="bi bi-shield-exclamation" aria-hidden="true" style="margin-top: 0.15rem;"></i>
+                <div>
+                    <strong>Operator/Staff account — hindi makakapag-rate.</strong>
+                    <p style="margin-top: 0.35rem; margin-bottom: 0;">
+                        Naka-log in ka bilang <strong>{{ auth()->user()->name }}</strong>. Hindi maaaring mag-rate ang
+                        operator o staff bilang pasahero — mag-sign out muna bago mag-rate, o gumamit ng ibang device.
+                    </p>
+                    <form action="{{ route('logout') }}" method="POST" style="margin-top: 0.5rem;">
+                        @csrf
+                        <button type="submit" class="rate-connect-btn" style="padding: 0.5rem 1rem;">
+                            <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Sign out
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @endif
+
         <section class="rate-card">
                 <h3 class="rate-heading">Rate Your Trip</h3>
                 <p class="rate-subtitle" style="margin-top: 0.15rem;">How's my ride?</p>
