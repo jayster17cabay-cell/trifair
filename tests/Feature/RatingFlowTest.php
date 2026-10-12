@@ -193,14 +193,45 @@ class RatingFlowTest extends TestCase
             'end_location' => 'B',
         ];
 
-        $this->post('/rate/' . $operator->qr_code, $payload)
+        // Same device = same tf_pid cookie on both submissions.
+        $cookie = 'device-' . Str::random(20);
+
+        $this->withUnencryptedCookies(['tf_pid' => $cookie])
+            ->post('/rate/' . $operator->qr_code, $payload)
             ->assertRedirect(route('rate.submitted', $operator->qr_code));
 
-        $this->post('/rate/' . $operator->qr_code, $payload)
+        $this->withUnencryptedCookies(['tf_pid' => $cookie])
+            ->post('/rate/' . $operator->qr_code, $payload)
             ->assertRedirect(route('rate.submitted', $operator->qr_code))
             ->assertSessionHas('alreadyRated');
 
         $this->assertEquals(1, Rating::count());
+    }
+
+    public function test_passengers_sharing_one_public_ip_can_each_rate_once()
+    {
+        $operator = $this->makeActiveOperator();
+
+        $payload = [
+            'rating' => 5,
+            'start_location' => 'A',
+            'end_location' => 'B',
+        ];
+
+        // Two different phones behind the same public IP (mobile carrier NAT
+        // or shared terminal Wi-Fi). Neither should be flagged as a duplicate.
+        $this->withUnencryptedCookies(['tf_pid' => 'phone-one'])
+            ->withServerVariables(['REMOTE_ADDR' => '203.177.0.10'])
+            ->post('/rate/' . $operator->qr_code, $payload)
+            ->assertRedirect(route('rate.submitted', $operator->qr_code));
+
+        $this->withUnencryptedCookies(['tf_pid' => 'phone-two'])
+            ->withServerVariables(['REMOTE_ADDR' => '203.177.0.10'])
+            ->post('/rate/' . $operator->qr_code, $payload)
+            ->assertRedirect(route('rate.submitted', $operator->qr_code))
+            ->assertSessionMissing('alreadyRated');
+
+        $this->assertEquals(2, Rating::count());
     }
 
     public function test_rate_form_is_blocked_for_inactive_operator()

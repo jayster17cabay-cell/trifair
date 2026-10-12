@@ -34,18 +34,20 @@ class RatingController extends Controller
     }
 
     /**
-     * One rating per operator per day, keyed on IP OR the signed client cookie.
-     * The cookie layer makes the guard robust against IP spoofing/rotation
-     * that the wildcard proxy trust setting on Render would otherwise allow.
+     * One rating per operator per day, identified by the passenger's device
+     * cookie (client_id) only.
+     *
+     * The IP is deliberately NOT used for deduplication: passengers on the same
+     * mobile carrier, terminal Wi-Fi or any shared/NAT network all share one
+     * public IP, which used to flag everyone after the first person as
+     * "already rated" even when they had not rated at all. The signed
+     * client_id cookie is a stable per-device identifier instead.
      */
-    private function existingRatingFor(Operator $operator, string $ip, string $clientId, bool $lock = false): ?Rating
+    private function existingRatingFor(Operator $operator, string $clientId, bool $lock = false): ?Rating
     {
         $query = Rating::where('operator_id', $operator->id)
             ->whereDate('created_at', Carbon::now('Asia/Manila')->toDateString())
-            ->where(function ($q) use ($ip, $clientId) {
-                $q->where('passenger_ip', $ip)
-                    ->orWhere('client_id', $clientId);
-            })
+            ->where('client_id', $clientId)
             ->orderBy('id');
 
         if ($lock) {
@@ -64,7 +66,7 @@ class RatingController extends Controller
             ->firstOrFail();
 
         $clientId = $this->getOrCreateClientId($request);
-        $existing = $this->existingRatingFor($operator, (string) $request->ip(), $clientId);
+        $existing = $this->existingRatingFor($operator, $clientId);
 
         if ($existing) {
             return redirect()->route('rate.submitted', $operator->qr_code)
@@ -95,7 +97,7 @@ class RatingController extends Controller
         }
 
         $clientId = $this->getOrCreateClientId($request);
-        $existing = $this->existingRatingFor($operator, (string) $request->ip(), $clientId);
+        $existing = $this->existingRatingFor($operator, $clientId);
 
         if ($existing) {
             // Redirect (not a 200 view) so a page refresh cannot re-submit the form.
@@ -150,7 +152,7 @@ class RatingController extends Controller
         $rating = DB::transaction(function () use ($request, $operator, $clientId, $data, $passengerUser, $passengerEmail) {
             // Re-check inside the transaction (with a row lock) so two
             // simultaneous submissions cannot both pass the dedup check.
-            $existing = $this->existingRatingFor($operator, (string) $request->ip(), $clientId, true);
+            $existing = $this->existingRatingFor($operator, $clientId, true);
 
             if ($existing) {
                 return null;
