@@ -208,9 +208,13 @@ class SuperadminController extends Controller
      * single operator. Loaded lazily (capped at 200 trips) so the reports
      * page stays fast even with 10k operators.
      */
-    public function reportTrips(Operator $operator)
+    public function reportTrips(Request $request, Operator $operator)
     {
-        $data = app(AdminQueryService::class)->reportTripsData($operator);
+        $data = app(AdminQueryService::class)->reportTripsData(
+            $operator,
+            $request->query('date_from'),
+            $request->query('date_to')
+        );
 
         return response()->json([
             'html' => view('partials.report-trips', $data)->render(),

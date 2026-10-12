@@ -7,6 +7,8 @@
                    the reportsData join, or pass $avg explicitly)
     - $routePrefix string               'superadmin' | 'tfrb-officer'
     - $avg         float|null           optional override for the average rating
+    - $dateFrom    string|null          optional period filter (mirrors the row)
+    - $dateTo      string|null          optional period filter (mirrors the row)
     The row exposes data-* attributes consumed by initTripHistoryDrawer().
 --}}
 @php
@@ -16,7 +18,7 @@
     $totalBadge = $count === 0 ? 'tw-badge-gray' : 'tw-badge-navy';
 @endphp
 <tr class="tw-tr-hover cursor-pointer" data-open-trips
-    data-trips-url="{{ route($routePrefix . '.reports.trips', $operator->id) }}"
+    data-trips-url="{{ route($routePrefix . '.reports.trips', array_filter(['operator' => $operator->id, 'date_from' => $dateFrom ?? null, 'date_to' => $dateTo ?? null])) }}"
     data-name="{{ $name }}"
     data-plate="{{ $operator->plate_number ?? '' }}"
     data-count="{{ $count }}"

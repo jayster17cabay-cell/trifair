@@ -748,11 +748,12 @@ class DashboardAuditTest extends TestCase
             ->assertSessionHas('success');
 
         $rating->refresh();
-        // Reopening sends the complaint back into the pending queue, so both
-        // the solved and reviewed flags are cleared.
+        // Reopening sends the complaint back into the pending queue, so the
+        // solved, reviewed and accepted flags are all cleared.
         $this->assertFalse($rating->is_reviewed);
         $this->assertFalse($rating->is_solved);
         $this->assertNull($rating->solved_at);
+        $this->assertNull($rating->is_accepted);
     }
 
     public function test_solving_a_complaint_without_email_skips_the_mail()
@@ -842,6 +843,7 @@ class DashboardAuditTest extends TestCase
         $this->assertSame('google', $user->provider);
         $this->assertSame('google-abc-123', $user->provider_id);
         $this->assertTrue($user->hasVerifiedEmail());
+        $this->assertNotSame(0, password_get_info($user->password)['algo'], 'Passenger password must be stored hashed.');
         $this->assertAuthenticatedAs($user);
     }
 
@@ -1032,5 +1034,31 @@ class DashboardAuditTest extends TestCase
             ->assertRedirect('/rate/ABC123');
 
         $this->assertNotNull(User::where('email', 'state-passenger@example.com')->where('role', 'passenger')->first());
+    }
+
+    public function test_google_redirect_keeps_session_state_in_sync_with_authorize_url()
+    {
+        // Guards against the regression where Socialite's own redirect() overwrote
+        // the session state we embed in the URL, making hash_equals() always fail
+        // and silently disabling the login-CSRF state check.
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+        config()->set('services.google.redirect', 'https://example.test/auth/google/callback');
+
+        $response = $this->get('/auth/google?intended=/rate/ABC123');
+        $response->assertRedirect();
+
+        $location = $response->headers->get('Location');
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+
+        $state = session('state');
+
+        $this->assertNotEmpty($state, 'The OAuth state must be stored in the session.');
+        $this->assertArrayHasKey('state', $query);
+        $this->assertSame($state, $query['state'], 'Session state must match the authorize URL state.');
+
+        $decoded = json_decode(base64_decode(strtr($query['state'], '-_', '+/')), true);
+        $this->assertSame('/rate/ABC123', $decoded['i'] ?? null);
+        $this->assertTrue((bool) ($decoded['c'] ?? false));
     }
 }

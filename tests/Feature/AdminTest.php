@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ActivityLog;
 use App\Models\Notification;
 use App\Models\Operator;
+use App\Models\OperatorProof;
 use App\Models\Rating;
 use App\Models\RatingProof;
 use App\Models\Toda;
@@ -429,6 +430,42 @@ class AdminTest extends TestCase
         $this->assertTrue((bool) $b->fresh()->is_reviewed);
     }
 
+    public function test_ratings_bulk_review_ignores_complaints()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator);
+
+        $this->actingAs($admin)->post('/superadmin/ratings/bulk-review', [
+            'ids' => json_encode([$complaint->id]),
+        ])->assertRedirect();
+
+        $this->assertFalse((bool) $complaint->fresh()->is_reviewed);
+        $this->assertNull($complaint->fresh()->is_accepted);
+    }
+
+    public function test_destroying_a_complaint_removes_operator_proofs()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator);
+
+        OperatorProof::create([
+            'rating_id' => $complaint->id,
+            'file_path' => 'operator-proofs/' . $operator->qr_code . '/response.jpg',
+            'file_type' => 'image/jpeg',
+            'original_name' => 'response.jpg',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete('/superadmin/complaints/' . $complaint->id)
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('ratings', ['id' => $complaint->id]);
+        $this->assertDatabaseMissing('operator_response_proofs', ['rating_id' => $complaint->id]);
+        $this->assertDatabaseMissing('rating_proofs', ['rating_id' => $complaint->id]);
+    }
+
     public function test_officer_can_bulk_review_ratings()
     {
         $officer = $this->makeUser('tfrb_officer');
@@ -506,6 +543,40 @@ class AdminTest extends TestCase
         $this->assertStringContainsString('data-trip-more', $html);
         $this->assertStringContainsString('bg-red-50/60', $html);
         $this->assertStringContainsString('bi-star-fill', $html);
+    }
+
+    public function test_reports_trips_endpoint_matches_row_counts_for_period_and_complaints()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+
+        // Plain rating: always counts.
+        $this->makeValidRating($operator, 5);
+
+        // Pending complaint (not accepted yet): must NOT count (same rule as the row).
+        $pending = $this->makeValidRating($operator, 2);
+        $pending->update(['complaint_type' => 'Rude Driver']);
+
+        // Accepted complaint: counts.
+        $accepted = $this->makeValidRating($operator, 2);
+        $accepted->update(['complaint_type' => 'Rude Driver', 'is_accepted' => true]);
+
+        // Older plain rating: counts overall, but must drop out of a "today" period.
+        $old = $this->makeValidRating($operator, 4);
+        $old->created_at = now()->subMonths(2);
+        $old->save();
+
+        $all = $this->actingAs($admin)
+            ->get('/superadmin/reports/operators/' . $operator->id . '/trips')
+            ->assertOk()
+            ->json('html');
+        $this->assertStringContainsString('3 trips', $all);
+
+        $today = $this->actingAs($admin)
+            ->get('/superadmin/reports/operators/' . $operator->id . '/trips?date_from=' . now()->toDateString())
+            ->assertOk()
+            ->json('html');
+        $this->assertStringContainsString('2 trips', $today);
     }
 
     public function test_restore_invalid_rating_reapplies_validity()

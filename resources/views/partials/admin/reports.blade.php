@@ -74,7 +74,7 @@
         <tbody>
             @forelse ($operators as $operator)
                 @php $avg = (float) ($operator->valid_ratings_avg_rating ?? 0); @endphp
-                @include('partials.admin.operator-performance-row', ['operator' => $operator, 'routePrefix' => $routePrefix, 'avg' => $avg])
+                @include('partials.admin.operator-performance-row', ['operator' => $operator, 'routePrefix' => $routePrefix, 'avg' => $avg, 'dateFrom' => $dateFrom ?? null, 'dateTo' => $dateTo ?? null])
             @empty
                 <tr>
                     <td colspan="5" class="px-4 py-10 text-center">

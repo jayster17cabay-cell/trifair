@@ -102,11 +102,11 @@
     @endif
     @if(session('alreadyRated'))
         <h1>Already Rated</h1>
-        <p>You already rated <span class="operator-name">{{ $operator->user->name }}</span> today.</p>
+        <p>You already rated <span class="operator-name">{{ $operator->user->name ?? 'this driver' }}</span> today.</p>
         <p style="font-size: 0.82rem; color: var(--gray-400);">One rating per operator per day.</p>
     @else
         <h1>Thank You!</h1>
-        <p>Your rating for <span class="operator-name">{{ $operator->user->name }}</span> has been recorded successfully.</p>
+        <p>Your rating for <span class="operator-name">{{ $operator->user->name ?? 'this driver' }}</span> has been recorded successfully.</p>
     @endif
 
     @unless(session('alreadyRated'))

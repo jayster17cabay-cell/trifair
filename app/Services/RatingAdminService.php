@@ -26,7 +26,7 @@ class RatingAdminService
         $rating->update(['is_reviewed' => true]);
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('mark_reviewed', "Marked rating #{$rating->id} as reviewed (operator: {$rating->operator->user->name})", $rating, 'review');
+        ActivityLogger::log('mark_reviewed', "Marked rating #{$rating->id} as reviewed (operator: {$rating->operator_name})", $rating, 'review');
 
         return back()->with('success', 'Rating marked as reviewed.');
     }
@@ -46,7 +46,7 @@ class RatingAdminService
         $rating->update(['is_reviewed' => true, 'is_accepted' => true]);
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (operator: {$rating->operator->user->name})", $rating, 'review');
+        ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
 
         if (!$wasAccepted) {
             $this->notifyComplaintStatus($rating, 'accepted');
@@ -71,7 +71,7 @@ class RatingAdminService
         $rating->update(['is_reviewed' => true, 'is_accepted' => false, 'is_solved' => false, 'solved_at' => null]);
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('reject_complaint', "Rejected complaint #{$rating->id} (operator: {$rating->operator->user->name})", $rating, 'review');
+        ActivityLogger::log('reject_complaint', "Rejected complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
 
         if (!$wasRejected) {
             $this->notifyComplaintStatus($rating, 'rejected');
@@ -94,7 +94,7 @@ class RatingAdminService
         $rating->update(['is_reviewed' => false, 'is_accepted' => null, 'is_solved' => false, 'solved_at' => null]);
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('reset_complaint', "Returned complaint #{$rating->id} to pending review (operator: {$rating->operator->user->name})", $rating, 'review');
+        ActivityLogger::log('reset_complaint', "Returned complaint #{$rating->id} to pending review (operator: {$rating->operator_name})", $rating, 'review');
 
         return back()->with('success', 'Complaint returned to pending review.');
     }
@@ -116,7 +116,7 @@ class RatingAdminService
         $rating->update(['is_reviewed' => true, 'is_accepted' => true, 'is_solved' => true, 'solved_at' => now()]);
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('mark_solved', "Marked complaint #{$rating->id} as solved (operator: {$rating->operator->user->name})", $rating, 'review');
+        ActivityLogger::log('mark_solved', "Marked complaint #{$rating->id} as solved (operator: {$rating->operator_name})", $rating, 'review');
 
         if (!$wasSolved) {
             $this->notifyComplaintStatus($rating, 'solved');
@@ -132,13 +132,14 @@ class RatingAdminService
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be reopened.']);
         }
 
-        // Reopening sends it back into the pending queue, so the reviewed flag
-        // must be cleared too — otherwise it is invisible to admins and the
-        // "Mark Reviewed" action never comes back on the card.
-        $rating->update(['is_solved' => false, 'solved_at' => null, 'is_reviewed' => false]);
+        // Reopening sends it back into the pending queue, so the reviewed and
+        // accepted flags must be cleared too — otherwise it stays "accepted",
+        // is invisible under the Pending filter, and the "Mark Reviewed" action
+        // never comes back on the card.
+        $rating->update(['is_solved' => false, 'solved_at' => null, 'is_reviewed' => false, 'is_accepted' => null]);
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('reopen_complaint', "Reopened complaint #{$rating->id} (operator: {$rating->operator->user->name})", $rating, 'review');
+        ActivityLogger::log('reopen_complaint', "Reopened complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
 
         return back()->with('success', 'Complaint reopened.');
     }
@@ -165,7 +166,7 @@ class RatingAdminService
             ->get()
             ->each(function ($rating) use (&$count) {
                 $rating->update(['is_reviewed' => true, 'is_accepted' => true]);
-                ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (bulk, operator: {$rating->operator->user->name})", $rating, 'review');
+                ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (bulk, operator: {$rating->operator_name})", $rating, 'review');
                 $this->notifyComplaintStatus($rating, 'accepted');
                 $this->notifyPassengerInApp($rating, 'Complaint Accepted', 'Your complaint has been verified and accepted by the TFRB. Thank you for helping keep our transport services safe.');
                 $count++;
@@ -187,7 +188,7 @@ class RatingAdminService
     {
         // Prefer the address stored on the complaint, which for connected
         // passengers is their linked Google account email.
-        $email = $rating->passenger_email ?: ($rating->passenger_user ? $rating->passenger_user->email : null);
+        $email = $rating->passenger_email ?: ($rating->passenger?->email);
         if (!$email) {
             return;
         }
@@ -234,12 +235,13 @@ class RatingAdminService
         $count = 0;
         Rating::whereIn('id', $ids)
             ->isValid()
+            ->whereNull('complaint_type')
             ->where('is_reviewed', false)
             ->with('operator.user')
             ->get()
             ->each(function ($rating) use (&$count) {
                 $rating->update(['is_reviewed' => true]);
-                ActivityLogger::log('mark_reviewed', "Marked rating #{$rating->id} as reviewed (bulk, operator: {$rating->operator->user->name})", $rating, 'review');
+                ActivityLogger::log('mark_reviewed', "Marked rating #{$rating->id} as reviewed (bulk, operator: {$rating->operator_name})", $rating, 'review');
                 $count++;
             });
 
@@ -265,8 +267,12 @@ class RatingAdminService
         foreach ($rating->proofs as $proof) {
             SupabaseStorage::delete($proof->file_path);
         }
+        foreach ($rating->operatorProofs as $proof) {
+            SupabaseStorage::delete($proof->file_path);
+        }
 
         $rating->proofs()->delete();
+        $rating->operatorProofs()->delete();
         $rating->response()->delete();
         Notification::where('rating_id', $rating->id)->delete();
         $rating->delete();
@@ -283,7 +289,7 @@ class RatingAdminService
         app(AdminDashboardService::class)->flush();
 
         $restoredAsValid = $rating->is_valid ? 'Restored rating ' : 'Attempted to restore rating ';
-        ActivityLogger::log('restore_rating', "{$restoredAsValid}#{$rating->id} (now " . ($rating->is_valid ? 'valid' : 'still invalid') . ", operator: {$rating->operator->user->name})", $rating, 'review');
+        ActivityLogger::log('restore_rating', "{$restoredAsValid}#{$rating->id} (now " . ($rating->is_valid ? 'valid' : 'still invalid') . ", operator: {$rating->operator_name})", $rating, 'review');
 
         $message = $rating->is_valid
             ? "Rating restored as valid. It will count towards the operator's average again."

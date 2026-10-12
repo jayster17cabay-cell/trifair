@@ -35,7 +35,7 @@
                         <td class="tw-td text-slate-500">{{ $loop->iteration + ($ratings->currentPage() - 1) * $ratings->perPage() }}</td>
                         <td class="tw-td">
                             <div class="flex items-center gap-2.5">
-                                <strong class="text-sm">{{ $rating->operator->user->name }}</strong>
+                                <strong class="text-sm">{{ $rating->operator->user->name ?? 'Unknown' }}</strong>
                             </div>
                         </td>
                         <td class="tw-td">

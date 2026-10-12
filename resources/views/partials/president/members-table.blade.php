@@ -19,7 +19,7 @@
             <tbody class="divide-y divide-slate-100 bg-white">
                 @foreach ($members as $member)
                     @php
-                        $memberAvg = $member->ratings()->isValid()->avg('rating');
+                        $memberAvg = $member->valid_rating_avg;
                         $statusColor = [
                             'active' => 'tw-badge-green',
                             'inactive' => 'tw-badge-gray',
@@ -30,9 +30,9 @@
                     <tr class="transition-colors hover:bg-slate-50">
                         <td class="whitespace-nowrap px-4 py-3">
                             <div class="flex items-center gap-2.5">
-                                <div class="tw-avatar tw-avatar-sm bg-navy-700 text-white">{{ strtoupper(substr($member->user->name, 0, 1)) }}</div>
+                                <div class="tw-avatar tw-avatar-sm bg-navy-700 text-white">{{ strtoupper(substr($member->user->name ?? '?', 0, 1)) }}</div>
                                 <div class="min-w-0">
-                                    <div class="text-sm font-semibold text-slate-800">{{ $member->user->name }}</div>
+                                    <div class="text-sm font-semibold text-slate-800">{{ $member->user->name ?? 'Unknown' }}</div>
                                     <div class="text-xs text-slate-400">{{ $member->plate_number }}</div>
                                 </div>
                             </div>

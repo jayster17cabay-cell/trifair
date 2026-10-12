@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Rate {{ $operator->user->name }} - TriFair</title>
+    <title>Rate {{ $operator->user->name ?? 'Driver' }} - TriFair</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -207,7 +207,7 @@
                 <h3 class="rate-heading">Rate Your Trip</h3>
                 <p class="rate-subtitle" style="margin-top: 0.15rem;">How's my ride?</p>
                 <div class="rate-driver-row">
-                    @include('partials.rate.driver-info-pill', ['driverName' => $operator->user->name])
+                    @include('partials.rate.driver-info-pill', ['driverName' => $operator->user->name ?? 'Driver'])
                 </div>
             </section>
 

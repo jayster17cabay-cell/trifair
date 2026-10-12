@@ -72,7 +72,7 @@ return [
     |
     */
 
-    'connection' => 'pgsql',
+    'connection' => env('SESSION_CONNECTION'),
 
     /*
     |--------------------------------------------------------------------------

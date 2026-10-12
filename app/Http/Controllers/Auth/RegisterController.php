@@ -23,7 +23,7 @@ class RegisterController extends Controller
 
     public function register(Request $request)
     {
-        $request->merge(['email' => strtolower(trim($request->input('email')))]);
+        $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -48,6 +48,9 @@ class RegisterController extends Controller
 
         // role/is_active are intentionally NOT mass-assignable (see User model)
         $user->forceFill(['role' => 'operator', 'is_active' => true])->save();
+
+        // Prevent session fixation by issuing a fresh session id on registration.
+        $request->session()->regenerate();
 
         Operator::create([
             'user_id' => $user->id,

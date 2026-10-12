@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteController extends Controller
@@ -27,15 +29,18 @@ class SocialiteController extends Controller
             $request->session()->put('google_connect_mode', true);
         }
 
-        // Override Socialite's random state with our own payload so the
-        // "where to send the passenger back" info survives the round-trip
-        // even when a phone browser drops the session cookie. Socialite still
-        // verifies it against the session when that is intact.
+        // Carry the "where to send the passenger back" info in the OAuth state
+        // so it survives even when a phone browser drops the session cookie.
         $state = $this->encodeConnectState($intended, $isConnect);
-        $request->session()->put('state', $state);
 
+        // Socialite's redirect() stores its own random state in the session and
+        // builds the authorize URL with it. We swap that value for our payload so
+        // the URL and the session agree; otherwise the callback's hash_equals()
+        // check would always fail and silently disable CSRF validation.
         $url = Socialite::driver('google')->redirect()->getTargetUrl();
         $url = preg_replace('/([?&])state=[^&]*/', '$1state=' . urlencode($state), $url);
+
+        $request->session()->put('state', $state);
 
         return redirect()->away($url);
     }
@@ -231,7 +236,7 @@ class SocialiteController extends Controller
         $user->forceFill([
             'name' => $googleUser->getName() ?: ucfirst(strstr($email, '@', true) ?: 'Passenger'),
             'email' => $email,
-            'password' => \Illuminate\Support\Str::random(32),
+            'password' => Hash::make(Str::random(32)),
             'email_verified_at' => now(),
             'provider' => 'google',
             'provider_id' => (string) $googleUser->getId(),
@@ -265,6 +270,7 @@ class SocialiteController extends Controller
         $payload = [
             'i' => $intended,
             'c' => $connect,
+            'n' => \Illuminate\Support\Str::random(40),
         ];
         return rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
     }

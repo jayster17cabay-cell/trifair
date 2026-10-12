@@ -83,7 +83,8 @@ class RatingController extends Controller
 
     public function submitRating(Request $request, $qrCode)
     {
-        $operator = Operator::where('qr_code', $qrCode)
+        $operator = Operator::with('user', 'toda')
+            ->where('qr_code', $qrCode)
             ->where('status', 'active')
             ->notArchived()
             ->firstOrFail();
@@ -180,7 +181,7 @@ class RatingController extends Controller
             if ($request->hasFile('proofs')) {
                 foreach ($request->file('proofs') as $file) {
                     if (!$file || !$file->isValid()) continue;
-                    $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $filename = time() . '_' . uniqid() . '.' . $file->extension();
                     $remotePath = $operator->qr_code . '/' . $filename;
 
                     $path = null;

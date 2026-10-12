@@ -98,7 +98,7 @@ class PresidentQueryService
      */
     public function members(Toda $toda, ?string $search, ?string $status)
     {
-        $base = $this->todaOperators($toda)->with('user');
+        $base = $this->todaOperators($toda)->with('user')->whereHas('user');
 
         if ($search) {
             $base->where(function ($q) use ($search) {
@@ -119,6 +119,7 @@ class PresidentQueryService
                 'ratings' => fn ($q) => $q->isValid(),
                 'ratings as complaint_count' => fn ($q) => $q->isValid()->isComplaint(),
             ])
+            ->withAvg(['ratings as valid_rating_avg' => fn ($q) => $q->isValid()], 'rating')
             ->latest('id')
             ->paginate(12)
             ->withQueryString();

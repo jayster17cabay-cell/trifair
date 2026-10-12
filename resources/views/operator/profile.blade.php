@@ -15,9 +15,9 @@
         <div class="tw-card">
             <div class="flex flex-col items-center px-6 py-8 text-center">
                 <div class="tw-avatar tw-avatar-lg bg-gradient-to-br from-navy-600 to-navy-500 text-white">
-                    {{ strtoupper(substr($operator->user->name, 0, 1)) }}
+                    {{ strtoupper(substr($operator->user->name ?? '?', 0, 1)) }}
                 </div>
-                <h3 class="mt-4 text-lg font-extrabold text-slate-800">{{ $operator->user->name }}</h3>
+                <h3 class="mt-4 text-lg font-extrabold text-slate-800">{{ $operator->user->name ?? 'Unknown' }}</h3>
                 <p class="text-sm text-slate-500">{{ $operator->user->email }}</p>
                 <div class="mt-3">
                     @if ($operator->status === 'active')
@@ -99,7 +99,7 @@
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Full Name</label>
-                        <p class="font-semibold text-slate-800">{{ $operator->user->name }}</p>
+                        <p class="font-semibold text-slate-800">{{ $operator->user->name ?? 'Unknown' }}</p>
                     </div>
                     <div>
                         <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Email</label>

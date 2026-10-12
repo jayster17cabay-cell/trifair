@@ -93,6 +93,7 @@ class Rating extends Model
     ];
 
     protected $casts = [
+        'rating' => 'integer',
         'is_reviewed' => 'boolean',
         'is_solved' => 'boolean',
         'solved_at' => 'datetime',
@@ -150,6 +151,16 @@ class Rating extends Model
     public function getReferenceNumberAttribute(): string
     {
         return sprintf('TFR-%d-%04d', $this->created_at ? (int) $this->created_at->format('Y') : (int) date('Y'), (int) $this->id);
+    }
+
+    /**
+     * Safe operator name for logs and views. The operator or its user account
+     * may be missing (denormalized data, cascade deletes), so never return null
+     * here — callers can render/log it without a null-safety guard.
+     */
+    public function getOperatorNameAttribute(): string
+    {
+        return $this->operator->user->name ?? 'Unknown';
     }
 
     public function scopeIsValid($query)

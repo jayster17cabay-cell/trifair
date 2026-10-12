@@ -1,7 +1,7 @@
-{{-- Trip history list rendered inside the reports drawer. Requires: $operator, $totalTrips --}}
+{{-- Trip history list rendered inside the reports drawer. Requires: $operator, $trips, $totalTrips --}}
 
 @php
-    $shown = $operator->validRatings->count();
+    $shown = $trips->count();
 @endphp
 @if ($shown > 0)
     <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -16,7 +16,7 @@
     </div>
 
     <div class="space-y-2">
-        @foreach ($operator->validRatings as $rating)
+        @foreach ($trips as $rating)
             @php
                 $rr = (int) $rating->rating;
                 $isLow = $rr <= 2;

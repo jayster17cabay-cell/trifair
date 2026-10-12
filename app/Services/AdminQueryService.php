@@ -167,6 +167,7 @@ class AdminQueryService
         $todas = Toda::orderBy('name')->get();
 
         $operators = $query->orderByRaw('COALESCE(vr.valid_ratings_count, 0) DESC')
+            ->orderBy('operators.id')
             ->paginate(25)
             ->withQueryString();
 
@@ -378,6 +379,7 @@ class AdminQueryService
         }
 
         return $query->orderByRaw('COALESCE(vr.valid_ratings_count, 0) DESC')
+            ->orderBy('operators.id')
             ->get()
             ->map(function ($operator) {
                 return [
@@ -486,7 +488,7 @@ class AdminQueryService
      * AJAX endpoint data for the reports page: trip history for a single
      * operator, capped at 200 trips so the page stays fast at scale.
      */
-    public function reportTripsData(Operator $operator): array
+    public function reportTripsData(Operator $operator, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         abort_unless(
             in_array($operator->status, ['active', 'inactive'], true)
@@ -495,11 +497,21 @@ class AdminQueryService
             404
         );
 
-        $totalTrips = $operator->validRatings()->count();
-        $operator->load(['validRatings' => function ($query) {
-            $query->latest()->limit(200);
-        }]);
+        // Match the reports table row exactly: a trip counts when the rating is
+        // valid AND (it has no complaint OR the complaint was accepted), within
+        // the same date period shown on that row (see reportsData()).
+        $query = $operator->ratings()->isValid()->countsTowardRating();
 
-        return compact('operator', 'totalTrips');
+        if ($from = $this->parseDate($dateFrom)) {
+            $query->where('created_at', '>=', $from->copy()->startOfDay());
+        }
+        if ($to = $this->parseDate($dateTo)) {
+            $query->where('created_at', '<=', $to->copy()->endOfDay());
+        }
+
+        $totalTrips = (clone $query)->count();
+        $trips = $query->latest()->limit(200)->get();
+
+        return compact('operator', 'trips', 'totalTrips');
     }
 }

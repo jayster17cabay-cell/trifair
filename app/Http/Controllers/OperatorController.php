@@ -108,7 +108,7 @@ class OperatorController extends Controller
             $rating->operatorProofs()->delete();
             foreach ($request->file('files') as $file) {
                 if (!$file || !$file->isValid()) continue;
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $filename = time() . '_' . uniqid() . '.' . $file->extension();
                 $remotePath = 'operator-proofs/' . $rating->id . '/' . $filename;
 
                 $saved = false;
