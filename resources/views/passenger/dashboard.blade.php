@@ -96,7 +96,7 @@
                             <div class="min-w-0">
                                 <div class="text-sm font-semibold text-slate-800">
                                     {{ $notification->title }}
-                                    @if ($notification->rating)
+                                    @if ($notification->rating && $notification->rating->reference_number)
                                         <span class="ml-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.7rem] font-semibold text-navy-600">{{ $notification->rating->reference_number }}</span>
                                     @endif
                                 </div>

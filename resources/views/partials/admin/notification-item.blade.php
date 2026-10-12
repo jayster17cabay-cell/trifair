@@ -36,7 +36,7 @@
         <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
                 <span class="truncate text-sm font-bold text-slate-800">{{ $notification->title }}</span>
-                @if ($rating)
+                @if ($rating && $rating->reference_number)
                     <span class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.68rem] font-semibold text-navy-600">{{ $rating->reference_number }}</span>
                 @endif
             </div>

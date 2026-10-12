@@ -678,6 +678,30 @@ class AdminTest extends TestCase
         $response->assertSee('Hindi ako nag-counterflow', false);
     }
 
+    public function test_positive_ratings_have_no_reference_number()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator);
+        $positive = $this->makeValidRating($operator, 5);
+
+        $this->assertNotNull($complaint->reference_number);
+        $this->assertNull($positive->reference_number);
+
+        Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $positive->id,
+            'type' => 'new_rating',
+            'title' => 'New Rating Received',
+            'message' => 'Operator received a 5-star rating from a passenger.',
+            'is_read' => false,
+        ]);
+
+        $html = $this->actingAs($admin)->get('/notifications')->assertOk()->getContent();
+
+        $this->assertDoesNotMatchRegularExpression('/TFR-\d{4}-\d{4}/', $html);
+    }
+
     public function test_operator_response_notification_opens_the_complaint()
     {
         $admin = $this->makeUser('superadmin');

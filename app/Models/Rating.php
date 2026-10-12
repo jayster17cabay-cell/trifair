@@ -144,12 +144,17 @@ class Rating extends Model
     }
 
     /**
-     * Human-friendly reference number for a rating/complaint ticket, derived
-     * from the row id so it stays stable and unique without a migration.
-     * Example: TFR-2026-0042.
+     * Human-friendly reference number for a complaint ticket (1-2 star
+     * ratings only), derived from the row id so it stays stable and unique
+     * without a migration. Example: TFR-2026-0042. Positive ratings (3-5
+     * stars) are not complaints and have no ticket, so they return null.
      */
-    public function getReferenceNumberAttribute(): string
+    public function getReferenceNumberAttribute(): ?string
     {
+        if ((int) $this->rating > 2) {
+            return null;
+        }
+
         return sprintf('TFR-%d-%04d', $this->created_at ? (int) $this->created_at->format('Y') : (int) date('Y'), (int) $this->id);
     }
 
