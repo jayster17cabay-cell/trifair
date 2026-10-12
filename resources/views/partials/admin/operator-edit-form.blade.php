@@ -49,11 +49,6 @@
             <input type="text" class="tw-input @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone', $operator->user->phone) }}">
             @error('phone') <div class="tw-error-text">{{ $message }}</div> @enderror
         </div>
-        <div>
-            <label for="license_number" class="tw-label">License #</label>
-            <input type="text" class="tw-input @error('license_number') is-invalid @enderror" id="license_number" name="license_number" value="{{ old('license_number', $operator->license_number) }}">
-            @error('license_number') <div class="tw-error-text">{{ $message }}</div> @enderror
-        </div>
     </div>
 
     <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Motorcycle</div>

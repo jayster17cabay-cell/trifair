@@ -34,7 +34,6 @@
         'contact' => $operator->contact_number,
         'plate' => $operator->plate_number,
         'body' => $operator->body_number,
-        'license' => $operator->license_number,
         'color' => $operator->motorcycle_model,
         'address' => $operator->address,
         'statusLabel' => $statusLabel,

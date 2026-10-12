@@ -108,7 +108,6 @@
         setText('opModalToda', op.toda);
         setText('opModalPlate', op.plate);
         setText('opModalBody', op.body);
-        setText('opModalLicense', op.license);
         setText('opModalColor', op.color);
         setText('opModalAddress', op.address);
 

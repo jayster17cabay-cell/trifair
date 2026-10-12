@@ -17,7 +17,6 @@
         ->push(['icon' => 'bi-calendar-check', 'label' => 'Member Since', 'value' => $user->created_at ? $user->created_at->format('M d, Y') : '—']);
     if ($operator) {
         $infoRows = $infoRows
-            ->push(['icon' => 'bi-person-vcard', 'label' => 'License Number', 'value' => $operator->license_number ?: 'Not set'])
             ->push(['icon' => 'bi-hash', 'label' => 'Body Number', 'value' => $operator->body_number ?: 'Not set'])
             ->push(['icon' => 'bi-speedometer2', 'label' => 'Plate Number', 'value' => $operator->plate_number ?: 'Not set'])
             ->push(['icon' => 'bi-bricks', 'label' => 'TODA', 'value' => $operator->toda ? $operator->toda->name : 'Unassigned']);

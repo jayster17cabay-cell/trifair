@@ -49,7 +49,6 @@ class PresidentDashboardTest extends TestCase
             'qr_code' => Str::random(32),
             'status' => $status,
             'contact_number' => '09171234567',
-            'license_number' => 'LIC-' . Str::random(6),
             'plate_number' => 'PLATE-' . Str::random(6),
             'body_number' => 'BODY-' . Str::random(6),
         ]);
@@ -66,7 +65,6 @@ class PresidentDashboardTest extends TestCase
             'qr_code' => Str::random(32),
             'status' => 'active',
             'contact_number' => '09171234567',
-            'license_number' => 'LIC-PRES-' . Str::random(4),
             'plate_number' => 'PRESIDENT',
             'body_number' => 'P01',
         ]);

@@ -43,10 +43,6 @@
                         <span class="font-bold text-slate-800">{{ $operator->plate_number ?? '—' }}</span>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
-                        <span class="text-navy-600 font-semibold">License #</span>
-                        <span class="font-bold text-slate-800">{{ $operator->license_number ?? '—' }}</span>
-                    </div>
-                    <div class="mb-3 flex items-center justify-between">
                         <span class="text-navy-600 font-semibold">Motorcycle Model</span>
                         <span class="font-bold text-slate-800">{{ $operator->motorcycle_model ?? '—' }}</span>
                     </div>
@@ -112,10 +108,6 @@
                     <div>
                         <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">Phone</label>
                         <p class="font-semibold text-slate-800">{{ $operator->user->phone ?? '—' }}</p>
-                    </div>
-                    <div>
-                        <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">License Number</label>
-                        <p class="font-semibold text-slate-800">{{ $operator->license_number ?? '—' }}</p>
                     </div>
                     <div>
                         <label class="tw-label text-[0.8rem] uppercase tracking-widest text-navy-600">QR Code</label>

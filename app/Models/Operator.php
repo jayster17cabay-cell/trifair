@@ -12,7 +12,6 @@ class Operator extends Model
     protected $fillable = [
         'user_id',
         'toda_id',
-        'license_number',
         'address',
         'contact_number',
         'qr_code',

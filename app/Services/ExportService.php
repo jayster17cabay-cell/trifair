@@ -68,14 +68,13 @@ class ExportService
 
     public function operatorsFormat(\Illuminate\Support\Collection $operators, string $format): Response
     {
-        $headers = ['ID', 'Name', 'Email', 'TODA', 'License No.', 'Plate No.', 'Body No.', 'Motorcycle Model', 'Contact', 'Address', 'Status', 'Archived', 'Registered'];
+        $headers = ['ID', 'Name', 'Email', 'TODA', 'Plate No.', 'Body No.', 'Motorcycle Model', 'Contact', 'Address', 'Status', 'Archived', 'Registered'];
         $rows = $operators->map(function ($o) {
             return [
                 $o->id,
                 $o->user->name ?? '',
                 $o->user->email ?? '',
                 $o->toda->name ?? 'Unassigned',
-                $o->license_number ?? '',
                 $o->plate_number ?? '',
                 $o->body_number ?? '',
                 $o->motorcycle_model ?? '',

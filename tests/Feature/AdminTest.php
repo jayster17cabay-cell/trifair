@@ -56,7 +56,6 @@ class AdminTest extends TestCase
             'qr_code' => Str::random(32),
             'status' => $status,
             'contact_number' => '09171234567',
-            'license_number' => 'LIC-' . Str::random(6),
             'plate_number' => 'PLATE-' . Str::random(6),
             'body_number' => 'BODY-' . Str::random(6),
         ]);
@@ -172,7 +171,6 @@ class AdminTest extends TestCase
             'email' => 'STORED@Example.com',
             'password' => 'password123',
             'phone' => '09171234567',
-            'license_number' => 'LIC-STORE',
             'address' => 'QC',
             'contact_number' => '09171234567',
             'plate_number' => 'PLATE-STORE',
@@ -368,7 +366,7 @@ class AdminTest extends TestCase
         $res->assertSee('bi-eye', false);
         $res->assertSee('data-tw-modal-close', false);
         $res->assertSee('View QR Code', false);
-        $res->assertSee('License #', false);
+        $res->assertDontSee('License #', false);
         $res->assertSee('even:bg-slate-50/60', false);
         $res->assertDontSee('<th class="tw-th">#</th>', false);
         $res->assertDontSee('<th class="tw-th">Plate #</th>', false);

@@ -73,7 +73,6 @@ class DatabaseSeeder extends Seeder
             ['user_id' => $driver1User->id],
             [
                 'toda_id' => $toda1->id,
-                'license_number' => 'N01-12345678',
                 'plate_number' => 'ABC 1234',
                 'body_number' => '001',
                 'motorcycle_model' => 'Honda Wave 125',
@@ -98,7 +97,6 @@ class DatabaseSeeder extends Seeder
             ['user_id' => $driver2User->id],
             [
                 'toda_id' => $toda2->id,
-                'license_number' => 'N01-87654321',
                 'plate_number' => 'XYZ 5678',
                 'body_number' => '002',
                 'motorcycle_model' => 'Yamaha Mio Sporty',
@@ -123,7 +121,6 @@ class DatabaseSeeder extends Seeder
             ['user_id' => $driver3User->id],
             [
                 'toda_id' => $toda1->id,
-                'license_number' => 'N01-11223344',
                 'plate_number' => 'DEF 9012',
                 'body_number' => '003',
                 'motorcycle_model' => 'Suzuki Smash 115',
@@ -154,7 +151,6 @@ class DatabaseSeeder extends Seeder
             ['user_id' => $presidentUser->id],
             [
                 'toda_id' => $toda1->id,
-                'license_number' => 'N01-PRES-01',
                 'plate_number' => 'PRES 001',
                 'body_number' => 'P01',
                 'motorcycle_model' => 'Honda Beat',

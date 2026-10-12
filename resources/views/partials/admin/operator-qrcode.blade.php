@@ -18,7 +18,7 @@
             </div>
             <h3 class="text-lg font-bold">{{ $operator->user->name }}</h3>
             <div class="mt-0.5 text-sm text-slate-300">
-                {{ $operator->license_number ?? 'No License' }} &middot; {{ $operator->plate_number ?? '' }}
+                {{ $operator->plate_number ?: '—' }}
             </div>
         </div>
         <div class="px-6 py-8 text-center">

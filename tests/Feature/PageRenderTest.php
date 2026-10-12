@@ -41,7 +41,6 @@ class PageRenderTest extends TestCase
             'qr_code' => Str::random(32),
             'status' => 'active',
             'contact_number' => '09171234567',
-            'license_number' => 'L-' . Str::random(6),
             'plate_number' => 'P-' . Str::random(6),
             'body_number' => 'B-' . Str::random(6),
         ]);

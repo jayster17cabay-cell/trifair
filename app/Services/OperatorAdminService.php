@@ -35,7 +35,6 @@ class OperatorAdminService
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
-            'license_number' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
             'contact_number' => 'nullable|string|max:20',
             'plate_number' => 'required|string|max:20|unique:operators,plate_number',
@@ -61,7 +60,6 @@ class OperatorAdminService
 
         $operator = Operator::create([
             'user_id' => $user->id,
-            'license_number' => $data['license_number'] ?? null,
             'address' => $data['address'] ?? null,
             'contact_number' => $data['contact_number'] ?? null,
             'plate_number' => $data['plate_number'],
@@ -95,7 +93,6 @@ class OperatorAdminService
             'email' => 'required|email|unique:users,email,' . $operator->user_id,
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|max:20',
-            'license_number' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
             'contact_number' => 'nullable|string|max:20',
             'plate_number' => 'required|string|max:20|unique:operators,plate_number,' . $operator->id,
@@ -119,7 +116,6 @@ class OperatorAdminService
         }
 
         $operator->update([
-            'license_number' => $data['license_number'] ?? null,
             'address' => $data['address'] ?? null,
             'contact_number' => $data['contact_number'] ?? null,
             'plate_number' => $data['plate_number'] ?? null,
