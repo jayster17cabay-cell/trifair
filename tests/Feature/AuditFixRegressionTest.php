@@ -66,14 +66,15 @@ class AuditFixRegressionTest extends TestCase
         return [$user, $operator];
     }
 
-    public function test_raw_tf_pid_cookie_is_respected_for_rating_identity_continuity()
+    public function test_tf_pid_cookie_is_respected_for_rating_identity_continuity()
     {
         [, $operator] = $this->makeOperatorUser(true, 'active');
 
-        // Simulate the client-side raw cookie already being set.
-        $cookie = 'raw-device-' . Str::random(20);
+        // The device cookie is encrypted by the EncryptCookies middleware, so
+        // the test client sends it through the same encryption path.
+        $cookie = 'device-' . Str::random(20);
 
-        $this->withUnencryptedCookies(['tf_pid' => $cookie])
+        $this->withCookie('tf_pid', $cookie)
             ->post('/rate/' . $operator->qr_code, [
                 'rating' => 5,
                 'start_location' => 'Start St',
@@ -84,7 +85,7 @@ class AuditFixRegressionTest extends TestCase
         $this->assertSame($cookie, $rating->client_id);
 
         // Same device cookie from a different IP must still be deduped.
-        $this->withUnencryptedCookies(['tf_pid' => $cookie])
+        $this->withCookie('tf_pid', $cookie)
             ->withServerVariables(['REMOTE_ADDR' => '192.168.99.99'])
             ->get('/rate/' . $operator->qr_code)
             ->assertRedirect(route('rate.submitted', $operator->qr_code))

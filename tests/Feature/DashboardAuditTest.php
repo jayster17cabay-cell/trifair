@@ -950,6 +950,27 @@ class DashboardAuditTest extends TestCase
         });
     }
 
+    public function test_invalid_complaint_does_not_send_a_submitted_email()
+    {
+        Mail::fake();
+        $op = $this->makeOperator('active');
+
+        // Missing route data makes the complaint invalid, so it never reaches
+        // the operators and the passenger must not be told it was submitted.
+        $this->post('/rate/' . $op->qr_code, [
+            'rating' => 1,
+            'complaint_type' => 'Rude Driver',
+            'complaint_details' => 'Rude to passenger',
+            'passenger_email' => 'guest_' . Str::random(6) . '@example.com',
+            'proofs' => [UploadedFile::fake()->create('proof.jpg', 100, 'image/jpeg')],
+        ])->assertRedirect(route('rate.submitted', $op->qr_code));
+
+        $rating = Rating::where('operator_id', $op->id)->latest()->first();
+        $this->assertNotNull($rating);
+        $this->assertFalse((bool) $rating->is_valid);
+        Mail::assertNothingSent();
+    }
+
     public function test_rate_form_shows_email_field_with_privacy_reassurance()
     {
         $op = $this->makeOperator('active');

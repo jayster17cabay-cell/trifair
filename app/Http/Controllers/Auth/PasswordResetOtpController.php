@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class PasswordResetOtpController extends Controller
@@ -35,12 +36,18 @@ class PasswordResetOtpController extends Controller
         $request->validate(['email' => 'required|email']);
 
         $email = strtolower(trim($request->input('email')));
-
-        PasswordResetCode::where('email', $email)->delete();
-
         $user = User::where('email', $email)->first();
 
-        if ($user && !$user->isPassenger()) {
+        // Cap how often a code can be (re)issued for the same address so an
+        // attacker cannot keep resetting the per-code attempt counter by
+        // requesting a fresh OTP. Non-existent addresses are never hit, so the
+        // response stays identical and account enumeration is still blocked.
+        $sendKey = 'otp-send:' . $email;
+        if ($user && !$user->isPassenger() && !RateLimiter::tooManyAttempts($sendKey, 10)) {
+            RateLimiter::hit($sendKey, 3600);
+
+            PasswordResetCode::where('email', $email)->delete();
+
             $otp = (string) random_int(100000, 999999);
 
             PasswordResetCode::create([
@@ -78,12 +85,20 @@ class PasswordResetOtpController extends Controller
 
         $email = strtolower(trim($data['email']));
 
-        $code = PasswordResetCode::where('email', $email)->latest('id')->first();
-
         $fail = function ($message) use ($request) {
             return back()->withInput($request->only('email', 'otp'))
                 ->withErrors(['otp' => $message]);
         };
+
+        // Even when an attacker keeps requesting fresh codes, the number of
+        // verification attempts per address is capped, so brute-forcing the
+        // 6-digit code stays impractical.
+        $attemptKey = 'otp-verify:' . $email;
+        if (RateLimiter::tooManyAttempts($attemptKey, 10)) {
+            return $fail('Too many failed attempts. Please try again in a few minutes.');
+        }
+
+        $code = PasswordResetCode::where('email', $email)->latest('id')->first();
 
         if (!$code || $code->used_at !== null) {
             return $fail('This code is invalid or has already been used.');
@@ -100,6 +115,7 @@ class PasswordResetOtpController extends Controller
         }
 
         if (!Hash::check($data['otp'], $code->code)) {
+            RateLimiter::hit($attemptKey, 600);
             $code->increment('attempts');
             return $fail('The code you entered is incorrect.');
         }
@@ -113,6 +129,7 @@ class PasswordResetOtpController extends Controller
 
         $code->update(['used_at' => now()]);
         PasswordResetCode::where('email', $email)->where('id', '!=', $code->id)->delete();
+        RateLimiter::clear($attemptKey);
 
         $user->password = Hash::make($data['password']);
         $user->setRememberToken(Str::random(60));

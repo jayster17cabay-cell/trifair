@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -212,6 +213,34 @@ class FeatureImprovementsTest extends TestCase
 
         $this->assertFalse(Hash::check('brandnewpass123', $user->fresh()->password));
         $this->assertSame(1, PasswordResetCode::where('email', $user->email)->first()->attempts);
+    }
+
+    public function test_otp_verification_is_rate_limited_across_code_requests()
+    {
+        $user = $this->makeUser('operator');
+
+        PasswordResetCode::create([
+            'email' => $user->email,
+            'code' => Hash::make('123456'),
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
+        // Simulate the failed guesses an attacker would accumulate while
+        // requesting a fresh code each time. The per-email limiter is keyed
+        // independently of the code, so re-requesting cannot clear it.
+        for ($i = 0; $i < 10; $i++) {
+            RateLimiter::hit('otp-verify:' . $user->email, 600);
+        }
+
+        // Even the correct code is now rejected: the address is locked out.
+        $this->post('/forgot-password/verify', [
+            'email' => $user->email,
+            'otp' => '123456',
+            'password' => 'brandnewpass123',
+            'password_confirmation' => 'brandnewpass123',
+        ])->assertSessionHasErrors('otp');
+
+        $this->assertFalse(Hash::check('brandnewpass123', $user->fresh()->password));
     }
 
     public function test_superadmin_can_change_own_password()

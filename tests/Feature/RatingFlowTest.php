@@ -196,11 +196,11 @@ class RatingFlowTest extends TestCase
         // Same device = same tf_pid cookie on both submissions.
         $cookie = 'device-' . Str::random(20);
 
-        $this->withUnencryptedCookies(['tf_pid' => $cookie])
+        $this->withCookie('tf_pid', $cookie)
             ->post('/rate/' . $operator->qr_code, $payload)
             ->assertRedirect(route('rate.submitted', $operator->qr_code));
 
-        $this->withUnencryptedCookies(['tf_pid' => $cookie])
+        $this->withCookie('tf_pid', $cookie)
             ->post('/rate/' . $operator->qr_code, $payload)
             ->assertRedirect(route('rate.submitted', $operator->qr_code))
             ->assertSessionHas('alreadyRated');
@@ -220,12 +220,12 @@ class RatingFlowTest extends TestCase
 
         // Two different phones behind the same public IP (mobile carrier NAT
         // or shared terminal Wi-Fi). Neither should be flagged as a duplicate.
-        $this->withUnencryptedCookies(['tf_pid' => 'phone-one'])
+        $this->withCookie('tf_pid', 'phone-one')
             ->withServerVariables(['REMOTE_ADDR' => '203.177.0.10'])
             ->post('/rate/' . $operator->qr_code, $payload)
             ->assertRedirect(route('rate.submitted', $operator->qr_code));
 
-        $this->withUnencryptedCookies(['tf_pid' => 'phone-two'])
+        $this->withCookie('tf_pid', 'phone-two')
             ->withServerVariables(['REMOTE_ADDR' => '203.177.0.10'])
             ->post('/rate/' . $operator->qr_code, $payload)
             ->assertRedirect(route('rate.submitted', $operator->qr_code))

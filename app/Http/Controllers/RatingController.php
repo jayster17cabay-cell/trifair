@@ -258,9 +258,10 @@ class RatingController extends Controller
 
         // Instant confirmation email: the moment a valid complaint lands, the
         // passenger gets notified on the same address they will later receive
-        // the "reviewed" and "solved" updates on. A delivery failure must never
-        // break the submission, so the send is guarded.
-        if ((int) $data['rating'] <= 2 && $passengerEmail) {
+        // the "reviewed" and "solved" updates on. An invalid complaint (missing
+        // route data) never reaches the operators, so we do not confirm it as
+        // submitted. A delivery failure must never break the submission.
+        if ((int) $data['rating'] <= 2 && $passengerEmail && $rating->is_valid) {
             try {
                 \Illuminate\Support\Facades\Mail::to($passengerEmail)
                     ->send(new \App\Mail\ComplaintStatus($rating, 'submitted'));
