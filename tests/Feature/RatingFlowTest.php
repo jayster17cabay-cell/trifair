@@ -125,6 +125,48 @@ class RatingFlowTest extends TestCase
         $this->assertEquals(2, Notification::count());
     }
 
+    public function test_complaint_with_empty_details_field_is_accepted()
+    {
+        $this->makeOfficer('superadmin');
+        $operator = $this->makeActiveOperator();
+
+        // The complaint form always posts the (hidden) details textarea, so it
+        // arrives as an empty string. It must not be rejected as "not a string"
+        // when the type is not "Others".
+        $this->post('/rate/' . $operator->qr_code, [
+            'rating' => 1,
+            'start_location' => 'A',
+            'end_location' => 'B',
+            'complaint_type' => 'Rude Driver',
+            'complaint_details' => '',
+            'passenger_email' => 'passenger@example.com',
+            'proofs' => [UploadedFile::fake()->create('proof.jpg', 100, 'image/jpeg')],
+        ])->assertRedirect(route('rate.submitted', $operator->qr_code))
+            ->assertSessionHasNoErrors();
+
+        $rating = Rating::first();
+        $this->assertNotNull($rating);
+        $this->assertSame('Rude Driver', $rating->complaint_type);
+        $this->assertNull($rating->complaint_details);
+    }
+
+    public function test_others_complaint_requires_details()
+    {
+        $operator = $this->makeActiveOperator();
+
+        $this->post('/rate/' . $operator->qr_code, [
+            'rating' => 1,
+            'start_location' => 'A',
+            'end_location' => 'B',
+            'complaint_type' => 'Others',
+            'complaint_details' => '',
+            'passenger_email' => 'passenger@example.com',
+            'proofs' => [UploadedFile::fake()->create('proof.jpg', 100, 'image/jpeg')],
+        ])->assertSessionHasErrors('complaint_details');
+
+        $this->assertEquals(0, Rating::count());
+    }
+
     public function test_rating_without_locations_is_invalid()
     {
         $operator = $this->makeActiveOperator();

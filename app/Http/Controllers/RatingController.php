@@ -129,7 +129,12 @@ class RatingController extends Controller
 
         if ($isComplaint) {
             $rules['complaint_type'] = 'required|string|max:100';
-            $rules['complaint_details'] = 'required_if:complaint_type,Others|string|max:2000';
+            // "Describe your complaint" is a hidden textarea unless the type is
+            // "Others", so ConvertEmptyStringsToNull leaves it null for every
+            // other type. Without "nullable" that null fails the string rule and
+            // the complaint is rejected — the details are only required for
+            // "Others".
+            $rules['complaint_details'] = 'nullable|required_if:complaint_type,Others|string|max:2000';
             $rules['proofs'] = 'required|array|min:1|max:3';
             $rules['proofs.*'] = 'file|mimes:jpg,jpeg,png,gif,mp4,avi,mov,pdf,doc,docx|max:20480';
 
