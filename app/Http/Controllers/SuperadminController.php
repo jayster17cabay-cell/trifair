@@ -500,16 +500,4 @@ class SuperadminController extends Controller
 
         return response()->json(['html' => $html, 'count' => $members->count()]);
     }
-
-    public function invalidRatings()
-    {
-        $ratings = app(AdminQueryService::class)->invalidRatingsData();
-
-        return view('superadmin.invalid-ratings', compact('ratings'));
-    }
-
-    public function restoreRating(Rating $rating)
-    {
-        return app(RatingAdminService::class)->restore($rating);
-    }
 }

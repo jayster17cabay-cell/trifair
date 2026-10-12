@@ -92,8 +92,6 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::get('/activity-logs', [TfrbOfficerController::class, 'activityLogs'])->name('activity-logs');
     Route::get('/todas', [TfrbOfficerController::class, 'todas'])->name('todas');
     Route::get('/toda/{toda}/members', [TfrbOfficerController::class, 'todaMembers'])->name('todas.members');
-    Route::get('/invalid-ratings', [TfrbOfficerController::class, 'invalidRatings'])->name('invalid-ratings');
-    Route::patch('/ratings/{rating}/restore', [TfrbOfficerController::class, 'restoreRating'])->name('ratings.restore');
     Route::patch('/operators/{operator}/approve', [TfrbOfficerController::class, 'approveOperator'])->name('operators.approve');
     Route::patch('/operators/{operator}/reject', [TfrbOfficerController::class, 'rejectOperator'])->name('operators.reject');
     Route::patch('/operators/{operator}/archive', [TfrbOfficerController::class, 'archiveOperator'])->name('operators.archive');
@@ -148,8 +146,6 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::put('/todas/{toda}', [SuperadminController::class, 'updateToda'])->name('todas.update');
     Route::delete('/todas/{toda}', [SuperadminController::class, 'destroyToda'])->name('todas.destroy');
     Route::get('/toda/{toda}/members', [SuperadminController::class, 'todaMembers'])->name('todas.members');
-    Route::get('/invalid-ratings', [SuperadminController::class, 'invalidRatings'])->name('invalid-ratings');
-    Route::patch('/ratings/{rating}/restore', [SuperadminController::class, 'restoreRating'])->name('ratings.restore');
     Route::patch('/operators/{operator}/approve', [SuperadminController::class, 'approveOperator'])->name('operators.approve');
     Route::patch('/operators/{operator}/reject', [SuperadminController::class, 'rejectOperator'])->name('operators.reject');
     Route::patch('/operators/{operator}/archive', [SuperadminController::class, 'archiveOperator'])->name('operators.archive');
@@ -192,8 +188,7 @@ Route::middleware(['auth', 'role:operator_president', 'president.active'])->pref
 });
 
 // Notification routes (TFRB Officer, Superadmin & TODA President — operators'
-// own staff users have no notification UI, and the global invalid-count badge
-// is sensitive)
+// own staff users have no notification UI)
 Route::middleware(['auth', 'role:superadmin,tfrb_officer,operator_president'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');

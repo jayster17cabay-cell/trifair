@@ -19,8 +19,6 @@
 </div>
 
 @php
-    $invalidRoute = Auth::user()->isSuperadmin() ? 'superadmin.invalid-ratings' : 'tfrb-officer.invalid-ratings';
-    $invalidActive = request()->routeIs('*.invalid-ratings');
     $tabs = [
         ['key' => 'all', 'label' => 'All', 'icon' => 'bi-bell', 'count' => $counts['all']],
         ['key' => 'unread', 'label' => 'Unread', 'icon' => 'bi-envelope-dash', 'count' => $counts['unread']],
@@ -37,12 +35,6 @@
             <span class="tw-badge {{ $type === $tab['key'] ? 'tw-badge-gold' : 'tw-badge-gray' }} ml-0.5" data-notif-count="{{ $tab['key'] }}">{{ $tab['count'] }}</span>
         </a>
     @endforeach
-    @if (!Auth::user()->isOperatorPresident())
-        <a href="{{ route($invalidRoute) }}" class="{{ $invalidActive ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-            <i class="bi bi-x-circle"></i> Invalid
-            <span class="tw-badge {{ $invalidActive ? 'tw-badge-gold' : 'tw-badge-gray' }} ml-0.5" data-notif-count="invalid">{{ $invalidCount }}</span>
-        </a>
-    @endif
 </div>
 
 <div class="tw-card overflow-hidden">

@@ -282,19 +282,4 @@ class RatingAdminService
 
         return back()->with('success', 'Complaint deleted successfully.');
     }
-
-    public function restore(Rating $rating): RedirectResponse
-    {
-        $rating->update(['is_valid' => $rating->evaluateValidity()]);
-        app(AdminDashboardService::class)->flush();
-
-        $restoredAsValid = $rating->is_valid ? 'Restored rating ' : 'Attempted to restore rating ';
-        ActivityLogger::log('restore_rating', "{$restoredAsValid}#{$rating->id} (now " . ($rating->is_valid ? 'valid' : 'still invalid') . ", operator: {$rating->operator_name})", $rating, 'review');
-
-        $message = $rating->is_valid
-            ? "Rating restored as valid. It will count towards the operator's average again."
-            : 'Rating still missing required data (route location and/or proof for low ratings) and remains invalid.';
-
-        return redirect()->back()->with('success', $message);
-    }
 }

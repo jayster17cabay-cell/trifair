@@ -141,7 +141,6 @@ class StructureAuditTest extends TestCase
             '/superadmin/todas',
             '/superadmin/todas/create',
             '/superadmin/todas/' . $toda->id . '/edit',
-            '/superadmin/invalid-ratings',
             '/superadmin/settings',
             '/notifications',
         ] as $path) {
@@ -169,7 +168,6 @@ class StructureAuditTest extends TestCase
             '/tfrb-officer/ratings',
             '/tfrb-officer/reports',
             '/tfrb-officer/activity-logs',
-            '/tfrb-officer/invalid-ratings',
             '/tfrb-officer/settings',
             '/tfrb-officer/todas',
             '/notifications',

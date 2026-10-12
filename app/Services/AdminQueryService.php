@@ -425,15 +425,6 @@ class AdminQueryService
             ->get();
     }
 
-    public function invalidRatingsData(): LengthAwarePaginator
-    {
-        return Rating::with(['operator.user', 'proofs'])
-            ->where('is_valid', false)
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
-    }
-
     public function activityLogsData(Request $request): array
     {
         $category = $request->query('category');

@@ -317,10 +317,6 @@
                     if (el) el.textContent = data.counts[key];
                 });
             }
-            if (typeof data.invalidCount === 'number') {
-                var inv = document.querySelector('[data-notif-count="invalid"]');
-                if (inv) inv.textContent = data.invalidCount;
-            }
             if (typeof data.unreadCount === 'number') {
                 updateUnreadBadges(data.unreadCount);
             }

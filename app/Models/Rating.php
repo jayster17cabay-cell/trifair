@@ -285,7 +285,7 @@ class Rating extends Model
      * Single source of truth for whether a rating is valid. A rating is valid
      * only when BOTH route locations are present AND, for low ratings (1-2),
      * at least one proof file is attached. Previously this rule was implemented
-     * differently in submitRating(), restoreRating() and the reindex migration,
+     * differently in submitRating() and the reindex migration,
      * which caused ratings to flip between valid and invalid depending on the
      * code path that evaluated them.
      */

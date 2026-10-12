@@ -35,13 +35,6 @@ return [
             'border' => 'border-l-emerald-500',
             'dot' => 'bg-emerald-500',
         ],
-        'invalid' => [
-            'label' => 'Invalid Rating',
-            'icon' => 'x-circle',
-            'icon_bg' => 'bg-red-50 text-red-600',
-            'border' => 'border-l-red-500',
-            'dot' => 'bg-red-500',
-        ],
     ],
 
     'default' => [

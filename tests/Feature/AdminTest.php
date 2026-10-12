@@ -113,7 +113,6 @@ class AdminTest extends TestCase
             '/superadmin/activity-logs',
             '/superadmin/todas',
             '/superadmin/todas/create',
-            '/superadmin/invalid-ratings',
             '/notifications',
         ] as $path) {
             $this->get($path)->assertStatus(200, 'Failed on: ' . $path);
@@ -140,7 +139,6 @@ class AdminTest extends TestCase
             '/tfrb-officer/reports',
             '/tfrb-officer/activity-logs',
             '/tfrb-officer/todas',
-            '/tfrb-officer/invalid-ratings',
             '/notifications',
         ] as $path) {
             $this->get($path)->assertStatus(200, 'Failed on: ' . $path);
@@ -579,25 +577,6 @@ class AdminTest extends TestCase
         $this->assertStringContainsString('2 trips', $today);
     }
 
-    public function test_restore_invalid_rating_reapplies_validity()
-    {
-        $admin = $this->makeUser('superadmin');
-        $operator = $this->makeOperator();
-        $rating = Rating::create([
-            'operator_id' => $operator->id,
-            'rating' => 5,
-            'start_location' => 'A',
-            'end_location' => 'B',
-            'is_valid' => false,
-            'is_auto' => true,
-        ]);
-
-        $this->actingAs($admin)->patch('/superadmin/ratings/' . $rating->id . '/restore')
-            ->assertRedirect();
-
-        $this->assertTrue((bool) $rating->fresh()->is_valid);
-    }
-
     public function test_superadmin_can_delete_complaint()
     {
         $admin = $this->makeUser('superadmin');
@@ -750,7 +729,7 @@ class AdminTest extends TestCase
         $response = $this->actingAs($admin)->getJson('/notifications');
 
         $response->assertOk();
-        $response->assertJsonStructure(['html', 'signature', 'counts', 'invalidCount', 'unreadCount', 'hasItems']);
+        $response->assertJsonStructure(['html', 'signature', 'counts', 'unreadCount', 'hasItems']);
         $response->assertJson([
             'unreadCount' => 1,
             'hasItems' => true,

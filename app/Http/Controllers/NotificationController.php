@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
-use App\Models\Rating;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,8 +22,6 @@ class NotificationController extends Controller
             'new_rating' => (clone $base)->where('type', 'new_rating')->count(),
             'operator_response' => (clone $base)->where('type', 'operator_response')->count(),
         ];
-
-        $invalidCount = $user->isOperatorPresident() ? 0 : Rating::where('is_valid', false)->count();
 
         $query = clone $base;
 
@@ -51,13 +48,12 @@ class NotificationController extends Controller
                 'html' => view('notifications.list', compact('notifications', 'type'))->render(),
                 'signature' => $signature,
                 'counts' => $counts,
-                'invalidCount' => $invalidCount,
                 'unreadCount' => $counts['unread'],
                 'hasItems' => $notifications->count() > 0,
             ]);
         }
 
-        return view('notifications.index', compact('notifications', 'type', 'counts', 'invalidCount'));
+        return view('notifications.index', compact('notifications', 'type', 'counts'));
     }
 
     public function markAsRead(Notification $notification)
