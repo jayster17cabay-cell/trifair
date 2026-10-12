@@ -34,6 +34,15 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active' => 'boolean',
     ];
 
+    /**
+     * Memoized result of presidentToda(); the TODA is looked up once per
+     * request instead of on every guard call (the middleware, controller and
+     * views all resolve it).
+     */
+    protected $presidentTodaCache = null;
+
+    protected $presidentTodaResolved = false;
+
     public function setEmailAttribute($value)
     {
         $this->attributes['email'] = $value === null ? null : strtolower(trim($value));
@@ -86,10 +95,15 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function presidentToda()
     {
-        if ($this->toda_id) {
-            return Toda::find($this->toda_id);
+        if ($this->presidentTodaResolved) {
+            return $this->presidentTodaCache;
         }
-        return $this->operator ? $this->operator->toda : null;
+        $this->presidentTodaResolved = true;
+
+        if ($this->toda_id) {
+            return $this->presidentTodaCache = Toda::find($this->toda_id);
+        }
+        return $this->presidentTodaCache = ($this->operator ? $this->operator->toda : null);
     }
 
     public function isTfrbOfficerOrSuperadmin()

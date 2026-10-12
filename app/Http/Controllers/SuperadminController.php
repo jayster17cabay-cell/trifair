@@ -56,9 +56,15 @@ class SuperadminController extends Controller
             ]);
         }
 
-        $totalOfficers = User::where('role', 'tfrb_officer')->count();
-        $activeOfficers = User::where('role', 'tfrb_officer')->where('is_active', true)->count();
-        $verifiedOfficers = User::where('role', 'tfrb_officer')->whereNotNull('email_verified_at')->count();
+        $tally = User::where('role', 'tfrb_officer')->selectRaw(
+            'COUNT(*) as total_count'
+            . ', SUM(CASE WHEN is_active = true THEN 1 ELSE 0 END) as active_count'
+            . ', SUM(CASE WHEN email_verified_at IS NOT NULL THEN 1 ELSE 0 END) as verified_count'
+        )->first();
+
+        $totalOfficers = (int) $tally->total_count;
+        $activeOfficers = (int) $tally->active_count;
+        $verifiedOfficers = (int) $tally->verified_count;
 
         return view('superadmin.officers', compact('officers', 'search', 'totalOfficers', 'activeOfficers', 'verifiedOfficers'));
     }
@@ -142,8 +148,13 @@ class SuperadminController extends Controller
             ]);
         }
 
-        $totalPresidents = User::where('role', 'operator_president')->count();
-        $assignedPresidents = User::where('role', 'operator_president')->whereNotNull('toda_id')->count();
+        $tally = User::where('role', 'operator_president')->selectRaw(
+            'COUNT(*) as total_count'
+            . ', SUM(CASE WHEN toda_id IS NOT NULL THEN 1 ELSE 0 END) as assigned_count'
+        )->first();
+
+        $totalPresidents = (int) $tally->total_count;
+        $assignedPresidents = (int) $tally->assigned_count;
 
         return view('superadmin.presidents', compact('presidents', 'search', 'totalPresidents', 'assignedPresidents'));
     }

@@ -14,16 +14,29 @@ class PassengerController extends Controller
 
         $base = Rating::query()
             ->where('passenger_user_id', $user->id)
-            ->whereNotNull('complaint_type')
-            ->with(['operator.user', 'response', 'proofs']);
+            ->whereNotNull('complaint_type');
 
-        $totalCount = (clone $base)->count();
-        $pendingCount = (clone $base)->whereNull('is_accepted')->where('is_solved', false)->count();
-        $acceptedCount = (clone $base)->where('is_accepted', true)->where('is_solved', false)->count();
-        $rejectedCount = (clone $base)->where('is_accepted', false)->count();
-        $solvedCount = (clone $base)->isSolved()->count();
+        // One round-trip instead of five: the status tallies are all derived
+        // from the same base query via conditional aggregation.
+        $tally = (clone $base)->selectRaw(
+            'COUNT(*) as total_count'
+            . ', SUM(CASE WHEN is_accepted IS NULL AND is_solved = false THEN 1 ELSE 0 END) as pending_count'
+            . ', SUM(CASE WHEN is_accepted = true AND is_solved = false THEN 1 ELSE 0 END) as accepted_count'
+            . ', SUM(CASE WHEN is_accepted = false THEN 1 ELSE 0 END) as rejected_count'
+            . ', SUM(CASE WHEN is_solved = true THEN 1 ELSE 0 END) as solved_count'
+        )->first();
 
-        $complaints = (clone $base)->latest()->paginate(15)->withQueryString();
+        $totalCount = (int) $tally->total_count;
+        $pendingCount = (int) $tally->pending_count;
+        $acceptedCount = (int) $tally->accepted_count;
+        $rejectedCount = (int) $tally->rejected_count;
+        $solvedCount = (int) $tally->solved_count;
+
+        $complaints = (clone $base)
+            ->with(['operator.user', 'response', 'proofs'])
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
 
         $notifications = Notification::where('user_id', $user->id)
             ->with('rating')

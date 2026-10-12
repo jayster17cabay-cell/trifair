@@ -63,10 +63,16 @@ class PresidentQueryService
             ->where('is_solved', false)
             ->count();
 
-        $ownAvg = $ownOperator
-            ? round((float) $ownOperator->countableRatings()->avg('rating'), 1)
-            : 0;
-        $ownTotal = $ownOperator ? $ownOperator->countableRatings()->count() : 0;
+        // The president's own averages/count share the same countable set, so a
+        // single aggregate is enough instead of two separate round-trips.
+        $ownStats = $ownOperator
+            ? $ownOperator->countableRatings()
+                ->selectRaw('COUNT(*) as total, AVG(rating) as avg')
+                ->first()
+            : null;
+
+        $ownAvg = $ownStats && $ownStats->total > 0 ? round((float) $ownStats->avg, 1) : 0;
+        $ownTotal = $ownStats ? (int) $ownStats->total : 0;
 
         return [
             'totalMembers' => $totalMembers,
@@ -189,5 +195,20 @@ class PresidentQueryService
             ->with('response', 'proofs')
             ->latest()
             ->paginate(10);
+    }
+
+    /**
+     * Single aggregate (average, total, complaint count) for a member's valid
+     * ratings — one round-trip instead of three for the member detail modal.
+     */
+    public function memberStats(Operator $member)
+    {
+        return $member->validRatings()
+            ->selectRaw(
+                'COUNT(*) as total'
+                . ', AVG(rating) as avg'
+                . ', SUM(CASE WHEN complaint_type IS NOT NULL THEN 1 ELSE 0 END) as complaints'
+            )
+            ->first();
     }
 }

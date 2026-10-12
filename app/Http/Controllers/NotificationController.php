@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class NotificationController extends Controller
 {
@@ -15,12 +16,23 @@ class NotificationController extends Controller
         $user = Auth::user();
         $base = Notification::forUser($user->id);
 
+        // One round-trip instead of five: every tally is derived from the same
+        // base query via conditional aggregation. Against the remote database
+        // each avoided count() saves a full ~300ms network round-trip.
+        $tally = (clone $base)->selectRaw(
+            'COUNT(*) as all_count'
+            . ', SUM(CASE WHEN is_read = false THEN 1 ELSE 0 END) as unread_count'
+            . ", SUM(CASE WHEN type = 'complaint' THEN 1 ELSE 0 END) as complaint_count"
+            . ", SUM(CASE WHEN type = 'new_rating' THEN 1 ELSE 0 END) as new_rating_count"
+            . ", SUM(CASE WHEN type = 'operator_response' THEN 1 ELSE 0 END) as operator_response_count"
+        )->first();
+
         $counts = [
-            'all' => (clone $base)->count(),
-            'unread' => (clone $base)->unread()->count(),
-            'complaint' => (clone $base)->where('type', 'complaint')->count(),
-            'new_rating' => (clone $base)->where('type', 'new_rating')->count(),
-            'operator_response' => (clone $base)->where('type', 'operator_response')->count(),
+            'all' => (int) $tally->all_count,
+            'unread' => (int) $tally->unread_count,
+            'complaint' => (int) $tally->complaint_count,
+            'new_rating' => (int) $tally->new_rating_count,
+            'operator_response' => (int) $tally->operator_response_count,
         ];
 
         $query = clone $base;
@@ -115,6 +127,11 @@ class NotificationController extends Controller
     public function markAllAsRead()
     {
         Notification::forUser(Auth::id())->unread()->update(['is_read' => true]);
+
+        // A query-builder update() bypasses model events, so the cached unread
+        // badge (see NotificationComposer) must be cleared by hand here.
+        Cache::forget('notif_unread:' . Auth::id());
+
         return back()->with('success', 'All notifications marked as read.');
     }
 }

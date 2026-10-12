@@ -4,10 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Notification extends Model
 {
     use HasFactory;
+
+    /**
+     * Drop the cached unread badge for the notification's owner whenever a
+     * notification changes, so the cached count in NotificationComposer can
+     * never go stale.
+     */
+    protected static function booted()
+    {
+        $forget = function (self $notification) {
+            if ($notification->user_id) {
+                Cache::forget('notif_unread:' . $notification->user_id);
+            }
+        };
+
+        static::saved($forget);
+        static::deleted($forget);
+    }
 
     protected $fillable = [
         'user_id',

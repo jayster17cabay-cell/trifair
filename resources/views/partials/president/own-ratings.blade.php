@@ -4,9 +4,14 @@
 --}}
 @php
     $ownName = $ownOperator && $ownOperator->user ? $ownOperator->user->name : Auth::user()->name;
-    $avg = $ownOperator ? round((float) $ownOperator->ratings()->isValid()->avg('rating'), 1) : 0;
-    $total = $ownOperator ? $ownOperator->ratings()->isValid()->count() : 0;
-    $complaints = $ownOperator ? $ownOperator->ratings()->isValid()->isComplaint()->count() : 0;
+    $ownStats = $ownOperator
+        ? $ownOperator->validRatings()
+            ->selectRaw('COUNT(*) as total, AVG(rating) as avg, SUM(CASE WHEN complaint_type IS NOT NULL THEN 1 ELSE 0 END) as complaints')
+            ->first()
+        : null;
+    $avg = $ownStats && $ownStats->total > 0 ? round((float) $ownStats->avg, 1) : 0;
+    $total = $ownStats ? (int) $ownStats->total : 0;
+    $complaints = $ownStats ? (int) $ownStats->complaints : 0;
 @endphp
 <div class="tw-card overflow-hidden transition-shadow duration-200 hover:shadow-md">
     {{-- Header band — navy blue with gold accent --}}

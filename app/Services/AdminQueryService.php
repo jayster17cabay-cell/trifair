@@ -277,10 +277,25 @@ class AdminQueryService
         $account = $request->query('account', 'all');
 
         $archivedCount = Operator::archived()->count();
-        $pendingCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator'))->where('status', 'pending')->count();
-        $activeOperatorsCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator'))->where('status', 'active')->count();
-        $accountsActiveCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator')->where('is_active', true))->count();
-        $accountsInactiveCount = Operator::notArchived()->whereHas('user', fn ($u) => $u->where('role', 'operator')->where('is_active', false))->count();
+
+        // One round-trip instead of four: the status/account tallies share the
+        // same not-archived operator set, so a single join against users plus
+        // conditional aggregation returns them all at once.
+        $tally = Operator::notArchived()
+            ->join('users', 'users.id', '=', 'operators.user_id')
+            ->where('users.role', 'operator')
+            ->selectRaw(
+                "SUM(CASE WHEN operators.status = 'pending' THEN 1 ELSE 0 END) as pending_count"
+                . ", SUM(CASE WHEN operators.status = 'active' THEN 1 ELSE 0 END) as active_count"
+                . ', SUM(CASE WHEN users.is_active = true THEN 1 ELSE 0 END) as accounts_active_count'
+                . ', SUM(CASE WHEN users.is_active = false THEN 1 ELSE 0 END) as accounts_inactive_count'
+            )
+            ->first();
+
+        $pendingCount = (int) $tally->pending_count;
+        $activeOperatorsCount = (int) $tally->active_count;
+        $accountsActiveCount = (int) $tally->accounts_active_count;
+        $accountsInactiveCount = (int) $tally->accounts_inactive_count;
 
         return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'activeOperatorsCount', 'accountsActiveCount', 'accountsInactiveCount');
     }

@@ -115,10 +115,12 @@ class PresidentController extends Controller
         $member->load('user', 'toda');
 
         $ratings = $this->query->memberRatings($toda, $member);
+        $stats = $this->query->memberStats($member);
 
         $html = view('partials.president.member-detail', [
             'member' => $member,
             'ratings' => $ratings,
+            'stats' => $stats,
         ])->render();
 
         return response()->json(['html' => $html]);

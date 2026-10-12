@@ -16,9 +16,9 @@
 
 <div class="tw-modal-body">
     @php
-        $mAvg = $member->ratings()->isValid()->avg('rating');
-        $mTotal = $member->ratings()->isValid()->count();
-        $mComplaints = $member->ratings()->isValid()->isComplaint()->count();
+        $mAvg = $stats && $stats->total > 0 ? (float) $stats->avg : 0;
+        $mTotal = $stats ? (int) $stats->total : 0;
+        $mComplaints = $stats ? (int) $stats->complaints : 0;
     @endphp
     <div class="mb-4 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
         <div>

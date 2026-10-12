@@ -312,8 +312,13 @@ class TfrbOfficerController extends Controller
             ]);
         }
 
-        $totalPresidents = User::where('role', 'operator_president')->count();
-        $assignedPresidents = User::where('role', 'operator_president')->whereNotNull('toda_id')->count();
+        $tally = User::where('role', 'operator_president')->selectRaw(
+            'COUNT(*) as total_count'
+            . ', SUM(CASE WHEN toda_id IS NOT NULL THEN 1 ELSE 0 END) as assigned_count'
+        )->first();
+
+        $totalPresidents = (int) $tally->total_count;
+        $assignedPresidents = (int) $tally->assigned_count;
 
         return view('tfrb-officer.presidents', compact('presidents', 'search', 'totalPresidents', 'assignedPresidents'));
     }
