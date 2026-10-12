@@ -33,7 +33,7 @@ class NotificationController extends Controller
             $type = 'all';
         }
 
-        $notifications = $query->with('rating.operator.user')
+        $notifications = $query->with('rating.operator.user', 'rating.response')
             ->latest()
             ->paginate(20)
             ->withQueryString();
@@ -70,9 +70,18 @@ class NotificationController extends Controller
             return redirect()->route('president.dashboard');
         }
 
-        if ($notification->type === 'complaint') {
+        // Complaints — and operator responses to a complaint — both live on the
+        // Complaints page. Jump straight to the exact reference number (across
+        // all statuses) so the officer lands on the response they need instead
+        // of scrolling the ratings list to find it.
+        if (in_array($notification->type, ['complaint', 'operator_response'], true)
+            && $notification->rating
+            && $notification->rating->complaint_type) {
             $route = $user->isSuperadmin() ? 'superadmin.complaints' : 'tfrb-officer.complaints';
-            return redirect()->route($route);
+            return redirect()->route($route, [
+                'filter' => 'all',
+                'search' => $notification->rating->reference_number,
+            ]);
         }
 
         if ($notification->rating_id) {

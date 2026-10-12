@@ -2,9 +2,11 @@
     Reusable notification item. Requires:
     - $notification  App\Models\Notification (eager-loaded with rating.operator.user)
 
-    Collapsed by default: one row showing type icon, title, one-line message and a
-    right-aligned relative timestamp. Clicking the row expands inline details
-    (operator, contact, route) and marks the notification as read (dot disappears).
+    Collapsed by default: one row showing type icon, title, the complaint/rating
+    reference number, one-line message and a right-aligned relative timestamp.
+    Clicking the row expands inline details (operator, contact, route) and marks
+    the notification as read (dot disappears). Operator responses also show the
+    driver's full reply so it can be found without opening the complaint.
     Type colors (left border, icon circle, unread dot) come from config('notifications').
 --}}
 @php
@@ -32,7 +34,12 @@
             <i class="bi bi-{{ $cfg['icon'] }}"></i>
         </div>
         <div class="min-w-0 flex-1">
-            <div class="truncate text-sm font-bold text-slate-800">{{ $notification->title }}</div>
+            <div class="flex items-center gap-2">
+                <span class="truncate text-sm font-bold text-slate-800">{{ $notification->title }}</span>
+                @if ($rating)
+                    <span class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.68rem] font-semibold text-navy-600">{{ $rating->reference_number }}</span>
+                @endif
+            </div>
             <p class="truncate text-xs text-slate-500">{{ $notification->message }}</p>
         </div>
         <span class="shrink-0 text-xs font-medium text-slate-400">{{ $notification->short_time }}</span>
@@ -56,6 +63,13 @@
                     <div>
                         <div class="tw-stat-label mb-1"><i class="bi bi-card-text mr-1 text-slate-500"></i>Details</div>
                         <p class="text-sm leading-relaxed text-slate-600">{{ $notification->message }}</p>
+                    </div>
+                @endif
+
+                @if ($notification->type === 'operator_response' && $rating && $rating->response)
+                    <div>
+                        <div class="tw-stat-label mb-1"><i class="bi bi-reply-fill mr-1 text-blue-600"></i>Driver's Response</div>
+                        <p class="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2.5 text-sm leading-relaxed text-slate-700">{{ $rating->response->message }}</p>
                     </div>
                 @endif
             </div>
@@ -89,7 +103,8 @@
         <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/70 px-4 py-3 sm:px-5">
             <span class="text-xs text-slate-400">{{ $notification->created_at->format('M d, Y \a\t h:i A') }}</span>
             <a href="{{ route('notifications.read', $notification) }}" class="tw-btn tw-btn-sm tw-btn-outline">
-                <i class="bi bi-arrow-right"></i> Open report
+                <i class="bi bi-arrow-right"></i>
+                {{ ($rating && $rating->complaint_type && in_array($notification->type, ['complaint', 'operator_response'], true)) ? 'View complaint' : 'Open report' }}
             </a>
         </div>
     </div>

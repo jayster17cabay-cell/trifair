@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Notification;
 use App\Models\Operator;
 use App\Models\OperatorProof;
+use App\Models\OperatorResponse;
 use App\Models\Rating;
 use App\Models\RatingProof;
 use App\Models\Toda;
@@ -649,6 +650,54 @@ class AdminTest extends TestCase
         $response->assertSee('Operator responded to a rating.', false);
         $response->assertDontSee('View Details');
         $response->assertSee('Mark All as Read');
+    }
+
+    public function test_notifications_show_reference_number_and_driver_response()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator);
+        OperatorResponse::create([
+            'rating_id' => $complaint->id,
+            'message' => 'Hindi ako nag-counterflow, may dashcam po ako.',
+        ]);
+        Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $complaint->id,
+            'type' => 'operator_response',
+            'title' => 'Operator Responded',
+            'message' => 'Operator responded to a rating.',
+            'is_read' => false,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/notifications');
+
+        $response->assertOk();
+        $response->assertSee($complaint->reference_number, false);
+        $response->assertSee("Driver's Response", false);
+        $response->assertSee('Hindi ako nag-counterflow', false);
+    }
+
+    public function test_operator_response_notification_opens_the_complaint()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator);
+        $notification = Notification::create([
+            'user_id' => $admin->id,
+            'rating_id' => $complaint->id,
+            'type' => 'operator_response',
+            'title' => 'Operator Responded',
+            'message' => 'Operator responded to a rating.',
+            'is_read' => false,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/notifications/' . $notification->id . '/read')
+            ->assertRedirect(route('superadmin.complaints', [
+                'filter' => 'all',
+                'search' => $complaint->reference_number,
+            ]));
     }
 
     public function test_notification_ajax_read_marks_read_and_returns_unread_count()
