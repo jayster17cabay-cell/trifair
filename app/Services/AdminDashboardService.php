@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class AdminDashboardService
 {
-    private const CACHE_TTL = 60;
+    private const CACHE_TTL = 300;
 
     /**
      * Compute the shared dashboard metrics for the Superadmin and

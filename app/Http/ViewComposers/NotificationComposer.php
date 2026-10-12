@@ -16,7 +16,7 @@ class NotificationComposer
      * invalidated whenever a notification is created, read or deleted (see
      * Notification::booted()).
      */
-    public const UNREAD_TTL = 60;
+    public const UNREAD_TTL = 300;
 
     public function compose(View $view)
     {
