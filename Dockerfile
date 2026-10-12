@@ -3,7 +3,7 @@ FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
     libpng-dev libonig-dev libxml2-dev libzip-dev libsqlite3-dev libpq-dev zip unzip \
-    && docker-php-ext-install pdo pdo_mysql pdo_sqlite pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip fileinfo \
+    && docker-php-ext-install pdo pdo_mysql pdo_sqlite pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip fileinfo opcache \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,6 +28,15 @@ RUN echo "upload_max_filesize=20M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "max_file_uploads=10" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "max_execution_time=300" >> /usr/local/etc/php/conf.d/uploads.ini
 
+# OPcache in production mode: opcode cache + cached config/views make every
+# request skip re-parsing PHP and re-reading dotenv (big win on cold requests).
+RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.enable_cli=0" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=192" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.max_accelerated_files=30000" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini
+
 RUN php artisan storage:link || true
 
 RUN chown -R www-data:www-data storage bootstrap/cache database \
@@ -37,4 +46,4 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 
 EXPOSE 80
 
-CMD ["/bin/bash", "-c", "mkdir -p /var/www/html/storage/framework/sessions /var/www/html/storage/framework/views /var/www/html/storage/framework/cache /var/www/html/storage/app/public /var/www/html/storage/logs && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && php artisan storage:link 2>/dev/null; php artisan config:clear && php artisan view:clear; php artisan migrate --force; exec apache2-foreground"]
+CMD ["/bin/bash", "-c", "mkdir -p /var/www/html/storage/framework/sessions /var/www/html/storage/framework/views /var/www/html/storage/framework/cache /var/www/html/storage/app/public /var/www/html/storage/logs && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache && php artisan storage:link 2>/dev/null; php artisan config:cache || php artisan config:clear; php artisan view:cache || php artisan view:clear; php artisan migrate --force; exec apache2-foreground"]

@@ -27,13 +27,26 @@ class AdminQueryService
 
         $base = Rating::isValid()->isComplaint();
 
-        $pendingCount = (clone $base)->whereNull('is_accepted')->where('is_solved', false)->count();
-        $acceptedCount = (clone $base)->where('is_accepted', true)->where('is_solved', false)->count();
-        $rejectedCount = (clone $base)->where('is_accepted', false)->count();
-        $solvedCount = (clone $base)->isSolved()->count();
-        $totalCount = (clone $base)->count();
-        $star1Count = (clone $base)->where('rating', 1)->count();
-        $star2Count = (clone $base)->where('rating', 2)->count();
+        // One round-trip instead of seven: the status/star tallies are all
+        // derived from the same base query via conditional aggregation. On a
+        // remote database each avoided count() saves a full network round-trip.
+        $counts = (clone $base)->selectRaw(
+            'COUNT(*) as total_count'
+            . ', SUM(CASE WHEN is_accepted IS NULL AND is_solved = false THEN 1 ELSE 0 END) as pending_count'
+            . ', SUM(CASE WHEN is_accepted = true AND is_solved = false THEN 1 ELSE 0 END) as accepted_count'
+            . ', SUM(CASE WHEN is_accepted = false THEN 1 ELSE 0 END) as rejected_count'
+            . ', SUM(CASE WHEN is_solved = true THEN 1 ELSE 0 END) as solved_count'
+            . ', SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as star1_count'
+            . ', SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as star2_count'
+        )->first();
+
+        $pendingCount = (int) ($counts->pending_count ?? 0);
+        $acceptedCount = (int) ($counts->accepted_count ?? 0);
+        $rejectedCount = (int) ($counts->rejected_count ?? 0);
+        $solvedCount = (int) ($counts->solved_count ?? 0);
+        $totalCount = (int) ($counts->total_count ?? 0);
+        $star1Count = (int) ($counts->star1_count ?? 0);
+        $star2Count = (int) ($counts->star2_count ?? 0);
 
         // Global count of proof files attached to valid complaints (not just the
         // current page) so the stats bar stays accurate across pagination.
@@ -101,8 +114,13 @@ class AdminQueryService
             $base->where('operator_id', $operatorId);
         }
 
-        $goodCount = (clone $base)->where('rating', '>=', 4)->count();
-        $reviewedCount = (clone $base)->where('is_reviewed', true)->count();
+        $counts = (clone $base)->selectRaw(
+            'SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as good_count'
+            . ', SUM(CASE WHEN is_reviewed = true THEN 1 ELSE 0 END) as reviewed_count'
+        )->first();
+
+        $goodCount = (int) ($counts->good_count ?? 0);
+        $reviewedCount = (int) ($counts->reviewed_count ?? 0);
         $proofsCount = (clone $base)->has('proofs')->count();
 
         $ratings = (clone $base)

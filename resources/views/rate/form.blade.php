@@ -9,8 +9,8 @@
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="{{ asset('vendor/leaflet/leaflet.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/leaflet-routing-machine/leaflet-routing-machine.css') }}">
     <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}">
     <style>
         :root {
@@ -318,9 +318,9 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-<script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+<script src="{{ asset('vendor/leaflet/leaflet.js') }}"></script>
+<script src="{{ asset('vendor/leaflet-routing-machine/leaflet-routing-machine.js') }}"></script>
+<script src="{{ asset('vendor/leaflet-polylinedecorator/leaflet.polylineDecorator.js') }}"></script>
 <script src="{{ asset('js/rate-map.js') . '?v=' . filemtime(public_path('js/rate-map.js')) }}"></script>
 <script>
 (function () {
