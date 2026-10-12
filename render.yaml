@@ -20,7 +20,7 @@ services:
       - key: PGSQL_HOST
         value: aws-0-ap-southeast-1.pooler.supabase.com
       - key: PGSQL_PORT
-        value: "6543"
+        value: "5432"
       - key: PGSQL_DATABASE
         value: postgres
       - key: PGSQL_USERNAME
