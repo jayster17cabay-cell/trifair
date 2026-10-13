@@ -15,6 +15,8 @@
 </head>
 <body class="overflow-x-hidden bg-white font-sans text-slate-800 antialiased">
 
+<span id="top" class="block h-0 w-0" aria-hidden="true"></span>
+
 {{-- MOBILE MENU --}}
 <div id="mobileMenu" class="lp-mobile-menu">
     <div class="mb-5 flex items-center justify-between">
@@ -27,8 +29,9 @@
         </button>
     </div>
     <nav class="flex flex-col gap-1">
+        <a href="#top" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Home</a>
         <a href="#features" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Features</a>
-        <a href="#how" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">How It Works</a>
+        <a href="#how" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Get Started</a>
         <a href="#roles" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Who It's For</a>
         <a href="#area" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Service Area</a>
         <div class="mt-4 grid gap-2.5">
@@ -46,8 +49,9 @@
             <span class="text-xl font-black tracking-tight">Tri<span class="text-gold">Fair</span></span>
         </a>
         <div class="hidden items-center gap-1 md:flex">
+            <a href="#top" class="lp-link">Home</a>
             <a href="#features" class="lp-link">Features</a>
-            <a href="#how" class="lp-link">How It Works</a>
+            <a href="#how" class="lp-link">Get Started</a>
             <a href="#roles" class="lp-link">Who It's For</a>
             <a href="#area" class="lp-link">Service Area</a>
         </div>
@@ -82,7 +86,7 @@
             </p>
             <div class="flex flex-wrap justify-center gap-3 lg:justify-start">
                 <a href="{{ route('login') }}" class="tw-btn tw-btn-gold tw-btn-lg"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
-                <a href="#how" class="tw-btn tw-btn-lg border border-white/20 bg-white/10 text-white backdrop-blur transition hover:border-white/30 hover:bg-white/15"><i class="bi bi-play-circle"></i> How It Works</a>
+                <a href="#how" class="tw-btn tw-btn-lg border border-white/20 bg-white/10 text-white backdrop-blur transition hover:border-white/30 hover:bg-white/15"><i class="bi bi-rocket-takeoff"></i> Get Started</a>
             </div>
             <div class="mt-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-white/50 lg:justify-start">
                 <div class="flex items-center gap-2 text-sm font-medium"><i class="bi bi-qr-code-scan text-gold"></i> No app download needed</div>
@@ -96,18 +100,29 @@
             <div class="lp-hero-ring h-[320px] w-[320px] -bottom-10 -left-12 hidden lg:block"></div>
 
             <div class="relative rounded-3xl bg-white p-5 shadow-[0_40px_80px_rgba(0,0,0,0.35)] sm:p-6">
-                <div class="mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-br from-navy-600 to-navy-500 px-5 py-4 text-white">
-                    <div>
-                        <div class="text-xs font-semibold uppercase tracking-wider text-white/60">Operator</div>
-                        <div class="text-base font-extrabold">R. Cruz</div>
-                        <div class="text-xs text-white/60">Plate # AB-1234 · TODA Solano East</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="flex items-center gap-0.5 text-gold">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+                <div class="mb-4 rounded-2xl bg-gradient-to-br from-navy-600 to-navy-500 p-5 text-white">
+                    <div class="flex items-center gap-3.5">
+                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15 text-xl"><i class="bi bi-bicycle"></i></span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-[11px] font-semibold uppercase tracking-wider text-white/55">Operator</div>
+                            <div class="truncate text-base font-extrabold">R. Cruz</div>
+                            <div class="truncate text-xs text-white/60">Plate # AB-1234 · TODA Solano East</div>
                         </div>
-                        <div class="mt-0.5 text-sm font-extrabold">4.8</div>
-                        <div class="text-[10px] text-white/60">127 ratings</div>
+                    </div>
+                    <div class="mt-4 flex items-end justify-between gap-4 rounded-xl bg-white/10 px-4 py-3">
+                        <div>
+                            <div class="text-[10px] font-semibold uppercase tracking-wider text-white/55">Average Rating</div>
+                            <div class="mt-0.5 flex items-baseline gap-1">
+                                <span class="text-3xl font-black leading-none">4.8</span>
+                                <span class="text-sm font-semibold text-white/50">/ 5</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex items-center justify-end gap-0.5 text-gold">
+                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+                            </div>
+                            <div class="mt-1 text-[10px] text-white/60">Based on 127 ratings</div>
+                        </div>
                     </div>
                 </div>
 
@@ -183,8 +198,8 @@
 
             {{-- Floating badge --}}
             <div class="anim anim-d1 absolute -left-5 top-10 hidden rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white shadow-xl backdrop-blur-md sm:block">
-                <div class="flex items-center gap-2.5">
-                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400"><i class="bi bi-patch-check-fill"></i></span>
+                <div class="flex items-center gap-3">
+                    <img src="{{ asset('images/verified-feedback.svg') }}" alt="" class="h-11 w-11 shrink-0 drop-shadow-lg" loading="lazy">
                     <div>
                         <div class="text-xs font-extrabold">Feedback verified</div>
                         <div class="text-[11px] text-white/60">Proof attached · reviewed</div>
@@ -285,7 +300,7 @@
     <div class="mx-auto max-w-6xl">
         <div class="mb-10 text-center">
             <div class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3.5 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-gold-dark"><i class="bi bi-lightning"></i> Simple Process</div>
-            <h2 class="mb-2.5 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">How It Works</h2>
+            <h2 class="mb-2.5 text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">Get Started</h2>
             <p class="mx-auto max-w-[540px] text-[0.95rem] leading-relaxed text-slate-500">Three easy steps for passengers to rate their ride.</p>
         </div>
         <div class="relative grid gap-8 md:grid-cols-3">
@@ -453,8 +468,9 @@
             <div>
                 <h5 class="mb-4 text-xs font-bold uppercase tracking-widest text-white/70">Explore</h5>
                 <ul class="space-y-2.5 text-sm text-white/40">
+                    <li><a href="#top" class="transition hover:text-gold">Home</a></li>
                     <li><a href="#features" class="transition hover:text-gold">Features</a></li>
-                    <li><a href="#how" class="transition hover:text-gold">How It Works</a></li>
+                    <li><a href="#how" class="transition hover:text-gold">Get Started</a></li>
                     <li><a href="#roles" class="transition hover:text-gold">Who It's For</a></li>
                     <li><a href="#area" class="transition hover:text-gold">Service Area</a></li>
                 </ul>
