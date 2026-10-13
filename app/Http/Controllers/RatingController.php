@@ -65,6 +65,13 @@ class RatingController extends Controller
             ->notArchived()
             ->firstOrFail();
 
+        // A lapsed franchise cannot collect new ratings until it is renewed.
+        // Show a clear "Franchise Expired" notice instead of a bare 404 so the
+        // passenger understands why the rating page is unavailable.
+        if (($term = $operator->currentTerm) && $term->isExpired()) {
+            return $this->franchiseExpired($operator, $term);
+        }
+
         $clientId = $this->getOrCreateClientId($request);
         $existing = $this->existingRatingFor($operator, $clientId);
 
@@ -88,6 +95,13 @@ class RatingController extends Controller
             ->where('status', 'active')
             ->notArchived()
             ->firstOrFail();
+
+        // A lapsed franchise cannot collect new ratings until it is renewed.
+        // Show a clear "Franchise Expired" notice instead of a bare 404 so the
+        // passenger understands why the rating page is unavailable.
+        if (($term = $operator->currentTerm) && $term->isExpired()) {
+            return $this->franchiseExpired($operator, $term);
+        }
 
         // Operator and staff accounts can never submit a passenger rating, even
         // when they are signed in — the rest of the flow would otherwise treat
@@ -166,6 +180,7 @@ class RatingController extends Controller
 
             $rating = Rating::create([
                 'operator_id' => $operator->id,
+                'franchise_term_id' => $operator->currentTerm?->id,
                 'rating' => $data['rating'],
                 'complaint_type' => $data['complaint_type'] ?? null,
                 'complaint_details' => $data['complaint_details'] ?? null,
@@ -280,6 +295,17 @@ class RatingController extends Controller
         return redirect()->route('rate.submitted', $operator->qr_code)
             ->with('rating_value', $data['rating'])
             ->with('passenger_name', $data['passenger_name'] ?? null);
+    }
+
+    /**
+     * Passenger-facing notice shown when the operator's franchise has lapsed.
+     */
+    private function franchiseExpired(Operator $operator, $term)
+    {
+        return response()
+            ->view('rate.franchise-expired', compact('operator', 'term'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 
     public function showSubmitted($qrCode)

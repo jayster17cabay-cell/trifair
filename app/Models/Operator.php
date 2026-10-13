@@ -80,4 +80,61 @@ class Operator extends Model
     {
         return $this->countableRatings()->count();
     }
+
+    /**
+     * All franchise terms for this operator, newest first.
+     */
+    public function terms()
+    {
+        return $this->hasMany(FranchiseTerm::class)->latest('id');
+    }
+
+    /**
+     * The operator's current franchise term. There is at most one active term
+     * at any moment; latestOfMany() guards against stale duplicates.
+     */
+    public function currentTerm()
+    {
+        return $this->hasOne(FranchiseTerm::class)
+            ->where('status', FranchiseTerm::STATUS_ACTIVE)
+            ->latestOfMany();
+    }
+
+    /**
+     * Current franchise health: 'valid', 'expired' or 'none' (no term yet).
+     */
+    public function franchiseStatus(): string
+    {
+        $term = $this->currentTerm;
+        if (!$term) {
+            return 'none';
+        }
+
+        return $term->isExpired() ? 'expired' : 'valid';
+    }
+
+    /**
+     * Ratings belonging to a specific term. Defaults to the current active
+     * term, so "current" statistics start at zero after a renewal while the
+     * "All Time" figures (averageRating/totalRatings above) keep counting
+     * every term.
+     */
+    public function termRatings(?FranchiseTerm $term = null)
+    {
+        $term = $term ?? $this->currentTerm;
+
+        if (!$term) {
+            return $this->hasMany(Rating::class)->whereRaw('1 = 0');
+        }
+
+        return $this->hasMany(Rating::class)->where('franchise_term_id', $term->id);
+    }
+
+    /**
+     * Countable ratings (valid + accepted) within a term.
+     */
+    public function termCountableRatings(?FranchiseTerm $term = null)
+    {
+        return $this->termRatings($term)->isValid()->countsTowardRating();
+    }
 }

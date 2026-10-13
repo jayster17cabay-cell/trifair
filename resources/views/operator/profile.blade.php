@@ -10,6 +10,7 @@
 @endsection
 
 @section('content')
+@include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'allTime' => $allTime, 'scopeRoute' => 'operator.profile'])
 <div class="grid gap-5 lg:grid-cols-3">
     <div class="lg:col-span-1">
         <div class="tw-card">
@@ -53,6 +54,22 @@
                     <div class="mb-3 flex items-center justify-between">
                         <span class="text-navy-600 font-semibold">Address</span>
                         <span class="font-bold text-slate-800">{{ $operator->address ?? '—' }}</span>
+                    </div>
+                    <div class="mb-3 flex items-center justify-between">
+                        <span class="text-navy-600 font-semibold">Franchise No.</span>
+                        <span class="font-mono font-bold text-slate-800">{{ $operator->currentTerm->franchise_no ?? '—' }}</span>
+                    </div>
+                    <div class="mb-3 flex items-center justify-between">
+                        <span class="text-navy-600 font-semibold">Franchise Validity</span>
+                        <span class="font-bold text-slate-800">
+                            @if ($operator->currentTerm && $operator->currentTerm->valid_until)
+                                {{ $operator->currentTerm->valid_until->format('M d, Y') }}
+                            @elseif ($operator->currentTerm)
+                                No expiry
+                            @else
+                                —
+                            @endif
+                        </span>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-navy-600 font-semibold">Member Since</span>

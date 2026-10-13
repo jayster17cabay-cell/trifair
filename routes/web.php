@@ -99,6 +99,9 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::patch('/operators/{operator}/toggle-active', [TfrbOfficerController::class, 'toggleActive'])->name('operators.toggleActive');
     Route::post('/operators/{operator}/assign-president', [TfrbOfficerController::class, 'assignPresident'])->name('operators.assignPresident');
     Route::post('/operators/{operator}/reset-password', [TfrbOfficerController::class, 'resetPassword'])->name('operators.resetPassword');
+    Route::post('/operators/{operator}/franchise', [TfrbOfficerController::class, 'issueFranchise'])->name('operators.franchise.issue');
+    Route::put('/operators/{operator}/franchise', [TfrbOfficerController::class, 'updateFranchise'])->name('operators.franchise.update');
+    Route::post('/operators/{operator}/franchise/renew', [TfrbOfficerController::class, 'renewFranchise'])->name('operators.franchise.renew');
     Route::get('/operators/export', [TfrbOfficerController::class, 'exportOperators'])->name('operators.export');
     Route::get('/reports/export', [TfrbOfficerController::class, 'exportReports'])->name('reports.export');
     Route::get('/ratings/export', [TfrbOfficerController::class, 'exportRatings'])->name('ratings.export');
@@ -153,6 +156,9 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::patch('/operators/{operator}/toggle-active', [SuperadminController::class, 'toggleActive'])->name('operators.toggleActive');
     Route::post('/operators/{operator}/assign-president', [SuperadminController::class, 'assignPresident'])->name('operators.assignPresident');
     Route::post('/operators/{operator}/reset-password', [SuperadminController::class, 'resetPassword'])->name('operators.resetPassword');
+    Route::post('/operators/{operator}/franchise', [SuperadminController::class, 'issueFranchise'])->name('operators.franchise.issue');
+    Route::put('/operators/{operator}/franchise', [SuperadminController::class, 'updateFranchise'])->name('operators.franchise.update');
+    Route::post('/operators/{operator}/franchise/renew', [SuperadminController::class, 'renewFranchise'])->name('operators.franchise.renew');
     Route::get('/operators/export', [SuperadminController::class, 'exportOperators'])->name('operators.export');
     Route::get('/reports/export', [SuperadminController::class, 'exportReports'])->name('reports.export');
     Route::get('/ratings/export', [SuperadminController::class, 'exportRatings'])->name('ratings.export');

@@ -236,7 +236,7 @@ class AdminQueryService
         // Only "true" operators appear in the Operators management list. A TODA
         // president is also given an Operator row (so they can carry their own
         // rating), but presidents are managed under their own Presidents section.
-        $query = Operator::with('user', 'toda.president')
+        $query = Operator::with('user', 'toda.president', 'currentTerm')
             ->whereHas('user', function ($u) {
                 $u->where('role', 'operator');
             });

@@ -72,6 +72,7 @@ class Rating extends Model
 
     protected $fillable = [
         'operator_id',
+        'franchise_term_id',
         'rating',
         'complaint_type',
         'complaint_details',
@@ -105,6 +106,7 @@ class Rating extends Model
         'is_valid' => 'boolean',
         'is_accepted' => 'boolean',
         'reviewed_by' => 'integer',
+        'franchise_term_id' => 'integer',
     ];
 
     /**
@@ -126,6 +128,15 @@ class Rating extends Model
     public function operator()
     {
         return $this->belongsTo(Operator::class);
+    }
+
+    /**
+     * The franchise term this rating belongs to (null for legacy rows that
+     * predate term tracking).
+     */
+    public function franchiseTerm()
+    {
+        return $this->belongsTo(FranchiseTerm::class);
     }
 
     public function proofs()

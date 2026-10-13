@@ -26,6 +26,11 @@
     $operatorName = $operator->user->name ?? 'Unknown';
     $todaName = $operator->toda ? $operator->toda->name : null;
 
+    $currentTerm = $operator->currentTerm;
+    $franchiseNo = $currentTerm->franchise_no ?? null;
+    $franchiseStatus = $operator->franchiseStatus();
+    $canIssueFranchise = !$operator->isArchived() && in_array($operator->status, ['active', 'inactive'], true);
+
     $viewData = [
         'id' => $operator->id,
         'name' => $operatorName,
@@ -42,6 +47,18 @@
         'accountActive' => $accountActive,
         'editUrl' => route($routePrefix . '.operators.edit', $operator),
         'qrUrl' => route($routePrefix . '.operators.qrcode', $operator),
+        'franchiseNo' => $franchiseNo,
+        'franchiseIssued' => optional($currentTerm ? $currentTerm->issued_at : null)->format('M d, Y'),
+        'franchiseValidUntil' => ($currentTerm && $currentTerm->valid_until) ? $currentTerm->valid_until->format('M d, Y') : null,
+        'franchiseIssuedRaw' => ($currentTerm && $currentTerm->issued_at) ? $currentTerm->issued_at->toDateString() : null,
+        'franchiseValidUntilRaw' => ($currentTerm && $currentTerm->valid_until) ? $currentTerm->valid_until->toDateString() : null,
+        'franchiseNotes' => $currentTerm->notes ?? null,
+        'franchiseStatus' => $franchiseStatus,
+        'hasTerm' => (bool) $currentTerm,
+        'canIssueFranchise' => $canIssueFranchise,
+        'issueUrl' => route($routePrefix . '.operators.franchise.issue', $operator),
+        'updateUrl' => route($routePrefix . '.operators.franchise.update', $operator),
+        'renewUrl' => route($routePrefix . '.operators.franchise.renew', $operator),
     ];
 @endphp
 
@@ -67,6 +84,20 @@
         </div>
     </td>
     <td class="tw-td hidden text-sm text-slate-500 md:table-cell">{{ $operator->contact_number ?? '—' }}</td>
+    <td class="tw-td hidden lg:table-cell">
+        @if ($franchiseNo)
+            <div class="space-y-0.5">
+                <div class="font-mono text-xs font-semibold text-slate-700">{{ $franchiseNo }}</div>
+                @if ($franchiseStatus === 'expired')
+                    <span class="tw-badge tw-badge-red"><i class="bi bi-exclamation-triangle-fill"></i>Expired</span>
+                @else
+                    <span class="tw-badge tw-badge-green"><i class="bi bi-patch-check-fill"></i>Valid</span>
+                @endif
+            </div>
+        @else
+            <span class="tw-badge tw-badge-gray"><i class="bi bi-dash-circle"></i>None</span>
+        @endif
+    </td>
     <td class="tw-td">
         <div class="flex flex-wrap items-center gap-1">
             <span class="tw-badge {{ $statusClass }}"><i class="bi {{ $statusIcon }}"></i>{{ $statusLabel }}</span>
@@ -78,6 +109,15 @@
                     data-operator-view='@json($viewData)'>
                 <i class="bi bi-eye"></i>
             </button>
+            @if ($canIssueFranchise)
+                <button type="button" class="tw-btn tw-btn-sm tw-btn-outline-gold"
+                        title="{{ $currentTerm ? 'Edit franchise' : 'Issue franchise' }}"
+                        aria-label="{{ $currentTerm ? 'Edit franchise for ' : 'Issue franchise for ' }}{{ $operatorName }}"
+                        data-franchise-open='@json($viewData)'
+                        data-franchise-mode="{{ $currentTerm ? 'edit' : 'issue' }}">
+                    <i class="bi {{ $currentTerm ? 'bi-pencil-square' : 'bi-patch-check' }}"></i>
+                </button>
+            @endif
             <div class="relative inline-block text-left">
                 <button type="button"
                         class="tw-btn tw-btn-sm tw-btn-outline"

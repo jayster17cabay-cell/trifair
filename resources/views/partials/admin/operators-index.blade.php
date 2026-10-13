@@ -101,6 +101,7 @@
                 <th class="tw-th">Operator</th>
                 <th class="tw-th">TODA</th>
                 <th class="tw-th hidden md:table-cell">Contact</th>
+                <th class="tw-th hidden lg:table-cell">Franchise</th>
                 <th class="tw-th">Status</th>
                 <th class="tw-th text-right">Actions</th>
             </tr>
@@ -117,6 +118,8 @@
 </div>
 
 @include('partials.admin.operator-details-modal', ['routePrefix' => $routePrefix])
+
+@include('partials.admin.operator-franchise-modal')
 
 <script>
     let searchTimeout;

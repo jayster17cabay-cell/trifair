@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\ActivityLogger;
 use App\Helpers\SupabaseStorage;
 use App\Mail\OperatorCredentials;
+use App\Models\FranchiseTerm;
 use App\Models\Operator;
 use App\Models\Rating;
 use App\Models\User;
@@ -13,6 +14,7 @@ use App\Services\AdminDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -388,7 +390,7 @@ class OperatorAdminService
             ->with('success', "Password reset for {$operator->user->name}. Temporary password: {$tempPassword}.");
     }
 
-    public function approve(Operator $operator, string $redirectRoute): RedirectResponse
+    public function approve(Request $request, Operator $operator, string $redirectRoute): RedirectResponse
     {
         $operator->load('user');
 
@@ -399,8 +401,28 @@ class OperatorAdminService
             return redirect()->route($redirectRoute)->with('error', 'Archived operators cannot be approved. Restore them first.');
         }
 
+        // Approving an operator may also record their first franchise term when
+        // the approver filled in franchise details on the approval form. A plain
+        // approve (no details) still works and the franchise can be issued later.
+        $issueFranchise = !$operator->currentTerm
+            && ($request->filled('franchise_no') || $request->filled('issued_at') || $request->filled('valid_until'));
+        $franchise = $issueFranchise ? $this->validateFranchise($request) : null;
+
         $operator->update(['status' => 'active']);
         $operator->user->forceFill(['is_active' => true])->save();
+
+        if ($issueFranchise) {
+            FranchiseTerm::create([
+                'operator_id' => $operator->id,
+                'franchise_no' => $franchise['franchise_no'] ?? null,
+                'issued_at' => $franchise['issued_at'] ?? null,
+                'valid_until' => $franchise['valid_until'] ?? null,
+                'status' => FranchiseTerm::STATUS_ACTIVE,
+                'notes' => $franchise['notes'] ?? null,
+                'processed_by' => Auth::id(),
+            ]);
+        }
+
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('approve_operator', "Approved operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
@@ -433,5 +455,166 @@ class OperatorAdminService
 
         return redirect()->route($redirectRoute, ['status' => 'pending'])
             ->with('success', "Operator {$operatorName} rejected and removed.");
+    }
+
+    /**
+     * Issue the operator's first franchise term. Only operators without a
+     * current term can be issued one; an existing term must be renewed instead
+     * so the previous term is preserved in the history.
+     */
+    public function issueFranchise(Request $request, Operator $operator, string $redirectRoute): RedirectResponse
+    {
+        $operator->load('user', 'toda');
+
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be issued a franchise.');
+        }
+        if ($operator->isArchived()) {
+            return redirect()->route($redirectRoute)->with('error', 'Archived operators cannot be issued a franchise. Restore them first.');
+        }
+        if ($operator->currentTerm()->exists()) {
+            return redirect()->route($redirectRoute)->with('error', "{$operator->user->name} already has a franchise. Use Renew instead.");
+        }
+
+        $data = $this->validateFranchise($request);
+
+        $term = FranchiseTerm::create([
+            'operator_id' => $operator->id,
+            'franchise_no' => $data['franchise_no'] ?? null,
+            'issued_at' => $data['issued_at'] ?? null,
+            'valid_until' => $data['valid_until'] ?? null,
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+            'notes' => $data['notes'] ?? null,
+            'processed_by' => Auth::id(),
+        ]);
+
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log(
+            'issue_franchise',
+            "Issued franchise to {$operator->user->name}" . (!empty($term->franchise_no) ? " ({$term->franchise_no})" : ''),
+            $term,
+            'operator'
+        );
+
+        return redirect()->route($redirectRoute)
+            ->with('success', "Franchise issued to {$operator->user->name}.");
+    }
+
+    /**
+     * Renew the operator's franchise: the current term is closed (status =
+     * ended) and a new active term is opened. Every rating keeps its original
+     * term, so the previous periods stay intact under "All Time" while the
+     * current view starts from zero.
+     */
+    public function renewFranchise(Request $request, Operator $operator, string $redirectRoute): RedirectResponse
+    {
+        $operator->load('user', 'toda');
+
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can have a franchise renewed.');
+        }
+        if ($operator->isArchived()) {
+            return redirect()->route($redirectRoute)->with('error', 'Archived operators cannot have a franchise renewed. Restore them first.');
+        }
+
+        $current = $operator->currentTerm;
+        if (!$current) {
+            return redirect()->route($redirectRoute)->with('error', "{$operator->user->name} has no franchise yet. Issue one first.");
+        }
+
+        $data = $this->validateFranchise($request);
+
+        DB::transaction(function () use ($operator, $current, $data) {
+            $current->update(['status' => FranchiseTerm::STATUS_ENDED]);
+
+            FranchiseTerm::create([
+                'operator_id' => $operator->id,
+                'franchise_no' => $data['franchise_no'] ?? $current->franchise_no,
+                'issued_at' => $data['issued_at'] ?? now()->toDateString(),
+                'valid_until' => $data['valid_until'] ?? null,
+                'status' => FranchiseTerm::STATUS_ACTIVE,
+                'renewed_from_id' => $current->id,
+                'notes' => $data['notes'] ?? null,
+                'processed_by' => Auth::id(),
+            ]);
+        });
+
+        $operator->unsetRelation('currentTerm');
+
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log(
+            'renew_franchise',
+            "Renewed franchise for {$operator->user->name}. Current statistics restarted; previous terms kept.",
+            $operator,
+            'operator'
+        );
+
+        return redirect()->route($redirectRoute)
+            ->with('success', "Franchise renewed for {$operator->user->name}. Current statistics restarted.");
+    }
+
+    /**
+     * Edit the current franchise term's details (number, dates, notes) in place
+     * WITHOUT closing it, so a data-entry fix never resets the operator's stats.
+     * Use renew to start a fresh term instead.
+     */
+    public function updateFranchise(Request $request, Operator $operator, string $redirectRoute): RedirectResponse
+    {
+        $operator->load('user');
+
+        if ($operator->user->role !== 'operator') {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can have a franchise edited.');
+        }
+
+        $current = $operator->currentTerm;
+        if (!$current) {
+            return redirect()->route($redirectRoute)->with('error', "{$operator->user->name} has no franchise yet. Issue one first.");
+        }
+
+        $data = $this->validateFranchise($request);
+
+        $current->update([
+            'franchise_no' => $data['franchise_no'] ?? null,
+            'issued_at' => $data['issued_at'] ?? null,
+            'valid_until' => $data['valid_until'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        $operator->unsetRelation('currentTerm');
+
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log(
+            'update_franchise',
+            "Updated franchise details for {$operator->user->name}" . (!empty($current->franchise_no) ? " ({$current->franchise_no})" : ''),
+            $current,
+            'operator'
+        );
+
+        return redirect()->route($redirectRoute)->with('success', "Franchise details updated for {$operator->user->name}.");
+    }
+
+    /**
+     * Shared validation for franchise details. The valid_until only has to be
+     * on/after issued_at when an issued date was actually supplied.
+     *
+     * @return array<string, mixed>
+     */
+    private function validateFranchise(Request $request): array
+    {
+        $rules = [
+            'franchise_no' => 'nullable|string|max:100',
+            'issued_at' => 'nullable|date',
+            'valid_until' => 'nullable|date',
+            'notes' => 'nullable|string|max:1000',
+        ];
+
+        if ($request->filled('issued_at')) {
+            $rules['valid_until'] = 'nullable|date|after_or_equal:issued_at';
+        }
+
+        return $request->validate($rules);
     }
 }

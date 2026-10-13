@@ -13,6 +13,7 @@
         initNotificationCards();
         initNotificationLive();
         initOperatorModals();
+        initFranchiseModals();
         initOfficerModals();
         initTripHistoryDrawer();
         initOperatorMenu();
@@ -134,6 +135,127 @@
         if (qr) {
             qr.setAttribute('href', op.qrUrl || '#');
         }
+
+        var franchise = document.getElementById('opModalFranchise');
+        if (franchise) {
+            if (op.franchiseNo) {
+                var line = 'No. <span class="font-mono font-semibold">' + escHtml(op.franchiseNo) + '</span>';
+                if (op.franchiseValidUntil) {
+                    line += ' · until ' + escHtml(op.franchiseValidUntil);
+                } else {
+                    line += ' · no expiry';
+                }
+                if (op.franchiseStatus === 'expired') {
+                    line += ' <span class="tw-badge tw-badge-red">Expired</span>';
+                } else {
+                    line += ' <span class="tw-badge tw-badge-green">Valid</span>';
+                }
+                franchise.innerHTML = line;
+            } else {
+                franchise.textContent = 'No franchise yet';
+            }
+        }
+
+        var franchiseBtn = document.getElementById('opModalFranchiseBtn');
+        var renewBtn = document.getElementById('opModalRenewBtn');
+        if (franchiseBtn) {
+            if (op.canIssueFranchise) {
+                franchiseBtn.classList.remove('hidden');
+                franchiseBtn.setAttribute('data-franchise-open', JSON.stringify(op));
+                franchiseBtn.setAttribute('data-franchise-mode', op.hasTerm ? 'edit' : 'issue');
+                franchiseBtn.innerHTML = '<i class="bi ' + (op.hasTerm ? 'bi-pencil-square' : 'bi-patch-check') + '"></i>' + (op.hasTerm ? 'Edit Franchise' : 'Issue Franchise');
+            } else {
+                franchiseBtn.classList.add('hidden');
+            }
+        }
+        if (renewBtn) {
+            if (op.canIssueFranchise && op.hasTerm) {
+                renewBtn.classList.remove('hidden');
+                renewBtn.setAttribute('data-franchise-open', JSON.stringify(op));
+            } else {
+                renewBtn.classList.add('hidden');
+            }
+        }
+    }
+
+    function initFranchiseModals() {
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-franchise-open]');
+            if (!btn) return;
+            var op;
+            try {
+                op = JSON.parse(btn.getAttribute('data-franchise-open'));
+            } catch (err) {
+                return;
+            }
+            if (!op || !op.issueUrl) return;
+            var mode = btn.getAttribute('data-franchise-mode') || (op.hasTerm ? 'edit' : 'issue');
+            fillFranchiseModal(op, mode);
+            closeModal(document.querySelector('#operatorDetailsModal .tw-modal'));
+            openModal('operatorFranchiseModal');
+        });
+    }
+
+    function fillFranchiseModal(op, mode) {
+        mode = mode || (op.hasTerm ? 'edit' : 'issue');
+
+        var httpMethod = 'POST';
+        var action = op.issueUrl;
+        var title = 'Issue Franchise';
+        var submitLabel = 'Issue Franchise';
+        var showNotice = false;
+        var prefill = false;
+
+        if (mode === 'renew') {
+            action = op.renewUrl;
+            title = 'Renew Franchise';
+            submitLabel = 'Renew Franchise';
+            showNotice = true;
+        } else if (mode === 'edit') {
+            action = op.updateUrl || op.issueUrl;
+            httpMethod = 'PUT';
+            title = 'Edit Franchise';
+            submitLabel = 'Save Changes';
+            prefill = true;
+        }
+
+        var form = document.getElementById('franchiseForm');
+        if (form) {
+            form.setAttribute('action', action || '#');
+        }
+        var methodEl = document.getElementById('franchiseMethod');
+        if (methodEl) {
+            methodEl.value = httpMethod;
+        }
+
+        var setText = function (id, value) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.textContent = value == null || value === '' ? '' : value;
+            }
+        };
+        setText('franchiseModalTitle', title);
+        setText('franchiseModalSubtitle', op.name || '');
+
+        var notice = document.getElementById('franchiseRenewNotice');
+        if (notice) {
+            notice.classList.toggle('hidden', !showNotice);
+        }
+
+        var submit = document.getElementById('franchiseSubmit');
+        if (submit) {
+            submit.innerHTML = '<i class="bi bi-patch-check"></i>' + submitLabel;
+        }
+
+        var keepNumber = (mode === 'edit' || mode === 'renew');
+        var no = document.getElementById('franchiseNo');
+        if (no) no.value = keepNumber ? (op.franchiseNo || '') : '';
+        var issued = document.getElementById('franchiseIssuedAt');
+        if (issued) issued.value = prefill ? (op.franchiseIssuedRaw || '') : '';
+        var until = document.getElementById('franchiseValidUntil');
+        if (until) until.value = prefill ? (op.franchiseValidUntilRaw || '') : '';
+        var notes = document.getElementById('franchiseNotes');
+        if (notes) notes.value = prefill ? (op.franchiseNotes || '') : '';
     }
 
     function initCollapsibleCardLists() {

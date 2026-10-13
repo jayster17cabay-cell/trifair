@@ -334,9 +334,24 @@ class SuperadminController extends Controller
         return app(OperatorAdminService::class)->destroy($operator, 'superadmin.operators');
     }
 
-    public function approveOperator(Operator $operator)
+    public function approveOperator(Request $request, Operator $operator)
     {
-        return app(OperatorAdminService::class)->approve($operator, 'superadmin.operators');
+        return app(OperatorAdminService::class)->approve($request, $operator, 'superadmin.operators');
+    }
+
+    public function issueFranchise(Request $request, Operator $operator)
+    {
+        return app(OperatorAdminService::class)->issueFranchise($request, $operator, 'superadmin.operators');
+    }
+
+    public function renewFranchise(Request $request, Operator $operator)
+    {
+        return app(OperatorAdminService::class)->renewFranchise($request, $operator, 'superadmin.operators');
+    }
+
+    public function updateFranchise(Request $request, Operator $operator)
+    {
+        return app(OperatorAdminService::class)->updateFranchise($request, $operator, 'superadmin.operators');
     }
 
     public function rejectOperator(Operator $operator)

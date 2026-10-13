@@ -14,12 +14,14 @@ use Illuminate\Http\Request;
 
 class OperatorController extends Controller
 {
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $operator = Auth::user()->operator;
-        $base = $operator->ratings()->isValid();
+        [$term, $allTime] = $this->resolveTermScope($operator, $request);
 
-        $agg = $operator->countableRatings()
+        $base = $term ? $operator->termRatings($term)->isValid() : $operator->ratings()->isValid();
+
+        $agg = ($term ? $operator->termCountableRatings($term) : $operator->countableRatings())
             ->selectRaw('COUNT(*) as total_ratings, AVG(rating) as avg_rating')
             ->selectRaw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as r1')
             ->selectRaw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as r2')
@@ -44,7 +46,7 @@ class OperatorController extends Controller
             ->take(5)
             ->get();
 
-        if (request()->wantsJson()) {
+        if ($request->wantsJson()) {
             return response()->json([
                 'totalRatings' => $totalRatings,
                 'averageRating' => round((float) $averageRating, 1),
@@ -54,24 +56,49 @@ class OperatorController extends Controller
 
         return view('operator.dashboard', compact(
             'operator', 'averageRating', 'totalRatings',
-            'recentRatings', 'ratingCounts'
+            'recentRatings', 'ratingCounts', 'term', 'allTime'
         ));
     }
 
-    public function ratings()
+    public function ratings(Request $request)
     {
         $operator = Auth::user()->operator;
-        $ratings = $operator->ratings()->isValid()
+        [$term, $allTime] = $this->resolveTermScope($operator, $request);
+
+        $query = $term
+            ? $operator->termRatings($term)->isValid()
+            : $operator->ratings()->isValid();
+
+        $ratings = $query
             ->with('proofs', 'response', 'operatorProofs')
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        $averageRating = $operator->countableRatings()->avg('rating');
-        $totalRatings = $operator->countableRatings()->count();
+        $agg = $term ? $operator->termCountableRatings($term) : $operator->countableRatings();
+        $averageRating = (clone $agg)->avg('rating');
+        $totalRatings = (clone $agg)->count();
 
         return view('operator.ratings', compact(
-            'operator', 'ratings', 'averageRating', 'totalRatings'
+            'operator', 'ratings', 'averageRating', 'totalRatings', 'term', 'allTime'
         ));
+    }
+
+    /**
+     * Resolve which franchise term the operator's own dashboard should show.
+     * By default the current active term is used so a renewal starts the view
+     * at zero; "?all_time=1" (or an operator with no term yet) falls back to
+     * every rating across all terms.
+     *
+     * @return array{0: ?\App\Models\FranchiseTerm, 1: bool}
+     */
+    private function resolveTermScope($operator, Request $request): array
+    {
+        $operator->loadMissing('currentTerm');
+        $allTime = $request->boolean('all_time');
+        $term = $allTime ? null : $operator->currentTerm;
+
+        return [$term, $allTime || $operator->currentTerm === null];
     }
 
     public function respond(Request $request, Rating $rating)
@@ -156,17 +183,22 @@ class OperatorController extends Controller
         return back()->with('success', 'Your response has been submitted.');
     }
 
-    public function profile()
+    public function profile(Request $request)
     {
         $operator = Auth::user()->operator->load('user', 'toda');
+        [$term, $allTime] = $this->resolveTermScope($operator, $request);
+
+        $countable = $term ? $operator->termCountableRatings($term) : $operator->countableRatings();
+        $valid = $term ? $operator->termRatings($term)->isValid() : $operator->ratings()->isValid();
+
         $stats = [
-            'totalRatings' => $operator->countableRatings()->count(),
-            'averageRating' => $operator->countableRatings()->avg('rating'),
-            'totalComplaints' => $operator->ratings()->isValid()->isComplaint()->count(),
-            'responseRate' => $operator->ratings()->isValid()->whereHas('response')->count(),
+            'totalRatings' => (clone $countable)->count(),
+            'averageRating' => (clone $countable)->avg('rating'),
+            'totalComplaints' => (clone $valid)->isComplaint()->count(),
+            'responseRate' => (clone $valid)->whereHas('response')->count(),
         ];
 
-        return view('operator.profile', compact('operator', 'stats'));
+        return view('operator.profile', compact('operator', 'stats', 'term', 'allTime'));
     }
 
     public function showSettings()
