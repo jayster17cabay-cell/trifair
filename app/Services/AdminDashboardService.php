@@ -42,6 +42,27 @@ class AdminDashboardService
     {
         Cache::forget('admin_dashboard:superadmin');
         Cache::forget('admin_dashboard:tfrb');
+        Cache::forget('landing:rating_stats');
+    }
+
+    /**
+     * Public, unauthenticated aggregate shown on the landing page hero: the
+     * system-wide average of every rating that counts towards a score, the
+     * total number of such ratings and how many arrived this month. Cached on
+     * the same short TTL as the dashboard and flushed whenever a rating is
+     * submitted or reviewed, so the landing page keeps pace with live data.
+     */
+    public function publicRatingStats(): array
+    {
+        return Cache::remember('landing:rating_stats', self::CACHE_TTL, function () {
+            $base = Rating::isValid()->countsTowardRating();
+
+            return [
+                'average' => round((float) (clone $base)->avg('rating'), 1),
+                'total' => (int) (clone $base)->count(),
+                'thisMonth' => (int) (clone $base)->where('created_at', '>=', now()->startOfMonth())->count(),
+            ];
+        });
     }
 
     private function computeStats(array $options = []): array

@@ -100,28 +100,38 @@
             <div class="lp-hero-ring h-[320px] w-[320px] -bottom-10 -left-12 hidden lg:block"></div>
 
             <div class="relative rounded-3xl bg-white p-5 shadow-[0_40px_80px_rgba(0,0,0,0.35)] sm:p-6">
+                @php
+                    $avg = (float) ($average ?? 0);
+                    $totalRatings = (int) ($total ?? 0);
+                    $thisMonth = (int) ($thisMonth ?? 0);
+                    $fullStars = (int) floor($avg);
+                    $halfStar = ($avg - $fullStars) >= 0.5 && $fullStars < 5;
+                    $emptyStars = 5 - $fullStars - ($halfStar ? 1 : 0);
+                @endphp
                 <div class="mb-4 rounded-2xl bg-gradient-to-br from-navy-600 to-navy-500 p-5 text-white">
                     <div class="flex items-center gap-3.5">
                         <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15 text-xl"><i class="bi bi-bicycle"></i></span>
                         <div class="min-w-0 flex-1">
-                            <div class="text-[11px] font-semibold uppercase tracking-wider text-white/55">Operator</div>
-                            <div class="truncate text-base font-extrabold">R. Cruz</div>
-                            <div class="truncate text-xs text-white/60">Plate # AB-1234 · TODA Solano East</div>
+                            <div class="text-[11px] font-semibold uppercase tracking-wider text-white/55">Overall Rating</div>
+                            <div class="truncate text-base font-extrabold">TriFair Community</div>
+                            <div class="truncate text-xs text-white/60">All operators · Solano, Nueva Vizcaya</div>
                         </div>
                     </div>
                     <div class="mt-4 flex items-end justify-between gap-4 rounded-xl bg-white/10 px-4 py-3">
                         <div>
                             <div class="text-[10px] font-semibold uppercase tracking-wider text-white/55">Average Rating</div>
                             <div class="mt-0.5 flex items-baseline gap-1">
-                                <span class="text-3xl font-black leading-none">4.8</span>
+                                <span class="text-3xl font-black leading-none" data-landing-stat="average">{{ number_format($avg, 1) }}</span>
                                 <span class="text-sm font-semibold text-white/50">/ 5</span>
                             </div>
                         </div>
                         <div class="text-right">
-                            <div class="flex items-center justify-end gap-0.5 text-gold">
-                                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+                            <div class="flex items-center justify-end gap-0.5 text-gold" data-landing-stars>
+                                @for ($i = 0; $i < $fullStars; $i++)<i class="bi bi-star-fill"></i>@endfor
+                                @if ($halfStar)<i class="bi bi-star-half"></i>@endif
+                                @for ($i = 0; $i < $emptyStars; $i++)<i class="bi bi-star"></i>@endfor
                             </div>
-                            <div class="mt-1 text-[10px] text-white/60">Based on 127 ratings</div>
+                            <div class="mt-1 text-[10px] text-white/60">Based on <span data-landing-stat="total">{{ number_format($totalRatings) }}</span> ratings</div>
                         </div>
                     </div>
                 </div>
@@ -187,10 +197,10 @@
                         </div>
                     </div>
                     <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg rating</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">This month</div>
                         <div class="mt-1 flex items-center gap-1.5">
                             <i class="bi bi-graph-up-arrow text-navy-600"></i>
-                            <span class="text-sm font-extrabold text-navy-600">+0.2 this month</span>
+                            <span class="text-sm font-extrabold text-navy-600" data-landing-stat="thisMonth">+{{ number_format($thisMonth) }} new</span>
                         </div>
                     </div>
                 </div>
@@ -532,6 +542,48 @@
         });
     }, { threshold: 0.12 });
     document.querySelectorAll('.anim').forEach(function (el) { observer.observe(el); });
+</script>
+
+<script>
+    (function () {
+        var statsUrl = @json(route('landing.stats'));
+        if (!statsUrl) return;
+
+        var numberFormat = new Intl.NumberFormat();
+
+        function starMarkup(average) {
+            var full = Math.floor(average);
+            var half = (average - full) >= 0.5 && full < 5;
+            var html = '';
+            for (var i = 0; i < full; i++) html += '<i class="bi bi-star-fill"></i>';
+            if (half) html += '<i class="bi bi-star-half"></i>';
+            for (var j = 0; j < (5 - full - (half ? 1 : 0)); j++) html += '<i class="bi bi-star"></i>';
+            return html;
+        }
+
+        function refresh() {
+            fetch(statsUrl, { headers: { 'Accept': 'application/json' } })
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(function (data) {
+                    if (!data) return;
+                    var avg = Number(data.average) || 0;
+                    var avgEl = document.querySelector('[data-landing-stat="average"]');
+                    var totalEl = document.querySelector('[data-landing-stat="total"]');
+                    var monthEl = document.querySelector('[data-landing-stat="thisMonth"]');
+                    var starsEl = document.querySelector('[data-landing-stars]');
+                    if (avgEl) avgEl.textContent = avg.toFixed(1);
+                    if (starsEl) starsEl.innerHTML = starMarkup(avg);
+                    if (totalEl) totalEl.textContent = numberFormat.format(Number(data.total) || 0);
+                    if (monthEl) monthEl.textContent = '+' + numberFormat.format(Number(data.thisMonth) || 0) + ' new';
+                })
+                .catch(function () {});
+        }
+
+        setInterval(refresh, 15000);
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) refresh();
+        });
+    })();
 </script>
 
 </body>

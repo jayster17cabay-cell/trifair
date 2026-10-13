@@ -359,4 +359,109 @@ class ComplaintReviewFlowTest extends TestCase
 
         $this->assertNull($rejected->fresh()->resolution_note);
     }
+
+    public function test_rejecting_records_reviewer_and_timestamp()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator, 1);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $complaint->id . '/reject', [
+                'resolution_note' => 'Hindi mapatunayan ang reklamo.',
+            ])
+            ->assertRedirect();
+
+        $fresh = $complaint->fresh();
+        $this->assertSame($admin->id, $fresh->reviewed_by);
+        $this->assertSame($admin->name, $fresh->reviewed_by_name);
+        $this->assertNotNull($fresh->rejected_at);
+        $this->assertNull($fresh->solved_at);
+        $this->assertSame($fresh->rejected_at->timestamp, $fresh->resolution_at->timestamp);
+
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=rejected')
+            ->assertOk()
+            ->assertSee('Reviewed by ' . $admin->name)
+            ->assertSee($fresh->rejected_at->format('M j, Y g:i A'), false);
+    }
+
+    public function test_solving_records_reviewer_and_timestamp()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator, 1);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $complaint->id . '/solve')
+            ->assertRedirect();
+
+        $fresh = $complaint->fresh();
+        $this->assertSame($admin->id, $fresh->reviewed_by);
+        $this->assertSame($admin->name, $fresh->reviewed_by_name);
+        $this->assertNotNull($fresh->solved_at);
+        $this->assertNull($fresh->rejected_at);
+        $this->assertSame($fresh->solved_at->timestamp, $fresh->resolution_at->timestamp);
+    }
+
+    public function test_reset_and_reopen_clear_reviewer_and_timestamps()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+
+        $rejected = $this->makeValidComplaint($operator, 1);
+        $rejected->update([
+            'is_reviewed' => true,
+            'is_accepted' => false,
+            'rejected_at' => now(),
+            'reviewed_by' => $admin->id,
+            'resolution_note' => 'Not valid.',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $rejected->id . '/reset')
+            ->assertRedirect();
+
+        $freshRejected = $rejected->fresh();
+        $this->assertNull($freshRejected->rejected_at);
+        $this->assertNull($freshRejected->reviewed_by);
+
+        $solved = $this->makeValidComplaint($operator, 1);
+        $solved->update([
+            'is_reviewed' => true,
+            'is_accepted' => true,
+            'is_solved' => true,
+            'solved_at' => now(),
+            'reviewed_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $solved->id . '/reopen')
+            ->assertRedirect();
+
+        $freshSolved = $solved->fresh();
+        $this->assertNull($freshSolved->solved_at);
+        $this->assertNull($freshSolved->reviewed_by);
+    }
+
+    public function test_landing_page_uses_live_system_overall_rating()
+    {
+        $operator = $this->makeOperator();
+        $this->makeValidRating($operator, 4);
+        $this->makeValidRating($operator, 5);
+        $rejected = $this->makeValidComplaint($operator, 1);
+        $rejected->update(['is_reviewed' => true, 'is_accepted' => false]);
+
+        Cache::flush();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('data-landing-stat="average"', false)
+            ->assertSee('>4.5<', false)
+            ->assertSee('data-landing-stat="total"', false)
+            ->assertSee('data-landing-stars', false);
+
+        $stats = $this->getJson('/landing-stats')->assertOk()->json();
+        $this->assertEqualsWithDelta(4.5, (float) $stats['average'], 0.001);
+        $this->assertSame(2, $stats['total']);
+    }
 }

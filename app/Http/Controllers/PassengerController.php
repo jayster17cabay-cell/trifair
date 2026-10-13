@@ -33,7 +33,7 @@ class PassengerController extends Controller
         $solvedCount = (int) $tally->solved_count;
 
         $complaints = (clone $base)
-            ->with(['operator.user', 'response', 'proofs', 'resolutionProofs'])
+            ->with(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer'])
             ->latest()
             ->paginate(15)
             ->withQueryString();

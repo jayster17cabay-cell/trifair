@@ -12,13 +12,13 @@ use App\Http\Controllers\PresidentController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\GeocodeController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PassengerController;
 use Illuminate\Support\Facades\Artisan;
 
-Route::get('/', function () {
-    return view('landing');
-});
+Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/landing-stats', [LandingController::class, 'stats'])->name('landing.stats');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');

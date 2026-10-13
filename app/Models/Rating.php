@@ -89,6 +89,8 @@ class Rating extends Model
         'is_auto',
         'is_valid',
         'is_accepted',
+        'rejected_at',
+        'reviewed_by',
         'start_location',
         'end_location',
     ];
@@ -98,9 +100,11 @@ class Rating extends Model
         'is_reviewed' => 'boolean',
         'is_solved' => 'boolean',
         'solved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'is_auto' => 'boolean',
         'is_valid' => 'boolean',
         'is_accepted' => 'boolean',
+        'reviewed_by' => 'integer',
     ];
 
     /**
@@ -150,6 +154,34 @@ class Rating extends Model
     public function passenger()
     {
         return $this->belongsTo(User::class, 'passenger_user_id');
+    }
+
+    /**
+     * The officer/superadmin who reviewed the complaint (accepted, rejected or
+     * solved it). Null for pending complaints and legacy rows reviewed before
+     * reviewer tracking existed.
+     */
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * The moment the complaint reached a terminal resolution: solved_at for a
+     * solved complaint, rejected_at for a rejected one, null while pending.
+     */
+    public function getResolutionAtAttribute()
+    {
+        return $this->solved_at ?? $this->rejected_at;
+    }
+
+    /**
+     * Display name of whoever reviewed the complaint, safe to print even when
+     * the reviewer was deleted or never recorded.
+     */
+    public function getReviewedByNameAttribute(): ?string
+    {
+        return $this->reviewer?->name;
     }
 
     /**

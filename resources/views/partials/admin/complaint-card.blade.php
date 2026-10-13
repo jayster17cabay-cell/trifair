@@ -169,9 +169,9 @@
         @endif
 
         {{-- Resolution details captured when the officer rejected or solved the
-             complaint. Shown here so reviewers can see the recorded reason and
-             any proof attached for the passenger. --}}
-        @if (($rating->status_label === 'Rejected' && $rating->resolution_note) || ($rating->status_label === 'Solved' && ($rating->resolution_note || $rating->resolutionProofs->count() > 0)))
+             complaint. Shown here so reviewers can see the recorded reason,
+             any proof attached and who resolved it and when. --}}
+        @if (in_array($rating->status_label, ['Rejected', 'Solved'], true))
             @php $isSolved = $rating->status_label === 'Solved'; @endphp
             <div class="mx-4 mb-4 rounded-xl border {{ $isSolved ? 'border-emerald-100 bg-emerald-50/60' : 'border-red-100 bg-red-50/60' }} px-4 py-3 sm:mx-5">
                 <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
@@ -197,6 +197,14 @@
                         </div>
                     </div>
                 @endif
+                <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-200 pt-2 text-[0.7rem] text-slate-500">
+                    @if ($rating->reviewed_by_name)
+                        <span><i class="bi bi-person-badge mr-1"></i>Reviewed by {{ $rating->reviewed_by_name }}</span>
+                    @endif
+                    @if ($rating->resolution_at)
+                        <span><i class="bi bi-clock-history mr-1"></i>{{ $rating->resolution_at->format('M j, Y g:i A') }}</span>
+                    @endif
+                </div>
             </div>
         @endif
 

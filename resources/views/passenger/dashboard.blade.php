@@ -187,15 +187,25 @@
                         <p class="mt-3 text-xs text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response from the operator yet.</p>
                     @endif
 
-                    @if ($rating->is_accepted === false && $rating->resolution_note)
+                    @if ($rating->is_accepted === false)
                         <div class="mt-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
                             <div class="mb-1 flex items-center gap-1.5">
                                 <i class="bi bi-x-circle-fill text-red-500"></i>
                                 <span class="text-[0.7rem] font-bold uppercase tracking-widest text-red-600">Reason for rejection</span>
                             </div>
-                            <p class="mb-0 text-sm text-slate-700">{{ $rating->resolution_note }}</p>
+                            @if ($rating->resolution_note)
+                                <p class="mb-0 text-sm text-slate-700">{{ $rating->resolution_note }}</p>
+                            @endif
+                            <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-red-100 pt-2 text-[0.7rem] text-slate-500">
+                                @if ($rating->reviewed_by_name)
+                                    <span><i class="bi bi-person-badge mr-1"></i>Reviewed by {{ $rating->reviewed_by_name }}</span>
+                                @endif
+                                @if ($rating->resolution_at)
+                                    <span><i class="bi bi-clock-history mr-1"></i>{{ $rating->resolution_at->format('M j, Y g:i A') }}</span>
+                                @endif
+                            </div>
                         </div>
-                    @elseif ($rating->is_solved && ($rating->resolution_note || $rating->resolutionProofs->count() > 0))
+                    @elseif ($rating->is_solved)
                         <div class="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
                             <div class="mb-1 flex items-center gap-1.5">
                                 <i class="bi bi-patch-check-fill text-emerald-600"></i>
@@ -225,6 +235,14 @@
                                     </div>
                                 </div>
                             @endif
+                            <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-emerald-100 pt-2 text-[0.7rem] text-slate-500">
+                                @if ($rating->reviewed_by_name)
+                                    <span><i class="bi bi-person-badge mr-1"></i>Reviewed by {{ $rating->reviewed_by_name }}</span>
+                                @endif
+                                @if ($rating->resolution_at)
+                                    <span><i class="bi bi-clock-history mr-1"></i>{{ $rating->resolution_at->format('M j, Y g:i A') }}</span>
+                                @endif
+                            </div>
                         </div>
                     @endif
                 </div>

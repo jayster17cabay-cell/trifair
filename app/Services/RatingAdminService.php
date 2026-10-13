@@ -11,6 +11,7 @@ use App\Models\ResolutionProof;
 use App\Services\AdminDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -76,6 +77,8 @@ class RatingAdminService
             'is_accepted' => false,
             'is_solved' => false,
             'solved_at' => null,
+            'rejected_at' => now(),
+            'reviewed_by' => Auth::id(),
             'resolution_note' => $note,
         ]);
         // A rejection carries no resolution proof, so drop any evidence left
@@ -112,6 +115,8 @@ class RatingAdminService
             'is_accepted' => null,
             'is_solved' => false,
             'solved_at' => null,
+            'rejected_at' => null,
+            'reviewed_by' => null,
             'resolution_note' => null,
         ]);
         $this->clearResolutionProofs($rating);
@@ -144,6 +149,8 @@ class RatingAdminService
             'is_accepted' => true,
             'is_solved' => true,
             'solved_at' => now(),
+            'rejected_at' => null,
+            'reviewed_by' => Auth::id(),
             'resolution_note' => $note,
         ]);
 
@@ -184,6 +191,8 @@ class RatingAdminService
             'solved_at' => null,
             'is_reviewed' => false,
             'is_accepted' => null,
+            'rejected_at' => null,
+            'reviewed_by' => null,
             'resolution_note' => null,
         ]);
         $this->clearResolutionProofs($rating);
