@@ -85,8 +85,8 @@
                 TriFair lets passengers rate their motorcycle ride in seconds — turning everyday trips into honest feedback that builds trust and improves public transport.
             </p>
             <div class="flex flex-wrap justify-center gap-3 lg:justify-start">
-                <a href="{{ route('login') }}" class="tw-btn tw-btn-gold tw-btn-lg"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
-                <a href="#how" class="tw-btn tw-btn-lg border border-white/20 bg-white/10 text-white backdrop-blur transition hover:border-white/30 hover:bg-white/15"><i class="bi bi-rocket-takeoff"></i> Get Started</a>
+                <a href="{{ route('register') }}" class="tw-btn tw-btn-gold tw-btn-lg"><i class="bi bi-person-plus"></i> Sign Up</a>
+                <a href="{{ route('login') }}" class="tw-btn tw-btn-lg border border-white/20 bg-white/10 text-white backdrop-blur transition hover:border-white/30 hover:bg-white/15"><i class="bi bi-rocket-takeoff"></i> Get Started</a>
             </div>
             <div class="mt-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-white/50 lg:justify-start">
                 <div class="flex items-center gap-2 text-sm font-medium"><i class="bi bi-qr-code-scan text-gold"></i> No app download needed</div>
