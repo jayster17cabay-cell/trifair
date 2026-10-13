@@ -38,15 +38,11 @@
                         <input type="date" id="franchiseValidUntil" name="valid_until" class="tw-input">
                         <p class="mt-1 text-xs text-slate-500">Leave blank for no expiry.</p>
                     </div>
-                    <div class="sm:col-span-2">
-                        <label for="franchiseNotes" class="tw-stat-label mb-1 block">Notes</label>
-                        <textarea id="franchiseNotes" name="notes" rows="2" class="tw-input" maxlength="500" placeholder="Optional remarks"></textarea>
-                    </div>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 px-6 py-4">
-                <button type="submit" id="franchiseSubmit" class="tw-btn tw-btn-sm tw-btn-gold">
-                    <i class="bi bi-patch-check"></i>Save Franchise
+                <button type="submit" id="franchiseSubmit" class="tw-btn tw-btn-sm tw-btn-gold" title="Confirm" aria-label="Confirm franchise">
+                    <i class="bi bi-check-lg"></i>
                 </button>
                 <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost ml-auto" data-tw-modal-close>
                     Cancel

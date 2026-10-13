@@ -59,9 +59,6 @@
             <a id="opModalQr" href="#" class="tw-btn tw-btn-sm tw-btn-outline">
                 <i class="bi bi-qr-code"></i>View QR Code
             </a>
-            <button type="button" id="opModalFranchiseBtn" class="tw-btn tw-btn-sm tw-btn-outline-gold hidden" data-franchise-open="{}" data-franchise-mode="edit">
-                <i class="bi bi-patch-check"></i>Franchise
-            </button>
             <button type="button" id="opModalRenewBtn" class="tw-btn tw-btn-sm tw-btn-outline hidden" data-franchise-open="{}" data-franchise-mode="renew">
                 <i class="bi bi-arrow-repeat"></i>Renew Franchise
             </button>

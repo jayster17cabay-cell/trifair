@@ -52,7 +52,6 @@
         'franchiseValidUntil' => ($currentTerm && $currentTerm->valid_until) ? $currentTerm->valid_until->format('M d, Y') : null,
         'franchiseIssuedRaw' => ($currentTerm && $currentTerm->issued_at) ? $currentTerm->issued_at->toDateString() : null,
         'franchiseValidUntilRaw' => ($currentTerm && $currentTerm->valid_until) ? $currentTerm->valid_until->toDateString() : null,
-        'franchiseNotes' => $currentTerm->notes ?? null,
         'franchiseStatus' => $franchiseStatus,
         'hasTerm' => (bool) $currentTerm,
         'canIssueFranchise' => $canIssueFranchise,

@@ -156,18 +156,7 @@
             }
         }
 
-        var franchiseBtn = document.getElementById('opModalFranchiseBtn');
         var renewBtn = document.getElementById('opModalRenewBtn');
-        if (franchiseBtn) {
-            if (op.canIssueFranchise) {
-                franchiseBtn.classList.remove('hidden');
-                franchiseBtn.setAttribute('data-franchise-open', JSON.stringify(op));
-                franchiseBtn.setAttribute('data-franchise-mode', op.hasTerm ? 'edit' : 'issue');
-                franchiseBtn.innerHTML = '<i class="bi ' + (op.hasTerm ? 'bi-pencil-square' : 'bi-patch-check') + '"></i>' + (op.hasTerm ? 'Edit Franchise' : 'Issue Franchise');
-            } else {
-                franchiseBtn.classList.add('hidden');
-            }
-        }
         if (renewBtn) {
             if (op.canIssueFranchise && op.hasTerm) {
                 renewBtn.classList.remove('hidden');
@@ -215,7 +204,7 @@
             action = op.updateUrl || op.issueUrl;
             httpMethod = 'PUT';
             title = 'Edit Franchise';
-            submitLabel = 'Save Changes';
+            submitLabel = 'Update Franchise';
             prefill = true;
         }
 
@@ -244,7 +233,9 @@
 
         var submit = document.getElementById('franchiseSubmit');
         if (submit) {
-            submit.innerHTML = '<i class="bi bi-patch-check"></i>' + submitLabel;
+            submit.innerHTML = '<i class="bi bi-check-lg"></i>';
+            submit.setAttribute('title', submitLabel);
+            submit.setAttribute('aria-label', submitLabel);
         }
 
         var keepNumber = (mode === 'edit' || mode === 'renew');
@@ -254,8 +245,6 @@
         if (issued) issued.value = prefill ? (op.franchiseIssuedRaw || '') : '';
         var until = document.getElementById('franchiseValidUntil');
         if (until) until.value = prefill ? (op.franchiseValidUntilRaw || '') : '';
-        var notes = document.getElementById('franchiseNotes');
-        if (notes) notes.value = prefill ? (op.franchiseNotes || '') : '';
     }
 
     function initCollapsibleCardLists() {
