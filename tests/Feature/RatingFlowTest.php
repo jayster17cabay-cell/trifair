@@ -280,7 +280,17 @@ class RatingFlowTest extends TestCase
         $operator = $this->makeActiveOperator();
         $operator->update(['status' => 'inactive']);
 
-        $this->get('/rate/' . $operator->qr_code)->assertNotFound();
+        $this->get('/rate/' . $operator->qr_code)
+            ->assertOk()
+            ->assertSee('Ratings Unavailable', false);
+
+        $this->post('/rate/' . $operator->qr_code, [
+            'rating' => 5,
+            'start_location' => 'A',
+            'end_location' => 'B',
+        ])->assertOk()->assertSee('Ratings Unavailable', false);
+
+        $this->assertSame(0, Rating::where('operator_id', $operator->id)->count());
     }
 
     public function test_thank_you_close_sends_guests_to_landing_page()

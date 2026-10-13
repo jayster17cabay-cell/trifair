@@ -76,6 +76,8 @@ class LoginController extends Controller
                         'email' => 'Your account is incomplete. Please contact support.',
                     ])->onlyInput('email');
                 }
+                // A lapsed franchise keeps the operator out until it is renewed.
+                $operator->syncFranchiseStatus();
                 if ($operator->isArchived()) {
                     Auth::logout();
                     $request->session()->invalidate();
@@ -101,7 +103,9 @@ class LoginController extends Controller
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
                     return back()->withErrors([
-                        'email' => 'Your account has been deactivated. Please contact support.',
+                        'email' => $operator->hasExpiredFranchise()
+                            ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
+                            : 'Your account has been deactivated. Please contact support.',
                     ])->onlyInput('email');
                 }
             }

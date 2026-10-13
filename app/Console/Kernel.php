@@ -15,7 +15,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Operators whose franchise has lapsed are switched to inactive so the
+        // admin lists and login checks agree with the franchise expiry date.
+        $schedule->command('franchise:sync-status')->dailyAt('00:05');
     }
 
     /**

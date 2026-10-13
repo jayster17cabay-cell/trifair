@@ -12,6 +12,7 @@ class OperatorActive
     {
         $user = Auth::user();
         if ($user && $user->isOperator()) {
+            $user->loadMissing('operator.currentTerm');
             $operator = $user->operator;
             if (!$operator) {
                 Auth::logout();
@@ -21,6 +22,8 @@ class OperatorActive
                     'email' => 'Your account is incomplete. Please contact support.',
                 ]);
             }
+            // Drop the session the moment the franchise lapses mid-session.
+            $operator->syncFranchiseStatus();
             if ($operator->isArchived()) {
                 Auth::logout();
                 $request->session()->invalidate();
@@ -45,7 +48,9 @@ class OperatorActive
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return redirect()->route('login')->withErrors([
-                    'email' => 'Your account has been deactivated. Please contact support.',
+                    'email' => $operator->hasExpiredFranchise()
+                        ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
+                        : 'Your account has been deactivated. Please contact support.',
                 ]);
             }
         }

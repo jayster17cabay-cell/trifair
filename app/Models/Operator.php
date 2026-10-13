@@ -114,6 +114,59 @@ class Operator extends Model
     }
 
     /**
+     * True when the operator has a current term that has already lapsed.
+     */
+    public function hasExpiredFranchise(): bool
+    {
+        $term = $this->currentTerm;
+
+        return $term !== null && $term->isExpired();
+    }
+
+    /**
+     * Keep the approval status in step with the franchise: an active operator
+     * whose current franchise has lapsed is switched to inactive. This never
+     * auto-reactivates, so a deliberate admin deactivation is preserved —
+     * issuing or renewing a term is what brings the operator back to active.
+     *
+     * @return bool true when the operator's status row was changed
+     */
+    public function syncFranchiseStatus(): bool
+    {
+        if ($this->status === 'active' && $this->hasExpiredFranchise()) {
+            $this->update(['status' => 'inactive']);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Bulk version of syncFranchiseStatus() for a whole set of operators in a
+     * single UPDATE. Any operator whose current franchise term has lapsed is
+     * marked inactive. Used by the daily command and before the admin list is
+     * built so the status shown always agrees with the franchise expiry date.
+     *
+     * @return int number of operators deactivated
+     */
+    public static function deactivateExpiredFranchises(): int
+    {
+        $today = now()->toDateString();
+
+        return static::query()
+            ->where('status', 'active')
+            ->whereIn('id', function ($query) use ($today) {
+                $query->from('franchise_terms')
+                    ->where('status', FranchiseTerm::STATUS_ACTIVE)
+                    ->whereNotNull('valid_until')
+                    ->whereDate('valid_until', '<', $today)
+                    ->select('operator_id');
+            })
+            ->update(['status' => 'inactive']);
+    }
+
+    /**
      * Ratings belonging to a specific term. Defaults to the current active
      * term, so "current" statistics start at zero after a renewal while the
      * "All Time" figures (averageRating/totalRatings above) keep counting

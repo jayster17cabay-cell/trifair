@@ -488,6 +488,11 @@ class OperatorAdminService
             'processed_by' => Auth::id(),
         ]);
 
+        // A fresh valid franchise lifts any earlier franchise-driven deactivation.
+        if ($operator->status === 'inactive' && ($operator->user->is_active ?? true)) {
+            $operator->update(['status' => 'active']);
+        }
+
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log(
@@ -541,6 +546,11 @@ class OperatorAdminService
         });
 
         $operator->unsetRelation('currentTerm');
+
+        // Renewing brings a lapsed operator back to active.
+        if ($operator->status === 'inactive' && ($operator->user->is_active ?? true)) {
+            $operator->update(['status' => 'active']);
+        }
 
         app(AdminDashboardService::class)->flush();
 

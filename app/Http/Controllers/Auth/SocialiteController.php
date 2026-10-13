@@ -195,6 +195,9 @@ class SocialiteController extends Controller
                 ]);
             }
 
+            // A lapsed franchise keeps the operator out until it is renewed.
+            $operator->syncFranchiseStatus();
+
             if ($operator->status === 'pending') {
                 ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
                 return redirect()->route('operator.pending');
@@ -214,7 +217,9 @@ class SocialiteController extends Controller
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return redirect()->route('login')->withErrors([
-                    'email' => 'Your account has been deactivated. Please contact support.',
+                    'email' => $operator->hasExpiredFranchise()
+                        ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
+                        : 'Your account has been deactivated. Please contact support.',
                 ]);
             }
 

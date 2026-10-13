@@ -270,6 +270,11 @@ class AdminQueryService
 
     public function operatorsData(Request $request): array
     {
+        // Keep the visible status honest: any operator whose franchise has
+        // lapsed is flipped to inactive before the list and its tallies are
+        // read, so the admin never sees a stale "active" expired operator.
+        Operator::deactivateExpiredFranchises();
+
         $operators = $this->operatorsBaseQuery($request)->latest()->paginate(10)->withQueryString();
 
         $search = $request->query('search');

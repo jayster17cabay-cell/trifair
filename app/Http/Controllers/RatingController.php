@@ -59,17 +59,18 @@ class RatingController extends Controller
 
     public function showRateForm(Request $request, $qrCode)
     {
-        $operator = Operator::with('user', 'toda')
-            ->where('qr_code', $qrCode)
-            ->where('status', 'active')
-            ->notArchived()
-            ->firstOrFail();
+        $operator = $this->findRateableOperator($qrCode);
 
         // A lapsed franchise cannot collect new ratings until it is renewed.
         // Show a clear "Franchise Expired" notice instead of a bare 404 so the
         // passenger understands why the rating page is unavailable.
         if (($term = $operator->currentTerm) && $term->isExpired()) {
             return $this->franchiseExpired($operator, $term);
+        }
+
+        // Inactive for a non-franchise reason (deactivated account): no ratings.
+        if ($operator->status !== 'active') {
+            return $this->operatorUnavailable($operator);
         }
 
         $clientId = $this->getOrCreateClientId($request);
@@ -90,17 +91,18 @@ class RatingController extends Controller
 
     public function submitRating(Request $request, $qrCode)
     {
-        $operator = Operator::with('user', 'toda')
-            ->where('qr_code', $qrCode)
-            ->where('status', 'active')
-            ->notArchived()
-            ->firstOrFail();
+        $operator = $this->findRateableOperator($qrCode);
 
         // A lapsed franchise cannot collect new ratings until it is renewed.
         // Show a clear "Franchise Expired" notice instead of a bare 404 so the
         // passenger understands why the rating page is unavailable.
         if (($term = $operator->currentTerm) && $term->isExpired()) {
             return $this->franchiseExpired($operator, $term);
+        }
+
+        // Inactive for a non-franchise reason (deactivated account): no ratings.
+        if ($operator->status !== 'active') {
+            return $this->operatorUnavailable($operator);
         }
 
         // Operator and staff accounts can never submit a passenger rating, even
@@ -298,12 +300,44 @@ class RatingController extends Controller
     }
 
     /**
+     * Resolve the operator a QR code points at. Archived and not-yet-approved
+     * (pending/rejected) accounts are hidden behind a 404 — inactive accounts
+     * are returned so the caller can explain why rating is unavailable rather
+     * than showing a bare "not found".
+     */
+    private function findRateableOperator(string $qrCode): Operator
+    {
+        $operator = Operator::with('user', 'toda')
+            ->where('qr_code', $qrCode)
+            ->notArchived()
+            ->first();
+
+        if (!$operator || !in_array($operator->status, ['active', 'inactive'], true)) {
+            abort(404);
+        }
+
+        return $operator;
+    }
+
+    /**
      * Passenger-facing notice shown when the operator's franchise has lapsed.
      */
     private function franchiseExpired(Operator $operator, $term)
     {
         return response()
             ->view('rate.franchise-expired', compact('operator', 'term'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
+    }
+
+    /**
+     * Passenger-facing notice shown when an inactive (deactivated, non-expired)
+     * operator's QR code is scanned, so the page never 404s unexpectedly.
+     */
+    private function operatorUnavailable(Operator $operator)
+    {
+        return response()
+            ->view('rate.unavailable', compact('operator'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }

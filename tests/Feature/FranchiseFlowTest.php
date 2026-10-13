@@ -294,4 +294,109 @@ class FranchiseFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Avg Rating · 2 Ratings', false);
     }
+
+    public function test_sync_command_deactivates_expired_franchise_only()
+    {
+        $expired = $this->makeOperator('active');
+        $valid = $this->makeOperator('active');
+
+        FranchiseTerm::create([
+            'operator_id' => $expired->id,
+            'franchise_no' => 'FR-EXPIRED',
+            'issued_at' => '2024-01-01',
+            'valid_until' => now()->subDay()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+        FranchiseTerm::create([
+            'operator_id' => $valid->id,
+            'franchise_no' => 'FR-VALID',
+            'issued_at' => now()->toDateString(),
+            'valid_until' => now()->addYear()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        $this->artisan('franchise:sync-status')->assertExitCode(0);
+
+        $this->assertSame('inactive', $expired->fresh()->status);
+        $this->assertSame('active', $valid->fresh()->status);
+    }
+
+    public function test_expired_franchise_operator_cannot_log_in()
+    {
+        $operator = $this->makeOperator('active');
+        $user = $operator->user;
+
+        FranchiseTerm::create([
+            'operator_id' => $operator->id,
+            'franchise_no' => 'FR-EXPIRED',
+            'issued_at' => '2024-01-01',
+            'valid_until' => now()->subDay()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+        $this->assertSame('inactive', $operator->fresh()->status);
+    }
+
+    public function test_renewing_reactivates_an_expired_operator()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator('inactive');
+
+        FranchiseTerm::create([
+            'operator_id' => $operator->id,
+            'franchise_no' => 'FR-EXPIRED',
+            'issued_at' => '2024-01-01',
+            'valid_until' => now()->subDay()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($admin)->post(route('superadmin.operators.franchise.renew', $operator), [
+            'franchise_no' => 'FR-RENEWED',
+            'valid_until' => now()->addYear()->toDateString(),
+        ])->assertRedirect();
+
+        $this->assertSame('active', $operator->fresh()->status);
+    }
+
+    public function test_expired_franchise_page_shows_even_when_operator_is_inactive()
+    {
+        $operator = $this->makeOperator('inactive');
+
+        FranchiseTerm::create([
+            'operator_id' => $operator->id,
+            'franchise_no' => 'FR-EXPIRED',
+            'issued_at' => '2024-01-01',
+            'valid_until' => now()->subDay()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee('Franchise Expired', false);
+    }
+
+    public function test_operators_page_renders_for_inactive_expired_operator()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator('inactive');
+
+        FranchiseTerm::create([
+            'operator_id' => $operator->id,
+            'franchise_no' => 'FR-EXPIRED',
+            'issued_at' => '2024-01-01',
+            'valid_until' => now()->subDay()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($admin)->get('/superadmin/operators?status=inactive')
+            ->assertOk()
+            ->assertSee('Inactive', false)
+            ->assertSee('Expired', false);
+    }
 }
