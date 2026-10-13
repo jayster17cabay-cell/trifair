@@ -13,7 +13,7 @@
         <div class="min-w-0">
             <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-gold">{{ $eyebrow }}</p>
             <h2 class="mt-0.5 text-lg font-extrabold tracking-tight sm:text-xl">
-                Welcome back, <span class="text-gold">{{ explode(' ', Auth::user()->name)[0] }}</span>
+                Welcome back, <span class="text-gold">{{ Auth::user()->name }}</span>
             </h2>
             <p class="mt-0.5 text-xs text-slate-300 sm:text-sm">{{ $subtitle }}</p>
         </div>
