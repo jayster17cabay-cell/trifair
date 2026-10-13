@@ -55,9 +55,8 @@
     function updateComplaintChart(stats) {
         if (!stats) return;
         window.__lastComplaintStats = stats;
-        // Zero-count categories are hidden by default (data-level filter so
-        // hidden rows leave no empty scroll space). The "Show all categories"
-        // toggle flips window.showAllComplaintTypes to render the full list.
+        // Zero-count categories are hidden (data-level filter so hidden rows
+        // leave no empty scroll space).
         var visible = window.showAllComplaintTypes === true
             ? stats
             : stats.filter(function (s) { return s.total > 0; });

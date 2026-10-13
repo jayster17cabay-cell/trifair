@@ -3,7 +3,7 @@
         <h3 class="tw-card-title text-sm"><i class="bi bi-flag-fill mr-1 text-gold"></i> Complaints by Type</h3>
         @if ($totalComplaints > 0)
             <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost" onclick="showComplaintModal()">
-                Details <i class="bi bi-chevron-right"></i>
+                Show all categories <i class="bi bi-chevron-right"></i>
             </button>
         @endif
     </div>
@@ -11,7 +11,6 @@
         @php
             $complaintMax = $complaintStats->max('total');
             $complaintVisible = $complaintStats->where('total', '>', 0);
-            $complaintHiddenCount = $complaintStats->count() - $complaintVisible->count();
         @endphp
         <div id="complaintChartBody" class="max-h-[248px] space-y-2 overflow-y-auto p-4">
             @foreach ($complaintVisible as $c)
@@ -26,13 +25,6 @@
                 </div>
             @endforeach
         </div>
-        @if ($complaintHiddenCount > 0)
-            <div class="px-4 pb-3">
-                <button type="button" id="complaintTypeToggle" onclick="toggleComplaintTypes()" class="mt-2 cursor-pointer text-sm text-gold hover:underline">
-                    Show all categories
-                </button>
-            </div>
-        @endif
     @else
         <div class="flex flex-col items-center justify-center py-8 text-center">
             <div class="tw-empty-icon"><i class="bi bi-flag"></i></div>
@@ -45,11 +37,5 @@
 <script>
     window.showAllComplaintTypes = false;
     window.__lastComplaintStats = @json($complaintStats->map(fn ($c) => ['complaint_type' => $c->complaint_type, 'total' => (int) $c->total])->values());
-    function toggleComplaintTypes() {
-        window.showAllComplaintTypes = !window.showAllComplaintTypes;
-        var btn = document.getElementById('complaintTypeToggle');
-        if (btn) btn.textContent = window.showAllComplaintTypes ? 'Show less' : 'Show all categories';
-        if (window.__rerenderComplaints) window.__rerenderComplaints();
-    }
 </script>
 @endif
