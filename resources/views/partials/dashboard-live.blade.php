@@ -110,7 +110,7 @@
             var pct = max > 0 ? Math.round((count / max) * 100) : 0;
             var height = count > 0 ? Math.max(pct, 4) : 0;
             bars += '<div class="relative h-full flex-1">' +
-                '<div class="absolute inset-x-0 bottom-0 rounded-t-md bg-gradient-to-t from-gold to-gold-dark shadow-sm" style="height:' + height + '%;"></div>' +
+                '<div class="absolute inset-x-0 bottom-0 rounded-t-md bg-gradient-to-t from-navy-700 to-navy-500 shadow-sm" style="height:' + height + '%;"></div>' +
                 '<span class="absolute inset-x-0 text-center text-[11px] font-bold text-slate-700" style="bottom:calc(' + height + '% + 4px);">' + count + '</span>' +
                 '</div>';
             labels += '<div class="flex-1 text-center text-[10px] font-semibold text-slate-500">' + star + ' Star</div>';
