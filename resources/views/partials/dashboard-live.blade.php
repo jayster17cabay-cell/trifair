@@ -101,15 +101,20 @@
         if (!dist) return;
         var body = document.getElementById('ratingChartBody');
         if (!body) return;
-        var counts = [1, 2, 3, 4, 5].map(function (i) { return dist[i] || 0; });
         var max = 0;
-        for (var i = 0; i < counts.length; i++) max = Math.max(max, counts[i]);
+        for (var i = 1; i <= 5; i++) max = Math.max(max, dist[i] || 0);
         var html = '';
-        for (var i = 0; i < counts.length; i++) {
-            var pct = max > 0 ? Math.round((counts[i] / max) * 100) : 0;
-            html += '<div class="flex h-full flex-1 flex-col items-center justify-end">' +
-                '<span class="mb-1 text-[11px] font-bold text-slate-700">' + counts[i] + '</span>' +
-                '<div class="w-full rounded-t-md" style="height:' + Math.max(pct, 2) + '%;background:linear-gradient(180deg,#2e7dd1,#0A2A5E);"></div>' +
+        for (var star = 5; star >= 1; star--) {
+            var count = dist[star] || 0;
+            var pct = max > 0 ? Math.round((count / max) * 100) : 0;
+            var width = count > 0 ? Math.max(pct, 3) : 0;
+            html += '<div class="flex items-center gap-3">' +
+                '<span class="flex w-11 shrink-0 items-center gap-1 text-xs font-bold text-slate-600">' + star +
+                '<i class="bi bi-star-fill text-[11px] text-gold"></i></span>' +
+                '<div class="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">' +
+                '<div class="h-full rounded-full bg-gradient-to-r from-gold to-gold-dark" style="width:' + width + '%;"></div>' +
+                '</div>' +
+                '<span class="w-8 shrink-0 text-right text-xs font-bold text-slate-900">' + count + '</span>' +
                 '</div>';
         }
         body.innerHTML = html;

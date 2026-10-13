@@ -1,30 +1,35 @@
-<div class="tw-card transition-shadow duration-200 hover:shadow-md">
+@php
+    $distTotal = array_sum($ratingDistribution);
+    $distMax = $distTotal > 0 ? max(array_values($ratingDistribution)) : 0;
+@endphp
+<div class="tw-card flex flex-col transition-shadow duration-200 hover:shadow-md">
     <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-        <h3 class="tw-card-title text-sm"><i class="bi bi-bar-chart-fill mr-1 text-gold"></i> Ratings Distribution</h3>
-        <p class="text-[11px] text-slate-400">Per star level</p>
+        <h3 class="tw-card-title text-sm"><i class="bi bi-star-half mr-1 text-gold"></i> Ratings Distribution</h3>
+        @if ($distTotal > 0)
+            <span class="text-[11px] font-semibold text-slate-400">{{ $distTotal }} {{ $distTotal == 1 ? 'rating' : 'ratings' }}</span>
+        @endif
     </div>
-    @php $distTotal = array_sum($ratingDistribution); @endphp
     @if ($distTotal > 0)
-        @php $distMax = max(array_values($ratingDistribution)); @endphp
-        <div id="ratingChartBody" class="flex h-44 items-end gap-3 px-4 pt-4">
-            @for ($star = 1; $star <= 5; $star++)
+        <div id="ratingChartBody" class="flex-1 space-y-3 p-4">
+            @for ($star = 5; $star >= 1; $star--)
                 @php
                     $count = $ratingDistribution[$star] ?? 0;
                     $pct = $distMax > 0 ? round(($count / $distMax) * 100) : 0;
+                    $width = $count > 0 ? max($pct, 3) : 0;
                 @endphp
-                <div class="flex h-full flex-1 flex-col items-center justify-end">
-                    <span class="mb-1 text-[11px] font-bold text-slate-700">{{ $count }}</span>
-                    <div class="w-full rounded-t-md bg-gradient-to-t from-navy-700 to-navy-500" style="height: {{ max($pct, 2) }}%;"></div>
+                <div class="flex items-center gap-3">
+                    <span class="flex w-11 shrink-0 items-center gap-1 text-xs font-bold text-slate-600">
+                        {{ $star }}<i class="bi bi-star-fill text-[11px] text-gold"></i>
+                    </span>
+                    <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                        <div class="h-full rounded-full bg-gradient-to-r from-gold to-gold-dark" style="width: {{ $width }}%;"></div>
+                    </div>
+                    <span class="w-8 shrink-0 text-right text-xs font-bold text-slate-900">{{ $count }}</span>
                 </div>
             @endfor
         </div>
-        <div class="flex gap-3 px-4 pb-4">
-            @for ($star = 1; $star <= 5; $star++)
-                <div class="flex-1 text-center text-[10px] font-semibold text-slate-500">{{ $star }} Star</div>
-            @endfor
-        </div>
     @else
-        <div class="flex flex-col items-center justify-center py-8 text-center">
+        <div class="flex flex-1 flex-col items-center justify-center py-8 text-center">
             <div class="tw-empty-icon"><i class="bi bi-star"></i></div>
             <h4 class="text-sm font-bold text-slate-700">No ratings yet</h4>
             <p class="mt-1 text-sm text-slate-400">Passenger ratings will appear here.</p>
