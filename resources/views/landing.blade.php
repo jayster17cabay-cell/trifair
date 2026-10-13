@@ -30,10 +30,10 @@
     </div>
     <nav class="flex flex-col gap-1">
         <a href="#top" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Home</a>
+        <a href="#area" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Service Area</a>
         <a href="#features" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Features</a>
         <a href="#how" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Get Started</a>
         <a href="#roles" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Who It's For</a>
-        <a href="#area" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Service Area</a>
         <div class="mt-4 grid gap-2.5">
             <a href="{{ route('login') }}" class="tw-btn tw-btn-gold tw-btn-lg w-full"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
             <a href="{{ route('register') }}" class="tw-btn tw-btn-lg w-full border border-white/20 bg-white/10 text-white backdrop-blur hover:border-white/30 hover:bg-white/15"><i class="bi bi-person-plus"></i> Sign Up</a>
@@ -50,10 +50,10 @@
         </a>
         <div class="hidden items-center gap-1 md:flex">
             <a href="#top" class="lp-link">Home</a>
-            <a href="#features" class="lp-link">Features</a>
-            <a href="#how" class="lp-link">Get Started</a>
-            <a href="#roles" class="lp-link">Who It's For</a>
-            <a href="#area" class="lp-link">Service Area</a>
+                <a href="#area" class="lp-link">Service Area</a>
+                <a href="#features" class="lp-link">Features</a>
+                <a href="#how" class="lp-link">Get Started</a>
+                <a href="#roles" class="lp-link">Who It's For</a>
         </div>
         <div class="hidden items-center gap-2 md:flex">
             <a href="{{ route('login') }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white/80 transition hover:text-white">Log In</a>
@@ -465,10 +465,10 @@
                 <h5 class="mb-4 text-xs font-bold uppercase tracking-widest text-white/70">Explore</h5>
                 <ul class="space-y-2.5 text-sm text-white/40">
                     <li><a href="#top" class="transition hover:text-gold">Home</a></li>
+                    <li><a href="#area" class="transition hover:text-gold">Service Area</a></li>
                     <li><a href="#features" class="transition hover:text-gold">Features</a></li>
                     <li><a href="#how" class="transition hover:text-gold">Get Started</a></li>
                     <li><a href="#roles" class="transition hover:text-gold">Who It's For</a></li>
-                    <li><a href="#area" class="transition hover:text-gold">Service Area</a></li>
                 </ul>
             </div>
             <div>
