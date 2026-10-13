@@ -103,21 +103,20 @@
         if (!body) return;
         var max = 0;
         for (var i = 1; i <= 5; i++) max = Math.max(max, dist[i] || 0);
-        var html = '';
-        for (var star = 5; star >= 1; star--) {
+        var bars = '';
+        var labels = '';
+        for (var star = 1; star <= 5; star++) {
             var count = dist[star] || 0;
             var pct = max > 0 ? Math.round((count / max) * 100) : 0;
-            var width = count > 0 ? Math.max(pct, 3) : 0;
-            html += '<div class="flex items-center gap-3">' +
-                '<span class="flex w-11 shrink-0 items-center gap-1 text-xs font-bold text-slate-600">' + star +
-                '<i class="bi bi-star-fill text-[11px] text-gold"></i></span>' +
-                '<div class="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">' +
-                '<div class="h-full rounded-full bg-gradient-to-r from-gold to-gold-dark" style="width:' + width + '%;"></div>' +
-                '</div>' +
-                '<span class="w-8 shrink-0 text-right text-xs font-bold text-slate-900">' + count + '</span>' +
+            var height = count > 0 ? Math.max(pct, 4) : 0;
+            bars += '<div class="relative h-full flex-1">' +
+                '<div class="absolute inset-x-0 bottom-0 rounded-t-md bg-gradient-to-t from-gold to-gold-dark shadow-sm" style="height:' + height + '%;"></div>' +
+                '<span class="absolute inset-x-0 text-center text-[11px] font-bold text-slate-700" style="bottom:calc(' + height + '% + 4px);">' + count + '</span>' +
                 '</div>';
+            labels += '<div class="flex-1 text-center text-[10px] font-semibold text-slate-500">' + star + ' Star</div>';
         }
-        body.innerHTML = html;
+        body.innerHTML = '<div class="flex flex-1 items-end gap-3">' + bars + '</div>' +
+            '<div class="mt-2 flex gap-3">' + labels + '</div>';
     }
 
     function setVisibility(id, show) {
