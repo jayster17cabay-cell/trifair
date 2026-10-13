@@ -11,7 +11,7 @@
     'actionIcon' => 'bi-bar-chart',
 ])
 
-<div class="mb-3 grid grid-cols-2 gap-2.5 md:grid-cols-4 xl:grid-cols-7">
+<div class="mb-4 grid grid-cols-2 gap-2.5 md:grid-cols-4 xl:grid-cols-7">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators'), 'icon' => 'bi-people', 'value' => $totalOperators, 'label' => 'Operators', 'live' => 'totalOperators']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators', ['status' => 'active']), 'icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.ratings'), 'icon' => 'bi-star', 'value' => $totalRatings, 'label' => 'Ratings', 'live' => 'totalRatings']])
@@ -23,7 +23,7 @@
 
 @include('partials.complaint-breakdown-modal')
 
-<div class="mb-3 grid gap-3 lg:grid-cols-2">
+<div class="mb-4 grid gap-3 lg:grid-cols-2">
     @include('partials.complaint-bar-chart')
     @include('partials.rating-distribution-chart')
 </div>

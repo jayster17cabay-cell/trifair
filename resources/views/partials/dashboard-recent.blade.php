@@ -4,7 +4,7 @@
     - $ratingsRoute     route name for the ratings view-all link
     - $totalComplaints  used to conditionally show the complaints view-all link
 --}}
-<div class="mb-3 grid gap-3 lg:grid-cols-3">
+<div class="mb-4 grid gap-3 lg:grid-cols-3">
     <div class="tw-card transition-shadow duration-200 hover:shadow-md">
         <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <h3 class="tw-card-title text-sm"><i class="bi bi-exclamation-triangle mr-1 text-gold"></i> Recent Complaints</h3>

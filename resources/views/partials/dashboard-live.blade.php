@@ -134,11 +134,6 @@
                     else if (key === 'averageRating') { setStat(key, data[key]); updateAvgStars(data.averageRating); }
                     else setStat(key, data[key]);
                 });
-                if (typeof data.pendingReview !== 'undefined') {
-                    setVisibility('pendingReviewBanner', data.pendingReview > 0);
-                    var pr = document.getElementById('pendingReviewText');
-                    if (pr) pr.textContent = data.pendingReview + ' complaint' + (data.pendingReview !== 1 ? 's' : '') + ' pending review';
-                }
                 if (typeof data.totalRatings !== 'undefined') {
                     var cap = document.querySelector('[data-live="ratingCaption"]');
                     if (cap) {

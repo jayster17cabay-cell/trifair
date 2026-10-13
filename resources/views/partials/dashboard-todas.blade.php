@@ -6,7 +6,7 @@
     Also includes the members modal partial once.
 --}}
 @if (($todaStats ?? collect())->isNotEmpty())
-<div class="mb-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+<div class="mb-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
     @foreach ($todaStats as $toda)
         @php
             $todaTotal = $toda->operators_count ?? 0;
