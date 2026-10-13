@@ -186,6 +186,47 @@
                     @elseif ($rating->is_accepted === true)
                         <p class="mt-3 text-xs text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response from the operator yet.</p>
                     @endif
+
+                    @if ($rating->is_accepted === false && $rating->resolution_note)
+                        <div class="mt-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
+                            <div class="mb-1 flex items-center gap-1.5">
+                                <i class="bi bi-x-circle-fill text-red-500"></i>
+                                <span class="text-[0.7rem] font-bold uppercase tracking-widest text-red-600">Reason for rejection</span>
+                            </div>
+                            <p class="mb-0 text-sm text-slate-700">{{ $rating->resolution_note }}</p>
+                        </div>
+                    @elseif ($rating->is_solved && ($rating->resolution_note || $rating->resolutionProofs->count() > 0))
+                        <div class="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                            <div class="mb-1 flex items-center gap-1.5">
+                                <i class="bi bi-patch-check-fill text-emerald-600"></i>
+                                <span class="text-[0.7rem] font-bold uppercase tracking-widest text-emerald-700">Resolution details</span>
+                            </div>
+                            @if ($rating->resolution_note)
+                                <p class="mb-0 text-sm text-slate-700">{{ $rating->resolution_note }}</p>
+                            @endif
+                            @if ($rating->resolutionProofs->count() > 0)
+                                <div class="mt-2.5 border-t border-emerald-100 pt-2">
+                                    <div class="mb-1.5 text-[0.7rem] font-bold uppercase tracking-widest text-slate-400">Resolution proof ({{ $rating->resolutionProofs->count() }} file(s))</div>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach ($rating->resolutionProofs as $proof)
+                                            @if (str_starts_with((string) $proof->file_type, 'image'))
+                                                <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}">
+                                                    <img src="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
+                                                         alt="{{ $proof->original_name }}"
+                                                         class="h-16 w-16 rounded-lg border border-slate-200 object-cover">
+                                                </a>
+                                            @else
+                                                <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
+                                                   class="tw-btn tw-btn-sm tw-btn-outline">
+                                                    <i class="bi bi-file-earmark"></i> {{ $proof->original_name }}
+                                                </a>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </div>
         @empty

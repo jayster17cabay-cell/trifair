@@ -5,12 +5,14 @@ namespace Tests\Feature;
 use App\Models\Operator;
 use App\Models\Rating;
 use App\Models\RatingProof;
+use App\Models\ResolutionProof;
 use App\Models\Toda;
 use App\Models\User;
 use App\Services\AdminDashboardService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -260,5 +262,101 @@ class ComplaintReviewFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Accepted')
             ->assertSee('Rejected');
+    }
+
+    public function test_rejecting_with_a_note_shows_the_reason_to_the_passenger()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $passenger = $this->makeUser('passenger');
+        $complaint = $this->makeValidComplaint($operator, 1);
+        $complaint->update(['passenger_user_id' => $passenger->id]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $complaint->id . '/reject', [
+                'resolution_note' => 'Walang sapat na ebidensya para mapatunayan ang reklamo.',
+            ])
+            ->assertRedirect();
+
+        $fresh = $complaint->fresh();
+        $this->assertSame('Walang sapat na ebidensya para mapatunayan ang reklamo.', $fresh->resolution_note);
+
+        $this->actingAs($passenger)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee('Reason for rejection')
+            ->assertSee('Walang sapat na ebidensya para mapatunayan ang reklamo.');
+    }
+
+    public function test_solving_with_a_note_stores_and_displays_the_resolution()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $passenger = $this->makeUser('passenger');
+        $complaint = $this->makeValidComplaint($operator, 1);
+        $complaint->update(['passenger_user_id' => $passenger->id]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $complaint->id . '/solve', [
+                'resolution_note' => 'Nakausap na ang driver at nagbigay ng apology.',
+            ])
+            ->assertRedirect();
+
+        $fresh = $complaint->fresh();
+        $this->assertSame('Nakausap na ang driver at nagbigay ng apology.', $fresh->resolution_note);
+        $this->assertTrue($fresh->is_solved);
+
+        // A stored proof file is surfaced to the passenger as resolution proof.
+        ResolutionProof::create([
+            'rating_id' => $complaint->id,
+            'file_path' => 'resolution-proofs/' . $complaint->id . '/resolved.jpg',
+            'file_type' => 'image/jpeg',
+            'original_name' => 'resolved.jpg',
+        ]);
+
+        $this->actingAs($passenger)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee('Resolution details')
+            ->assertSee('Nakausap na ang driver at nagbigay ng apology.')
+            ->assertSee('resolved.jpg');
+    }
+
+    public function test_reset_and_reopen_clear_the_resolution_details()
+    {
+        Http::fake();
+
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+
+        $solved = $this->makeValidComplaint($operator, 1);
+        $solved->update([
+            'is_reviewed' => true,
+            'is_accepted' => true,
+            'is_solved' => true,
+            'solved_at' => now(),
+            'resolution_note' => 'Resolved already.',
+        ]);
+        ResolutionProof::create([
+            'rating_id' => $solved->id,
+            'file_path' => 'resolution-proofs/' . $solved->id . '/resolved.jpg',
+            'file_type' => 'image/jpeg',
+            'original_name' => 'resolved.jpg',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $solved->id . '/reopen')
+            ->assertRedirect();
+
+        $fresh = $solved->fresh();
+        $this->assertNull($fresh->resolution_note);
+        $this->assertSame(0, ResolutionProof::where('rating_id', $solved->id)->count());
+
+        $rejected = $this->makeValidComplaint($operator, 1);
+        $rejected->update(['is_reviewed' => true, 'is_accepted' => false, 'resolution_note' => 'Not a valid complaint.']);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $rejected->id . '/reset')
+            ->assertRedirect();
+
+        $this->assertNull($rejected->fresh()->resolution_note);
     }
 }

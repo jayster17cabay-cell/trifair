@@ -85,6 +85,7 @@ class Rating extends Model
         'is_reviewed',
         'is_solved',
         'solved_at',
+        'resolution_note',
         'is_auto',
         'is_valid',
         'is_accepted',
@@ -136,6 +137,14 @@ class Rating extends Model
     public function operatorProofs()
     {
         return $this->hasMany(OperatorProof::class);
+    }
+
+    /**
+     * Evidence attached by the reviewing officer when the complaint is solved.
+     */
+    public function resolutionProofs()
+    {
+        return $this->hasMany(ResolutionProof::class);
     }
 
     public function passenger()

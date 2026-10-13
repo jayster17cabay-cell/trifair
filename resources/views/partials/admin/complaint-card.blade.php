@@ -168,6 +168,38 @@
             </div>
         @endif
 
+        {{-- Resolution details captured when the officer rejected or solved the
+             complaint. Shown here so reviewers can see the recorded reason and
+             any proof attached for the passenger. --}}
+        @if (($rating->status_label === 'Rejected' && $rating->resolution_note) || ($rating->status_label === 'Solved' && ($rating->resolution_note || $rating->resolutionProofs->count() > 0)))
+            @php $isSolved = $rating->status_label === 'Solved'; @endphp
+            <div class="mx-4 mb-4 rounded-xl border {{ $isSolved ? 'border-emerald-100 bg-emerald-50/60' : 'border-red-100 bg-red-50/60' }} px-4 py-3 sm:mx-5">
+                <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
+                    <i class="bi {{ $isSolved ? 'bi-patch-check-fill text-emerald-600' : 'bi-x-circle-fill text-red-500' }}"></i>
+                    <span class="text-[0.7rem] font-bold uppercase tracking-widest {{ $isSolved ? 'text-emerald-700' : 'text-red-600' }}">
+                        {{ $isSolved ? 'Resolution Details' : 'Reason for Rejection' }}
+                    </span>
+                </div>
+                @if ($rating->resolution_note)
+                    <p class="mb-0 text-sm leading-relaxed text-slate-700">{{ $rating->resolution_note }}</p>
+                @endif
+                @if ($rating->resolutionProofs->count() > 0)
+                    <div class="mt-2.5 border-t border-slate-200 pt-2">
+                        <small class="text-[0.65rem] font-bold uppercase tracking-widest text-slate-500"><i class="bi bi-paperclip mr-1"></i>Resolution Proof</small>
+                        <div class="mt-1.5 flex flex-wrap gap-2">
+                            @foreach ($rating->resolutionProofs as $proof)
+                                <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
+                                   class="inline-flex items-center gap-1.5 rounded-lg border-[1.5px] border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50">
+                                    <i class="bi bi-{{ str_contains($proof->file_type ?? '', 'image') ? 'image' : (str_contains($proof->file_type ?? '', 'video') ? 'play-circle' : 'file-earmark') }}"></i>
+                                    {{ $proof->original_name }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
+
         <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white/70 px-4 py-3 sm:px-5">
             @if ($rating->response)
                 <span class="text-xs text-slate-400"><i class="bi bi-check2-all mr-1 text-emerald-500"></i>Operator responded</span>
@@ -183,21 +215,19 @@
                             <i class="bi bi-check-lg"></i>Accept
                         </button>
                     </form>
-                    <form action="{{ route($routePrefix . '.complaints.reject', $rating) }}" method="POST" onsubmit="return confirm('Reject this complaint? It will NOT count towards the operator\'s rating.')">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reject complaint">
-                            <i class="bi bi-x-lg"></i>Reject
-                        </button>
-                    </form>
+                    <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" title="Reject complaint"
+                            data-complaint-resolution data-mode="reject"
+                            data-action="{{ route($routePrefix . '.complaints.reject', $rating) }}"
+                            data-ref="{{ $rating->reference_number }}">
+                        <i class="bi bi-x-lg"></i>Reject
+                    </button>
                 @elseif ($rating->status_label === 'Accepted')
-                    <form action="{{ route($routePrefix . '.complaints.reject', $rating) }}" method="POST" onsubmit="return confirm('Reject this complaint? It will stop counting towards the operator\'s rating.')">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reject complaint">
-                            <i class="bi bi-x-lg"></i>Reject
-                        </button>
-                    </form>
+                    <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" title="Reject complaint"
+                            data-complaint-resolution data-mode="reject"
+                            data-action="{{ route($routePrefix . '.complaints.reject', $rating) }}"
+                            data-ref="{{ $rating->reference_number }}">
+                        <i class="bi bi-x-lg"></i>Reject
+                    </button>
                 @elseif ($rating->status_label === 'Rejected')
                     <form action="{{ route($routePrefix . '.complaints.reset', $rating) }}" method="POST" onsubmit="return confirm('Undo rejection and return this complaint to pending review?')">
                         @csrf
@@ -217,13 +247,12 @@
                         </button>
                     </form>
                 @elseif ($rating->status_label === 'Accepted')
-                    <form action="{{ route($routePrefix . '.complaints.solve', $rating) }}" method="POST" onsubmit="return confirm('Mark this complaint as solved? The passenger will be notified via email.')">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy" title="Mark complaint as solved">
-                            <i class="bi bi-patch-check"></i>Solved
-                        </button>
-                    </form>
+                    <button type="button" class="tw-btn tw-btn-sm tw-btn-navy" title="Mark complaint as solved"
+                            data-complaint-resolution data-mode="solve"
+                            data-action="{{ route($routePrefix . '.complaints.solve', $rating) }}"
+                            data-ref="{{ $rating->reference_number }}">
+                        <i class="bi bi-patch-check"></i>Solved
+                    </button>
                 @endif
 
                 <form action="{{ route($routePrefix . '.complaints.destroy', $rating) }}" method="POST" onsubmit="return confirm('Delete this complaint?')">

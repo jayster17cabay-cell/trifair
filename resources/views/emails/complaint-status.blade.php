@@ -83,6 +83,23 @@
                                     the complaint is resolved. Thank you for your patience.
                                 @endif
                             </p>
+                            @if (in_array($status, ['solved', 'rejected'], true) && $rating->resolution_note)
+                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ $status === 'solved' ? '#ecfdf5' : '#fef2f2' }};border:1px solid {{ $status === 'solved' ? '#a7f3d0' : '#fecaca' }};border-radius:8px;margin-top:18px;">
+                                    <tr>
+                                        <td style="padding:14px 18px;">
+                                            <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:{{ $status === 'solved' ? '#047857' : '#b91c1c' }};padding-bottom:6px;">
+                                                {{ $status === 'solved' ? 'Resolution Details' : 'Reason' }}
+                                            </div>
+                                            <div style="font-size:14px;line-height:1.6;color:#334155;">{{ $rating->resolution_note }}</div>
+                                            @if ($status === 'solved' && $rating->resolutionProofs->count() > 0)
+                                                <div style="font-size:12px;color:#64748b;padding-top:8px;">
+                                                    The officer also attached {{ $rating->resolutionProofs->count() }} proof file(s). Sign in to TriFair to view {{ $rating->resolutionProofs->count() === 1 ? 'it' : 'them' }}.
+                                                </div>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                </table>
+                            @endif
                         </td>
                     </tr>
                     <tr>

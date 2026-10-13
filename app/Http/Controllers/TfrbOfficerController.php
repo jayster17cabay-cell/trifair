@@ -251,9 +251,13 @@ class TfrbOfficerController extends Controller
         return app(RatingAdminService::class)->complaintsAccept($rating);
     }
 
-    public function complaintsReject(Rating $rating)
+    public function complaintsReject(Request $request, Rating $rating)
     {
-        return app(RatingAdminService::class)->complaintsReject($rating);
+        $request->validate([
+            'resolution_note' => 'nullable|string|max:2000',
+        ]);
+
+        return app(RatingAdminService::class)->complaintsReject($rating, $request->input('resolution_note'));
     }
 
     public function complaintsResetReview(Rating $rating)
@@ -261,9 +265,19 @@ class TfrbOfficerController extends Controller
         return app(RatingAdminService::class)->complaintsResetReview($rating);
     }
 
-    public function complaintsMarkSolved(Rating $rating)
+    public function complaintsMarkSolved(Request $request, Rating $rating)
     {
-        return app(RatingAdminService::class)->complaintsMarkSolved($rating);
+        $request->validate([
+            'resolution_note' => 'nullable|string|max:2000',
+            'resolution_proofs' => 'nullable|array|max:5',
+            'resolution_proofs.*' => 'nullable|file|max:10240',
+        ]);
+
+        return app(RatingAdminService::class)->complaintsMarkSolved(
+            $rating,
+            $request->input('resolution_note'),
+            $request->file('resolution_proofs') ?: []
+        );
     }
 
     public function complaintsReopen(Rating $rating)

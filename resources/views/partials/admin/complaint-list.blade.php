@@ -198,3 +198,97 @@
         });
     })();
 </script>
+
+{{-- Shared resolution modal opened by the Reject / Solved buttons on a card.
+     The note is required here in the UI; the server keeps it optional so the
+     plain reject/solve endpoints remain backwards compatible. --}}
+<div id="complaintResolutionModal" class="tw-modal-backdrop hidden" data-complaint-resolution-modal>
+    <div class="tw-modal">
+        <div class="tw-modal-head">
+            <h3 class="text-base font-bold text-slate-800" data-resolution-title>Review Complaint</h3>
+            <button type="button" class="tw-modal-close" data-resolution-close aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form id="complaintResolutionForm" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PATCH')
+            <div class="tw-modal-body">
+                <p class="mb-3 text-sm leading-relaxed text-slate-500" data-resolution-help></p>
+                <label class="tw-label" for="resolutionNote" data-resolution-note-label>Resolution details</label>
+                <textarea id="resolutionNote" name="resolution_note" rows="4" required maxlength="2000" class="tw-textarea" placeholder="Describe the resolution..."></textarea>
+
+                <div class="mt-3 hidden" data-resolution-proof-wrap>
+                    <label class="tw-label" for="resolutionProofs">Resolution proof (optional)</label>
+                    <input type="file" id="resolutionProofs" name="resolution_proofs[]" multiple
+                           accept="image/*,video/*,.pdf,.doc,.docx" class="tw-input">
+                    <p class="mt-1 text-xs text-slate-400">Attach evidence that the complaint was resolved (photos, documents, up to 5 files).</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
+                <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" data-resolution-close>Cancel</button>
+                <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy" data-resolution-submit>Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var modal = document.querySelector('[data-complaint-resolution-modal]');
+        if (!modal) return;
+
+        var form = document.getElementById('complaintResolutionForm');
+        var title = modal.querySelector('[data-resolution-title]');
+        var help = modal.querySelector('[data-resolution-help]');
+        var noteLabel = modal.querySelector('[data-resolution-note-label]');
+        var note = document.getElementById('resolutionNote');
+        var proofWrap = modal.querySelector('[data-resolution-proof-wrap]');
+        var proofInput = document.getElementById('resolutionProofs');
+        var submit = modal.querySelector('[data-resolution-submit]');
+
+        function open(mode, action, ref) {
+            form.setAttribute('action', action);
+            note.value = '';
+            if (proofInput) { proofInput.value = ''; }
+            var solved = mode === 'solve';
+            title.textContent = solved ? 'Mark Complaint Solved' : 'Reject Complaint';
+            noteLabel.textContent = solved ? 'Resolution details' : 'Reason for rejection';
+            help.textContent = solved
+                ? 'Explain how complaint ' + ref + ' was resolved. The passenger will see this and any proof you attach.'
+                : 'Explain why complaint ' + ref + ' is being rejected. The passenger will see this reason.';
+            proofWrap.classList.toggle('hidden', !solved);
+            if (submit) { submit.textContent = solved ? 'Mark Solved' : 'Reject'; }
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            note.focus();
+        }
+
+        function close() {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('click', function (e) {
+            var trigger = e.target && e.target.closest ? e.target.closest('[data-complaint-resolution]') : null;
+            if (trigger) {
+                e.preventDefault();
+                open(trigger.getAttribute('data-mode'), trigger.getAttribute('data-action'), trigger.getAttribute('data-ref'));
+                return;
+            }
+            if (e.target && e.target.closest && e.target.closest('[data-resolution-close]')) {
+                close();
+                return;
+            }
+            if (e.target === modal) {
+                close();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                close();
+            }
+        });
+    })();
+</script>

@@ -7,6 +7,7 @@ use App\Helpers\SupabaseStorage;
 use App\Mail\ComplaintStatus;
 use App\Models\Notification;
 use App\Models\Rating;
+use App\Models\ResolutionProof;
 use App\Services\AdminDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,21 +62,36 @@ class RatingAdminService
      * valid report (e.g. fake or unverifiable). A rejected complaint is a dead
      * end — it is never solved and never counts towards the operator's rating.
      */
-    public function complaintsReject(Rating $rating): RedirectResponse
+    public function complaintsReject(Rating $rating, ?string $note = null): RedirectResponse
     {
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be reviewed here.']);
         }
 
+        $note = $this->cleanResolutionNote($note);
         $wasRejected = $rating->is_accepted === false;
-        $rating->update(['is_reviewed' => true, 'is_accepted' => false, 'is_solved' => false, 'solved_at' => null]);
+
+        $rating->update([
+            'is_reviewed' => true,
+            'is_accepted' => false,
+            'is_solved' => false,
+            'solved_at' => null,
+            'resolution_note' => $note,
+        ]);
+        // A rejection carries no resolution proof, so drop any evidence left
+        // over from a previous "solved" state to avoid showing stale files.
+        $this->clearResolutionProofs($rating);
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('reject_complaint', "Rejected complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
 
         if (!$wasRejected) {
             $this->notifyComplaintStatus($rating, 'rejected');
-            $this->notifyPassengerInApp($rating, 'Complaint Rejected', 'After review, your complaint was not validated and will not affect the operator\'s record. Thank you for your report.');
+            $message = 'After review, your complaint was not validated and will not affect the operator\'s record. Thank you for your report.';
+            if ($note) {
+                $message .= ' Reason: ' . $note;
+            }
+            $this->notifyPassengerInApp($rating, 'Complaint Rejected', $message);
         }
 
         return back()->with('success', 'Complaint rejected. It will not count towards the operator\'s rating.');
@@ -91,7 +107,14 @@ class RatingAdminService
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be reset here.']);
         }
 
-        $rating->update(['is_reviewed' => false, 'is_accepted' => null, 'is_solved' => false, 'solved_at' => null]);
+        $rating->update([
+            'is_reviewed' => false,
+            'is_accepted' => null,
+            'is_solved' => false,
+            'solved_at' => null,
+            'resolution_note' => null,
+        ]);
+        $this->clearResolutionProofs($rating);
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('reset_complaint', "Returned complaint #{$rating->id} to pending review (operator: {$rating->operator_name})", $rating, 'review');
@@ -101,26 +124,46 @@ class RatingAdminService
 
     /**
      * Mark a complaint as solved. Solving also implies the complaint has been
-     * reviewed. Always notifies the passenger (only when transitioning out of
-     * the solved state) so a re-solve does not spam their inbox.
+     * reviewed. The passenger is notified only when the complaint transitions
+     * out of the solved state so a re-solve does not spam their inbox. An
+     * optional resolution note and proof attachments are stored so the
+     * passenger can see how the matter was resolved.
      */
-    public function complaintsMarkSolved(Rating $rating): RedirectResponse
+    public function complaintsMarkSolved(Rating $rating, ?string $note = null, array $files = []): RedirectResponse
     {
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be marked solved here.']);
         }
 
+        $note = $this->cleanResolutionNote($note);
         $wasSolved = (bool) $rating->is_solved;
         // Solving implies the complaint was legitimate, so it is accepted too:
         // a resolved complaint must always count towards the operator's record.
-        $rating->update(['is_reviewed' => true, 'is_accepted' => true, 'is_solved' => true, 'solved_at' => now()]);
+        $rating->update([
+            'is_reviewed' => true,
+            'is_accepted' => true,
+            'is_solved' => true,
+            'solved_at' => now(),
+            'resolution_note' => $note,
+        ]);
+
+        // Only replace the evidence when fresh files are supplied, so re-saving
+        // a solved complaint (e.g. editing the note) keeps the existing proof.
+        if (!empty($files)) {
+            $this->clearResolutionProofs($rating);
+            $this->storeResolutionProofs($rating, $files);
+        }
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('mark_solved', "Marked complaint #{$rating->id} as solved (operator: {$rating->operator_name})", $rating, 'review');
 
         if (!$wasSolved) {
             $this->notifyComplaintStatus($rating, 'solved');
-            $this->notifyPassengerInApp($rating, 'Complaint Solved', 'Your complaint has been marked as solved.');
+            $message = 'Your complaint has been marked as solved.';
+            if ($note) {
+                $message .= ' Details: ' . $note;
+            }
+            $this->notifyPassengerInApp($rating, 'Complaint Solved', $message);
         }
 
         return back()->with('success', 'Complaint marked as solved.');
@@ -136,7 +179,14 @@ class RatingAdminService
         // accepted flags must be cleared too — otherwise it stays "accepted",
         // is invisible under the Pending filter, and the "Mark Reviewed" action
         // never comes back on the card.
-        $rating->update(['is_solved' => false, 'solved_at' => null, 'is_reviewed' => false, 'is_accepted' => null]);
+        $rating->update([
+            'is_solved' => false,
+            'solved_at' => null,
+            'is_reviewed' => false,
+            'is_accepted' => null,
+            'resolution_note' => null,
+        ]);
+        $this->clearResolutionProofs($rating);
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('reopen_complaint', "Reopened complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
@@ -217,6 +267,87 @@ class RatingAdminService
             'title' => $title,
             'message' => $message,
         ]);
+    }
+
+    /**
+     * Normalise a resolution note coming from the review forms. Empty strings
+     * collapse to null so the column stays clean and the "has a note" checks
+     * elsewhere keep working.
+     */
+    private function cleanResolutionNote(?string $note): ?string
+    {
+        $note = trim((string) $note);
+
+        return $note === '' ? null : $note;
+    }
+
+    /**
+     * Persist officer-supplied resolution evidence, mirroring the storage
+     * strategy used for passenger/operator proofs: Supabase Storage when
+     * available, with a public-disk fallback so nothing is lost in tests or
+     * when the remote bucket is unreachable.
+     */
+    private function storeResolutionProofs(Rating $rating, array $files): void
+    {
+        foreach ($files as $file) {
+            if (!$file || !$file->isValid()) {
+                continue;
+            }
+
+            $filename = time() . '_' . uniqid() . '.' . $file->extension();
+            $remotePath = 'resolution-proofs/' . $rating->id . '/' . $filename;
+            $path = null;
+
+            try {
+                if (class_exists(SupabaseStorage::class) && SupabaseStorage::upload($file, $remotePath)) {
+                    $path = $remotePath;
+                }
+                if (!$path) {
+                    $file->storeAs('resolution-proofs/' . $rating->id, $filename, 'public');
+                    $path = 'resolution-proofs/' . $rating->id . '/' . $filename;
+                }
+            } catch (\Throwable $e) {
+                Log::error('Resolution proof save failed: ' . get_class($e) . ': ' . $e->getMessage(), ['path' => $remotePath]);
+                $path = null;
+            }
+
+            if (!$path) {
+                continue;
+            }
+
+            ResolutionProof::create([
+                'rating_id' => $rating->id,
+                'file_path' => $path,
+                'file_type' => (string) ($file->getMimeType() ?: 'application/octet-stream'),
+                'original_name' => $file->getClientOriginalName(),
+            ]);
+        }
+
+        $rating->unsetRelation('resolutionProofs');
+    }
+
+    /**
+     * Remove every stored resolution proof for a complaint (rows + remote
+     * files). Used when rejecting, undoing a review or replacing evidence so
+     * stale attachments never linger.
+     */
+    private function clearResolutionProofs(Rating $rating): void
+    {
+        $proofs = $rating->resolutionProofs;
+
+        foreach ($proofs as $proof) {
+            try {
+                SupabaseStorage::delete($proof->file_path);
+            } catch (\Throwable $e) {
+                Log::error('Resolution proof delete failed: ' . get_class($e) . ': ' . $e->getMessage());
+            }
+        }
+
+        if ($proofs->isNotEmpty()) {
+            $rating->resolutionProofs()->delete();
+        }
+
+        $rating->unsetRelation('resolutionProofs');
     }
 
     public function ratingsBulkReview(Request $request): RedirectResponse
