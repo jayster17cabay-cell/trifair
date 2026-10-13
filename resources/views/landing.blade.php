@@ -32,7 +32,7 @@
         <a href="#top" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Home</a>
         <a href="#area" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Service Area</a>
         <a href="#features" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Features</a>
-        <a href="#how" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Get Started</a>
+        <a href="#how" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">How It Works</a>
         <a href="#roles" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Who It's For</a>
         <div class="mt-4 grid gap-2.5">
             <a href="{{ route('login') }}" class="tw-btn tw-btn-gold tw-btn-lg w-full"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
@@ -52,7 +52,7 @@
             <a href="#top" class="lp-link">Home</a>
                 <a href="#area" class="lp-link">Service Area</a>
                 <a href="#features" class="lp-link">Features</a>
-                <a href="#how" class="lp-link">Get Started</a>
+                <a href="#how" class="lp-link">How It Works</a>
                 <a href="#roles" class="lp-link">Who It's For</a>
         </div>
         <div class="hidden items-center gap-2 md:flex">
