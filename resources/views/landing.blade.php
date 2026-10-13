@@ -408,20 +408,6 @@
     </div>
 </section>
 
-{{-- CTA --}}
-<section class="relative overflow-hidden bg-[linear-gradient(155deg,#060e1a_0%,#0f2b4a_40%,#1e3a5f_80%,#2a4a7a_100%)] px-6 py-16 text-center md:px-8 md:py-20">
-    <div class="pointer-events-none absolute inset-0 lp-bg-grid"></div>
-    <div class="pointer-events-none absolute -right-24 -top-[40%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(245,184,0,0.10)_0%,transparent_65%)]"></div>
-    <div class="relative z-10 mx-auto max-w-2xl">
-        <h2 class="mb-3 text-3xl font-extrabold tracking-tight text-white md:text-4xl">Ready to Get Started?</h2>
-        <p class="mb-8 text-[0.95rem] leading-relaxed text-white/60">Log in to access your dashboard and start managing or rating motorcycle rides today.</p>
-        <div class="flex flex-wrap justify-center gap-3">
-            <a href="{{ route('login') }}" class="tw-btn tw-btn-gold tw-btn-lg"><i class="bi bi-box-arrow-in-right"></i> Log In Now</a>
-            <a href="{{ route('register') }}" class="tw-btn tw-btn-lg border border-white/20 bg-white/10 text-white backdrop-blur transition hover:border-white/30 hover:bg-white/15"><i class="bi bi-person-plus"></i> Create Account</a>
-        </div>
-    </div>
-</section>
-
 {{-- DEVELOPERS --}}
 <section id="developers" class="relative overflow-hidden bg-[linear-gradient(155deg,#060e1a_0%,#0f2b4a_40%,#1e3a5f_80%,#2a4a7a_100%)] px-6 py-16 md:px-8 md:py-20">
     <div class="pointer-events-none absolute inset-0 lp-bg-grid"></div>
