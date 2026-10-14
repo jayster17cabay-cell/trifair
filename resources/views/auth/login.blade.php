@@ -33,9 +33,6 @@
                             <span class="tw-input-group-icon"><i class="bi bi-envelope"></i></span>
                             <input id="email" type="email" class="tw-input @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autofocus placeholder="you@example.com">
                         </div>
-                        @error('email')
-                            <span class="tw-error-text" role="alert">{{ $message }}</span>
-                        @enderror
                     </div>
 
                     <div class="tw-auth-field">
