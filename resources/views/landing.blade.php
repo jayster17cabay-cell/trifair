@@ -34,10 +34,6 @@
         <a href="#features" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Features</a>
         <a href="#how" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">How It Works</a>
         <a href="#roles" class="mobile-link rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-white/10 hover:text-white">Who It's For</a>
-        <div class="mt-4 grid gap-2.5">
-            <a href="{{ route('login') }}" class="tw-btn tw-btn-gold tw-btn-lg w-full"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
-            <a href="{{ route('register') }}" class="tw-btn tw-btn-lg w-full border border-white/20 bg-white/10 text-white backdrop-blur hover:border-white/30 hover:bg-white/15"><i class="bi bi-person-plus"></i> Sign Up</a>
-        </div>
     </nav>
 </div>
 
@@ -54,10 +50,6 @@
                 <a href="#features" class="lp-link">Features</a>
                 <a href="#how" class="lp-link">How It Works</a>
                 <a href="#roles" class="lp-link">Who It's For</a>
-        </div>
-        <div class="hidden items-center gap-2 md:flex">
-            <a href="{{ route('login') }}" class="rounded-lg px-4 py-2 text-sm font-semibold text-white/80 transition hover:text-white">Log In</a>
-            <a href="{{ route('register') }}" class="tw-btn tw-btn-gold"><i class="bi bi-person-plus"></i> Sign Up</a>
         </div>
         <button id="mobileMenuOpen" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-white transition hover:bg-white/10 md:hidden" aria-label="Open menu">
             <i class="bi bi-list text-2xl"></i>
