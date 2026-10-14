@@ -158,19 +158,17 @@ class PageRenderTest extends TestCase
         $this->get('/rate/' . $operator->qr_code)->assertOk();
     }
 
-    public function test_admin_pages_show_home_breadcrumb_except_dashboard()
+    public function test_admin_shell_shows_home_link_in_topbar()
     {
         $officer = $this->makeUser('tfrb_officer');
 
         $this->actingAs($officer)->get('/tfrb-officer/complaints')
             ->assertOk()
-            ->assertSee('aria-label="Breadcrumb"', false)
-            ->assertSee('Home')
-            ->assertSee('Complaints');
+            ->assertSee('aria-label="Home"', false);
 
         $this->actingAs($officer)->get('/tfrb-officer/dashboard')
             ->assertOk()
-            ->assertDontSee('aria-label="Breadcrumb"', false);
+            ->assertSee('aria-label="Home"', false);
     }
 
     public function test_login_page_has_no_google_button()

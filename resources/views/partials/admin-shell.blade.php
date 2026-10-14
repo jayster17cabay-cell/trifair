@@ -47,6 +47,10 @@
                 <i class="bi {{ $shell['roleIcon'] }} text-xl text-gold"></i>
                 <span>TriFair <span class="text-gold">{{ $shell['roleLabel'] }}</span></span>
             </a>
+            <a href="{{ route($shell['home']) }}" class="inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors {{ request()->routeIs($shell['home']) ? 'bg-gold text-navy-800' : 'bg-white/10 text-white hover:bg-white/20' }}" title="Home" aria-label="Home">
+                <i class="bi bi-house-door text-lg"></i>
+                <span class="hidden sm:inline">Home</span>
+            </a>
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
             <div class="hidden text-right md:block">
@@ -151,21 +155,6 @@
                     <button type="button" class="tw-alert-close" data-tw-dismiss aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
                 </div>
             @endif
-
-            @php
-                $pageTitle = trim((string) $__env->yieldContent('title'));
-                $atHome = request()->routeIs($shell['home']);
-            @endphp
-            @unless ($atHome)
-                <nav aria-label="Breadcrumb" class="mb-4 flex items-center gap-2 text-sm">
-                    <a href="{{ route($shell['home']) }}" class="inline-flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-navy-600">
-                        <i class="bi bi-house-door"></i>
-                        <span>Home</span>
-                    </a>
-                    <i class="bi bi-chevron-right text-[10px] text-slate-300"></i>
-                    <span class="font-semibold text-navy-700">{{ $pageTitle !== '' ? $pageTitle : $shell['roleLabel'] }}</span>
-                </nav>
-            @endunless
 
             @yield('content')
         </main>
