@@ -18,6 +18,7 @@
     $tone = [
         'active'     => ['border-l-nv-green', 'bg-nv-green-light text-nv-green'],
         'inactive'   => ['border-l-slate-300', 'bg-slate-100 text-slate-500'],
+        'suspended'  => ['border-l-amber-400', 'bg-amber-100 text-amber-700'],
         'complaints' => ['border-l-nv-red',   'bg-nv-red-light text-nv-red'],
         'default'    => ['border-l-gold',     'bg-gold-50 text-gold-800'],
     ];

@@ -64,12 +64,6 @@
                     <span id="unreadBellBadge" class="tw-topbar-badge" data-unread-badge data-live="unreadCount" style="display: {{ $unreadCount > 0 ? '' : 'none' }}">{{ $unreadCount }}</span>
                 </a>
             @endif
-            <div class="hidden items-center gap-3 sm:flex">
-                <div class="text-right">
-                    <small class="block text-[11px] font-medium uppercase tracking-wider text-white/60">Welcome</small>
-                    <strong class="text-sm font-bold text-gold">{{ Auth::user()->name }}</strong>
-                </div>
-            </div>
         </div>
     </nav>
 

@@ -1083,11 +1083,13 @@ class DashboardAuditTest extends TestCase
         $this->makeUser('superadmin');
         $toda = $this->makeToda();
 
-        // Same total, but one operator is inactive and one still pending, so
-        // "Active" must NOT equal "Operators" (the original "15 / 15" bug).
+        // Same total, but one operator each is inactive and suspended, and one
+        // is still a pending registration, so "Active" must NOT equal
+        // "Operators" (the original "15 / 15" bug).
         $active = $this->makeOperator('active', $toda);
         $inactive = $this->makeOperator('inactive', $toda);
-        $this->makeOperator('pending', $toda);
+        $this->makeOperator('suspended', $toda);
+        $this->makeOperator('pending', $toda); // registration, not an operator yet
 
         // Valid feedback of every star value that counts toward a score...
         $this->makeRating($active, 5);
@@ -1103,9 +1105,15 @@ class DashboardAuditTest extends TestCase
         Cache::flush();
         $stats = app(\App\Services\AdminDashboardService::class)->stats(['includeOfficers' => true]);
 
-        $this->assertSame(3, $stats['totalOperators'], 'Operators = active + inactive + pending');
+        $this->assertSame(3, $stats['totalOperators'], 'Operators = active + inactive + suspended (pending excluded)');
         $this->assertSame(1, $stats['activeOperators']);
         $this->assertSame(1, $stats['inactiveOperators']);
+        $this->assertSame(1, $stats['suspendedOperators']);
+        $this->assertSame(
+            $stats['totalOperators'],
+            $stats['activeOperators'] + $stats['inactiveOperators'] + $stats['suspendedOperators'],
+            'Active + Inactive + Suspended must equal the Operators total'
+        );
 
         $this->assertSame(6, $stats['totalRatings'], 'Only valid, counted ratings');
         $this->assertSame(6, array_sum($stats['ratingDistribution']), 'Distribution must sum to the Ratings KPI');

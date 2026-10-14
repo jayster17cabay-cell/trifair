@@ -77,9 +77,13 @@ class AdminDashboardService
         $recentLimit = $options['recentLimit'] ?? 5;
 
         $data = [
-            'totalOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->count(),
+            // "Operators" counts real, live operators only. Registrations that
+            // are still pending or were rejected are not operators yet, so the
+            // total always equals active + inactive + suspended.
+            'totalOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->whereNotIn('status', ['pending', 'rejected'])->count(),
             'activeOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'active')->count(),
             'inactiveOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'inactive')->count(),
+            'suspendedOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'suspended')->count(),
             'totalRatings' => Rating::isValid()->countsTowardRating()->count(),
             // Averages only consider accepted complaints so pending/rejected
             // complaints can never drag an operator's score down.
@@ -186,6 +190,7 @@ class AdminDashboardService
             'totalOperators' => $stats['totalOperators'],
             'activeOperators' => $stats['activeOperators'],
             'inactiveOperators' => $stats['inactiveOperators'],
+            'suspendedOperators' => $stats['suspendedOperators'],
             'totalRatings' => $stats['totalRatings'],
             'averageRating' => round((float) $stats['averageRating'], 1),
             'totalComplaints' => $stats['totalComplaints'],
