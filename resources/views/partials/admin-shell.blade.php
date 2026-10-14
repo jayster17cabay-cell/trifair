@@ -49,10 +49,12 @@
             </a>
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
-            <a href="{{ route($shell['home']) }}" class="tw-topbar-home {{ request()->routeIs($shell['home']) ? 'active' : '' }}" title="Home" aria-label="Home">
-                <i class="bi bi-house-door-fill text-base"></i>
-                <span class="hidden sm:inline">Home</span>
-            </a>
+            @if (!request()->routeIs($shell['home']))
+                <a href="{{ route($shell['home']) }}" class="tw-topbar-home" title="Home" aria-label="Home">
+                    <i class="bi bi-house-door-fill text-base"></i>
+                    <span class="hidden sm:inline">Home</span>
+                </a>
+            @endif
             <div class="hidden text-right md:block">
                 <div class="text-[11px] font-bold text-white/60" data-live-clock="datetime"></div>
             </div>
@@ -66,9 +68,6 @@
                 <div class="text-right">
                     <small class="block text-[11px] font-medium uppercase tracking-wider text-white/60">Welcome</small>
                     <strong class="text-sm font-bold text-gold">{{ Auth::user()->name }}</strong>
-                </div>
-                <div class="tw-avatar tw-avatar-md bg-gold text-navy-800">
-                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                 </div>
             </div>
         </div>

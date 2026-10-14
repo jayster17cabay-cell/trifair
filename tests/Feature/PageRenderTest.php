@@ -162,13 +162,14 @@ class PageRenderTest extends TestCase
     {
         $officer = $this->makeUser('tfrb_officer');
 
+        // Home is a "back" affordance: it only appears off the dashboard.
         $this->actingAs($officer)->get('/tfrb-officer/complaints')
             ->assertOk()
             ->assertSee('aria-label="Home"', false);
 
         $this->actingAs($officer)->get('/tfrb-officer/dashboard')
             ->assertOk()
-            ->assertSee('aria-label="Home"', false);
+            ->assertDontSee('aria-label="Home"', false);
     }
 
     public function test_login_page_has_no_google_button()
