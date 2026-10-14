@@ -23,7 +23,6 @@ class TfrbOfficerController extends Controller
     {
         $stats = app(AdminDashboardService::class)->stats([
             'recentLimit' => 5,
-            'includePendingReview' => true,
         ]);
 
         if (request()->wantsJson()) {

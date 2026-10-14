@@ -92,10 +92,6 @@ class AdminDashboardService
             $data['totalOfficers'] = User::where('role', 'tfrb_officer')->count();
         }
 
-        if ($options['includePendingReview'] ?? false) {
-            $data['pendingReview'] = Rating::isValid()->isComplaint()->whereNull('is_accepted')->where('is_solved', false)->count();
-        }
-
         $data['recentRatings'] = Rating::isValid()->with(['operator.user', 'operator.toda'])
             ->latest()
             ->take($recentLimit)
@@ -190,7 +186,6 @@ class AdminDashboardService
             'totalComplaints' => $stats['totalComplaints'],
             'totalOfficers' => $stats['totalOfficers'] ?? null,
             'totalTodas' => $stats['totalTodas'],
-            'pendingReview' => $stats['pendingReview'] ?? null,
             'unreadCount' => Notification::forUser(Auth::id())->unread()->count(),
             'complaintStats' => $stats['complaintStats']->map(function ($c) {
                 return ['complaint_type' => $c->complaint_type, 'total' => (int) $c->total];
