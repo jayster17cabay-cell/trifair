@@ -94,8 +94,27 @@
                                                 <div style="font-size:14px;line-height:1.6;color:#334155;">{{ $rating->resolution_note }}</div>
                                             @endif
                                             @if ($status === 'solved' && $rating->resolutionProofs->count() > 0)
-                                                <div style="font-size:12px;color:#64748b;padding-top:8px;">
-                                                    The officer also attached {{ $rating->resolutionProofs->count() }} proof file(s). Sign in to TriFair to view {{ $rating->resolutionProofs->count() === 1 ? 'it' : 'them' }}.
+                                                <div style="padding-top:12px;">
+                                                    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#047857;padding-bottom:6px;">
+                                                        Photo attached by the TFRB ({{ $rating->resolutionProofs->count() }})
+                                                    </div>
+                                                    @foreach ($rating->resolutionProofs as $proof)
+                                                        @php $proofUrl = URL::signedRoute('storage.serve', ['path' => $proof->file_path]); @endphp
+                                                        @if (str_starts_with((string) $proof->file_type, 'image'))
+                                                            <div style="padding-top:8px;">
+                                                                <a href="{{ $proofUrl }}" style="text-decoration:none;">
+                                                                    <img src="{{ $proofUrl }}" alt="{{ $proof->original_name }}" style="display:block;width:100%;max-width:320px;height:auto;border:1px solid #a7f3d0;border-radius:8px;">
+                                                                </a>
+                                                            </div>
+                                                        @else
+                                                            <div style="padding-top:8px;font-size:13px;">
+                                                                <a href="{{ $proofUrl }}" style="color:#047857;text-decoration:underline;">{{ $proof->original_name }}</a>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                    <div style="font-size:11px;color:#94a3b8;padding-top:8px;">
+                                                        If the photo does not load, tap it to open in your browser.
+                                                    </div>
                                                 </div>
                                             @endif
                                             @if ($rating->reviewed_by_name || $rating->resolution_at)

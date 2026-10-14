@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ComplaintStatus;
 use App\Models\Operator;
 use App\Models\Rating;
 use App\Models\RatingProof;
@@ -318,6 +319,34 @@ class ComplaintReviewFlowTest extends TestCase
             ->assertSee('Resolution details')
             ->assertSee('Nakausap na ang driver at nagbigay ng apology.')
             ->assertSee('resolved.jpg');
+    }
+
+    public function test_solved_complaint_email_embeds_the_resolution_photo()
+    {
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator, 1);
+        $complaint->update([
+            'is_reviewed' => true,
+            'is_accepted' => true,
+            'is_solved' => true,
+            'solved_at' => now(),
+        ]);
+
+        ResolutionProof::create([
+            'rating_id' => $complaint->id,
+            'file_path' => 'resolution-proofs/' . $complaint->id . '/resolved.jpg',
+            'file_type' => 'image/jpeg',
+            'original_name' => 'resolved.jpg',
+        ]);
+
+        $html = (new ComplaintStatus($complaint->fresh(), 'solved'))->render();
+
+        // The officer's photo is embedded directly through a signed URL so the
+        // passenger can view it straight from the email without signing in.
+        $this->assertStringContainsString('<img', $html);
+        $this->assertStringContainsString('file-storage/resolution-proofs', $html);
+        $this->assertStringContainsString('resolved.jpg', $html);
+        $this->assertStringNotContainsString('Sign in', $html);
     }
 
     public function test_reset_and_reopen_clear_the_resolution_details()
