@@ -61,6 +61,12 @@ class RatingController extends Controller
     {
         $operator = $this->findRateableOperator($qrCode);
 
+        // A member suspended by their TODA president cannot collect ratings
+        // until the suspension is lifted.
+        if ($operator->status === 'suspended') {
+            return $this->operatorSuspended($operator);
+        }
+
         // A lapsed franchise cannot collect new ratings until it is renewed.
         // Show a clear "Franchise Expired" notice instead of a bare 404 so the
         // passenger understands why the rating page is unavailable.
@@ -92,6 +98,12 @@ class RatingController extends Controller
     public function submitRating(Request $request, $qrCode)
     {
         $operator = $this->findRateableOperator($qrCode);
+
+        // A member suspended by their TODA president cannot collect ratings
+        // until the suspension is lifted.
+        if ($operator->status === 'suspended') {
+            return $this->operatorSuspended($operator);
+        }
 
         // A lapsed franchise cannot collect new ratings until it is renewed.
         // Show a clear "Franchise Expired" notice instead of a bare 404 so the
@@ -312,9 +324,12 @@ class RatingController extends Controller
             ->notArchived()
             ->first();
 
-        if (!$operator || !in_array($operator->status, ['active', 'inactive'], true)) {
+        if (!$operator || !in_array($operator->status, ['active', 'inactive', 'suspended'], true)) {
             abort(404);
         }
+
+        // A suspension that has run its course must not keep the QR blocked.
+        $operator->syncSuspensionStatus();
 
         return $operator;
     }
@@ -338,6 +353,20 @@ class RatingController extends Controller
     {
         return response()
             ->view('rate.unavailable', compact('operator'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
+    }
+
+    /**
+     * Passenger-facing notice shown when a TODA member is suspended: ratings
+     * are paused for the duration of the president's suspension.
+     */
+    private function operatorSuspended(Operator $operator)
+    {
+        $suspension = $operator->currentSuspension;
+
+        return response()
+            ->view('rate.suspended', compact('operator', 'suspension'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }

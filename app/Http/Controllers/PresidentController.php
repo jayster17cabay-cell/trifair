@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Operator;
 use App\Models\Toda;
 use App\Services\PresidentQueryService;
+use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -103,26 +104,104 @@ class PresidentController extends Controller
 
     public function memberDetail(Operator $member)
     {
-        $user = Auth::user();
-        $toda = $user->presidentToda();
-
-        // Enforce the org boundary: only allow if this member belongs to the
-        // president's TODA, AND the president is assigned to a TODA.
-        if (!$user->isOperatorPresident() || !$toda || (int) $member->toda_id !== (int) $toda->id) {
-            abort(403);
-        }
+        $toda = $this->authorizeMember($member);
 
         $member->load('user', 'toda');
 
         $ratings = $this->query->memberRatings($toda, $member);
         $stats = $this->query->memberStats($member);
 
+        // A lapsed suspension must not linger, so reconcile before rendering.
+        $member->syncSuspensionStatus();
+
+        $currentSuspension = $member->currentSuspension;
+        $suspensionHistory = $member->suspensions()
+            ->with('suspender', 'ender')
+            ->take(10)
+            ->get();
+
         $html = view('partials.president.member-detail', [
             'member' => $member,
             'ratings' => $ratings,
             'stats' => $stats,
+            'currentSuspension' => $currentSuspension,
+            'suspensionHistory' => $suspensionHistory,
         ])->render();
 
         return response()->json(['html' => $html]);
+    }
+
+    /**
+     * Suspend one of the president's own TODA members, recording the
+     * resolution and blocking the member until the end date.
+     */
+    public function suspendMember(Request $request, Operator $member)
+    {
+        $toda = $this->authorizeMember($member);
+
+        if ($member->isSuspended()) {
+            return redirect()->back()->with('error', 'This member is already suspended.');
+        }
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:1000'],
+            'suspended_at' => ['required', 'date'],
+            'suspended_until' => ['required', 'date', 'after_or_equal:suspended_at'],
+        ]);
+
+        $member->suspend([
+            'toda_id' => $toda->id,
+            'suspended_by' => Auth::id(),
+            'reason' => $validated['reason'],
+            'suspended_at' => $validated['suspended_at'],
+            'suspended_until' => $validated['suspended_until'],
+        ]);
+
+        ActivityLogger::log(
+            'suspend_member',
+            "Suspended TODA member {$member->user->name} ({$member->user->email}) until {$validated['suspended_until']}",
+            $member,
+            ActivityLogger::CATEGORY_OPERATOR
+        );
+
+        return redirect()->back()->with('success', "{$member->user->name} has been suspended.");
+    }
+
+    /**
+     * End a member's suspension early. The record is kept for history and the
+     * member's account is reactivated (unless the franchise has lapsed).
+     */
+    public function endSuspension(Operator $member)
+    {
+        $this->authorizeMember($member);
+
+        if (!$member->endSuspension(Auth::user())) {
+            return redirect()->back()->with('error', 'This member has no active suspension.');
+        }
+
+        ActivityLogger::log(
+            'end_member_suspension',
+            "Ended the suspension of TODA member {$member->user->name} ({$member->user->email})",
+            $member,
+            ActivityLogger::CATEGORY_OPERATOR
+        );
+
+        return redirect()->back()->with('success', "{$member->user->name}'s suspension has been lifted.");
+    }
+
+    /**
+     * Enforce the org boundary: only allow if this member belongs to the
+     * president's TODA, AND the president is assigned to a TODA.
+     */
+    protected function authorizeMember(Operator $member): Toda
+    {
+        $user = Auth::user();
+        $toda = $user->presidentToda();
+
+        if (!$user->isOperatorPresident() || !$toda || (int) $member->toda_id !== (int) $toda->id) {
+            abort(403);
+        }
+
+        return $toda;
     }
 }

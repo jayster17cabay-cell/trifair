@@ -165,6 +165,29 @@
                 renewBtn.classList.add('hidden');
             }
         }
+
+        var suspensionWrap = document.getElementById('opModalSuspensionWrap');
+        var suspension = document.getElementById('opModalSuspension');
+        if (suspensionWrap && suspension) {
+            if (op.isSuspended) {
+                var lines = '<span class="tw-badge tw-badge-amber"><i class="bi bi-slash-circle-fill"></i>Suspended</span>';
+                if (op.suspensionUntil) {
+                    lines += ' <span class="text-slate-500">until ' + escHtml(op.suspensionUntil) + '</span>';
+                }
+                if (op.suspensionFrom) {
+                    lines += ' <span class="text-xs text-slate-400">(from ' + escHtml(op.suspensionFrom) + ')</span>';
+                }
+                lines += '<div class="mt-1.5 text-slate-700">' + escHtml(op.suspensionReason || '—') + '</div>';
+                if (op.suspensionBy) {
+                    lines += '<div class="mt-0.5 text-xs text-slate-400">By ' + escHtml(op.suspensionBy) + '</div>';
+                }
+                suspension.innerHTML = lines;
+                suspensionWrap.classList.remove('hidden');
+            } else {
+                suspension.textContent = '—';
+                suspensionWrap.classList.add('hidden');
+            }
+        }
     }
 
     function initFranchiseModals() {

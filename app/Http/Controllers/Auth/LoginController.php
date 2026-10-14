@@ -78,12 +78,22 @@ class LoginController extends Controller
                 }
                 // A lapsed franchise keeps the operator out until it is renewed.
                 $operator->syncFranchiseStatus();
+                // A lapsed TODA suspension is lifted automatically.
+                $operator->syncSuspensionStatus();
                 if ($operator->isArchived()) {
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
                     return back()->withErrors([
                         'email' => 'Your account has been archived. Please contact support.',
+                    ])->onlyInput('email');
+                }
+                if ($operator->isSuspended()) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return back()->withErrors([
+                        'email' => $this->suspensionMessage($operator),
                     ])->onlyInput('email');
                 }
                 if ($operator->status === 'pending') {
@@ -143,5 +153,19 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('login');
+    }
+
+    /**
+     * Message shown when a suspended member tries to sign in, naming the end
+     * date when one is set.
+     */
+    private function suspensionMessage($operator): string
+    {
+        $suspension = $operator->currentSuspension;
+        $until = $suspension ? $suspension->suspended_until : null;
+
+        return 'Your account is currently suspended by your TODA. '
+            . ($until ? 'The suspension ends on ' . $until->format('M d, Y') . '. ' : '')
+            . 'Please contact your TODA president or the TFRB Office.';
     }
 }

@@ -80,6 +80,11 @@
             <i class="bi bi-hourglass-split"></i> Pending Approvals <span class="tw-badge tw-badge-amber ml-1">{{ $pendingCount }}</span>
         </a>
     @endif
+    @if (!empty($suspendedCount))
+        <a href="{{ route($routePrefix . '.operators', ['status' => 'suspended']) }}" class="{{ $currentStatus === 'suspended' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+            <i class="bi bi-slash-circle"></i> Suspended <span class="tw-badge tw-badge-amber ml-1">{{ $suspendedCount }}</span>
+        </a>
+    @endif
 </div>
 
 <div class="mb-4 max-w-md">

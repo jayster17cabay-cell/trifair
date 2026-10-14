@@ -12,7 +12,7 @@ class OperatorActive
     {
         $user = Auth::user();
         if ($user && $user->isOperator()) {
-            $user->loadMissing('operator.currentTerm');
+            $user->loadMissing('operator.currentTerm', 'operator.currentSuspension');
             $operator = $user->operator;
             if (!$operator) {
                 Auth::logout();
@@ -24,12 +24,22 @@ class OperatorActive
             }
             // Drop the session the moment the franchise lapses mid-session.
             $operator->syncFranchiseStatus();
+            // Lift a TODA suspension the moment its end date has passed.
+            $operator->syncSuspensionStatus();
             if ($operator->isArchived()) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return redirect()->route('login')->withErrors([
                     'email' => 'Your account has been archived. Please contact support.',
+                ]);
+            }
+            if ($operator->isSuspended()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect()->route('login')->withErrors([
+                    'email' => $this->suspensionMessage($operator),
                 ]);
             }
             if ($operator->status === 'pending') {
@@ -55,5 +65,19 @@ class OperatorActive
             }
         }
         return $next($request);
+    }
+
+    /**
+     * Message shown when a suspended member's session is dropped, naming the
+     * end date when one is set.
+     */
+    private function suspensionMessage($operator): string
+    {
+        $suspension = $operator->currentSuspension;
+        $until = $suspension ? $suspension->suspended_until : null;
+
+        return 'Your account is currently suspended by your TODA. '
+            . ($until ? 'The suspension ends on ' . $until->format('M d, Y') . '. ' : '')
+            . 'Please contact your TODA president or the TFRB Office.';
     }
 }

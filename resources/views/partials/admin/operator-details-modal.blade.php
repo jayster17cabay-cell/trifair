@@ -49,6 +49,10 @@
                     <div class="tw-stat-label mb-1"><i class="bi bi-patch-check mr-1 text-amber-500"></i>Franchise</div>
                     <div id="opModalFranchise" class="text-sm text-slate-700">—</div>
                 </div>
+                <div id="opModalSuspensionWrap" class="hidden border-t border-slate-100 pt-4 sm:col-span-2">
+                    <div class="tw-stat-label mb-1"><i class="bi bi-slash-circle mr-1 text-red-500"></i>TODA Suspension</div>
+                    <div id="opModalSuspension" class="text-sm text-slate-700">—</div>
+                </div>
             </div>
         </div>
 

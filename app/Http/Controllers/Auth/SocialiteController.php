@@ -197,6 +197,21 @@ class SocialiteController extends Controller
 
             // A lapsed franchise keeps the operator out until it is renewed.
             $operator->syncFranchiseStatus();
+            // A lapsed TODA suspension is lifted automatically.
+            $operator->syncSuspensionStatus();
+
+            if ($operator->isSuspended()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                $suspension = $operator->currentSuspension;
+                $until = $suspension ? $suspension->suspended_until : null;
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Your account is currently suspended by your TODA. '
+                        . ($until ? 'The suspension ends on ' . $until->format('M d, Y') . '. ' : '')
+                        . 'Please contact your TODA president or the TFRB Office.',
+                ]);
+            }
 
             if ($operator->status === 'pending') {
                 ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');

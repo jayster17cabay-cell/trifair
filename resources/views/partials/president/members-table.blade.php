@@ -23,6 +23,7 @@
                         $statusColor = [
                             'active' => 'tw-badge-green',
                             'inactive' => 'tw-badge-gray',
+                            'suspended' => 'tw-badge-amber',
                             'pending' => 'tw-badge-blue',
                             'rejected' => 'tw-badge-red',
                         ][$member->status] ?? 'tw-badge-blue';

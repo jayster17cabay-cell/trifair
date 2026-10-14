@@ -104,6 +104,10 @@ class PresidentQueryService
      */
     public function members(Toda $toda, ?string $search, ?string $status)
     {
+        // A lapsed suspension must never leave a member stuck in the suspended
+        // bucket, so reconcile before the list (and its counts) are built.
+        Operator::endExpiredSuspensions();
+
         $base = $this->todaOperators($toda)->with('user')->whereHas('user');
 
         if ($search) {
@@ -116,7 +120,7 @@ class PresidentQueryService
             });
         }
 
-        if ($status && in_array($status, ['active', 'inactive', 'pending', 'rejected'], true)) {
+        if ($status && in_array($status, ['active', 'inactive', 'suspended', 'pending', 'rejected'], true)) {
             $base->where('status', $status);
         }
 

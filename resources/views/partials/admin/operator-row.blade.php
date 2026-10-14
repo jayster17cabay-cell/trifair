@@ -14,6 +14,8 @@
         $statusLabel = 'Pending'; $statusClass = 'tw-badge-amber'; $statusIcon = 'bi-hourglass-split';
     } elseif ($operator->status === 'rejected') {
         $statusLabel = 'Rejected'; $statusClass = 'tw-badge-red'; $statusIcon = 'bi-x-circle-fill';
+    } elseif ($operator->status === 'suspended') {
+        $statusLabel = 'Suspended'; $statusClass = 'tw-badge-amber'; $statusIcon = 'bi-slash-circle-fill';
     } else {
         $statusLabel = 'Inactive'; $statusClass = 'tw-badge-gray'; $statusIcon = 'bi-pause-circle-fill';
     }
@@ -31,6 +33,10 @@
     $franchiseStatus = $operator->franchiseStatus();
     $canIssueFranchise = !$operator->isArchived() && in_array($operator->status, ['active', 'inactive'], true);
 
+    // Live (non-lapsed) TODA suspension, if the president has issued one.
+    $suspension = $operator->currentSuspension;
+    $isSuspended = $operator->status === 'suspended' && $suspension !== null && !$suspension->isExpired();
+
     $viewData = [
         'id' => $operator->id,
         'name' => $operatorName,
@@ -45,6 +51,11 @@
         'statusClass' => $statusClass,
         'statusIcon' => $statusIcon,
         'accountActive' => $accountActive,
+        'isSuspended' => $isSuspended,
+        'suspensionReason' => $isSuspended ? $suspension->reason : null,
+        'suspensionFrom' => $isSuspended ? $suspension->suspended_at->format('M d, Y') : null,
+        'suspensionUntil' => $isSuspended ? $suspension->suspended_until->format('M d, Y') : null,
+        'suspensionBy' => ($isSuspended && $suspension->suspender) ? $suspension->suspender->name : null,
         'editUrl' => route($routePrefix . '.operators.edit', $operator),
         'qrUrl' => route($routePrefix . '.operators.qrcode', $operator),
         'franchiseNo' => $franchiseNo,

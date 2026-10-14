@@ -189,6 +189,8 @@ Route::middleware(['auth', 'role:operator_president', 'president.active'])->pref
     Route::get('/dashboard', [PresidentController::class, 'dashboard'])->name('dashboard');
     Route::get('/members', [PresidentController::class, 'members'])->name('members');
     Route::get('/members/{member}', [PresidentController::class, 'memberDetail'])->name('members.detail');
+    Route::post('/members/{member}/suspend', [PresidentController::class, 'suspendMember'])->name('members.suspend');
+    Route::patch('/members/{member}/suspend/end', [PresidentController::class, 'endSuspension'])->name('members.suspend.end');
 });
 
 // Notification routes (TFRB Officer, Superadmin & TODA President — operators'

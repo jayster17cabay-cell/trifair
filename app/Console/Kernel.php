@@ -18,6 +18,10 @@ class Kernel extends ConsoleKernel
         // Operators whose franchise has lapsed are switched to inactive so the
         // admin lists and login checks agree with the franchise expiry date.
         $schedule->command('franchise:sync-status')->dailyAt('00:05');
+
+        // Members whose TODA suspension has run its course are switched back to
+        // active so a lapsed suspension never leaves them locked out.
+        $schedule->command('suspension:sync-status')->dailyAt('00:06');
     }
 
     /**

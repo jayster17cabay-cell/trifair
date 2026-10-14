@@ -236,14 +236,14 @@ class AdminQueryService
         // Only "true" operators appear in the Operators management list. A TODA
         // president is also given an Operator row (so they can carry their own
         // rating), but presidents are managed under their own Presidents section.
-        $query = Operator::with('user', 'toda.president', 'currentTerm')
+        $query = Operator::with('user', 'toda.president', 'currentTerm', 'currentSuspension.suspender')
             ->whereHas('user', function ($u) {
                 $u->where('role', 'operator');
             });
 
         if ($status === 'archived') {
             $query->archived();
-        } elseif ($status && in_array($status, ['active', 'inactive', 'pending', 'rejected'])) {
+        } elseif ($status && in_array($status, ['active', 'inactive', 'suspended', 'pending', 'rejected'])) {
             $query->notArchived()->where('status', $status);
         } else {
             $status = null;
@@ -271,9 +271,11 @@ class AdminQueryService
     public function operatorsData(Request $request): array
     {
         // Keep the visible status honest: any operator whose franchise has
-        // lapsed is flipped to inactive before the list and its tallies are
-        // read, so the admin never sees a stale "active" expired operator.
+        // lapsed is flipped to inactive, and any lapsed TODA suspension is
+        // closed, before the list and its tallies are read, so the admin never
+        // sees a stale status.
         Operator::deactivateExpiredFranchises();
+        Operator::endExpiredSuspensions();
 
         $operators = $this->operatorsBaseQuery($request)->latest()->paginate(10)->withQueryString();
 
@@ -292,6 +294,7 @@ class AdminQueryService
             ->selectRaw(
                 "SUM(CASE WHEN operators.status = 'pending' THEN 1 ELSE 0 END) as pending_count"
                 . ", SUM(CASE WHEN operators.status = 'active' THEN 1 ELSE 0 END) as active_count"
+                . ", SUM(CASE WHEN operators.status = 'suspended' THEN 1 ELSE 0 END) as suspended_count"
                 . ', SUM(CASE WHEN users.is_active = true THEN 1 ELSE 0 END) as accounts_active_count'
                 . ', SUM(CASE WHEN users.is_active = false THEN 1 ELSE 0 END) as accounts_inactive_count'
             )
@@ -299,10 +302,11 @@ class AdminQueryService
 
         $pendingCount = (int) $tally->pending_count;
         $activeOperatorsCount = (int) $tally->active_count;
+        $suspendedCount = (int) $tally->suspended_count;
         $accountsActiveCount = (int) $tally->accounts_active_count;
         $accountsInactiveCount = (int) $tally->accounts_inactive_count;
 
-        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'activeOperatorsCount', 'accountsActiveCount', 'accountsInactiveCount');
+        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'activeOperatorsCount', 'suspendedCount', 'accountsActiveCount', 'accountsInactiveCount');
     }
 
     public function operatorsForExport(Request $request)
