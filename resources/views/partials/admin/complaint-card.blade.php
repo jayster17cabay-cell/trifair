@@ -229,13 +229,6 @@
                             data-ref="{{ $rating->reference_number }}">
                         <i class="bi bi-x-lg"></i>Reject
                     </button>
-                @elseif ($rating->status_label === 'Accepted')
-                    <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" title="Reject complaint"
-                            data-complaint-resolution data-mode="reject"
-                            data-action="{{ route($routePrefix . '.complaints.reject', $rating) }}"
-                            data-ref="{{ $rating->reference_number }}">
-                        <i class="bi bi-x-lg"></i>Reject
-                    </button>
                 @elseif ($rating->status_label === 'Rejected')
                     <form action="{{ route($routePrefix . '.complaints.reset', $rating) }}" method="POST" onsubmit="return confirm('Undo rejection and return this complaint to pending review?')">
                         @csrf
@@ -244,9 +237,7 @@
                             <i class="bi bi-arrow-counterclockwise"></i>Undo Reject
                         </button>
                     </form>
-                @endif
-
-                @if ($rating->status_label === 'Solved')
+                @elseif ($rating->status_label === 'Solved')
                     <form action="{{ route($routePrefix . '.complaints.reopen', $rating) }}" method="POST" onsubmit="return confirm('Reopen this complaint?')">
                         @csrf
                         @method('PATCH')
@@ -254,7 +245,9 @@
                             <i class="bi bi-arrow-counterclockwise"></i>Reopen
                         </button>
                     </form>
-                @elseif ($rating->status_label === 'Accepted')
+                @endif
+
+                @if ($rating->status_label === 'Accepted')
                     <button type="button" class="tw-btn tw-btn-sm tw-btn-navy" title="Mark complaint as solved"
                             data-complaint-resolution data-mode="solve"
                             data-action="{{ route($routePrefix . '.complaints.solve', $rating) }}"
@@ -263,13 +256,15 @@
                     </button>
                 @endif
 
-                <form action="{{ route($routePrefix . '.complaints.destroy', $rating) }}" method="POST" onsubmit="return confirm('Delete this complaint?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Delete complaint">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </form>
+                @if ($rating->status_label !== 'Accepted' && $rating->status_label !== 'Solved')
+                    <form action="{{ route($routePrefix . '.complaints.destroy', $rating) }}" method="POST" onsubmit="return confirm('Delete this complaint?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Delete complaint">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
     </div>
