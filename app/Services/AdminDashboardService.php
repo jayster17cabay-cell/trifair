@@ -78,7 +78,8 @@ class AdminDashboardService
 
         $data = [
             'totalOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->count(),
-            'activeOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'active')->count(),
+            'activeOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator')->where('is_active', true))->count(),
+            'inactiveOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator')->where('is_active', false))->count(),
             'totalRatings' => Rating::isValid()->countsTowardRating()->count(),
             // Averages only consider accepted complaints so pending/rejected
             // complaints can never drag an operator's score down.
@@ -183,6 +184,7 @@ class AdminDashboardService
         return [
             'totalOperators' => $stats['totalOperators'],
             'activeOperators' => $stats['activeOperators'],
+            'inactiveOperators' => $stats['inactiveOperators'],
             'totalRatings' => $stats['totalRatings'],
             'averageRating' => round((float) $stats['averageRating'], 1),
             'totalComplaints' => $stats['totalComplaints'],
