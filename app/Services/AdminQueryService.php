@@ -294,17 +294,19 @@ class AdminQueryService
             ->selectRaw(
                 "SUM(CASE WHEN operators.status = 'pending' THEN 1 ELSE 0 END) as pending_count"
                 . ", SUM(CASE WHEN operators.status = 'suspended' THEN 1 ELSE 0 END) as suspended_count"
+                . ", SUM(CASE WHEN operators.status = 'active' THEN 1 ELSE 0 END) as active_status_count"
+                . ", SUM(CASE WHEN operators.status = 'inactive' THEN 1 ELSE 0 END) as inactive_status_count"
                 . ', SUM(CASE WHEN users.is_active = true THEN 1 ELSE 0 END) as accounts_active_count'
-                . ', SUM(CASE WHEN users.is_active = false THEN 1 ELSE 0 END) as accounts_inactive_count'
             )
             ->first();
 
         $pendingCount = (int) $tally->pending_count;
         $suspendedCount = (int) $tally->suspended_count;
+        $activeStatusCount = (int) $tally->active_status_count;
+        $inactiveStatusCount = (int) $tally->inactive_status_count;
         $accountsActiveCount = (int) $tally->accounts_active_count;
-        $accountsInactiveCount = (int) $tally->accounts_inactive_count;
 
-        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'accountsActiveCount', 'accountsInactiveCount');
+        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount', 'accountsActiveCount');
     }
 
     public function operatorsForExport(Request $request)

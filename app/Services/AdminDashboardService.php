@@ -78,8 +78,8 @@ class AdminDashboardService
 
         $data = [
             'totalOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->count(),
-            'activeOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator')->where('is_active', true))->count(),
-            'inactiveOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator')->where('is_active', false))->count(),
+            'activeOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'active')->count(),
+            'inactiveOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'inactive')->count(),
             'totalRatings' => Rating::isValid()->countsTowardRating()->count(),
             // Averages only consider accepted complaints so pending/rejected
             // complaints can never drag an operator's score down.
@@ -116,15 +116,20 @@ class AdminDashboardService
                 ->get()
         );
 
+        // The distribution must use the exact same base as the "Ratings" KPI
+        // (valid ratings that count towards a score) so the bars always add up
+        // to the headline total — pending/rejected complaints are excluded.
         $distribution = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
         foreach (
-            Rating::isValid()
-                ->whereBetween('rating', [1, 5])
+            Rating::isValid()->countsTowardRating()
                 ->select('rating', DB::raw('count(*) as total'))
                 ->groupBy('rating')
                 ->get() as $row
         ) {
-            $distribution[(int) $row->rating] = (int) $row->total;
+            $star = (int) $row->rating;
+            if (array_key_exists($star, $distribution)) {
+                $distribution[$star] = (int) $row->total;
+            }
         }
         $data['ratingDistribution'] = $distribution;
 

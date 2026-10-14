@@ -12,6 +12,7 @@ use App\Models\Toda;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -1075,5 +1076,39 @@ class DashboardAuditTest extends TestCase
         $decoded = json_decode(base64_decode(strtr($query['state'], '-_', '+/')), true);
         $this->assertSame('/rate/ABC123', $decoded['i'] ?? null);
         $this->assertTrue((bool) ($decoded['c'] ?? false));
+    }
+
+    public function test_dashboard_operator_counts_and_rating_distribution_reconcile()
+    {
+        $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        // Same total, but one operator is inactive and one still pending, so
+        // "Active" must NOT equal "Operators" (the original "15 / 15" bug).
+        $active = $this->makeOperator('active', $toda);
+        $inactive = $this->makeOperator('inactive', $toda);
+        $this->makeOperator('pending', $toda);
+
+        // Valid feedback of every star value that counts toward a score...
+        $this->makeRating($active, 5);
+        $this->makeRating($active, 5);
+        $this->makeRating($active, 4);
+        $this->makeRating($active, 3);
+        $this->makeRating($active, 2);
+        $this->makeRating($active, 1);
+        // ...plus rows that must not be counted anywhere.
+        $this->makeRating($active, 5, false);          // invalid rating
+        $this->makeRating($inactive, 1, true, true);   // pending complaint
+
+        Cache::flush();
+        $stats = app(\App\Services\AdminDashboardService::class)->stats(['includeOfficers' => true]);
+
+        $this->assertSame(3, $stats['totalOperators'], 'Operators = active + inactive + pending');
+        $this->assertSame(1, $stats['activeOperators']);
+        $this->assertSame(1, $stats['inactiveOperators']);
+
+        $this->assertSame(6, $stats['totalRatings'], 'Only valid, counted ratings');
+        $this->assertSame(6, array_sum($stats['ratingDistribution']), 'Distribution must sum to the Ratings KPI');
+        $this->assertSame([1 => 1, 2 => 1, 3 => 1, 4 => 1, 5 => 2], $stats['ratingDistribution']);
     }
 }

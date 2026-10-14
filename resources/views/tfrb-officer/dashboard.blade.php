@@ -13,8 +13,8 @@
 
 <div class="mb-4 grid grid-cols-2 gap-2.5 md:grid-cols-4 xl:grid-cols-7">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators'), 'icon' => 'bi-people', 'value' => $totalOperators, 'label' => 'Operators', 'live' => 'totalOperators']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['account' => 'active']), 'icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['account' => 'inactive']), 'icon' => 'bi-person-dash', 'value' => $inactiveOperators, 'label' => 'Inactive', 'live' => 'inactiveOperators']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['status' => 'active']), 'icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['status' => 'inactive']), 'icon' => 'bi-person-dash', 'value' => $inactiveOperators, 'label' => 'Inactive', 'live' => 'inactiveOperators']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.ratings'), 'icon' => 'bi-star', 'value' => $totalRatings, 'label' => 'Ratings', 'live' => 'totalRatings']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.ratings'), 'icon' => 'bi-award', 'value' => number_format($averageRating ?? 0, 1), 'label' => 'Avg Rating', 'live' => 'averageRating']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.complaints'), 'icon' => 'bi-flag', 'value' => $totalComplaints, 'label' => 'Complaints', 'live' => 'totalComplaints']])

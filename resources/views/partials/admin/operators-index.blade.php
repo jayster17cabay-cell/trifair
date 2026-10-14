@@ -1,4 +1,4 @@
-{{-- Shared operators index page body. Requires: $routePrefix, $operators, $search, $status, $account, $accountsActiveCount, $accountsInactiveCount, $activeOperators --}}
+{{-- Shared operators index page body. Requires: $routePrefix, $operators, $search, $status, $account, $activeStatusCount, $inactiveStatusCount, $accountsActiveCount, $activeOperators --}}
 
 @php $currentStatus = request('status'); @endphp
 
@@ -61,14 +61,14 @@
 </div>
 
 <div class="mb-4 flex flex-wrap gap-2">
-    <a href="{{ route($routePrefix . '.operators', array_filter(['status' => $currentStatus, 'account' => 'all'])) }}" class="{{ $account === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+    <a href="{{ route($routePrefix . '.operators') }}" class="{{ !$currentStatus && $account === 'all' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
         <i class="bi bi-people"></i> All
     </a>
-    <a href="{{ route($routePrefix . '.operators', array_filter(['status' => $currentStatus, 'account' => 'active'])) }}" class="{{ $account === 'active' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-        <i class="bi bi-person-check"></i> Active <span class="tw-badge tw-badge-green ml-1">{{ $accountsActiveCount }}</span>
+    <a href="{{ route($routePrefix . '.operators', ['status' => 'active']) }}" class="{{ $currentStatus === 'active' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+        <i class="bi bi-person-check"></i> Active <span class="tw-badge tw-badge-green ml-1">{{ $activeStatusCount }}</span>
     </a>
-    <a href="{{ route($routePrefix . '.operators', array_filter(['status' => $currentStatus, 'account' => 'inactive'])) }}" class="{{ $account === 'inactive' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
-        <i class="bi bi-person-dash"></i> Inactive <span class="tw-badge tw-badge-gray ml-1">{{ $accountsInactiveCount }}</span>
+    <a href="{{ route($routePrefix . '.operators', ['status' => 'inactive']) }}" class="{{ $currentStatus === 'inactive' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
+        <i class="bi bi-person-dash"></i> Inactive <span class="tw-badge tw-badge-gray ml-1">{{ $inactiveStatusCount }}</span>
     </a>
     @if (!empty($archivedCount))
         <a href="{{ route($routePrefix . '.operators', ['status' => 'archived']) }}" class="{{ $currentStatus === 'archived' ? 'tw-chip tw-chip-active' : 'tw-chip' }}">
