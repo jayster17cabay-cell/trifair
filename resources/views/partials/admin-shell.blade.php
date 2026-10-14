@@ -60,7 +60,7 @@
             @endif
             <div class="hidden items-center gap-3 sm:flex">
                 <div class="text-right">
-                    <small class="block text-[11px] font-medium uppercase tracking-wider text-white/60">Welcome back</small>
+                    <small class="block text-[11px] font-medium uppercase tracking-wider text-white/60">Welcome</small>
                     <strong class="text-sm font-bold text-gold">{{ Auth::user()->name }}</strong>
                 </div>
                 <div class="tw-avatar tw-avatar-md bg-gold text-navy-800">
@@ -151,6 +151,21 @@
                     <button type="button" class="tw-alert-close" data-tw-dismiss aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
                 </div>
             @endif
+
+            @php
+                $pageTitle = trim((string) $__env->yieldContent('title'));
+                $atHome = request()->routeIs($shell['home']);
+            @endphp
+            @unless ($atHome)
+                <nav aria-label="Breadcrumb" class="mb-4 flex items-center gap-2 text-sm">
+                    <a href="{{ route($shell['home']) }}" class="inline-flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-navy-600">
+                        <i class="bi bi-house-door"></i>
+                        <span>Home</span>
+                    </a>
+                    <i class="bi bi-chevron-right text-[10px] text-slate-300"></i>
+                    <span class="font-semibold text-navy-700">{{ $pageTitle !== '' ? $pageTitle : $shell['roleLabel'] }}</span>
+                </nav>
+            @endunless
 
             @yield('content')
         </main>
