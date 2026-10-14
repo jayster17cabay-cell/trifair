@@ -47,12 +47,12 @@
                 <i class="bi {{ $shell['roleIcon'] }} text-xl text-gold"></i>
                 <span>TriFair <span class="text-gold">{{ $shell['roleLabel'] }}</span></span>
             </a>
-            <a href="{{ route($shell['home']) }}" class="inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors {{ request()->routeIs($shell['home']) ? 'bg-gold text-navy-800' : 'bg-white/10 text-white hover:bg-white/20' }}" title="Home" aria-label="Home">
-                <i class="bi bi-house-door text-lg"></i>
-                <span class="hidden sm:inline">Home</span>
-            </a>
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
+            <a href="{{ route($shell['home']) }}" class="tw-topbar-home {{ request()->routeIs($shell['home']) ? 'active' : '' }}" title="Home" aria-label="Home">
+                <i class="bi bi-house-door-fill text-base"></i>
+                <span class="hidden sm:inline">Home</span>
+            </a>
             <div class="hidden text-right md:block">
                 <div class="text-[11px] font-bold text-white/60" data-live-clock="datetime"></div>
             </div>
