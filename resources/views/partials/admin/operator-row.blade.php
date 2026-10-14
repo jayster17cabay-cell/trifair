@@ -174,13 +174,6 @@
                         </button>
                     @endif
                 </form>
-                <form action="{{ route($routePrefix . '.operators.toggleActive', $operator) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="{{ $accountActive ? 'Deactivate account' : 'Activate account' }}" aria-label="{{ $accountActive ? 'Deactivate' : 'Activate' }} {{ $operatorName }}" onclick="return confirm(@js(($accountActive ? 'Deactivate' : 'Activate') . ' the account of ' . $operatorName . '? Inactive accounts cannot log in.'))">
-                        <i class="bi {{ $accountActive ? 'bi-person-dash' : 'bi-person-check' }}"></i>
-                    </button>
-                </form>
                 <form action="{{ route($routePrefix . '.operators.resetPassword', $operator) }}" method="POST" onsubmit="return confirm(@js('Reset the password of ' . $operatorName . '? A temporary password will be e-mailed to them.'))">
                     @csrf
                     <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reset password" aria-label="Reset password {{ $operatorName }}">

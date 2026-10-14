@@ -100,7 +100,6 @@ class OperatorAdminService
             'plate_number' => 'required|string|max:20|unique:operators,plate_number,' . $operator->id,
             'body_number' => 'required|string|max:20|unique:operators,body_number,' . $operator->id,
             'motorcycle_model' => 'nullable|string|max:50',
-            'status' => 'required|in:active,inactive',
             'toda_id' => 'required|exists:todas,id',
         ], [
             'plate_number.unique' => 'This plate number is already registered in the system.',
@@ -123,7 +122,6 @@ class OperatorAdminService
             'plate_number' => $data['plate_number'] ?? null,
             'body_number' => $data['body_number'] ?? null,
             'motorcycle_model' => $data['motorcycle_model'] ?? null,
-            'status' => $data['status'],
             'toda_id' => $data['toda_id'],
         ]);
 
@@ -195,44 +193,6 @@ class OperatorAdminService
 
         return redirect()->route($redirectRoute, ['status' => 'archived'])
             ->with('success', "Operator {$operator->user->name} restored successfully.");
-    }
-
-    /**
-     * Toggle the operator's account state (users.is_active) without touching
-     * the approval status (operators.status). Beware: is_active blocks login.
-     */
-    public function toggleActive(Operator $operator, string $redirectRoute): RedirectResponse
-    {
-        $operator->load('user');
-
-        if ($operator->user->role !== 'operator') {
-            return redirect()->back()->with('error', 'Only operator accounts can be toggled.');
-        }
-
-        $target = !$operator->user->is_active;
-        $operator->user->forceFill(['is_active' => $target])->save();
-
-        // Mirror the account state onto the approval status so a deactivated
-        // operator's live session is dropped by the OperatorActive middleware
-        // (which logs out status = inactive) instead of lingering with their
-        // approval row still marked active.
-        if ($target && $operator->status === 'inactive') {
-            $operator->update(['status' => 'active']);
-        } elseif (!$target && $operator->status === 'active') {
-            $operator->update(['status' => 'inactive']);
-        }
-
-        app(AdminDashboardService::class)->flush();
-
-        ActivityLogger::log(
-            $target ? 'activate_operator' : 'deactivate_operator',
-            ($target ? 'Activated' : 'Deactivated') . " account of {$operator->user->name} ({$operator->user->email})",
-            $operator,
-            'operator'
-        );
-
-        return redirect()->route($redirectRoute)
-            ->with('success', "{$operator->user->name} is now " . ($target ? 'active' : 'inactive') . '.');
     }
 
     /**

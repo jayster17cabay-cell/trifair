@@ -106,11 +106,6 @@ class TfrbOfficerController extends Controller
         return app(OperatorAdminService::class)->archive($operator, 'tfrb-officer.operators');
     }
 
-    public function toggleActive(Operator $operator)
-    {
-        return app(OperatorAdminService::class)->toggleActive($operator, 'tfrb-officer.operators');
-    }
-
     public function assignPresident(Operator $operator)
     {
         return app(OperatorAdminService::class)->assignPresident($operator, 'tfrb-officer.operators');

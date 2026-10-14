@@ -364,11 +364,6 @@ class SuperadminController extends Controller
         return app(OperatorAdminService::class)->archive($operator, 'superadmin.operators');
     }
 
-    public function toggleActive(Operator $operator)
-    {
-        return app(OperatorAdminService::class)->toggleActive($operator, 'superadmin.operators');
-    }
-
     public function assignPresident(Operator $operator)
     {
         return app(OperatorAdminService::class)->assignPresident($operator, 'superadmin.operators');

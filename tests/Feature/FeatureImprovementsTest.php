@@ -417,47 +417,13 @@ class FeatureImprovementsTest extends TestCase
         $this->assertNull($operator->fresh()->archived_at);
     }
 
-    public function test_superadmin_can_deactivate_and_reactivate_operator_account()
-    {
-        $admin = $this->makeUser('superadmin');
-        $operator = $this->makeOperator();
-        $userId = $operator->user->id;
-
-        $this->actingAs($admin)
-            ->patch('/superadmin/operators/' . $operator->id . '/toggle-active')
-            ->assertRedirect(route('superadmin.operators'));
-
-        $this->assertFalse((bool) User::find($userId)->is_active);
-        $this->assertNotNull(ActivityLog::where('action', 'deactivate_operator')->latest()->first());
-
-        $this->actingAs($admin)
-            ->patch('/superadmin/operators/' . $operator->id . '/toggle-active')
-            ->assertRedirect(route('superadmin.operators'));
-
-        $this->assertTrue((bool) User::find($userId)->is_active);
-        $this->assertNotNull(ActivityLog::where('action', 'activate_operator')->latest()->first());
-    }
-
-    public function test_officer_can_toggle_operator_account()
-    {
-        $officer = $this->makeUser('tfrb_officer');
-        $operator = $this->makeOperator();
-
-        $this->actingAs($officer)
-            ->patch('/tfrb-officer/operators/' . $operator->id . '/toggle-active')
-            ->assertRedirect(route('tfrb-officer.operators'));
-
-        $this->assertFalse((bool) $operator->fresh()->user->is_active);
-    }
-
     public function test_deactivated_operator_cannot_login()
     {
-        $admin = $this->makeUser('superadmin');
         $operator = $this->makeOperator();
-        $operator->user->forceFill(['password' => Hash::make('password123')])->save();
-
-        $this->actingAs($admin)
-            ->patch('/superadmin/operators/' . $operator->id . '/toggle-active');
+        $operator->user->forceFill([
+            'password' => Hash::make('password123'),
+            'is_active' => false,
+        ])->save();
 
         $this->post('/login', [
             'email' => $operator->user->email,

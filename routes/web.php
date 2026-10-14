@@ -96,7 +96,6 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::patch('/operators/{operator}/reject', [TfrbOfficerController::class, 'rejectOperator'])->name('operators.reject');
     Route::patch('/operators/{operator}/archive', [TfrbOfficerController::class, 'archiveOperator'])->name('operators.archive');
     Route::patch('/operators/{operator}/restore', [TfrbOfficerController::class, 'restoreOperator'])->name('operators.restore');
-    Route::patch('/operators/{operator}/toggle-active', [TfrbOfficerController::class, 'toggleActive'])->name('operators.toggleActive');
     Route::post('/operators/{operator}/assign-president', [TfrbOfficerController::class, 'assignPresident'])->name('operators.assignPresident');
     Route::post('/operators/{operator}/reset-password', [TfrbOfficerController::class, 'resetPassword'])->name('operators.resetPassword');
     Route::post('/operators/{operator}/franchise', [TfrbOfficerController::class, 'issueFranchise'])->name('operators.franchise.issue');
@@ -153,7 +152,6 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::patch('/operators/{operator}/reject', [SuperadminController::class, 'rejectOperator'])->name('operators.reject');
     Route::patch('/operators/{operator}/archive', [SuperadminController::class, 'archiveOperator'])->name('operators.archive');
     Route::patch('/operators/{operator}/restore', [SuperadminController::class, 'restoreOperator'])->name('operators.restore');
-    Route::patch('/operators/{operator}/toggle-active', [SuperadminController::class, 'toggleActive'])->name('operators.toggleActive');
     Route::post('/operators/{operator}/assign-president', [SuperadminController::class, 'assignPresident'])->name('operators.assignPresident');
     Route::post('/operators/{operator}/reset-password', [SuperadminController::class, 'resetPassword'])->name('operators.resetPassword');
     Route::post('/operators/{operator}/franchise', [SuperadminController::class, 'issueFranchise'])->name('operators.franchise.issue');

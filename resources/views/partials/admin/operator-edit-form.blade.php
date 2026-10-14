@@ -37,14 +37,6 @@
             @error('toda_id') <div class="tw-error-text">{{ $message }}</div> @enderror
         </div>
         <div>
-            <label for="status" class="tw-label">Status</label>
-            <select class="tw-select @error('status') is-invalid @enderror" id="status" name="status">
-                <option value="active" {{ old('status', $operator->status) === 'active' ? 'selected' : '' }}>Active</option>
-                <option value="inactive" {{ old('status', $operator->status) === 'inactive' ? 'selected' : '' }}>Inactive</option>
-            </select>
-            @error('status') <div class="tw-error-text">{{ $message }}</div> @enderror
-        </div>
-        <div>
             <label for="phone" class="tw-label">Phone Number</label>
             <input type="text" class="tw-input @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone', $operator->user->phone) }}">
             @error('phone') <div class="tw-error-text">{{ $message }}</div> @enderror
