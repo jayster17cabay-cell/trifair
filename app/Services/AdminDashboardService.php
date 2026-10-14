@@ -67,6 +67,11 @@ class AdminDashboardService
 
     private function computeStats(array $options = []): array
     {
+        // An operator whose franchise has lapsed must never linger as "active"
+        // in the dashboard aggregates, so reconcile the statuses before the
+        // numbers are measured (and cached).
+        Operator::deactivateExpiredFranchises();
+
         $recentLimit = $options['recentLimit'] ?? 5;
 
         $data = [
@@ -141,10 +146,13 @@ class AdminDashboardService
 
         $todaStats = Toda::withCount([
             'operators' => function ($query) {
-                $query->whereNull('archived_at');
+                $query->whereNull('archived_at')
+                    ->whereHas('user', fn ($u) => $u->where('role', 'operator'));
             },
             'operators as active_operators_count' => function ($query) {
-                $query->where('status', 'active')->whereNull('archived_at');
+                $query->where('status', 'active')
+                    ->whereNull('archived_at')
+                    ->whereHas('user', fn ($u) => $u->where('role', 'operator'));
             },
         ])->get();
 

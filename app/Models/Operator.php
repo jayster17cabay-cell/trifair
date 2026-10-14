@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\AdminDashboardService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -135,6 +136,7 @@ class Operator extends Model
     {
         if ($this->status === 'active' && $this->hasExpiredFranchise()) {
             $this->update(['status' => 'inactive']);
+            app(AdminDashboardService::class)->flush();
 
             return true;
         }
@@ -154,7 +156,7 @@ class Operator extends Model
     {
         $today = now()->toDateString();
 
-        return static::query()
+        $deactivated = static::query()
             ->where('status', 'active')
             ->whereIn('id', function ($query) use ($today) {
                 $query->from('franchise_terms')
@@ -164,6 +166,12 @@ class Operator extends Model
                     ->select('operator_id');
             })
             ->update(['status' => 'inactive']);
+
+        if ($deactivated > 0) {
+            app(AdminDashboardService::class)->flush();
+        }
+
+        return $deactivated;
     }
 
     /**

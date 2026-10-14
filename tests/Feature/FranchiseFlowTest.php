@@ -399,4 +399,94 @@ class FranchiseFlowTest extends TestCase
             ->assertSee('Inactive', false)
             ->assertSee('Expired', false);
     }
+
+    public function test_dashboard_toda_counts_follow_expiry_and_exclude_president()
+    {
+        $service = app(\App\Services\AdminDashboardService::class);
+        $service->flush();
+
+        $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        $expiring = $this->makeOperator('active');
+        $expiring->forceFill(['toda_id' => $toda->id])->save();
+
+        $valid = $this->makeOperator('active');
+        $valid->forceFill(['toda_id' => $toda->id])->save();
+
+        // A TODA president keeps an Operator row but is not counted as a member
+        // (the members modal hides them, so the card must agree).
+        $presidentUser = $this->makeUser('operator_president');
+        $presidentUser->forceFill(['toda_id' => $toda->id])->save();
+        Operator::create([
+            'user_id' => $presidentUser->id,
+            'toda_id' => $toda->id,
+            'qr_code' => Str::random(32),
+            'status' => 'active',
+            'contact_number' => '09171234567',
+            'plate_number' => 'PLATE-' . Str::random(6),
+            'body_number' => 'BODY-' . Str::random(6),
+        ]);
+
+        $term = FranchiseTerm::create([
+            'operator_id' => $expiring->id,
+            'franchise_no' => 'FR-EXPIRING',
+            'issued_at' => '2024-01-01',
+            'valid_until' => now()->addDay()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        // Warm the dashboard cache while both riders still read as active.
+        $before = collect($service->stats(['includeOfficers' => true])['todaStats'])
+            ->firstWhere('id', $toda->id);
+        $this->assertSame(2, (int) $before->operators_count);
+        $this->assertSame(2, (int) $before->active_operators_count);
+
+        // The franchise lapses, and the admin list (or daily command) reconciles
+        // the status — which must invalidate the stale dashboard cache.
+        $term->update(['valid_until' => now()->subDay()->toDateString()]);
+        Operator::deactivateExpiredFranchises();
+
+        $after = collect($service->stats(['includeOfficers' => true])['todaStats'])
+            ->firstWhere('id', $toda->id);
+        $this->assertSame(2, (int) $after->operators_count);
+        $this->assertSame(1, (int) $after->active_operators_count);
+        $this->assertSame('inactive', $expiring->fresh()->status);
+        $this->assertSame('active', $valid->fresh()->status);
+    }
+
+    public function test_dashboard_active_count_recovers_after_renewal()
+    {
+        $service = app(\App\Services\AdminDashboardService::class);
+        $service->flush();
+
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        $operator = $this->makeOperator('active');
+        $operator->forceFill(['toda_id' => $toda->id])->save();
+
+        FranchiseTerm::create([
+            'operator_id' => $operator->id,
+            'franchise_no' => 'FR-EXPIRED',
+            'issued_at' => '2024-01-01',
+            'valid_until' => now()->subDay()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        Operator::deactivateExpiredFranchises();
+        $this->assertSame('inactive', $operator->fresh()->status);
+
+        $this->actingAs($admin)->post(route('superadmin.operators.franchise.renew', $operator), [
+            'franchise_no' => 'FR-RENEWED',
+            'valid_until' => now()->addYear()->toDateString(),
+        ])->assertRedirect();
+
+        $this->assertSame('active', $operator->fresh()->status);
+
+        $card = collect($service->stats(['includeOfficers' => true])['todaStats'])
+            ->firstWhere('id', $toda->id);
+        $this->assertSame(1, (int) $card->operators_count);
+        $this->assertSame(1, (int) $card->active_operators_count);
+    }
 }

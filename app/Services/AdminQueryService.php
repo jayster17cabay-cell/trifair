@@ -464,10 +464,13 @@ class AdminQueryService
     {
         $todas = Toda::withCount([
             'operators' => function ($query) {
-                $query->whereNull('archived_at');
+                $query->whereNull('archived_at')
+                    ->whereHas('user', fn ($u) => $u->where('role', 'operator'));
             },
             'operators as active_operators_count' => function ($query) {
-                $query->where('status', 'active')->whereNull('archived_at');
+                $query->where('status', 'active')
+                    ->whereNull('archived_at')
+                    ->whereHas('user', fn ($u) => $u->where('role', 'operator'));
             },
         ])
             ->when($search, function ($query, $search) {
