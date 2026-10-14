@@ -494,6 +494,11 @@ class AdminQueryService
     {
         return $toda->operators()
             ->with('user')
+            ->withCount([
+                'ratings' => fn ($q) => $q->isValid(),
+                'ratings as complaint_count' => fn ($q) => $q->isValid()->isComplaint(),
+            ])
+            ->withAvg(['ratings as valid_rating_avg' => fn ($q) => $q->isValid()], 'rating')
             // Presidents are also operators (they keep their own ratable row),
             // but they are managed under the Presidents section — never from the
             // TODA members modal, where they could be edited/deleted/rejected.

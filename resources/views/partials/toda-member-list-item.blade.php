@@ -36,6 +36,10 @@
                     <span class="text-slate-400">No vehicle details</span>
                 @endif
             </div>
+            <div class="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
+                <span class="inline-flex items-center gap-0.5"><i class="bi bi-star-fill text-gold"></i>{{ $member->ratings_count ?? 0 }}</span>
+                <span class="inline-flex items-center gap-0.5"><i class="bi bi-exclamation-triangle-fill text-red-500"></i>{{ $member->complaint_count ?? 0 }}</span>
+            </div>
         </div>
         <span class="tw-badge {{ $statusClass }} shrink-0"><i class="bi {{ $statusIcon }}"></i>{{ $statusLabel }}</span>
         <button type="button" class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
