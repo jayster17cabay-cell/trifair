@@ -213,6 +213,7 @@ class AdminQueryService
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
         $todaId = $request->query('toda_id') ? (int) $request->query('toda_id') : null;
+        $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
         $minRating = ($request->query('min_rating') !== null && $request->query('min_rating') !== '')
             ? (float) $request->query('min_rating')
             : null;
@@ -223,7 +224,10 @@ class AdminQueryService
             })
             ->whereNotIn('operators.status', ['pending', 'rejected'])
             ->whereNull('operators.archived_at')
-            ->when($todaId, fn ($q) => $q->where('operators.toda_id', $todaId));
+            // A specific operator is more precise than the TODA it belongs to,
+            // so the TODA filter only applies when no single operator is chosen.
+            ->when($todaId && ! $operatorId, fn ($q) => $q->where('operators.toda_id', $todaId))
+            ->when($operatorId, fn ($q) => $q->where('operators.id', $operatorId));
 
         // The Period presets (All Time / This Year / This Month / This Week)
         // drive both the on-screen average and the export, so the downloaded
@@ -259,7 +263,7 @@ class AdminQueryService
         $dateFrom = $from?->toDateString();
         $dateTo = $to?->toDateString();
 
-        return [$query, compact('dateFrom', 'dateTo', 'todaId', 'minRating', 'period')];
+        return [$query, compact('dateFrom', 'dateTo', 'todaId', 'operatorId', 'minRating', 'period')];
     }
 
     /**
@@ -481,10 +485,6 @@ class AdminQueryService
         $request = $request ?? request();
 
         [$query, ] = $this->reportsBaseQuery($request);
-
-        if ($request->query('operator_id')) {
-            $query->where('operators.id', (int) $request->query('operator_id'));
-        }
 
         return $query->orderByRaw('COALESCE(vr.valid_ratings_count, 0) DESC')
             ->orderBy('operators.id')

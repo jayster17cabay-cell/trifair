@@ -175,7 +175,7 @@ class ExportService
     private function buildContextHtml(array $context): string
     {
         $bits = [];
-        foreach (['toda' => 'TODA', 'period' => 'Period', 'summary' => 'Summary'] as $key => $label) {
+        foreach (['operator' => 'Operator', 'toda' => 'TODA', 'period' => 'Period', 'summary' => 'Summary'] as $key => $label) {
             if (($context[$key] ?? '') !== '') {
                 $bits[] = '<b>' . $label . ':</b> ' . htmlspecialchars((string) $context[$key]);
             }

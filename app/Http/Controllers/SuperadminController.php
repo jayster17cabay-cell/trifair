@@ -415,6 +415,12 @@ class SuperadminController extends Controller
                 $context['toda'] = $toda->name;
             }
         }
+        if ($request->query('operator_id')) {
+            $operator = Operator::with('user')->find((int) $request->query('operator_id'));
+            if ($operator) {
+                $context['operator'] = $operator->user->name ?? 'Unknown';
+            }
+        }
         $period = app(AdminQueryService::class)->resolvePeriod($request);
         if ($label = app(AdminQueryService::class)->periodLabel($period)) {
             $context['period'] = $periodLabel = $label;

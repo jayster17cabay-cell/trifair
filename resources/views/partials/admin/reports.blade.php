@@ -5,13 +5,28 @@
         <h1 class="tw-page-title"><i class="bi bi-bar-chart-line mr-2 text-violet-600"></i>Operator Performance</h1>
         <p class="tw-page-sub">Analytics and performance overview of all operators</p>
     </div>
+    @php
+        $exportTodaOptions = ['' => 'All TODAs'];
+        foreach ($todas as $toda) {
+            $exportTodaOptions[$toda->id] = $toda->name;
+        }
+        $exportOperatorOptions = ['' => 'All operators'];
+        foreach ($activeOperators as $op) {
+            if (($op->user->role ?? null) === 'operator') {
+                $exportOperatorOptions[$op->id] = $op->user->name ?? 'Unknown';
+            }
+        }
+    @endphp
     @include('partials.admin.export-dropdown', [
         'exportRoute' => route($routePrefix . '.reports.export'),
         'exportLabel' => 'Report',
         'exportIcon' => 'bi-bar-chart-line',
-        'exportSub' => 'Operator performance analytics',
+        'exportSub' => 'Export every operator, one TODA, or a single operator',
+        'exportFilters' => [
+            ['type' => 'select', 'name' => 'toda_id', 'label' => 'TODA', 'options' => $exportTodaOptions, 'value' => $todaId ?? '', 'help' => 'Leave as "All TODAs" to include every TODA.'],
+            ['type' => 'select', 'name' => 'operator_id', 'label' => 'Operator', 'options' => $exportOperatorOptions, 'value' => '', 'help' => 'Pick one operator to export only their report.'],
+        ],
         'preservedParams' => array_filter([
-            'toda_id' => $todaId ?? null,
             'min_rating' => $minRating ?? null,
             'period' => ($period ?? 'all') !== 'all' ? $period : null,
         ]),

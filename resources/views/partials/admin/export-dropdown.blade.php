@@ -87,6 +87,9 @@
                                             <option value="{{ $val }}" {{ (string) ($field['value'] ?? '') === (string) $val ? 'selected' : '' }}>{{ $lbl }}</option>
                                         @endforeach
                                     </select>
+                                    @if (! empty($field['help']))
+                                        <p class="mt-1 text-[0.7rem] text-slate-400">{{ $field['help'] }}</p>
+                                    @endif
                                 </div>
                             @endif
                         @endforeach

@@ -156,6 +156,12 @@ class TfrbOfficerController extends Controller
                 $context['toda'] = $toda->name;
             }
         }
+        if ($request->query('operator_id')) {
+            $operator = Operator::with('user')->find((int) $request->query('operator_id'));
+            if ($operator) {
+                $context['operator'] = $operator->user->name ?? 'Unknown';
+            }
+        }
         if ($request->query('date_from') || $request->query('date_to')) {
             $context['period'] = trim(($request->query('date_from') ?? 'start') . ' — ' . ($request->query('date_to') ?? 'today'));
         }
