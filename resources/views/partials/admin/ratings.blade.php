@@ -58,19 +58,7 @@
     </form>
 </div>
 
-@php
-    $allStarsUrl = route($routePrefix . '.ratings', array_filter([
-        'date_from' => $dateFrom, 'date_to' => $dateTo, 'operator_id' => $operatorId,
-    ], fn ($v) => $v !== null && $v !== ''));
-    $starParam = function ($star) use ($routePrefix, $dateFrom, $dateTo, $operatorId, $ratingFilter) {
-        $target = $ratingFilter === $star ? null : $star;
-        return route($routePrefix . '.ratings', array_filter([
-            'date_from' => $dateFrom, 'date_to' => $dateTo, 'operator_id' => $operatorId, 'rating' => $target,
-        ], fn ($v) => $v !== null && $v !== ''));
-    };
-@endphp
-
-{{-- Sticky summary + star breakdown + bulk bar: stays pinned below the topbar while the list scrolls. --}}
+{{-- Sticky summary + bulk bar: stays pinned below the topbar while the list scrolls. --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 bg-slate-50/95 px-4 pb-4 pt-2 shadow-[0_4px_10px_-8px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <div class="tw-stat">
@@ -88,22 +76,6 @@
             <div class="tw-stat-num">{{ $proofsCount }}</div>
             <div class="tw-stat-label">Proofs</div>
         </div>
-    </div>
-
-    {{-- Star breakdown: all ratings 1-5 with counts; click a chip to filter. --}}
-    <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200/70 pt-3">
-        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-            <i class="bi bi-stars text-gold"></i>Stars
-        </span>
-        <a href="{{ $allStarsUrl }}" class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition {{ $ratingFilter === null ? 'border-navy-600 bg-navy-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300' }}">
-            All <span class="rounded px-1 text-[10px] font-bold {{ $ratingFilter === null ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $totalCount }}</span>
-        </a>
-        @foreach ([1, 2, 3, 4, 5] as $star)
-            <a href="{{ $starParam($star) }}" class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition {{ $ratingFilter === $star ? 'border-navy-600 bg-navy-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300' }}">
-                {{ $star }} <i class="bi bi-star-fill {{ $ratingFilter === $star ? 'text-white' : 'text-amber-400' }}"></i>
-                <span class="rounded px-1 text-[10px] font-bold {{ $ratingFilter === $star ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $starCounts[$star] ?? 0 }}</span>
-            </a>
-        @endforeach
     </div>
 
     <div class="mt-3 flex flex-wrap items-center justify-end gap-3">

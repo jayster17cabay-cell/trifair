@@ -633,6 +633,48 @@ class FeatureImprovementsTest extends TestCase
         $this->actingAs($admin)->get('/superadmin/ratings?rating=9')->assertOk();
     }
 
+    public function test_ratings_page_tally_matches_counting_rules()
+    {
+        $operator = $this->makeOperator();
+
+        $this->makeValidRating($operator, 5);
+        $this->makeValidRating($operator, 4);
+
+        Rating::create([
+            'operator_id' => $operator->id,
+            'rating' => 1,
+            'complaint_type' => 'Overcharging',
+            'is_accepted' => true,
+            'start_location' => 'A',
+            'end_location' => 'B',
+            'is_valid' => true,
+            'is_reviewed' => true,
+            'is_auto' => false,
+        ]);
+
+        foreach ([null, false] as $accepted) {
+            Rating::create([
+                'operator_id' => $operator->id,
+                'rating' => 1,
+                'complaint_type' => 'Rude',
+                'is_accepted' => $accepted,
+                'start_location' => 'A',
+                'end_location' => 'B',
+                'is_valid' => true,
+                'is_reviewed' => false,
+                'is_auto' => false,
+            ]);
+        }
+
+        $data = app(\App\Services\AdminQueryService::class)->ratingsData(request());
+        $this->assertSame(3, $data['totalCount']);
+        $this->assertSame(3, array_sum($data['starCounts']));
+
+        $response = $this->actingAs($this->makeUser('superadmin'))->get('/superadmin/ratings');
+        $response->assertOk();
+        $this->assertSame(3, substr_count($response->getContent(), 'data-rating-card'));
+    }
+
     public function test_reports_page_filters_by_toda_and_min_rating()
     {
         $admin = $this->makeUser('superadmin');

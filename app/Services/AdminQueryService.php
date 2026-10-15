@@ -110,7 +110,10 @@ class AdminQueryService
         $ratingKey = (string) $request->query('rating');
         $ratingFilter = in_array($ratingKey, ['1', '2', '3', '4', '5'], true) ? (int) $ratingKey : null;
 
-        $base = Rating::isValid()->notComplaint();
+        // Same base the dashboard "Ratings" KPI and the rating-distribution
+        // chart use (plain feedback plus accepted complaints) so the tally on
+        // this page always matches the dashboard numbers.
+        $base = Rating::isValid()->countsTowardRating();
         $this->applyDateRange($base, $dateFrom, $dateTo);
         if ($operatorId) {
             $base->where('operator_id', $operatorId);
@@ -347,7 +350,7 @@ class AdminQueryService
 
     public function ratingsForExport(Request $request): \Illuminate\Support\Collection
     {
-        $query = Rating::isValid()->notComplaint()->with(['operator.user', 'response']);
+        $query = Rating::isValid()->countsTowardRating()->with(['operator.user', 'response']);
         $this->applyDateRange($query, $request->query('date_from'), $request->query('date_to'));
         $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
         if ($operatorId) {
