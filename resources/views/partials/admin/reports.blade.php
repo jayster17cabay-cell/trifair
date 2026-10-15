@@ -22,6 +22,9 @@
         'exportLabel' => 'Report',
         'exportIcon' => 'bi-bar-chart-line',
         'exportSub' => 'Export every operator, one TODA, or a single operator',
+        // The page's $activeOperators is inherited by @include; null it out so the
+        // panel does not render a second (duplicate) operator selector below.
+        'activeOperators' => null,
         'exportFilters' => [
             ['type' => 'select', 'name' => 'toda_id', 'label' => 'TODA', 'options' => $exportTodaOptions, 'value' => $todaId ?? '', 'help' => 'Leave as "All TODAs" to include every TODA.'],
             ['type' => 'select', 'name' => 'operator_id', 'label' => 'Operator', 'options' => $exportOperatorOptions, 'value' => '', 'help' => 'Pick one operator to export only their report.'],

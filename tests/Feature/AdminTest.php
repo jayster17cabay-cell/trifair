@@ -521,6 +521,9 @@ class AdminTest extends TestCase
         $res->assertSee('bi-star-fill', false);
         $res->assertSee('trips', false);
         $res->assertSee('data-trips-url', false);
+        // The export panel shows a single operator selector (no duplicate from
+        // the inherited $activeOperators built-in select).
+        $res->assertDontSee('Limit to operator', false);
     }
 
     public function test_reports_period_filter_scopes_records_and_average()
