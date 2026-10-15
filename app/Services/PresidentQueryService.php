@@ -91,8 +91,7 @@ class PresidentQueryService
         if (!$ownOperator) {
             return collect();
         }
-        return $ownOperator->ratings()
-            ->isValid()
+        return $ownOperator->countableRatings()
             ->with('response')
             ->latest()
             ->take($limit)

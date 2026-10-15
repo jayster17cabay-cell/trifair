@@ -5,7 +5,7 @@
 @php
     $ownName = $ownOperator && $ownOperator->user ? $ownOperator->user->name : Auth::user()->name;
     $ownStats = $ownOperator
-        ? $ownOperator->validRatings()
+        ? $ownOperator->countableRatings()
             ->selectRaw('COUNT(*) as total, AVG(rating) as avg, SUM(CASE WHEN complaint_type IS NOT NULL THEN 1 ELSE 0 END) as complaints')
             ->first()
         : null;
