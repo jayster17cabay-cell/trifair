@@ -13,7 +13,7 @@
         @endif
     </div>
     @if ($distTotal > 0)
-        <div id="ratingChartBody" class="flex h-56 flex-col px-4 pb-4 pt-5">
+        <div id="ratingChartBody" class="flex h-44 flex-col px-4 pb-4 pt-5">
             <div class="flex flex-1 items-end gap-3">
                 @for ($star = 1; $star <= 5; $star++)
                     @php
@@ -34,7 +34,7 @@
             </div>
         </div>
     @else
-        <div class="flex h-56 flex-col items-center justify-center py-8 text-center">
+        <div class="flex h-44 flex-col items-center justify-center py-8 text-center">
             <div class="tw-empty-icon"><i class="bi bi-star"></i></div>
             <h4 class="text-sm font-bold text-slate-700">No ratings yet</h4>
             <p class="mt-1 text-sm text-slate-400">Passenger ratings will appear here.</p>

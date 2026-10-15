@@ -7,14 +7,14 @@
 --}}
 @if (($todaStats ?? collect())->isNotEmpty())
 <h2 class="tw-section-title">TODA Activity</h2>
-<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+<div class="grid gap-2.5 sm:grid-cols-2 xl:max-h-[560px] xl:grid-cols-1 xl:overflow-y-auto xl:pr-1">
     @foreach ($todaStats as $toda)
         @php
             $todaTotal = $toda->operators_count ?? 0;
             $todaActive = $toda->active_operators_count ?? 0;
             $todaPct = $todaTotal > 0 ? round(($todaActive / $todaTotal) * 100) : 0;
         @endphp
-        <button type="button" onclick="showTodaMembers({{ $toda->id }}, @js($toda->name))" class="tw-card group flex cursor-pointer items-center gap-3 p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md">
+        <button type="button" onclick="showTodaMembers({{ $toda->id }}, @js($toda->name))" class="tw-card group flex cursor-pointer items-center gap-2.5 p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md">
             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-base text-blue-600 transition-colors group-hover:bg-blue-100">
                 <i class="bi bi-diagram-3"></i>
             </div>

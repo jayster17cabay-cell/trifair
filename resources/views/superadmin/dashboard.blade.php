@@ -11,8 +11,8 @@
     'actionIcon' => 'bi-bar-chart',
 ])
 
-<div class="grid gap-6 xl:grid-cols-12 xl:items-start">
-    <div class="space-y-6 xl:col-span-8">
+<div class="grid gap-4 xl:grid-cols-12 xl:items-start">
+    <div class="space-y-4 xl:col-span-8">
         <section>
             <h2 class="tw-section-title">Overview</h2>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -44,7 +44,7 @@
     </div>
 </div>
 
-<section class="mt-6">
+<section class="mt-4">
     @include('partials.dashboard-recent', [
         'complaintsRoute' => 'superadmin.complaints',
         'ratingsRoute' => 'superadmin.ratings',

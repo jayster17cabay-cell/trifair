@@ -15,7 +15,7 @@
             $complaintMax = $complaintStats->max('total');
             $complaintVisible = $complaintStats->where('total', '>', 0);
         @endphp
-        <div id="complaintChartBody" class="max-h-[240px] space-y-2.5 overflow-y-auto px-4 py-3">
+        <div id="complaintChartBody" class="max-h-[200px] space-y-2.5 overflow-y-auto px-4 py-3">
             @foreach ($complaintVisible as $c)
                 <div>
                     <div class="mb-1 flex items-center justify-between gap-2 text-[11px]">
