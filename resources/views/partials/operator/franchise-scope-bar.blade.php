@@ -13,7 +13,7 @@
         'week' => 'This Week',
     ];
 @endphp
-<div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+<div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
     <div class="min-w-0">
         <div class="text-[11px] font-bold uppercase tracking-wide text-slate-400">
             <i class="bi bi-patch-check mr-1"></i>Franchise

@@ -640,14 +640,14 @@
         @apply mt-2 text-[11px] font-bold uppercase tracking-wider text-white/60;
     }
     .op-dashboard {
-        @apply pt-[18px];
+        @apply pt-4;
     }
     .op-qa-grid {
         @apply grid grid-cols-2 gap-3;
     }
     .op-qa-card {
-        @apply flex flex-col items-center gap-3 rounded-[14px] bg-white p-[18px] text-center transition hover:-translate-y-0.5;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        @apply flex flex-col items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-gold/50 hover:shadow-lg;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
     }
     .op-qa-icon {
         @apply flex h-12 w-12 items-center justify-center rounded-2xl text-xl;
@@ -659,32 +659,32 @@
         @apply bg-sky-50 text-sky-600;
     }
     .op-qa-label {
-        @apply text-sm font-semibold text-slate-700;
+        @apply text-[13px] font-bold text-slate-700;
     }
     .op-stack {
-        @apply mt-[14px] flex flex-col gap-[14px];
+        @apply mt-3.5 flex flex-col gap-3.5;
     }
     .op-card {
-        @apply rounded-[14px] bg-white p-[18px];
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        @apply rounded-2xl border border-slate-200 bg-white p-4 sm:p-[18px];
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
     }
     .op-card-head {
-        @apply mb-4 flex items-center justify-between border-b border-slate-100 pb-3;
+        @apply mb-3.5 flex items-center justify-between gap-2 border-b border-slate-100 pb-3;
     }
     .op-card-title {
         @apply text-sm font-bold text-slate-900;
     }
     .op-qr-panel {
-        @apply flex items-center justify-center rounded-xl bg-slate-100 p-5;
+        @apply flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-5;
     }
     .op-qr-img {
-        @apply h-40 w-40;
+        @apply h-44 w-44 rounded-lg bg-white p-2 shadow-sm;
     }
     .op-qr-actions {
         @apply mt-4 flex gap-3;
     }
     .op-info-banner {
-        @apply mt-4 flex items-center gap-2 rounded-xl bg-sky-50 px-4 py-3 text-xs font-medium text-sky-700;
+        @apply mt-4 flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-xs font-medium text-sky-700;
     }
     .op-stat-strip {
         @apply mb-4 grid grid-cols-2 gap-3;
