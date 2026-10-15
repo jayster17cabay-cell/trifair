@@ -34,8 +34,6 @@
 
 <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
     <div class="flex cursor-pointer select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:px-5" data-complaint-toggle role="button" tabindex="0" aria-expanded="false">
-        <input type="checkbox" class="tw-check complaint-check" value="{{ $rating->id }}" data-complaint-check aria-label="Select complaint {{ $rating->reference_number }}">
-
         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $avatarClass }} text-sm font-extrabold"
               title="{{ $severity === 'danger' ? 'High severity complaint' : ($severity === 'warning' ? 'Moderate severity complaint' : 'Low severity complaint') }}">{{ $initials }}</span>
 

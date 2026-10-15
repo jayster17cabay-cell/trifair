@@ -385,10 +385,10 @@ class AdminTest extends TestCase
         $res->assertOk();
         $res->assertSee('data-complaint-card', false);
         $res->assertSee('data-complaint-toggle', false);
-        $res->assertSee('data-complaint-check', false);
-        $res->assertSee('data-complaint-select-all', false);
-        $res->assertSee('data-complaint-bulk-review', false);
-        $res->assertSee('complaintBulkReviewForm', false);
+        $res->assertSee('id="complaint_filter"', false);
+        $res->assertSee('id="complaint_rating"', false);
+        $res->assertDontSee('data-complaint-select-all', false);
+        $res->assertDontSee('complaintBulkReviewForm', false);
         $res->assertSee('border-l-4', false);
     }
 

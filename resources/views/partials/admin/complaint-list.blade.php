@@ -12,12 +12,6 @@
 
 @php
     $search = trim((string) ($search ?? request('search', '')));
-    $statusUrl = function ($f) use ($routePrefix, $ratingFilter, $search) {
-        return route($routePrefix . '.complaints', array_filter(['filter' => $f, 'rating' => $ratingFilter, 'search' => $search], fn ($v) => $v !== null && $v !== ''));
-    };
-    $starUrl = function ($r) use ($routePrefix, $filter, $search) {
-        return route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $r, 'search' => $search], fn ($v) => $v !== null && $v !== ''));
-    };
 
     $statItems = [
         ['num' => $totalCount, 'label' => 'Total', 'icon' => 'bi-exclamation-circle', 'chip' => 'bg-blue-50 text-navy-600'],
@@ -67,84 +61,41 @@
         @endforeach
     </div>
 
-    {{-- Status filters + search/bulk actions --}}
-    <div class="mt-3.5 flex flex-wrap items-center gap-3">
-        <div class="inline-flex flex-wrap items-center gap-1 rounded-xl bg-slate-100 p-1">
-            <a href="{{ $statusUrl('all') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'all' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
-                <i class="bi bi-list-ul"></i> All <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'all' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $totalCount }}</span>
-            </a>
-            <a href="{{ $statusUrl('pending') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'pending' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
-                <i class="bi bi-clock-history"></i> Pending <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'pending' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $pendingCount }}</span>
-            </a>
-            <a href="{{ $statusUrl('accepted') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'accepted' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
-                <i class="bi bi-check-circle"></i> Accepted <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'accepted' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $acceptedCount }}</span>
-            </a>
-            <a href="{{ $statusUrl('rejected') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'rejected' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
-                <i class="bi bi-x-circle"></i> Rejected <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'rejected' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $rejectedCount }}</span>
-            </a>
-            <a href="{{ $statusUrl('solved') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition {{ $filter === 'solved' ? 'bg-white text-navy-700 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
-                <i class="bi bi-patch-check-fill"></i> Solved <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold {{ $filter === 'solved' ? 'bg-navy-600 text-white' : 'bg-white text-slate-400' }}">{{ $solvedCount }}</span>
-            </a>
+    {{-- Status, severity and search filters. --}}
+    <form method="GET" action="{{ route($routePrefix . '.complaints') }}" class="mt-3.5 flex flex-wrap items-center gap-3">
+        <div>
+            <label for="complaint_filter" class="sr-only">Status</label>
+            <select name="filter" id="complaint_filter" class="tw-select py-2 text-xs" onchange="this.form.submit()" aria-label="Filter complaints by status">
+                <option value="all" {{ $filter === 'all' ? 'selected' : '' }}>All statuses ({{ $totalCount }})</option>
+                <option value="pending" {{ $filter === 'pending' ? 'selected' : '' }}>Pending ({{ $pendingCount }})</option>
+                <option value="accepted" {{ $filter === 'accepted' ? 'selected' : '' }}>Accepted ({{ $acceptedCount }})</option>
+                <option value="rejected" {{ $filter === 'rejected' ? 'selected' : '' }}>Rejected ({{ $rejectedCount }})</option>
+                <option value="solved" {{ $filter === 'solved' ? 'selected' : '' }}>Solved ({{ $solvedCount }})</option>
+            </select>
         </div>
-
-        <div class="ml-auto flex flex-wrap items-center gap-3">
-            <form action="{{ route($routePrefix . '.complaints') }}" method="GET" class="flex items-center gap-2">
-                <input type="hidden" name="filter" value="{{ $filter }}">
-                @if ($ratingFilter !== null)
-                    <input type="hidden" name="rating" value="{{ $ratingFilter }}">
-                @endif
-                <div class="tw-input-group">
-                    <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search" value="{{ $search }}" placeholder="Search by reference #"
-                           class="tw-input py-2" style="width: min(14rem, 100%);" aria-label="Search complaint by reference number"
-                           data-complaint-live-search>
-                </div>
-                @if ($search !== '')
-                    <a href="{{ route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null)) }}"
-                       class="tw-btn tw-btn-sm tw-btn-ghost" title="Clear search">
-                        <i class="bi bi-x-lg"></i><span class="hidden sm:inline">Clear</span>
-                    </a>
-                @endif
-            </form>
-            <span class="h-5 w-px bg-slate-100" aria-hidden="true"></span>
-            <label class="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600">
-                <input type="checkbox" class="tw-check" data-complaint-select-all>
-                Select all
-            </label>
-            <form id="complaintBulkReviewForm" action="{{ route($routePrefix . '.complaints.bulkReview') }}" method="POST">
-                @csrf
-                <input type="hidden" name="ids" id="complaintBulkReviewIds">
-                <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" data-complaint-bulk-review disabled title="Accept all selected pending complaints">
-                    <i class="bi bi-check2-all"></i>Accept <span data-complaint-bulk-count>0</span>
-                </button>
-            </form>
+        <div>
+            <label for="complaint_rating" class="sr-only">Severity</label>
+            <select name="rating" id="complaint_rating" class="tw-select py-2 text-xs" onchange="this.form.submit()" aria-label="Filter complaints by severity">
+                <option value="" {{ $ratingFilter === null ? 'selected' : '' }}>All stars</option>
+                <option value="1" {{ $ratingFilter === 1 ? 'selected' : '' }}>1 Star ({{ $star1Count }})</option>
+                <option value="2" {{ $ratingFilter === 2 ? 'selected' : '' }}>2 Stars ({{ $star2Count }})</option>
+            </select>
         </div>
-    </div>
-
-    {{-- Star rating (severity) filter: compact segmented control in its own row. --}}
-    <div class="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
-        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-            <i class="bi bi-stars text-gold"></i>Severity
-        </span>
-        <div class="inline-flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
-            <a href="{{ $starUrl(null) }}" class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition {{ $ratingFilter === null ? 'bg-navy-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50' }}">
-                All stars
-            </a>
-            <a href="{{ $starUrl(1) }}" class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition {{ $ratingFilter === 1 ? 'bg-navy-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50' }}">
-                <i class="bi bi-star-fill {{ $ratingFilter === 1 ? '' : 'text-amber-400' }}"></i>1 Star
-                <span class="{{ $ratingFilter === 1 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }} rounded px-1 text-[10px] font-bold">{{ $star1Count }}</span>
-            </a>
-            <a href="{{ $starUrl(2) }}" class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition {{ $ratingFilter === 2 ? 'bg-navy-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50' }}">
-                <i class="bi bi-star-fill {{ $ratingFilter === 2 ? '' : 'text-amber-400' }}"></i>2 Stars
-                <span class="{{ $ratingFilter === 2 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }} rounded px-1 text-[10px] font-bold">{{ $star2Count }}</span>
-            </a>
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+            <div class="tw-input-group">
+                <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" value="{{ $search }}" placeholder="Search by reference #"
+                       class="tw-input py-2" style="width: min(14rem, 100%);" aria-label="Search complaint by reference number"
+                       data-complaint-live-search>
+            </div>
+            @if ($search !== '')
+                <a href="{{ route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null && $v !== '')) }}"
+                   class="tw-btn tw-btn-sm tw-btn-ghost" title="Clear search">
+                    <i class="bi bi-x-lg"></i><span class="hidden sm:inline">Clear</span>
+                </a>
+            @endif
         </div>
-        @if ($ratingFilter !== null)
-            <a href="{{ $starUrl(null) }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Clear star filter">
-                <i class="bi bi-x-lg"></i>Clear
-            </a>
-        @endif
-    </div>
+    </form>
 </div>
 
 @php
