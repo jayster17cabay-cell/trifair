@@ -3,14 +3,14 @@
     $distMax = $distTotal > 0 ? max(array_values($ratingDistribution)) : 0;
 @endphp
 <div class="tw-card flex flex-col transition-shadow duration-200 hover:shadow-md">
-    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <h3 class="tw-card-title text-sm"><i class="bi bi-bar-chart-fill mr-1 text-gold"></i> Ratings Distribution</h3>
         @if ($distTotal > 0)
             <span class="text-[11px] font-semibold text-slate-400">{{ $distTotal }} {{ $distTotal == 1 ? 'rating' : 'ratings' }}</span>
         @endif
     </div>
     @if ($distTotal > 0)
-        <div id="ratingChartBody" class="flex h-64 flex-col px-4 pb-4 pt-6">
+        <div id="ratingChartBody" class="flex h-64 flex-col px-5 pb-5 pt-6">
             <div class="flex flex-1 items-end gap-3">
                 @for ($star = 1; $star <= 5; $star++)
                     @php

@@ -1,5 +1,5 @@
 <div class="tw-card transition-shadow duration-200 hover:shadow-md">
-    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <h3 class="tw-card-title text-sm"><i class="bi bi-flag-fill mr-1 text-gold"></i> Complaints by Type</h3>
         @if ($totalComplaints > 0)
             <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost" onclick="showComplaintModal()">
@@ -12,7 +12,7 @@
             $complaintMax = $complaintStats->max('total');
             $complaintVisible = $complaintStats->where('total', '>', 0);
         @endphp
-        <div id="complaintChartBody" class="max-h-[248px] space-y-2 overflow-y-auto p-4">
+        <div id="complaintChartBody" class="max-h-[248px] space-y-3 overflow-y-auto px-5 py-4">
             @foreach ($complaintVisible as $c)
                 <div>
                     <div class="mb-1 flex items-center justify-between gap-2 text-[11px]">

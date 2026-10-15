@@ -4,9 +4,10 @@
     - $ratingsRoute     route name for the ratings view-all link
     - $totalComplaints  used to conditionally show the complaints view-all link
 --}}
+<h2 class="tw-section-title">Recent Activity</h2>
 <div class="mb-6 grid gap-3 lg:grid-cols-3">
     <div class="tw-card transition-shadow duration-200 hover:shadow-md">
-        <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <h3 class="tw-card-title text-sm"><i class="bi bi-exclamation-triangle mr-1 text-gold"></i> Recent Complaints</h3>
             @if ($totalComplaints > 5)
                 <a href="{{ route($complaintsRoute) }}" class="tw-btn tw-btn-sm tw-btn-ghost">View all <i class="bi bi-arrow-right"></i></a>
@@ -18,7 +19,7 @@
     </div>
 
     <div class="tw-card transition-shadow duration-200 hover:shadow-md">
-        <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <h3 class="tw-card-title text-sm"><i class="bi bi-trophy mr-1 text-gold"></i> Top Rated Operators</h3>
         </div>
         <div class="max-h-[300px] divide-y divide-slate-100 overflow-y-auto" data-live-list="top">
@@ -27,7 +28,7 @@
     </div>
 
     <div class="tw-card transition-shadow duration-200 hover:shadow-md">
-        <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <h3 class="tw-card-title text-sm"><i class="bi bi-clock-history mr-1 text-navy-600"></i> Recent Ratings</h3>
             <a href="{{ route($ratingsRoute) }}" class="tw-btn tw-btn-sm tw-btn-ghost">View all <i class="bi bi-arrow-right"></i></a>
         </div>

@@ -6,6 +6,7 @@
     Also includes the members modal partial once.
 --}}
 @if (($todaStats ?? collect())->isNotEmpty())
+<h2 class="tw-section-title">TODA Activity</h2>
 <div class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
     @foreach ($todaStats as $toda)
         @php

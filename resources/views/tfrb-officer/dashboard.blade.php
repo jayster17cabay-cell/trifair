@@ -11,6 +11,7 @@
     'actionIcon' => 'bi-bar-chart-line',
 ])
 
+<h2 class="tw-section-title">Overview</h2>
 <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators'), 'icon' => 'bi-people', 'value' => $totalOperators, 'label' => 'Operators', 'live' => 'totalOperators']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['status' => 'active']), 'icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
@@ -24,6 +25,7 @@
 
 @include('partials.complaint-breakdown-modal')
 
+<h2 class="tw-section-title">Analytics</h2>
 <div class="mb-6 grid gap-3 lg:grid-cols-2">
     @include('partials.complaint-bar-chart')
     @include('partials.rating-distribution-chart')
