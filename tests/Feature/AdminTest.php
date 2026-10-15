@@ -11,6 +11,7 @@ use App\Models\Rating;
 use App\Models\RatingProof;
 use App\Models\Toda;
 use App\Models\User;
+use App\Services\AdminQueryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -87,6 +88,31 @@ class AdminTest extends TestCase
         ]);
 
         return $rating;
+    }
+
+    public function test_operators_list_groups_by_toda_alphabetically_then_operator_name()
+    {
+        $this->makeUser('superadmin');
+
+        $todaBeta = Toda::create(['name' => 'Beta TODA', 'area' => 'Quezon City', 'is_active' => true]);
+        $todaAlpha = Toda::create(['name' => 'Alpha TODA', 'area' => 'Quezon City', 'is_active' => true]);
+
+        // Deliberately created out of order to prove the query sorts, not insert order.
+        $zed = $this->makeOperator('active', $todaBeta);
+        $zed->user->forceFill(['name' => 'Zed'])->save();
+
+        $ann = $this->makeOperator('active', $todaBeta);
+        $ann->user->forceFill(['name' => 'ann'])->save();
+
+        $mia = $this->makeOperator('active', $todaAlpha);
+        $mia->user->forceFill(['name' => 'Mia'])->save();
+
+        $operators = app(AdminQueryService::class)->operatorsData(request())['operators'];
+
+        $ordered = collect($operators->items())->map(fn ($o) => $o->user->name)->values()->all();
+
+        // Alpha TODA first (with Mia), then Beta TODA (Ann before Zed, case-insensitive).
+        $this->assertSame(['Mia', 'ann', 'Zed'], $ordered);
     }
 
     public function test_superadmin_pages_return_200()

@@ -352,6 +352,24 @@ class AdminQueryService
         return $query;
     }
 
+    /**
+     * Order the operator list TODA-first (alphabetical) so everyone belonging
+     * to the same TODA appears together, then alphabetically by operator name.
+     * Operators without a TODA ("Unassigned") are pushed to the bottom so the
+     * named TODA groups stay tidy and easy to scan.
+     */
+    private function orderByTodaThenName($query)
+    {
+        return $query
+            ->leftJoin('todas', 'todas.id', '=', 'operators.toda_id')
+            ->leftJoin('users as operator_users', 'operator_users.id', '=', 'operators.user_id')
+            ->orderByRaw('todas.name IS NULL')
+            ->orderByRaw('lower(todas.name)')
+            ->orderByRaw('lower(operator_users.name)')
+            ->orderBy('operators.id')
+            ->select('operators.*');
+    }
+
     public function operatorsData(Request $request): array
     {
         // Keep the visible status honest: any operator whose franchise has
@@ -361,7 +379,9 @@ class AdminQueryService
         Operator::deactivateExpiredFranchises();
         Operator::endExpiredSuspensions();
 
-        $operators = $this->operatorsBaseQuery($request)->latest()->paginate(10)->withQueryString();
+        $operators = $this->orderByTodaThenName($this->operatorsBaseQuery($request))
+            ->paginate(10)
+            ->withQueryString();
 
         $search = $request->query('search');
         $status = $request->query('status');
@@ -405,7 +425,7 @@ class AdminQueryService
             $query->where('operators.toda_id', $todaId);
         }
 
-        return $query->latest()->get();
+        return $this->orderByTodaThenName($query)->get();
     }
 
     public function ratingsForExport(Request $request): \Illuminate\Support\Collection
