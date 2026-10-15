@@ -13,15 +13,14 @@
         'preservedParams' => array_filter([
             'toda_id' => $todaId ?? null,
             'min_rating' => $minRating ?? null,
-            'date_from' => $dateFrom ?? null,
-            'date_to' => $dateTo ?? null,
+            'period' => ($period ?? 'all') !== 'all' ? $period : null,
         ]),
     ])
 </div>
 
-{{-- Filter bar: TODA, period, and minimum average rating. --}}
+{{-- Filter bar: TODA, reporting period, and minimum average rating. --}}
 <div class="mb-4 rounded-xl border border-slate-100 bg-white p-3 shadow-sm sm:p-4">
-    <form method="GET" action="{{ route($routePrefix . '.reports') }}" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <form method="GET" action="{{ route($routePrefix . '.reports') }}" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
             <label for="report_toda" class="mb-1 block text-xs font-semibold text-slate-600">TODA</label>
             <select name="toda_id" id="report_toda" class="tw-select py-2 text-xs" onchange="this.form.submit()">
@@ -32,12 +31,13 @@
             </select>
         </div>
         <div>
-            <label for="report_from" class="mb-1 block text-xs font-semibold text-slate-600">From Date</label>
-            <input type="date" name="date_from" id="report_from" value="{{ $dateFrom ?? '' }}" class="tw-input py-2 text-xs" onchange="this.form.submit()">
-        </div>
-        <div>
-            <label for="report_to" class="mb-1 block text-xs font-semibold text-slate-600">To Date</label>
-            <input type="date" name="date_to" id="report_to" value="{{ $dateTo ?? '' }}" class="tw-input py-2 text-xs" onchange="this.form.submit()">
+            <label for="report_period" class="mb-1 block text-xs font-semibold text-slate-600">Period</label>
+            <select name="period" id="report_period" class="tw-select py-2 text-xs" onchange="this.form.submit()">
+                <option value="all" {{ ($period ?? 'all') === 'all' ? 'selected' : '' }}>All Time</option>
+                <option value="year" {{ ($period ?? 'all') === 'year' ? 'selected' : '' }}>This Year</option>
+                <option value="month" {{ ($period ?? 'all') === 'month' ? 'selected' : '' }}>This Month</option>
+                <option value="week" {{ ($period ?? 'all') === 'week' ? 'selected' : '' }}>This Week</option>
+            </select>
         </div>
         <div>
             <label for="report_min" class="mb-1 block text-xs font-semibold text-slate-600">Min. Average Rating</label>
@@ -49,8 +49,8 @@
             </select>
             <p class="mt-1 text-[0.7rem] text-slate-400">Rating average is computed within the selected period.</p>
         </div>
-        <div class="flex items-end gap-2 lg:col-span-4">
-            @if ($dateFrom || $dateTo || $todaId || $minRating)
+        <div class="flex items-end gap-2 lg:col-span-3">
+            @if (($period ?? 'all') !== 'all' || $todaId || $minRating)
                 <a href="{{ route($routePrefix . '.reports') }}" class="tw-btn tw-btn-sm tw-btn-outline">
                     <i class="bi bi-x-lg"></i>Clear
                 </a>

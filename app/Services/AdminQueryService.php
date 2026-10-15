@@ -225,10 +225,17 @@ class AdminQueryService
             ->whereNull('operators.archived_at')
             ->when($todaId, fn ($q) => $q->where('operators.toda_id', $todaId));
 
-        // Average rating across the optional period. The subquery is filtered by
-        // created_at so the computed average matches the selected date range.
-        $from = $this->parseDate($dateFrom);
-        $to = $this->parseDate($dateTo);
+        // The Period presets (All Time / This Year / This Month / This Week)
+        // drive both the on-screen average and the export, so the downloaded
+        // file always matches the window the user picked. All Time keeps every
+        // record; a narrower period only keeps records created within it.
+        $period = $this->resolvePeriod($request);
+        [$from, $to] = $this->periodRange($period);
+
+        // An explicit custom range is only honored when no preset was chosen.
+        $from ??= $this->parseDate($dateFrom);
+        $to ??= $this->parseDate($dateTo);
+
         $periodWhere = '';
         if ($from) {
             $periodWhere .= " and created_at >= " . DB::connection()->getPdo()->quote($from->copy()->startOfDay());
@@ -247,7 +254,53 @@ class AdminQueryService
             $query->whereRaw('COALESCE(vr.valid_ratings_avg_rating, 0) >= ?', [$minRating]);
         }
 
-        return [$query, compact('dateFrom', 'dateTo', 'todaId', 'minRating')];
+        // Feed the resolved bounds back to the view so the trip-history drawer
+        // and the export carry the exact same window as the table.
+        $dateFrom = $from?->toDateString();
+        $dateTo = $to?->toDateString();
+
+        return [$query, compact('dateFrom', 'dateTo', 'todaId', 'minRating', 'period')];
+    }
+
+    /**
+     * Resolve the reports page period. One of all|year|month|week, defaulting
+     * to "all" so the page shows every record until a narrower window is picked.
+     */
+    public function resolvePeriod(Request $request): string
+    {
+        $period = (string) $request->query('period', 'all');
+
+        return in_array($period, ['all', 'year', 'month', 'week'], true) ? $period : 'all';
+    }
+
+    /**
+     * Map a period preset to a [from, to] Carbon bounds pair. The upper bound
+     * stays open (null) so the current period is always up to "now".
+     *
+     * @return array{0: \Illuminate\Support\Carbon|null, 1: \Illuminate\Support\Carbon|null}
+     */
+    private function periodRange(string $period): array
+    {
+        return match ($period) {
+            'year' => [now()->startOfYear(), null],
+            'month' => [now()->startOfMonth(), null],
+            'week' => [now()->startOfWeek(), null],
+            default => [null, null],
+        };
+    }
+
+    /**
+     * Human label for a period preset, used in export headers so a download is
+     * self-describing ("This Year" instead of a raw "year" query string).
+     */
+    public function periodLabel(string $period): ?string
+    {
+        return match ($period) {
+            'year' => 'This Year',
+            'month' => 'This Month',
+            'week' => 'This Week',
+            default => null,
+        };
     }
 
     /**

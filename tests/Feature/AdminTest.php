@@ -523,6 +523,47 @@ class AdminTest extends TestCase
         $res->assertSee('data-trips-url', false);
     }
 
+    public function test_reports_period_filter_scopes_records_and_average()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+
+        $this->makeValidRating($operator, 5);
+        $lastYear = $this->makeValidRating($operator, 1);
+        $lastYear->forceFill(['created_at' => now()->subYear()])->save();
+
+        // All Time (default) keeps every record: avg of 5 and 1 = 3.0, 2 trips.
+        $all = $this->actingAs($admin)->get('/superadmin/reports')->assertOk()->getContent();
+        $this->assertStringContainsString('2 trips', $all);
+        $this->assertStringContainsString('3.0', $all);
+
+        // This Year drops the previous-year record: avg 5.0, 1 trip.
+        $year = $this->actingAs($admin)->get('/superadmin/reports?period=year')->assertOk()->getContent();
+        $this->assertStringContainsString('1 trip', $year);
+        $this->assertStringContainsString('5.0', $year);
+    }
+
+    public function test_reports_export_honors_period_filter()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+
+        $this->makeValidRating($operator, 5);
+        $lastYear = $this->makeValidRating($operator, 1);
+        $lastYear->forceFill(['created_at' => now()->subYear()])->save();
+
+        // Export with This Year carries only this year's average.
+        $year = $this->actingAs($admin)->get('/superadmin/reports/export?format=csv&period=year');
+        $year->assertOk();
+        $this->assertStringContainsString($operator->user->name, $year->getContent());
+        $this->assertStringContainsString('5.00', $year->getContent());
+
+        // All Time export includes the previous-year record in the average.
+        $all = $this->actingAs($admin)->get('/superadmin/reports/export?format=csv');
+        $all->assertOk();
+        $this->assertStringContainsString('3.00', $all->getContent());
+    }
+
     public function test_reports_trips_endpoint_renders_cards_and_show_all()
     {
         $admin = $this->makeUser('superadmin');

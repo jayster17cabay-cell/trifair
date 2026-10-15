@@ -211,7 +211,7 @@ class SuperadminController extends Controller
         extract(app(AdminQueryService::class)->reportsData($request));
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('superadmin.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating'));
+        return view('superadmin.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating', 'period'));
     }
 
     /**
@@ -415,7 +415,10 @@ class SuperadminController extends Controller
                 $context['toda'] = $toda->name;
             }
         }
-        if ($request->query('date_from') || $request->query('date_to')) {
+        $period = app(AdminQueryService::class)->resolvePeriod($request);
+        if ($label = app(AdminQueryService::class)->periodLabel($period)) {
+            $context['period'] = $periodLabel = $label;
+        } elseif ($request->query('date_from') || $request->query('date_to')) {
             $context['period'] = trim(($request->query('date_from') ?? 'start') . ' — ' . ($request->query('date_to') ?? 'today'));
         }
 

@@ -159,6 +159,9 @@ class TfrbOfficerController extends Controller
         if ($request->query('date_from') || $request->query('date_to')) {
             $context['period'] = trim(($request->query('date_from') ?? 'start') . ' — ' . ($request->query('date_to') ?? 'today'));
         }
+        if ($label = app(AdminQueryService::class)->periodLabel($request->query('period', 'all'))) {
+            $context['period'] = $label;
+        }
 
         return app(ExportService::class)->reportsFormat($reports, $format, $context);
     }
@@ -216,7 +219,7 @@ class TfrbOfficerController extends Controller
         extract(app(AdminQueryService::class)->reportsData($request));
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('tfrb-officer.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating'));
+        return view('tfrb-officer.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating', 'period'));
     }
 
     /**
