@@ -548,6 +548,27 @@ class FeatureImprovementsTest extends TestCase
         $this->assertSame(1, $toda->president()->count());
     }
 
+    public function test_president_still_appears_in_operators_list_by_name()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+        $operator = $this->makeOperator();
+        $operator->update(['toda_id' => $toda->id]);
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $operator->id . '/assign-president')
+            ->assertRedirect(route('superadmin.operators'));
+
+        $this->assertSame('operator_president', $operator->user->fresh()->role);
+
+        // A president is still an operator, so their name and row stay in the
+        // Operators list (managed additionally via the Presidents section).
+        $html = $this->actingAs($admin)->get('/superadmin/operators')->assertOk()->getContent();
+        $this->assertStringContainsString($operator->user->fresh()->name, $html);
+        $this->assertStringContainsString(route('superadmin.operators.edit', $operator), $html);
+        $this->assertStringContainsString('President', $html);
+    }
+
     public function test_officer_can_assign_toda_president()
     {
         $officer = $this->makeUser('tfrb_officer');

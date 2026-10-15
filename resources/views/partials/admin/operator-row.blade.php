@@ -21,8 +21,9 @@
     }
 
     $accountActive = (bool) ($operator->user->is_active ?? true);
-    // The TODA's current president (a president is also an Operator row, but is
-    // managed under the Presidents section — role becomes operator_president).
+    // A TODA president is still an operator (they keep their Operator row), so
+    // they appear here by name too. They are managed via the Presidents section.
+    $isPresident = ($operator->user->role ?? null) === 'operator_president';
     $todaPresident = $operator->toda ? $operator->toda->president : null;
 
     $operatorName = $operator->user->name ?? 'Unknown';
@@ -111,6 +112,9 @@
     <td class="tw-td">
         <div class="flex flex-wrap items-center gap-1">
             <span class="tw-badge {{ $statusClass }}"><i class="bi {{ $statusIcon }}"></i>{{ $statusLabel }}</span>
+            @if ($isPresident)
+                <span class="tw-badge tw-badge-navy" title="TODA President — also an operator"><i class="bi bi-award-fill"></i>President</span>
+            @endif
         </div>
     </td>
     <td class="tw-td text-right">
@@ -165,6 +169,7 @@
                         <a href="{{ route($routePrefix . '.operators.edit', $operator) }}" class="tw-dropdown-item">
                             <i class="bi bi-pencil tw-dropdown-item-icon"></i>Edit
                         </a>
+                @unless ($isPresident)
                 @php
                     $hasPresidentName = $todaPresident && $todaPresident->name !== $operatorName;
                     if ($hasPresidentName) {
@@ -185,6 +190,7 @@
                         </button>
                     @endif
                 </form>
+                @endunless
                 <form action="{{ route($routePrefix . '.operators.resetPassword', $operator) }}" method="POST" onsubmit="return confirm(@js('Reset the password of ' . $operatorName . '? A temporary password will be e-mailed to them.'))">
                     @csrf
                     <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reset password" aria-label="Reset password {{ $operatorName }}">

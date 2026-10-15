@@ -260,12 +260,12 @@ class AdminQueryService
         $status = $request->query('status');
         $account = $request->query('account', 'all');
 
-        // Only "true" operators appear in the Operators management list. A TODA
-        // president is also given an Operator row (so they can carry their own
-        // rating), but presidents are managed under their own Presidents section.
+        // A TODA president is also an operator (they keep their own Operator row
+        // so they can carry a rating), so they still appear here by name — they
+        // are additionally managed under the Presidents section.
         $query = Operator::with('user', 'toda.president', 'currentTerm', 'currentSuspension.suspender')
             ->whereHas('user', function ($u) {
-                $u->where('role', 'operator');
+                $u->whereIn('role', ['operator', 'operator_president']);
             });
 
         if ($status === 'archived') {
@@ -317,7 +317,7 @@ class AdminQueryService
         // conditional aggregation returns them all at once.
         $tally = Operator::notArchived()
             ->join('users', 'users.id', '=', 'operators.user_id')
-            ->where('users.role', 'operator')
+            ->whereIn('users.role', ['operator', 'operator_president'])
             ->selectRaw(
                 "SUM(CASE WHEN operators.status = 'pending' THEN 1 ELSE 0 END) as pending_count"
                 . ", SUM(CASE WHEN operators.status = 'suspended' THEN 1 ELSE 0 END) as suspended_count"
