@@ -203,7 +203,7 @@ class SuperadminController extends Controller
         extract(app(AdminQueryService::class)->ratingsData($request));
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('superadmin.ratings', compact('ratings', 'activeOperators', 'goodCount', 'reviewedCount', 'proofsCount', 'dateFrom', 'dateTo', 'operatorId'));
+        return view('superadmin.ratings', compact('ratings', 'activeOperators', 'goodCount', 'reviewedCount', 'proofsCount', 'dateFrom', 'dateTo', 'operatorId', 'ratingFilter', 'starCounts', 'totalCount'));
     }
 
     public function reports(Request $request)

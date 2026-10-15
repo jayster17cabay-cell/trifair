@@ -107,6 +107,8 @@ class AdminQueryService
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
         $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
+        $ratingKey = (string) $request->query('rating');
+        $ratingFilter = in_array($ratingKey, ['1', '2', '3', '4', '5'], true) ? (int) $ratingKey : null;
 
         $base = Rating::isValid()->notComplaint();
         $this->applyDateRange($base, $dateFrom, $dateTo);
@@ -114,14 +116,36 @@ class AdminQueryService
             $base->where('operator_id', $operatorId);
         }
 
+        // One round-trip for every tally shown on the page: total plus the
+        // per-star breakdown. Computed before the star filter is applied so the
+        // counts always reflect the date/operator scope the officer can switch
+        // between.
         $counts = (clone $base)->selectRaw(
-            'SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as good_count'
+            'COUNT(*) as total_count'
+            . ', SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as star1_count'
+            . ', SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as star2_count'
+            . ', SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as star3_count'
+            . ', SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as star4_count'
+            . ', SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as star5_count'
+            . ', SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as good_count'
             . ', SUM(CASE WHEN is_reviewed = true THEN 1 ELSE 0 END) as reviewed_count'
         )->first();
 
+        $totalCount = (int) ($counts->total_count ?? 0);
+        $starCounts = [
+            1 => (int) ($counts->star1_count ?? 0),
+            2 => (int) ($counts->star2_count ?? 0),
+            3 => (int) ($counts->star3_count ?? 0),
+            4 => (int) ($counts->star4_count ?? 0),
+            5 => (int) ($counts->star5_count ?? 0),
+        ];
         $goodCount = (int) ($counts->good_count ?? 0);
         $reviewedCount = (int) ($counts->reviewed_count ?? 0);
         $proofsCount = (clone $base)->has('proofs')->count();
+
+        if ($ratingFilter) {
+            $base->where('rating', $ratingFilter);
+        }
 
         $ratings = (clone $base)
             ->with(['operator.user', 'proofs', 'response', 'operatorProofs'])
@@ -129,7 +153,7 @@ class AdminQueryService
             ->paginate(15)
             ->withQueryString();
 
-        return compact('ratings', 'goodCount', 'reviewedCount', 'proofsCount', 'dateFrom', 'dateTo', 'operatorId');
+        return compact('ratings', 'goodCount', 'reviewedCount', 'proofsCount', 'dateFrom', 'dateTo', 'operatorId', 'ratingFilter', 'starCounts', 'totalCount');
     }
 
     public function applyDateRange($query, ?string $dateFrom, ?string $dateTo): void
@@ -328,6 +352,10 @@ class AdminQueryService
         $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
         if ($operatorId) {
             $query->where('operator_id', $operatorId);
+        }
+        $ratingKey = (string) $request->query('rating');
+        if (in_array($ratingKey, ['1', '2', '3', '4', '5'], true)) {
+            $query->where('rating', (int) $ratingKey);
         }
 
         return $query->latest()

@@ -14,11 +14,12 @@
                 'date_from' => $dateFrom ?? null,
                 'date_to' => $dateTo ?? null,
                 'operator_id' => $operatorId ?? null,
+                'rating' => $ratingFilter ?? null,
             ]),
         ])
 </div>
 
-{{-- Filter bar: search ratings by date range and operator. --}}
+{{-- Filter bar: date range, operator and star rating (1-5). --}}
 <div class="mb-4 rounded-xl border border-slate-100 bg-white p-3 shadow-sm sm:p-4">
     <form method="GET" action="{{ route($routePrefix . '.ratings') }}" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" id="ratingsFilterForm">
         <div>
@@ -38,41 +39,71 @@
                 @endforeach
             </select>
         </div>
-        <div class="flex items-end gap-2">
-            @if ($dateFrom || $dateTo || $operatorId)
-                <a href="{{ route($routePrefix . '.ratings') }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Clear filters">
-                    <i class="bi bi-x-lg"></i><span class="hidden sm:inline">Clear</span>
-                </a>
-            @endif
-            <p class="text-xs text-slate-400">Results update automatically.</p>
+        <div>
+            <label for="rating_stars" class="mb-1 block text-xs font-semibold text-slate-600">Stars</label>
+            <select name="rating" id="rating_stars" class="tw-select py-2 text-xs" onchange="this.form.submit()">
+                <option value="" {{ $ratingFilter === null ? 'selected' : '' }}>All stars ({{ $totalCount }})</option>
+                @foreach ([5, 4, 3, 2, 1] as $star)
+                    <option value="{{ $star }}" {{ $ratingFilter === $star ? 'selected' : '' }}>{{ $star }} Star{{ $star > 1 ? 's' : '' }} ({{ $starCounts[$star] ?? 0 }})</option>
+                @endforeach
+            </select>
         </div>
+        @if ($dateFrom || $dateTo || $operatorId || $ratingFilter)
+            <div class="flex items-center sm:col-span-2 lg:col-span-4">
+                <a href="{{ route($routePrefix . '.ratings') }}" class="tw-btn tw-btn-sm tw-btn-outline" title="Clear filters">
+                    <i class="bi bi-x-lg"></i>Clear filters
+                </a>
+            </div>
+        @endif
     </form>
 </div>
 
 @php
-    $totalR = $ratings->total();
-    $goodR = $goodCount;
-    $proofsR = $proofsCount;
+    $allStarsUrl = route($routePrefix . '.ratings', array_filter([
+        'date_from' => $dateFrom, 'date_to' => $dateTo, 'operator_id' => $operatorId,
+    ], fn ($v) => $v !== null && $v !== ''));
+    $starParam = function ($star) use ($routePrefix, $dateFrom, $dateTo, $operatorId, $ratingFilter) {
+        $target = $ratingFilter === $star ? null : $star;
+        return route($routePrefix . '.ratings', array_filter([
+            'date_from' => $dateFrom, 'date_to' => $dateTo, 'operator_id' => $operatorId, 'rating' => $target,
+        ], fn ($v) => $v !== null && $v !== ''));
+    };
 @endphp
 
-{{-- Sticky summary + bulk bar: stays pinned below the topbar while the list scrolls. --}}
+{{-- Sticky summary + star breakdown + bulk bar: stays pinned below the topbar while the list scrolls. --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 bg-slate-50/95 px-4 pb-4 pt-2 shadow-[0_4px_10px_-8px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-star"></i></div>
-            <div class="tw-stat-num">{{ $totalR }}</div>
+            <div class="tw-stat-num">{{ $totalCount }}</div>
             <div class="tw-stat-label">Total</div>
         </div>
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-hand-thumbs-up"></i></div>
-            <div class="tw-stat-num">{{ $goodR }}</div>
+            <div class="tw-stat-num">{{ $goodCount }}</div>
             <div class="tw-stat-label">Good (4-5)</div>
         </div>
         <div class="tw-stat">
             <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-paperclip"></i></div>
-            <div class="tw-stat-num">{{ $proofsR }}</div>
+            <div class="tw-stat-num">{{ $proofsCount }}</div>
             <div class="tw-stat-label">Proofs</div>
         </div>
+    </div>
+
+    {{-- Star breakdown: all ratings 1-5 with counts; click a chip to filter. --}}
+    <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200/70 pt-3">
+        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+            <i class="bi bi-stars text-gold"></i>Stars
+        </span>
+        <a href="{{ $allStarsUrl }}" class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition {{ $ratingFilter === null ? 'border-navy-600 bg-navy-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300' }}">
+            All <span class="rounded px-1 text-[10px] font-bold {{ $ratingFilter === null ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $totalCount }}</span>
+        </a>
+        @foreach ([1, 2, 3, 4, 5] as $star)
+            <a href="{{ $starParam($star) }}" class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition {{ $ratingFilter === $star ? 'border-navy-600 bg-navy-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300' }}">
+                {{ $star }} <i class="bi bi-star-fill {{ $ratingFilter === $star ? 'text-white' : 'text-amber-400' }}"></i>
+                <span class="rounded px-1 text-[10px] font-bold {{ $ratingFilter === $star ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $starCounts[$star] ?? 0 }}</span>
+            </a>
+        @endforeach
     </div>
 
     <div class="mt-3 flex flex-wrap items-center justify-end gap-3">

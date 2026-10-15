@@ -612,6 +612,27 @@ class FeatureImprovementsTest extends TestCase
         $this->assertEquals(2, substr_count($response->getContent(), 'data-rating-card'));
     }
 
+    public function test_ratings_page_filters_by_each_star_1_to_5()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        for ($star = 1; $star <= 5; $star++) {
+            $this->makeValidRating($operator, $star);
+        }
+
+        foreach ([1, 2, 3, 4, 5] as $star) {
+            $response = $this->actingAs($admin)->get('/superadmin/ratings?rating=' . $star);
+            $response->assertOk();
+            $this->assertEquals(1, substr_count($response->getContent(), 'data-rating-card'), "Expected one card for star {$star}");
+        }
+
+        $all = $this->actingAs($admin)->get('/superadmin/ratings');
+        $all->assertOk();
+        $this->assertEquals(5, substr_count($all->getContent(), 'data-rating-card'));
+
+        $this->actingAs($admin)->get('/superadmin/ratings?rating=9')->assertOk();
+    }
+
     public function test_reports_page_filters_by_toda_and_min_rating()
     {
         $admin = $this->makeUser('superadmin');
