@@ -231,7 +231,7 @@ class FranchiseFlowTest extends TestCase
             $this->actingAs($user)->get($path)
                 ->assertOk()
                 ->assertSee('FR-9000', false)
-                ->assertSee('All Time Record', false);
+                ->assertSee('All Time', false);
         }
     }
 
@@ -266,33 +266,33 @@ class FranchiseFlowTest extends TestCase
             ->assertSee('MTOP-2026-777', false);
     }
 
-    public function test_operator_dashboard_defaults_to_current_term_with_all_time_toggle()
+    public function test_operator_dashboard_shows_all_records_by_default_and_filters_by_period()
     {
         $operator = $this->makeOperator();
         $user = $operator->user;
 
-        $oldTerm = FranchiseTerm::create([
-            'operator_id' => $operator->id,
-            'franchise_no' => 'FR-OLD',
-            'status' => FranchiseTerm::STATUS_ENDED,
-        ]);
-        $currentTerm = FranchiseTerm::create([
+        $term = FranchiseTerm::create([
             'operator_id' => $operator->id,
             'franchise_no' => 'FR-NEW',
             'status' => FranchiseTerm::STATUS_ACTIVE,
         ]);
 
-        $this->makeRating($operator, 1, $oldTerm);
-        $this->makeRating($operator, 5, $currentTerm);
+        // A rating from a previous year plus one from the current period.
+        $old = $this->makeRating($operator, 1, $term);
+        $old->forceFill(['created_at' => now()->subYear()])->save();
+        $this->makeRating($operator, 5, $term);
 
+        // "All Time" is the default, so a renewal never hides earlier records.
         $this->actingAs($user)->get('/operator/dashboard')
+            ->assertOk()
+            ->assertSee('Avg Rating · 2 Ratings', false)
+            ->assertSee('3.0', false);
+
+        // Narrowing to "This Year" drops the previous-year record.
+        $this->actingAs($user)->get('/operator/dashboard?period=year')
             ->assertOk()
             ->assertSee('Avg Rating · 1 Rating', false)
             ->assertSee('5.0', false);
-
-        $this->actingAs($user)->get('/operator/dashboard?all_time=1')
-            ->assertOk()
-            ->assertSee('Avg Rating · 2 Ratings', false);
     }
 
     public function test_sync_command_deactivates_expired_franchise_only()

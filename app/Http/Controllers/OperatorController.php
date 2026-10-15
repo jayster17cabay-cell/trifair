@@ -17,11 +17,11 @@ class OperatorController extends Controller
     public function dashboard(Request $request)
     {
         $operator = Auth::user()->operator;
-        [$term, $allTime] = $this->resolveTermScope($operator, $request);
+        $period = $this->resolvePeriod($request);
 
-        $base = $term ? $operator->termRatings($term)->isValid() : $operator->ratings()->isValid();
+        $base = $this->applyPeriod($operator->ratings()->isValid(), $period);
 
-        $agg = ($term ? $operator->termCountableRatings($term) : $operator->countableRatings())
+        $agg = $this->applyPeriod($operator->countableRatings(), $period)
             ->selectRaw('COUNT(*) as total_ratings, AVG(rating) as avg_rating')
             ->selectRaw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as r1')
             ->selectRaw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as r2')
@@ -56,18 +56,16 @@ class OperatorController extends Controller
 
         return view('operator.dashboard', compact(
             'operator', 'averageRating', 'totalRatings',
-            'recentRatings', 'ratingCounts', 'term', 'allTime'
+            'recentRatings', 'ratingCounts', 'period'
         ));
     }
 
     public function ratings(Request $request)
     {
         $operator = Auth::user()->operator;
-        [$term, $allTime] = $this->resolveTermScope($operator, $request);
+        $period = $this->resolvePeriod($request);
 
-        $query = $term
-            ? $operator->termRatings($term)->isValid()
-            : $operator->ratings()->isValid();
+        $query = $this->applyPeriod($operator->ratings()->isValid(), $period);
 
         $ratings = $query
             ->with('proofs', 'response', 'operatorProofs')
@@ -75,30 +73,40 @@ class OperatorController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $agg = $term ? $operator->termCountableRatings($term) : $operator->countableRatings();
+        $agg = $this->applyPeriod($operator->countableRatings(), $period);
         $averageRating = (clone $agg)->avg('rating');
         $totalRatings = (clone $agg)->count();
 
         return view('operator.ratings', compact(
-            'operator', 'ratings', 'averageRating', 'totalRatings', 'term', 'allTime'
+            'operator', 'ratings', 'averageRating', 'totalRatings', 'period'
         ));
     }
 
     /**
-     * Resolve which franchise term the operator's own dashboard should show.
-     * By default the current active term is used so a renewal starts the view
-     * at zero; "?all_time=1" (or an operator with no term yet) falls back to
-     * every rating across all terms.
-     *
-     * @return array{0: ?\App\Models\FranchiseTerm, 1: bool}
+     * Resolve which reporting period the operator's own dashboard should show.
+     * "period" is one of all|year|month|week and defaults to "all", so a
+     * franchise renewal never hides the operator's earlier ratings or
+     * complaints — every record stays visible until a narrower period is
+     * deliberately chosen.
      */
-    private function resolveTermScope($operator, Request $request): array
+    private function resolvePeriod(Request $request): string
     {
-        $operator->loadMissing('currentTerm');
-        $allTime = $request->boolean('all_time');
-        $term = $allTime ? null : $operator->currentTerm;
+        $period = (string) $request->query('period', 'all');
 
-        return [$term, $allTime || $operator->currentTerm === null];
+        return in_array($period, ['all', 'year', 'month', 'week'], true) ? $period : 'all';
+    }
+
+    /**
+     * Narrow a ratings query to the chosen reporting period (relative to now).
+     */
+    private function applyPeriod($query, string $period)
+    {
+        return match ($period) {
+            'year' => $query->where('created_at', '>=', now()->startOfYear()),
+            'month' => $query->where('created_at', '>=', now()->startOfMonth()),
+            'week' => $query->where('created_at', '>=', now()->startOfWeek()),
+            default => $query,
+        };
     }
 
     public function respond(Request $request, Rating $rating)
@@ -186,10 +194,10 @@ class OperatorController extends Controller
     public function profile(Request $request)
     {
         $operator = Auth::user()->operator->load('user', 'toda');
-        [$term, $allTime] = $this->resolveTermScope($operator, $request);
+        $period = $this->resolvePeriod($request);
 
-        $countable = $term ? $operator->termCountableRatings($term) : $operator->countableRatings();
-        $valid = $term ? $operator->termRatings($term)->isValid() : $operator->ratings()->isValid();
+        $countable = $this->applyPeriod($operator->countableRatings(), $period);
+        $valid = $this->applyPeriod($operator->ratings()->isValid(), $period);
 
         $stats = [
             'totalRatings' => (clone $countable)->count(),
@@ -198,7 +206,7 @@ class OperatorController extends Controller
             'responseRate' => (clone $valid)->whereHas('response')->count(),
         ];
 
-        return view('operator.profile', compact('operator', 'stats', 'term', 'allTime'));
+        return view('operator.profile', compact('operator', 'stats', 'period'));
     }
 
     public function showSettings()

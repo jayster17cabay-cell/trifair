@@ -29,7 +29,7 @@
 @endsection
 
 @section('content')
-@include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'allTime' => $allTime, 'scopeRoute' => 'operator.dashboard'])
+@include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'period' => $period, 'scopeRoute' => 'operator.dashboard'])
 <div class="op-dashboard">
     @include('partials.operator.dashboard-quick-actions', ['operator' => $operator])
 
