@@ -11,40 +11,44 @@
     'actionIcon' => 'bi-bar-chart-line',
 ])
 
-<div class="space-y-6">
-    <section>
-        <h2 class="tw-section-title">Overview</h2>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators'), 'icon' => 'bi-people', 'value' => $totalOperators, 'label' => 'Operators', 'live' => 'totalOperators']])
-            @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['status' => 'active']), 'icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
-            @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['status' => 'inactive']), 'icon' => 'bi-person-dash', 'value' => $inactiveOperators, 'label' => 'Inactive', 'live' => 'inactiveOperators']])
-            @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['status' => 'suspended']), 'icon' => 'bi-slash-circle', 'value' => $suspendedOperators, 'label' => 'Suspended', 'live' => 'suspendedOperators']])
-            @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.ratings'), 'icon' => 'bi-star', 'value' => $totalRatings, 'label' => 'Ratings', 'live' => 'totalRatings']])
-            @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.ratings'), 'icon' => 'bi-award', 'value' => number_format($averageRating ?? 0, 1), 'label' => 'Avg Rating', 'live' => 'averageRating']])
-            @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.complaints'), 'icon' => 'bi-flag', 'value' => $totalComplaints, 'label' => 'Complaints', 'live' => 'totalComplaints']])
-            @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.todas'), 'icon' => 'bi-diagram-3', 'value' => $totalTodas, 'label' => 'TODA', 'live' => 'totalTodas']])
-        </div>
-    </section>
+<div class="grid gap-6 xl:grid-cols-12 xl:items-start">
+    <div class="space-y-6 xl:col-span-8">
+        <section>
+            <h2 class="tw-section-title">Overview</h2>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators'), 'icon' => 'bi-people', 'value' => $totalOperators, 'label' => 'Operators', 'live' => 'totalOperators']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['status' => 'active']), 'icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['status' => 'inactive']), 'icon' => 'bi-person-dash', 'value' => $inactiveOperators, 'label' => 'Inactive', 'live' => 'inactiveOperators']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators', ['status' => 'suspended']), 'icon' => 'bi-slash-circle', 'value' => $suspendedOperators, 'label' => 'Suspended', 'live' => 'suspendedOperators']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.ratings'), 'icon' => 'bi-star', 'value' => $totalRatings, 'label' => 'Ratings', 'live' => 'totalRatings']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.ratings'), 'icon' => 'bi-award', 'value' => number_format($averageRating ?? 0, 1), 'label' => 'Avg Rating', 'live' => 'averageRating']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.complaints'), 'icon' => 'bi-flag', 'value' => $totalComplaints, 'label' => 'Complaints', 'live' => 'totalComplaints']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.todas'), 'icon' => 'bi-diagram-3', 'value' => $totalTodas, 'label' => 'TODA', 'live' => 'totalTodas']])
+            </div>
+        </section>
 
-    <section>
-        <h2 class="tw-section-title">Analytics</h2>
-        <div class="grid gap-3 lg:grid-cols-2">
-            @include('partials.complaint-bar-chart')
-            @include('partials.rating-distribution-chart')
-        </div>
-    </section>
+        <section>
+            <h2 class="tw-section-title">Analytics</h2>
+            <div class="grid gap-3 lg:grid-cols-2">
+                @include('partials.complaint-bar-chart')
+                @include('partials.rating-distribution-chart')
+            </div>
+        </section>
+    </div>
 
-    <section>
-        @include('partials.dashboard-todas', ['membersUrl' => url('/tfrb-officer/toda'), 'addMemberUrl' => route('tfrb-officer.operators.create')])
-    </section>
-
-    <section>
-        @include('partials.dashboard-recent', [
-            'complaintsRoute' => 'tfrb-officer.complaints',
-            'ratingsRoute' => 'tfrb-officer.ratings',
-        ])
-    </section>
+    <div class="xl:col-span-4">
+        <section>
+            @include('partials.dashboard-todas', ['membersUrl' => url('/tfrb-officer/toda'), 'addMemberUrl' => route('tfrb-officer.operators.create')])
+        </section>
+    </div>
 </div>
+
+<section class="mt-6">
+    @include('partials.dashboard-recent', [
+        'complaintsRoute' => 'tfrb-officer.complaints',
+        'ratingsRoute' => 'tfrb-officer.ratings',
+    ])
+</section>
 
 @include('partials.complaint-breakdown-modal')
 

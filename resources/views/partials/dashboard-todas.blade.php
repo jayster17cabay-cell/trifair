@@ -7,7 +7,7 @@
 --}}
 @if (($todaStats ?? collect())->isNotEmpty())
 <h2 class="tw-section-title">TODA Activity</h2>
-<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
     @foreach ($todaStats as $toda)
         @php
             $todaTotal = $toda->operators_count ?? 0;
