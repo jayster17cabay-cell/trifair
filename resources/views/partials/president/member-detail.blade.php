@@ -73,7 +73,7 @@
                                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
                         </div>
                     </div>
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger" style="background-color:#dc2626;color:#fff;">
                         <i class="bi bi-slash-circle"></i>Suspend Member
                     </button>
                 </form>
