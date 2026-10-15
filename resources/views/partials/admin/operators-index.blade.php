@@ -24,11 +24,27 @@
         </p>
     </div>
     <div class="flex items-center gap-2">
+        @php
+            $exportTodaOptions = ['' => 'All TODAs'];
+            foreach ($todas as $t) {
+                $exportTodaOptions[$t->id] = $t->name;
+            }
+            $exportOperatorOptions = ['' => 'All operators'];
+            $exportOperatorData = [];
+            foreach ($activeOperators as $op) {
+                $exportOperatorOptions[$op->id] = $op->user->name ?? 'Unknown';
+                $exportOperatorData[$op->id] = (int) $op->toda_id;
+            }
+        @endphp
         @include('partials.admin.export-dropdown', [
             'exportRoute' => route($routePrefix . '.operators.export'),
             'exportLabel' => 'Operators',
             'exportIcon' => 'bi-people',
-            'activeOperators' => $activeOperators ?? collect(),
+            'activeOperators' => null,
+            'exportFilters' => [
+                ['type' => 'select', 'name' => 'toda_id', 'label' => 'TODA', 'options' => $exportTodaOptions, 'value' => '', 'help' => 'Leave as "All TODAs" to include every TODA.'],
+                ['type' => 'select', 'name' => 'operator_id', 'label' => 'Operator', 'options' => $exportOperatorOptions, 'value' => '', 'option_data' => $exportOperatorData, 'help' => 'Pick one operator to export only them. Members of the selected TODA appear when a TODA filter is active.'],
+            ],
             'preservedParams' => array_filter(['search' => $search ?? null, 'status' => $currentStatus ?? null, 'account' => $account ?? null]),
         ])
         @if ($currentStatus === 'pending')

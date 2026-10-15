@@ -10,11 +10,16 @@
         foreach ($todas as $toda) {
             $exportTodaOptions[$toda->id] = $toda->name;
         }
+        // Every operator carries its TODA so the Operator list can be narrowed
+        // to the selected TODA on the fly (see initExportScopeFilters()).
         $exportOperatorOptions = ['' => 'All operators'];
+        $exportOperatorData = [];
         foreach ($activeOperators as $op) {
-            if (($op->user->role ?? null) === 'operator') {
-                $exportOperatorOptions[$op->id] = $op->user->name ?? 'Unknown';
+            if (($op->user->role ?? null) !== 'operator') {
+                continue;
             }
+            $exportOperatorOptions[$op->id] = $op->user->name ?? 'Unknown';
+            $exportOperatorData[$op->id] = (int) $op->toda_id;
         }
     @endphp
     @include('partials.admin.export-dropdown', [
@@ -27,7 +32,7 @@
         'activeOperators' => null,
         'exportFilters' => [
             ['type' => 'select', 'name' => 'toda_id', 'label' => 'TODA', 'options' => $exportTodaOptions, 'value' => $todaId ?? '', 'help' => 'Leave as "All TODAs" to include every TODA.'],
-            ['type' => 'select', 'name' => 'operator_id', 'label' => 'Operator', 'options' => $exportOperatorOptions, 'value' => '', 'help' => 'Pick one operator to export only their report.'],
+            ['type' => 'select', 'name' => 'operator_id', 'label' => 'Operator', 'options' => $exportOperatorOptions, 'value' => '', 'option_data' => $exportOperatorData, 'help' => 'Pick one operator to export only their report. Members of the selected TODA appear when a TODA filter is active.'],
         ],
         'preservedParams' => array_filter([
             'min_rating' => $minRating ?? null,

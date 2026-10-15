@@ -7,6 +7,7 @@
         initModalTriggers();
         initDropdowns();
         initExportForms();
+        initExportScopeFilters();
         initPasswordToggles();
         initProofInputs();
         initCollapsibleCardLists();
@@ -664,6 +665,47 @@
                     if (label) label.textContent = original;
                 }, 4000);
             });
+        });
+    }
+
+    function initExportScopeFilters() {
+        // In an export panel that offers both a TODA and an Operator selector,
+        // keep the Operator list scoped to the chosen TODA: picking a TODA shows
+        // only its members, and "All TODAs" brings every operator back.
+        document.querySelectorAll('[data-export-form]').forEach(function (form) {
+            var toda = form.querySelector('select[name="toda_id"]');
+            var operator = form.querySelector('select[name="operator_id"]');
+            if (!toda || !operator) return;
+
+            var all = Array.prototype.map.call(operator.options, function (o) {
+                return { value: o.value, label: o.textContent, toda: o.getAttribute('data-toda') || '' };
+            });
+            if (!all.some(function (o) { return o.toda !== ''; })) return;
+
+            function todaLabel() {
+                return toda.selectedIndex >= 0 ? toda.options[toda.selectedIndex].textContent : 'All TODAs';
+            }
+
+            function rebuild() {
+                var selected = toda.value;
+                var prev = operator.value;
+                var label = todaLabel();
+                operator.innerHTML = '';
+                all.forEach(function (o) {
+                    if (o.value !== '' && selected && o.toda !== selected) return;
+                    var opt = document.createElement('option');
+                    opt.value = o.value;
+                    opt.textContent = (o.value === '')
+                        ? (selected ? label + ' — All members' : 'All operators')
+                        : o.label;
+                    opt.setAttribute('data-toda', o.toda);
+                    if (o.value === prev) opt.selected = true;
+                    operator.appendChild(opt);
+                });
+            }
+
+            toda.addEventListener('change', rebuild);
+            rebuild();
         });
     }
 

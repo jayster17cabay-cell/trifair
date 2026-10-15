@@ -397,9 +397,12 @@ class AdminQueryService
     {
         $query = $this->operatorsBaseQuery($request);
 
-        $operatorId = $request->query('operator_id');
+        $operatorId = $request->query('operator_id') ? (int) $request->query('operator_id') : null;
+        $todaId = $request->query('toda_id') ? (int) $request->query('toda_id') : null;
         if ($operatorId) {
             $query->where('operators.id', $operatorId);
+        } elseif ($todaId) {
+            $query->where('operators.toda_id', $todaId);
         }
 
         return $query->latest()->get();
@@ -484,7 +487,7 @@ class AdminQueryService
     {
         $request = $request ?? request();
 
-        [$query, ] = $this->reportsBaseQuery($request);
+        [$query, $filters] = $this->reportsBaseQuery($request);
 
         return $query->orderByRaw('COALESCE(vr.valid_ratings_count, 0) DESC')
             ->orderBy('operators.id')

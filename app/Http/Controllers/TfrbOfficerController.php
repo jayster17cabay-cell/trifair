@@ -35,6 +35,7 @@ class TfrbOfficerController extends Controller
     public function operators(Request $request)
     {
         $data = app(AdminQueryService::class)->operatorsData($request);
+        $data['todas'] = \App\Models\Toda::orderBy('name')->get();
         $data['activeOperators'] = app(AdminQueryService::class)->activeOperators();
         $operators = $data['operators'];
         if ($request->ajax()) {

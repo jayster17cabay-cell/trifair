@@ -84,7 +84,9 @@
                                     <label for="{{ $dropdownId }}_{{ $field['name'] }}" class="mb-1 block text-xs font-semibold text-slate-600">{{ $field['label'] }}</label>
                                     <select id="{{ $dropdownId }}_{{ $field['name'] }}" name="{{ $field['name'] }}" class="tw-select py-2 text-xs">
                                         @foreach ($field['options'] as $val => $lbl)
-                                            <option value="{{ $val }}" {{ (string) ($field['value'] ?? '') === (string) $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                                            <option value="{{ $val }}"
+                                                @if (! empty($field['option_data'])) data-toda="{{ $field['option_data'][$val] ?? '' }}" @endif
+                                                {{ (string) ($field['value'] ?? '') === (string) $val ? 'selected' : '' }}>{{ $lbl }}</option>
                                         @endforeach
                                     </select>
                                     @if (! empty($field['help']))

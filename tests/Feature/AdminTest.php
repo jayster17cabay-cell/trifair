@@ -600,6 +600,36 @@ class AdminTest extends TestCase
         $this->assertStringNotContainsString('Alpha Driver', $one->getContent());
     }
 
+    public function test_operators_export_scope_by_all_operator_or_toda()
+    {
+        $admin = $this->makeUser('superadmin');
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+
+        $opA = $this->makeOperator('active', $todaA);
+        $opA->user->forceFill(['name' => 'Alpha Driver'])->save();
+        $opB = $this->makeOperator('active', $todaB);
+        $opB->user->forceFill(['name' => 'Beta Driver'])->save();
+
+        // All operators.
+        $all = $this->actingAs($admin)->get('/superadmin/operators/export?format=csv');
+        $all->assertOk();
+        $this->assertStringContainsString('Alpha Driver', $all->getContent());
+        $this->assertStringContainsString('Beta Driver', $all->getContent());
+
+        // One TODA.
+        $toda = $this->actingAs($admin)->get('/superadmin/operators/export?format=csv&toda_id=' . $todaA->id);
+        $toda->assertOk();
+        $this->assertStringContainsString('Alpha Driver', $toda->getContent());
+        $this->assertStringNotContainsString('Beta Driver', $toda->getContent());
+
+        // One operator.
+        $one = $this->actingAs($admin)->get('/superadmin/operators/export?format=csv&operator_id=' . $opB->id);
+        $one->assertOk();
+        $this->assertStringContainsString('Beta Driver', $one->getContent());
+        $this->assertStringNotContainsString('Alpha Driver', $one->getContent());
+    }
+
     public function test_reports_trips_endpoint_renders_cards_and_show_all()
     {
         $admin = $this->makeUser('superadmin');
