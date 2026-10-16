@@ -10,29 +10,22 @@
 
 {{-- KPI cards --}}
 <div class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#ownRatings', 'icon' => 'bi-award', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#ownRatings', 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => '#membersSection', 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
-    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-bar-chart', 'value' => number_format($summary['avgMemberRating'], 1), 'label' => 'TODA Avg']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#membersSection', 'icon' => 'bi-flag', 'value' => $summary['pendingComplaints'], 'label' => 'Complaints']])
+    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-star-half', 'value' => number_format($summary['avgMemberRating'], 1), 'label' => 'Avg Rating']])
+    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-flag', 'value' => $summary['totalComplaints'], 'label' => 'Complaints']])
 </div>
 
-{{-- Sections 1 & 2 — side by side on wide screens so the desktop layout is
-     balanced instead of two stretched full-width columns. --}}
-<div class="mb-4 grid gap-4 lg:grid-cols-2 lg:items-start">
-    {{-- Section 1 — My Ratings (the president's own), first and highlighted --}}
-    <div id="ownRatings" class="scroll-mt-24">
-        @include('partials.president.own-ratings', ['ownOperator' => $ownOperator, 'ownRecentRatings' => $ownRecentRatings])
-    </div>
-
-    {{-- Section 2 — Member rating breakdown --}}
-    <div>
-        @include('partials.president.breakdown-chart', ['breakdown' => $breakdown])
-    </div>
+{{-- Section 1 — My Ratings (the president's own performance as an operator).
+     Member-level ratings are intentionally omitted here; the president reviews
+     them per member from the TODA members list below. --}}
+<div id="ownRatings" class="mb-4 scroll-mt-24">
+    @include('partials.president.own-ratings', ['ownOperator' => $ownOperator, 'ownRecentRatings' => $ownRecentRatings])
 </div>
 
-{{-- Section 3 — Members toggle button --}}
+{{-- Section 2 — Members toggle button --}}
 @php $membersActive = ($membersActive ?? false) || request()->has('search') || request()->has('status'); @endphp
-{{-- Section 3 — Members search + toggle (search is always visible) --}}
+{{-- Section 2 — Members search + toggle (search is always visible) --}}
 <div id="membersSection" class="scroll-mt-24 tw-card mb-4 overflow-hidden">
     <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
         <div class="flex items-center gap-2">

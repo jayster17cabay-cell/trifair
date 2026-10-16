@@ -63,6 +63,12 @@ class PresidentQueryService
             ->where('is_solved', false)
             ->count();
 
+        $totalComplaints = Rating::query()
+            ->whereIn('operator_id', $memberIds)
+            ->isValid()
+            ->isComplaint()
+            ->count();
+
         // The president's own averages/count share the same countable set, so a
         // single aggregate is enough instead of two separate round-trips.
         $ownStats = $ownOperator
@@ -78,6 +84,7 @@ class PresidentQueryService
             'totalMembers' => $totalMembers,
             'avgMemberRating' => $avgMemberRating,
             'pendingComplaints' => $pendingComplaints,
+            'totalComplaints' => $totalComplaints,
             'ownAvg' => $ownAvg,
             'ownTotal' => $ownTotal,
         ];

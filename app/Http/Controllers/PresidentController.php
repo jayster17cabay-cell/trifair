@@ -42,7 +42,6 @@ class PresidentController extends Controller
 
         $members = $this->query->members($toda, request()->query('search'), request()->query('status'));
         $ownRecentRatings = $this->query->ownRecentRatings($ownOperator);
-        $breakdown = $this->query->memberBreakdown($toda);
 
         if (request()->wantsJson()) {
             $html = view('partials.president.members-table', ['members' => $members, 'memberDetailUrl' => route('president.members')])->render();
@@ -57,8 +56,7 @@ class PresidentController extends Controller
             'summary',
             'members',
             'ownOperator',
-            'ownRecentRatings',
-            'breakdown'
+            'ownRecentRatings'
         ));
     }
 
@@ -78,7 +76,6 @@ class PresidentController extends Controller
             $request->query('status')
         );
         $ownRecentRatings = $this->query->ownRecentRatings($ownOperator);
-        $breakdown = $this->query->memberBreakdown($toda);
 
         // AJAX (members search inside the dashboard) returns a JSON table fragment.
         if ($request->wantsJson()) {
@@ -97,8 +94,7 @@ class PresidentController extends Controller
             'summary',
             'members',
             'ownOperator',
-            'ownRecentRatings',
-            'breakdown'
+            'ownRecentRatings'
         ))->with('membersActive', true);
     }
 

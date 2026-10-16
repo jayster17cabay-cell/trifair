@@ -102,6 +102,25 @@ class PresidentDashboardTest extends TestCase
             ->assertSee('Members');
     }
 
+    public function test_president_dashboard_shows_toda_stats_and_omits_member_ratings_breakdown()
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+        $member = $this->makeOperator($toda);
+
+        $this->makeValidRating($member, 2, 'Overcharging');
+
+        $this->actingAs($pres['user'])
+            ->get('/president/dashboard')
+            ->assertOk()
+            ->assertSee('My Rating')
+            ->assertSee('Members')
+            ->assertSee('Avg Rating')
+            ->assertSee('Complaints')
+            ->assertDontSee('Member Ratings')
+            ->assertDontSee('Avg rating per member');
+    }
+
     public function test_non_president_cannot_access_dashboard()
     {
         $toda = $this->makeToda();
