@@ -335,6 +335,9 @@ Route::get('/rate/keepalive', function () {
 
 // Shared
 Route::get('/rate/{qrCode}', [RatingController::class, 'showRateForm'])->name('rate.operator');
+// An operator may belong to several TODAs; this dedicated, refresh-safe URL
+// renders the rating form scoped to the chosen TODA.
+Route::get('/rate/{qrCode}/toda/{todaId}', [RatingController::class, 'showRateForm'])->name('rate.toda');
 Route::post('/rate/{qrCode}', [RatingController::class, 'submitRating'])->name('rate.submit')->middleware('throttle:30,1');
 Route::get('/rate/{qrCode}/submitted', [RatingController::class, 'showSubmitted'])->name('rate.submitted');
 

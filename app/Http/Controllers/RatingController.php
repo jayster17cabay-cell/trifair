@@ -7,6 +7,7 @@ use App\Models\Rating;
 use App\Models\RatingProof;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\Toda;
 use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -57,26 +58,29 @@ class RatingController extends Controller
         return $query->first();
     }
 
-    public function showRateForm(Request $request, $qrCode)
+    public function showRateForm(Request $request, $qrCode, $todaId = null)
     {
         $operator = $this->findRateableOperator($qrCode);
+        $todas = $operator->getRateableTodas();
 
-        // A member suspended by their TODA president cannot collect ratings
-        // until the suspension is lifted.
-        if ($operator->status === 'suspended') {
-            return $this->operatorSuspended($operator);
+        // An operator may serve several TODAs. When more than one applies, the
+        // passenger must first pick which TODA this ride belongs to so the
+        // rating is filed against the right franchise — and so a suspension in
+        // one TODA does not wrongly block the others.
+        $selectedToda = null;
+        if ($todaId !== null) {
+            $selectedToda = $todas->firstWhere('id', (int) $todaId);
+            if (!$selectedToda) {
+                abort(404);
+            }
+        } elseif ($todas->count() === 1) {
+            $selectedToda = $todas->first();
+        } elseif ($todas->count() > 1) {
+            return $this->selectToda($operator, $todas);
         }
 
-        // A lapsed franchise cannot collect new ratings until it is renewed.
-        // Show a clear "Franchise Expired" notice instead of a bare 404 so the
-        // passenger understands why the rating page is unavailable.
-        if (($term = $operator->currentTerm) && $term->isExpired()) {
-            return $this->franchiseExpired($operator, $term);
-        }
-
-        // Inactive for a non-franchise reason (deactivated account): no ratings.
-        if ($operator->status !== 'active') {
-            return $this->operatorUnavailable($operator);
+        if ($block = $this->rateabilityBlock($operator, $selectedToda)) {
+            return $block;
         }
 
         $clientId = $this->getOrCreateClientId($request);
@@ -92,29 +96,31 @@ class RatingController extends Controller
         $user = $request->user();
         $staffBlocked = $user && !$user->isPassenger();
 
-        return view('rate.form', compact('operator', 'staffBlocked'));
+        return view('rate.form', compact('operator', 'staffBlocked', 'selectedToda'));
     }
 
     public function submitRating(Request $request, $qrCode)
     {
         $operator = $this->findRateableOperator($qrCode);
+        $todas = $operator->getRateableTodas();
 
-        // A member suspended by their TODA president cannot collect ratings
-        // until the suspension is lifted.
-        if ($operator->status === 'suspended') {
-            return $this->operatorSuspended($operator);
+        $selectedToda = null;
+        $requestedTodaId = $request->input('toda_id');
+        if ($requestedTodaId) {
+            $selectedToda = $todas->firstWhere('id', (int) $requestedTodaId);
+            if (!$selectedToda) {
+                abort(404);
+            }
+        } elseif ($todas->count() === 1) {
+            $selectedToda = $todas->first();
+        } elseif ($todas->count() > 1) {
+            // The chosen TODA went missing from the POST (expired session,
+            // back-button). Send the passenger back to pick one.
+            return redirect()->route('rate.operator', $operator->qr_code);
         }
 
-        // A lapsed franchise cannot collect new ratings until it is renewed.
-        // Show a clear "Franchise Expired" notice instead of a bare 404 so the
-        // passenger understands why the rating page is unavailable.
-        if (($term = $operator->currentTerm) && $term->isExpired()) {
-            return $this->franchiseExpired($operator, $term);
-        }
-
-        // Inactive for a non-franchise reason (deactivated account): no ratings.
-        if ($operator->status !== 'active') {
-            return $this->operatorUnavailable($operator);
+        if ($block = $this->rateabilityBlock($operator, $selectedToda)) {
+            return $block;
         }
 
         // Operator and staff accounts can never submit a passenger rating, even
@@ -183,7 +189,7 @@ class RatingController extends Controller
         // their own inbox. The typed field is only a fallback for guests.
         $passengerEmail = $passengerUser ? $passengerUser->email : ($data['passenger_email'] ?? null);
 
-        $rating = DB::transaction(function () use ($request, $operator, $clientId, $data, $passengerUser, $passengerEmail) {
+        $rating = DB::transaction(function () use ($request, $operator, $clientId, $data, $passengerUser, $passengerEmail, $selectedToda) {
             // Re-check inside the transaction (with a row lock) so two
             // simultaneous submissions cannot both pass the dedup check.
             $existing = $this->existingRatingFor($operator, $clientId, true);
@@ -194,7 +200,8 @@ class RatingController extends Controller
 
             $rating = Rating::create([
                 'operator_id' => $operator->id,
-                'franchise_term_id' => $operator->currentTerm?->id,
+                'franchise_term_id' => $operator->termForToda($selectedToda?->id)?->id,
+                'toda_id' => $selectedToda?->id,
                 'rating' => $data['rating'],
                 'complaint_type' => $data['complaint_type'] ?? null,
                 'complaint_details' => $data['complaint_details'] ?? null,
@@ -312,6 +319,53 @@ class RatingController extends Controller
     }
 
     /**
+     * Run the per-TODA availability checks shared by the form and the submit
+     * action. Returns a passenger-facing response when rating is not allowed,
+     * or null when the operator may be rated under the chosen TODA.
+     */
+    private function rateabilityBlock(Operator $operator, $selectedToda)
+    {
+        $todaId = $selectedToda?->id;
+
+        // A member suspended by their TODA president cannot collect ratings
+        // until the suspension is lifted. Suspensions tied to another TODA do
+        // not block this one; a TODA-less suspension blocks every TODA.
+        $suspension = $operator->currentSuspensionForToda($todaId);
+        if ($suspension && !$suspension->isExpired()) {
+            return $this->operatorSuspended($operator, $suspension);
+        }
+
+        // A lapsed franchise cannot collect new ratings until it is renewed.
+        // When a TODA is chosen its own term is inspected; otherwise fall back
+        // to the operator's current term (legacy single-TODA behaviour).
+        if (($term = $operator->termForToda($todaId)) && $term->isExpired()) {
+            return $this->franchiseExpired($operator, $term);
+        }
+
+        // Inactive for a non-franchise reason (deactivated account): no ratings.
+        // A TODA-scoped suspension that is live but belongs to another TODA is
+        // handled above, so an operator left in 'suspended' status by a
+        // different TODA still rates here if the active checks pass.
+        if ($operator->status !== 'active' && $operator->status !== 'suspended') {
+            return $this->operatorUnavailable($operator);
+        }
+
+        return null;
+    }
+
+    /**
+     * Passenger-facing TODA picker shown when an operator belongs to more than
+     * one TODA, so the ride's rating is filed against the correct franchise.
+     */
+    private function selectToda(Operator $operator, $todas)
+    {
+        return response()
+            ->view('rate.select-toda', compact('operator', 'todas'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
+    }
+
+    /**
      * Resolve the operator a QR code points at. Archived and not-yet-approved
      * (pending/rejected) accounts are hidden behind a 404 — inactive accounts
      * are returned so the caller can explain why rating is unavailable rather
@@ -361,9 +415,9 @@ class RatingController extends Controller
      * Passenger-facing notice shown when a TODA member is suspended: ratings
      * are paused for the duration of the president's suspension.
      */
-    private function operatorSuspended(Operator $operator)
+    private function operatorSuspended(Operator $operator, $suspension = null)
     {
-        $suspension = $operator->currentSuspension;
+        $suspension = $suspension ?? $operator->currentSuspension;
 
         return response()
             ->view('rate.suspended', compact('operator', 'suspension'))

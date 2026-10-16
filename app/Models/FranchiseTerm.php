@@ -14,6 +14,7 @@ class FranchiseTerm extends Model
 
     protected $fillable = [
         'operator_id',
+        'toda_id',
         'franchise_no',
         'issued_at',
         'valid_until',
@@ -25,6 +26,7 @@ class FranchiseTerm extends Model
 
     protected $casts = [
         'operator_id' => 'integer',
+        'toda_id' => 'integer',
         'renewed_from_id' => 'integer',
         'processed_by' => 'integer',
         'issued_at' => 'date',
@@ -34,6 +36,11 @@ class FranchiseTerm extends Model
     public function operator()
     {
         return $this->belongsTo(Operator::class);
+    }
+
+    public function toda()
+    {
+        return $this->belongsTo(Toda::class);
     }
 
     public function renewedFrom()

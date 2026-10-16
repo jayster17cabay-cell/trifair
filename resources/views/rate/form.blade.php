@@ -209,10 +209,19 @@
                 <div class="rate-driver-row">
                     @include('partials.rate.driver-info-pill', ['driverName' => $operator->user->name ?? 'Driver'])
                 </div>
+                @if(!empty($selectedToda))
+                    <p class="rate-subtitle" style="margin-top: 0.5rem;">
+                        <i class="bi bi-building"></i> {{ $selectedToda->name }}
+                    </p>
+                @endif
             </section>
 
             <form action="{{ route('rate.submit', $operator->qr_code) }}" method="POST" enctype="multipart/form-data" id="rateForm" class="rate-stack">
                 @csrf
+
+                @if(!empty($selectedToda))
+                    <input type="hidden" name="toda_id" value="{{ $selectedToda->id }}">
+                @endif
 
                 <input type="hidden" name="rating" id="ratingValue" value="">
 

@@ -90,6 +90,11 @@ class Operator extends Model
         return $this->hasMany(FranchiseTerm::class)->latest('id');
     }
 
+    public function franchiseTerms()
+    {
+        return $this->hasMany(FranchiseTerm::class)->latest('id');
+    }
+
     /**
      * The operator's current franchise term. There is at most one active term
      * at any moment; latestOfMany() guards against stale duplicates.
@@ -112,6 +117,82 @@ class Operator extends Model
         }
 
         return $term->isExpired() ? 'expired' : 'valid';
+    }
+
+    /**
+     * The distinct TODAs this operator may be rated under. An operator can
+     * belong to more than one TODA, each through its own franchise term; when
+     * no per-TODA term exists (legacy single-TODA accounts) we fall back to the
+     * operator's own toda_id.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\Toda>
+     */
+    public function getRateableTodas()
+    {
+        $todaIds = $this->terms()
+            ->whereNotNull('toda_id')
+            ->pluck('toda_id')
+            ->unique()
+            ->values();
+
+        if ($todaIds->isEmpty() && $this->toda_id) {
+            $todaIds = collect([$this->toda_id]);
+        }
+
+        if ($todaIds->isEmpty()) {
+            return collect();
+        }
+
+        return Toda::whereIn('id', $todaIds)->orderBy('name')->get();
+    }
+
+    /**
+     * The active franchise term that applies when rating under a given TODA.
+     * Falls back to a TODA-less term (accounts whose terms predate per-TODA
+     * tagging) and finally to the operator's current term, matching the
+     * pre-multi-TODA behaviour.
+     */
+    public function termForToda($todaId = null): ?FranchiseTerm
+    {
+        if (!$todaId) {
+            return $this->currentTerm;
+        }
+
+        $term = $this->terms()
+            ->where('toda_id', $todaId)
+            ->where('status', FranchiseTerm::STATUS_ACTIVE)
+            ->latest('id')
+            ->first();
+
+        if (!$term) {
+            $term = $this->terms()
+                ->whereNull('toda_id')
+                ->where('status', FranchiseTerm::STATUS_ACTIVE)
+                ->latest('id')
+                ->first();
+        }
+
+        return $term;
+    }
+
+    /**
+     * The live suspension that blocks rating under a given TODA. A suspension
+     * with a NULL toda_id applies to every TODA; one tied to a specific TODA
+     * only blocks that TODA.
+     */
+    public function currentSuspensionForToda($todaId = null): ?MemberSuspension
+    {
+        return $this->suspensions()
+            ->whereNull('ended_at')
+            ->where(function ($query) use ($todaId) {
+                $query->whereNull('toda_id');
+
+                if ($todaId) {
+                    $query->orWhere('toda_id', $todaId);
+                }
+            })
+            ->latest('id')
+            ->first();
     }
 
     /**

@@ -374,6 +374,7 @@ class OperatorAdminService
         if ($issueFranchise) {
             FranchiseTerm::create([
                 'operator_id' => $operator->id,
+                'toda_id' => $operator->toda_id,
                 'franchise_no' => $franchise['franchise_no'] ?? null,
                 'issued_at' => $franchise['issued_at'] ?? null,
                 'valid_until' => $franchise['valid_until'] ?? null,
@@ -440,6 +441,7 @@ class OperatorAdminService
 
         $term = FranchiseTerm::create([
             'operator_id' => $operator->id,
+            'toda_id' => $operator->toda_id,
             'franchise_no' => $data['franchise_no'] ?? null,
             'issued_at' => $data['issued_at'] ?? null,
             'valid_until' => $data['valid_until'] ?? null,
@@ -495,6 +497,7 @@ class OperatorAdminService
 
             FranchiseTerm::create([
                 'operator_id' => $operator->id,
+                'toda_id' => $operator->toda_id,
                 'franchise_no' => $data['franchise_no'] ?? $current->franchise_no,
                 'issued_at' => $data['issued_at'] ?? now()->toDateString(),
                 'valid_until' => $data['valid_until'] ?? null,

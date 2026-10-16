@@ -73,6 +73,7 @@ class Rating extends Model
     protected $fillable = [
         'operator_id',
         'franchise_term_id',
+        'toda_id',
         'rating',
         'complaint_type',
         'complaint_details',
@@ -107,6 +108,7 @@ class Rating extends Model
         'is_accepted' => 'boolean',
         'reviewed_by' => 'integer',
         'franchise_term_id' => 'integer',
+        'toda_id' => 'integer',
     ];
 
     /**
@@ -137,6 +139,11 @@ class Rating extends Model
     public function franchiseTerm()
     {
         return $this->belongsTo(FranchiseTerm::class);
+    }
+
+    public function toda()
+    {
+        return $this->belongsTo(Toda::class);
     }
 
     public function proofs()
