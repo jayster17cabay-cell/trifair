@@ -94,6 +94,23 @@ class FranchiseFlowTest extends TestCase
             ->assertSee('FR-1234', false);
     }
 
+    public function test_operators_table_shows_franchise_expiry_date()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+
+        $this->actingAs($admin)->post(route('superadmin.operators.franchise.issue', $operator), [
+            'franchise_no' => 'FR-7788',
+            'issued_at' => '2026-02-01',
+            'valid_until' => '2027-02-01',
+        ])->assertRedirect();
+
+        $this->actingAs($admin)->get('/superadmin/operators')
+            ->assertOk()
+            ->assertSee('FR-7788', false)
+            ->assertSee('Feb 01, 2027', false);
+    }
+
     public function test_issuing_a_second_franchise_is_blocked()
     {
         $admin = $this->makeUser('superadmin');

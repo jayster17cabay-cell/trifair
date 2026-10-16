@@ -55,6 +55,25 @@ class OperatorAppTest extends TestCase
         ]);
     }
 
+    public function test_operator_dashboard_shows_franchise_expiry_date()
+    {
+        $operator = $this->makeOperator();
+
+        \App\Models\FranchiseTerm::create([
+            'operator_id' => $operator->id,
+            'franchise_no' => 'FR-5555',
+            'issued_at' => '2026-01-01',
+            'valid_until' => '2027-01-01',
+            'status' => \App\Models\FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($operator->user)->get('/operator/dashboard')
+            ->assertOk()
+            ->assertSee('FR-5555', false)
+            ->assertSee('Valid until', false)
+            ->assertSee('Jan 01, 2027', false);
+    }
+
     public function test_operator_dashboard_renders_mobile_app_header_and_menu()
     {
         $operator = $this->makeOperator();

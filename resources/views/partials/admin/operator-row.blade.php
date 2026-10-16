@@ -104,13 +104,20 @@
     <td class="tw-td hidden text-sm text-slate-500 md:table-cell">{{ $operator->contact_number ?? '—' }}</td>
     <td class="tw-td hidden lg:table-cell">
         @if ($franchiseNo)
-            <div class="space-y-0.5">
+            <div class="space-y-1">
                 <div class="font-mono text-xs font-semibold text-slate-700">{{ $franchiseNo }}</div>
-                @if ($franchiseStatus === 'expired')
-                    <span class="tw-badge tw-badge-red"><i class="bi bi-exclamation-triangle-fill"></i>Expired</span>
-                @else
-                    <span class="tw-badge tw-badge-green"><i class="bi bi-patch-check-fill"></i>Valid</span>
-                @endif
+                <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                    @if ($franchiseStatus === 'expired')
+                        <span class="tw-badge tw-badge-red"><i class="bi bi-exclamation-triangle-fill"></i>Expired</span>
+                    @else
+                        <span class="tw-badge tw-badge-green"><i class="bi bi-patch-check-fill"></i>Valid</span>
+                    @endif
+                    @if ($currentTerm && $currentTerm->valid_until)
+                        <span class="text-[11px] font-medium text-slate-500">until {{ $currentTerm->valid_until->format('M d, Y') }}</span>
+                    @else
+                        <span class="text-[11px] font-medium text-slate-400">no expiry</span>
+                    @endif
+                </div>
             </div>
         @else
             <span class="tw-badge tw-badge-gray"><i class="bi bi-dash-circle"></i>None</span>
