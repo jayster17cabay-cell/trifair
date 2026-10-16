@@ -66,6 +66,16 @@
             <button type="button" id="opModalRenewBtn" class="tw-btn tw-btn-sm tw-btn-outline hidden" data-franchise-open="{}" data-franchise-mode="renew">
                 <i class="bi bi-arrow-repeat"></i>Renew Franchise
             </button>
+            <button type="button" id="opModalSuspendBtn" class="tw-btn tw-btn-sm tw-btn-danger hidden" data-suspend-open="{}">
+                <i class="bi bi-slash-circle"></i>Suspend
+            </button>
+            <form id="opModalEndSuspendForm" method="POST" action="#" class="hidden">
+                @csrf
+                <input type="hidden" name="_method" value="PATCH">
+                <button type="submit" class="tw-btn tw-btn-sm tw-btn-success" onclick="return confirm('End this operator\'s suspension early?')">
+                    <i class="bi bi-play-circle"></i>End Suspension
+                </button>
+            </form>
             <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost ml-auto" data-tw-modal-close>
                 Close
             </button>

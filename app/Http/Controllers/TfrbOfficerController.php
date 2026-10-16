@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\SuspendsOperator;
 use App\Models\Operator;
 use App\Models\Rating;
 use App\Models\Toda;
@@ -19,6 +20,8 @@ use App\Helpers\ActivityLogger;
 
 class TfrbOfficerController extends Controller
 {
+    use SuspendsOperator;
+
     public function dashboard()
     {
         $stats = app(AdminDashboardService::class)->stats([

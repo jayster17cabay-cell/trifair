@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\SuspendsOperator;
 use App\Models\Operator;
 use App\Models\Rating;
 use App\Models\User;
@@ -19,6 +20,8 @@ use Illuminate\Support\Str;
 
 class SuperadminController extends Controller
 {
+    use SuspendsOperator;
+
     public function dashboard()
     {
         $stats = app(AdminDashboardService::class)->stats([

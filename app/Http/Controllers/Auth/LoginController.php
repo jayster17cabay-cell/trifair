@@ -62,6 +62,20 @@ class LoginController extends Controller
                         'email' => 'Your account is not assigned to a TODA. Please contact support.',
                     ])->onlyInput('email');
                 }
+                // Presidents keep an Operator row, so an admin-issued suspension
+                // blocks sign-in the same way it does for a regular operator.
+                $presidentOperator = $user->operator;
+                if ($presidentOperator) {
+                    $presidentOperator->syncSuspensionStatus();
+                    if ($presidentOperator->isSuspended()) {
+                        Auth::logout();
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+                        return back()->withErrors([
+                            'email' => 'Your account is currently suspended by the TFRB Office. Please contact support.',
+                        ])->onlyInput('email');
+                    }
+                }
                 ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
                 return redirect()->route('president.dashboard');
             }

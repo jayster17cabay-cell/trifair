@@ -1031,4 +1031,142 @@ class AdminTest extends TestCase
             ->assertOk()
             ->assertSee('value="' . $toda->id . '" selected', false);
     }
+
+    public function test_superadmin_can_suspend_an_operator()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator('active');
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $operator->id . '/suspend', [
+                'reason' => 'Repeated overcharging reported.',
+                'suspended_at' => now()->toDateString(),
+                'suspended_until' => now()->addDays(7)->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $this->assertEquals('suspended', $operator->fresh()->status);
+        $this->assertTrue($operator->fresh()->isSuspended());
+        $this->assertDatabaseHas('member_suspensions', [
+            'operator_id' => $operator->id,
+            'reason' => 'Repeated overcharging reported.',
+            'suspended_by' => $admin->id,
+        ]);
+    }
+
+    public function test_superadmin_can_suspend_an_operator_president()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        $presUser = $this->makeUser('operator_president');
+        $president = Operator::create([
+            'user_id' => $presUser->id,
+            'toda_id' => $toda->id,
+            'qr_code' => Str::random(32),
+            'status' => 'active',
+            'contact_number' => '09171234567',
+            'plate_number' => 'PRESIDENT',
+            'body_number' => 'P01',
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $president->id . '/suspend', [
+                'reason' => 'Misconduct while in office.',
+                'suspended_at' => now()->toDateString(),
+                'suspended_until' => now()->addDays(10)->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $this->assertEquals('suspended', $president->fresh()->status);
+        $this->assertTrue($president->fresh()->isSuspended());
+    }
+
+    public function test_superadmin_can_end_a_member_suspension()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator('active');
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $operator->id . '/suspend', [
+                'reason' => 'Under review.',
+                'suspended_at' => now()->toDateString(),
+                'suspended_until' => now()->addDays(3)->toDateString(),
+            ]);
+
+        $this->assertEquals('suspended', $operator->fresh()->status);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/operators/' . $operator->id . '/suspend/end')
+            ->assertRedirect();
+
+        $this->assertEquals('active', $operator->fresh()->status);
+        $this->assertFalse($operator->fresh()->isSuspended());
+    }
+
+    public function test_tfrb_officer_can_suspend_an_operator()
+    {
+        $officer = $this->makeUser('tfrb_officer');
+        $operator = $this->makeOperator('active');
+
+        $this->actingAs($officer)
+            ->post('/tfrb-officer/operators/' . $operator->id . '/suspend', [
+                'reason' => 'Flagged by a TFRB field report.',
+                'suspended_at' => now()->toDateString(),
+                'suspended_until' => now()->addDays(5)->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $this->assertEquals('suspended', $operator->fresh()->status);
+        $this->assertTrue($operator->fresh()->isSuspended());
+    }
+
+    public function test_operators_index_exposes_suspend_controls()
+    {
+        $admin = $this->makeUser('superadmin');
+        $this->makeOperator('active');
+
+        $this->actingAs($admin)->get('/superadmin/operators')
+            ->assertOk()
+            ->assertSee('operatorSuspendModal')
+            ->assertSee('data-suspend-open', false);
+    }
+
+    public function test_suspended_operator_president_is_blocked_from_dashboard_and_login()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        $presUser = $this->makeUser('operator_president');
+        $presUser->forceFill(['toda_id' => $toda->id])->save();
+
+        $president = Operator::create([
+            'user_id' => $presUser->id,
+            'toda_id' => $toda->id,
+            'qr_code' => Str::random(32),
+            'status' => 'active',
+            'contact_number' => '09171234567',
+            'plate_number' => 'PRESIDENT',
+            'body_number' => 'P01',
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $president->id . '/suspend', [
+                'reason' => 'Misconduct while in office.',
+                'suspended_at' => now()->toDateString(),
+                'suspended_until' => now()->addDays(10)->toDateString(),
+            ]);
+
+        // An existing session is dropped at the middleware boundary.
+        $this->actingAs($presUser->fresh())
+            ->get('/president/dashboard')
+            ->assertRedirect(route('login'));
+
+        // A fresh sign-in is refused too.
+        $this->post('/login', [
+            'email' => $presUser->email,
+            'password' => 'password123',
+        ])->assertRedirect('/');
+        $this->assertGuest();
+    }
 }

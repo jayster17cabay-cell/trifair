@@ -142,6 +142,8 @@
 
 @include('partials.admin.operator-franchise-modal')
 
+@include('partials.admin.operator-suspend-modal')
+
 <script>
     let searchTimeout;
     function liveSearch(val) {

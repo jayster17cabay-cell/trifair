@@ -38,6 +38,10 @@
     $suspension = $operator->currentSuspension;
     $isSuspended = $operator->status === 'suspended' && $suspension !== null && !$suspension->isExpired();
 
+    // Superadmin/TFRB officers may suspend (and lift) any operator — including a
+    // TODA president, who cannot suspend themselves.
+    $canSuspend = !$operator->isArchived() && !in_array($operator->status, ['pending', 'rejected'], true);
+
     $viewData = [
         'id' => $operator->id,
         'name' => $operatorName,
@@ -53,6 +57,9 @@
         'statusIcon' => $statusIcon,
         'accountActive' => $accountActive,
         'isSuspended' => $isSuspended,
+        'canSuspend' => $canSuspend,
+        'suspendUrl' => route($routePrefix . '.operators.suspend', $operator),
+        'endSuspensionUrl' => route($routePrefix . '.operators.suspend.end', $operator),
         'suspensionReason' => $isSuspended ? $suspension->reason : null,
         'suspensionFrom' => $isSuspended ? $suspension->suspended_at->format('M d, Y') : null,
         'suspensionUntil' => $isSuspended ? $suspension->suspended_until->format('M d, Y') : null,
