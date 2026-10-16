@@ -21,6 +21,7 @@
         $mTotal = $stats ? (int) $stats->total : 0;
         $mComplaints = $stats ? (int) $stats->complaints : 0;
         $activeSuspension = ($currentSuspension ?? null) && !$currentSuspension->isExpired() ? $currentSuspension : null;
+        $suspendPayload = ['name' => $member->user->name, 'suspendUrl' => route('president.members.suspend', $member->id)];
     @endphp
 
     {{-- Rating summary --}}
@@ -138,7 +139,7 @@
             </div>
         @else
             <button type="button" class="tw-btn tw-btn-sm tw-btn-danger" style="background-color:#dc2626;color:#fff;"
-                    data-suspend-open='@json(['name' => $member->user->name, 'suspendUrl' => route('president.members.suspend', $member->id)])'>
+                    data-suspend-open='@json($suspendPayload)'>
                 <i class="bi bi-slash-circle"></i> Suspend
             </button>
         @endif

@@ -124,12 +124,16 @@
             @endif
         </div>
     </td>
-    <td class="tw-td text-right">
-        <div class="inline-flex gap-1.5">
-            <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" title="View details" aria-label="View {{ $operatorName }}"
+    <td class="tw-td">
+        <div class="flex items-center justify-end gap-1.5">
+            {{-- View details --}}
+            <button type="button" class="tw-btn tw-btn-sm tw-btn-outline-navy"
+                    title="View details" aria-label="View details of {{ $operatorName }}"
                     data-operator-view='@json($viewData)'>
                 <i class="bi bi-eye"></i>
             </button>
+
+            {{-- Franchise (issue / edit) --}}
             @if ($canIssueFranchise)
                 <button type="button" class="tw-btn tw-btn-sm tw-btn-outline-gold"
                         title="{{ $currentTerm ? 'Edit franchise' : 'Issue franchise' }}"
@@ -139,81 +143,107 @@
                     <i class="bi {{ $currentTerm ? 'bi-pencil-square' : 'bi-patch-check' }}"></i>
                 </button>
             @endif
+
+            {{-- More actions --}}
             <div class="relative inline-block text-left">
                 <button type="button"
                         class="tw-btn tw-btn-sm tw-btn-outline"
                         title="More actions" aria-label="More actions for {{ $operatorName }}"
                         aria-haspopup="true" aria-expanded="false"
                         data-tw-dropdown="operatorActions{{ $operator->id }}">
-                    <i class="bi bi-three-dots"></i>
+                    <i class="bi bi-three-dots-vertical"></i>
                 </button>
                 <div id="operatorActions{{ $operator->id }}" data-tw-dropdown-menu
-                     class="tw-dropdown right-0 top-full z-50 mt-1 min-w-[12.5rem] py-1.5">
+                     class="tw-dropdown right-0 top-full z-50 mt-1 min-w-[13rem] py-1.5">
                     @if ($operator->isArchived())
-                        <form action="{{ route($routePrefix . '.operators.restore', $operator) }}" method="POST" data-tw-dropdown-menu-child-form>
+                        <div class="tw-dropdown-label">Archived</div>
+                        <form action="{{ route($routePrefix . '.operators.restore', $operator) }}" method="POST">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js('Restore ' . $operatorName . '?'))">
-                                <i class="bi bi-arrow-counterclockwise tw-dropdown-item-icon"></i>Restore
+                                <i class="bi bi-arrow-counterclockwise"></i>Restore operator
                             </button>
                         </form>
                     @elseif (in_array($operator->status, ['pending', 'rejected'], true))
-                        <form action="{{ route($routePrefix . '.operators.approve', $operator) }}" method="POST" data-tw-dropdown-menu-child-form>
+                        <div class="tw-dropdown-label">Review registration</div>
+                        <form action="{{ route($routePrefix . '.operators.approve', $operator) }}" method="POST">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js('Approve ' . $operatorName . '?'))">
-                                <i class="bi bi-check-lg tw-dropdown-item-icon"></i>Approve
+                                <i class="bi bi-check-circle"></i>Approve
                             </button>
                         </form>
-                        <form action="{{ route($routePrefix . '.operators.reject', $operator) }}" method="POST" data-tw-dropdown-menu-child-form>
+                        <form action="{{ route($routePrefix . '.operators.reject', $operator) }}" method="POST">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="tw-dropdown-item tw-dropdown-danger" onclick="return confirm(@js('Reject and remove ' . $operatorName . '?'))">
-                                <i class="bi bi-x-lg tw-dropdown-item-icon"></i>Reject
+                                <i class="bi bi-x-circle"></i>Reject
                             </button>
                         </form>
                     @else
+                        @php
+                            $hasPresidentName = $todaPresident && $todaPresident->name !== $operatorName;
+                            if ($hasPresidentName) {
+                                $assignPrompt = 'This TODA already has a president (' . $todaPresident->name . '). Remove them as President first before assigning a new one.';
+                            } else {
+                                $assignPrompt = 'Assign ' . $operatorName . ' as President of ' . ($todaName ?? 'this TODA') . '? They will oversee all members of that TODA.';
+                            }
+                            $suspendPayload = ['name' => $operatorName, 'toda' => $todaName, 'suspendUrl' => route($routePrefix . '.operators.suspend', $operator)];
+                        @endphp
+
+                        <div class="tw-dropdown-label">Manage</div>
                         <a href="{{ route($routePrefix . '.operators.edit', $operator) }}" class="tw-dropdown-item">
-                            <i class="bi bi-pencil tw-dropdown-item-icon"></i>Edit
+                            <i class="bi bi-pencil"></i>Edit details
                         </a>
-                @unless ($isPresident)
-                @php
-                    $hasPresidentName = $todaPresident && $todaPresident->name !== $operatorName;
-                    if ($hasPresidentName) {
-                        $assignPrompt = 'This TODA already has a president (' . $todaPresident->name . '). Remove them as President first before assigning a new one.';
-                    } else {
-                        $assignPrompt = 'Assign ' . $operatorName . ' as President of ' . ($todaName ?? 'this TODA') . '? They will oversee all members of that TODA.';
-                    }
-                @endphp
-                <form action="{{ route($routePrefix . '.operators.assignPresident', $operator) }}" method="POST">
-                    @csrf
-                    @if ($hasPresidentName)
-                        <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" title="{{ $assignPrompt }}" aria-label="President already assigned" disabled style="opacity:.45;cursor:not-allowed">
-                            <i class="bi bi-person-fill-gear"></i>
-                        </button>
-                    @else
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-gold" title="Assign as President" onclick="return confirm(@js($assignPrompt))">
-                            <i class="bi bi-award"></i>
-                        </button>
+                        @unless ($isPresident)
+                            @if ($hasPresidentName)
+                                <button type="button" class="tw-dropdown-item" title="{{ $assignPrompt }}" aria-label="President already assigned" disabled style="opacity:.45;cursor:not-allowed">
+                                    <i class="bi bi-award"></i>Assign as President
+                                </button>
+                            @else
+                                <form action="{{ route($routePrefix . '.operators.assignPresident', $operator) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js($assignPrompt))">
+                                        <i class="bi bi-award"></i>Assign as President
+                                    </button>
+                                </form>
+                            @endif
+                        @endunless
+
+                        <div class="tw-dropdown-divider"></div>
+                        <div class="tw-dropdown-label">Account</div>
+                        <form action="{{ route($routePrefix . '.operators.resetPassword', $operator) }}" method="POST" onsubmit="return confirm(@js('Reset the password of ' . $operatorName . '? A temporary password will be e-mailed to them.'))">
+                            @csrf
+                            <button type="submit" class="tw-dropdown-item">
+                                <i class="bi bi-key"></i>Reset password
+                            </button>
+                        </form>
+                        @if ($operator->status === 'suspended')
+                            <form action="{{ route($routePrefix . '.operators.suspend.end', $operator) }}" method="POST" onsubmit="return confirm(@js('End ' . $operatorName . '\'s suspension early?'))">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="tw-dropdown-item">
+                                    <i class="bi bi-play-circle"></i>End suspension
+                                </button>
+                            </form>
+                        @elseif ($canSuspend)
+                            <button type="button" class="tw-dropdown-item tw-dropdown-danger"
+                                    data-suspend-open='@json($suspendPayload)'>
+                                <i class="bi bi-slash-circle"></i>Suspend account
+                            </button>
+                        @endif
+
+                        <div class="tw-dropdown-divider"></div>
+                        <form action="{{ route($routePrefix . '.operators.archive', $operator) }}" method="POST" onsubmit="return confirm(@js('Archive ' . $operatorName . '? They will be hidden from active lists but keep their rating history.'))">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-dropdown-item tw-dropdown-danger">
+                                <i class="bi bi-archive"></i>Archive
+                            </button>
+                        </form>
                     @endif
-                </form>
-                @endunless
-                <form action="{{ route($routePrefix . '.operators.resetPassword', $operator) }}" method="POST" onsubmit="return confirm(@js('Reset the password of ' . $operatorName . '? A temporary password will be e-mailed to them.'))">
-                    @csrf
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reset password" aria-label="Reset password {{ $operatorName }}">
-                        <i class="bi bi-key"></i>
-                    </button>
-                </form>
-                <form action="{{ route($routePrefix . '.operators.archive', $operator) }}" method="POST" onsubmit="return confirm('Archive this operator? They will be hidden from active lists but keep their rating history.')">
-                    @csrf
-                    @method('PATCH')
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Archive" aria-label="Archive {{ $operatorName }}" data-tw-dropdown-menu-child-form-submit>
-                        <i class="bi bi-archive"></i>
-                    </button>
-                </form>
-            @endif
+                </div>
+            </div>
         </div>
-        </div>
-    </div>
     </td>
 </tr>

@@ -1157,6 +1157,21 @@ class AdminTest extends TestCase
             ->assertSee('data-suspend-open', false);
     }
 
+    public function test_operators_index_groups_actions_into_labelled_menu()
+    {
+        $admin = $this->makeUser('superadmin');
+        $this->makeOperator('active');
+
+        $this->actingAs($admin)->get('/superadmin/operators')
+            ->assertOk()
+            ->assertSee('data-operator-view', false)
+            ->assertSee('Edit details')
+            ->assertSee('Reset password')
+            ->assertSee('Suspend account')
+            ->assertSee('data-tw-dropdown-menu', false)
+            ->assertSee('Archive');
+    }
+
     public function test_suspended_operator_president_is_blocked_from_dashboard_and_login()
     {
         $admin = $this->makeUser('superadmin');
