@@ -1172,6 +1172,30 @@ class AdminTest extends TestCase
             ->assertSee('Archive');
     }
 
+    public function test_operators_active_stat_counts_status_not_login_flag()
+    {
+        $admin = $this->makeUser('superadmin');
+        $this->makeOperator('active');
+
+        // An operator whose franchise lapsed is "inactive" even though the
+        // login account itself is still enabled.
+        $inactive = $this->makeOperator('active');
+        $inactive->update(['status' => 'inactive']);
+        $inactive->user->forceFill(['is_active' => true])->save();
+
+        $data = app(AdminQueryService::class)
+            ->operatorsData(\Illuminate\Http\Request::create('/superadmin/operators', 'GET'));
+
+        $this->assertSame(1, $data['activeStatusCount']);
+        $this->assertSame(1, $data['inactiveStatusCount']);
+        $this->assertArrayNotHasKey('accountsActiveCount', $data);
+
+        $this->actingAs($admin)->get('/superadmin/operators')
+            ->assertOk()
+            ->assertSee('tw-stat-label">Active', false)
+            ->assertDontSee('Account Active');
+    }
+
     public function test_suspended_operator_president_is_blocked_from_dashboard_and_login()
     {
         $admin = $this->makeUser('superadmin');

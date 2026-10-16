@@ -1,4 +1,4 @@
-{{-- Shared operators index page body. Requires: $routePrefix, $operators, $search, $status, $account, $activeStatusCount, $inactiveStatusCount, $accountsActiveCount, $activeOperators --}}
+{{-- Shared operators index page body. Requires: $routePrefix, $operators, $search, $status, $account, $activeStatusCount, $inactiveStatusCount, $activeOperators --}}
 
 @php $currentStatus = request('status'); @endphp
 
@@ -71,8 +71,8 @@
     </div>
     <div class="tw-stat">
         <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-person-check"></i></div>
-        <div class="tw-stat-num">{{ $accountsActiveCount }}</div>
-        <div class="tw-stat-label">Account Active</div>
+        <div class="tw-stat-num">{{ $activeStatusCount }}</div>
+        <div class="tw-stat-label">Active</div>
     </div>
 </div>
 

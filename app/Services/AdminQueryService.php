@@ -389,8 +389,8 @@ class AdminQueryService
 
         $archivedCount = Operator::archived()->count();
 
-        // One round-trip instead of four: the status/account tallies share the
-        // same not-archived operator set, so a single join against users plus
+        // One round-trip instead of three: the status tallies share the same
+        // not-archived operator set, so a single join against users plus
         // conditional aggregation returns them all at once.
         $tally = Operator::notArchived()
             ->join('users', 'users.id', '=', 'operators.user_id')
@@ -400,7 +400,6 @@ class AdminQueryService
                 . ", SUM(CASE WHEN operators.status = 'suspended' THEN 1 ELSE 0 END) as suspended_count"
                 . ", SUM(CASE WHEN operators.status = 'active' THEN 1 ELSE 0 END) as active_status_count"
                 . ", SUM(CASE WHEN operators.status = 'inactive' THEN 1 ELSE 0 END) as inactive_status_count"
-                . ', SUM(CASE WHEN users.is_active = true THEN 1 ELSE 0 END) as accounts_active_count'
             )
             ->first();
 
@@ -408,9 +407,8 @@ class AdminQueryService
         $suspendedCount = (int) $tally->suspended_count;
         $activeStatusCount = (int) $tally->active_status_count;
         $inactiveStatusCount = (int) $tally->inactive_status_count;
-        $accountsActiveCount = (int) $tally->accounts_active_count;
 
-        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount', 'accountsActiveCount');
+        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount');
     }
 
     public function operatorsForExport(Request $request)
