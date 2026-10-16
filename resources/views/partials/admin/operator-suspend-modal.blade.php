@@ -8,7 +8,7 @@
     <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="suspendModalTitle">
         <div class="tw-modal-head">
             <div class="min-w-0 flex-1">
-                <div id="suspendModalTitle" class="truncate text-base font-bold text-slate-900">Suspend Operator</div>
+                <div id="suspendModalTitle" class="truncate text-base font-bold text-slate-900">{{ $suspendTitle ?? 'Suspend Operator' }}</div>
                 <div id="suspendModalSubtitle" class="truncate text-xs text-slate-500">&nbsp;</div>
             </div>
             <button type="button" class="tw-modal-close" data-tw-modal-close aria-label="Close">
@@ -32,11 +32,11 @@
                     <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
                         <div>
                             <label for="suspendFormStart" class="tw-stat-label mb-1 block">Start date</label>
-                            <input type="date" id="suspendFormStart" name="suspended_at" class="tw-input" required>
-                        </div>
-                        <div>
-                            <label for="suspendFormEnd" class="tw-stat-label mb-1 block">End date</label>
-                            <input type="date" id="suspendFormEnd" name="suspended_until" class="tw-input" required>
+                        <input type="date" id="suspendFormStart" name="suspended_at" class="tw-input" required value="{{ now()->toDateString() }}">
+                    </div>
+                    <div>
+                        <label for="suspendFormEnd" class="tw-stat-label mb-1 block">End date</label>
+                        <input type="date" id="suspendFormEnd" name="suspended_until" class="tw-input" required value="{{ now()->addDays(7)->toDateString() }}">
                         </div>
                     </div>
                 </div>

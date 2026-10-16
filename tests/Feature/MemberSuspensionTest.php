@@ -96,6 +96,25 @@ class MemberSuspensionTest extends TestCase
         ]);
     }
 
+    public function test_president_member_detail_exposes_compact_suspend_control()
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+        $member = $this->makeOperator($toda);
+
+        $this->actingAs($pres['user'])
+            ->get('/president/members/' . $member->id)
+            ->assertOk()
+            ->assertSee('data-suspend-open', false)
+            ->assertDontSee('Suspend this member');
+
+        $this->actingAs($pres['user'])
+            ->get('/president/dashboard')
+            ->assertOk()
+            ->assertSee('operatorSuspendModal')
+            ->assertSee('Suspend Member');
+    }
+
     public function test_president_cannot_suspend_another_toda_member()
     {
         $todaA = $this->makeToda();

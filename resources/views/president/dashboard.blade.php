@@ -58,6 +58,8 @@
     </div>
 </div>
 
+@include('partials.admin.operator-suspend-modal', ['suspendTitle' => 'Suspend Member'])
+
 <script>
     function togglePresidentMembers() {
         var wrap = document.getElementById('presidentMembersWrap');

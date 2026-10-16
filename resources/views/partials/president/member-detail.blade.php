@@ -137,35 +137,10 @@
                 </div>
             </div>
         @else
-            <details class="rounded-xl border border-slate-200 bg-slate-50">
-                <summary class="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold text-slate-700">
-                    <i class="bi bi-slash-circle text-red-500"></i> Suspend this member
-                </summary>
-                <form method="POST" action="{{ route('president.members.suspend', $member->id) }}" class="space-y-3 border-t border-slate-200 px-4 py-4">
-                    @csrf
-                    <div>
-                        <label for="suspendReason" class="tw-stat-label mb-1 block">Resolution / Reason</label>
-                        <textarea id="suspendReason" name="reason" rows="3" required maxlength="1000"
-                                  placeholder="State the resolution or reason for the suspension…"
-                                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"></textarea>
-                    </div>
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        <div>
-                            <label for="suspendedAt" class="tw-stat-label mb-1 block">Start date</label>
-                            <input id="suspendedAt" type="date" name="suspended_at" required value="{{ now()->toDateString() }}"
-                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
-                        </div>
-                        <div>
-                            <label for="suspendedUntil" class="tw-stat-label mb-1 block">End date</label>
-                            <input id="suspendedUntil" type="date" name="suspended_until" required value="{{ now()->addDays(7)->toDateString() }}"
-                                   class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
-                        </div>
-                    </div>
-                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger" style="background-color:#dc2626;color:#fff;">
-                        <i class="bi bi-slash-circle"></i>Suspend Member
-                    </button>
-                </form>
-            </details>
+            <button type="button" class="tw-btn tw-btn-sm tw-btn-danger" style="background-color:#dc2626;color:#fff;"
+                    data-suspend-open='@json(['name' => $member->user->name, 'suspendUrl' => route('president.members.suspend', $member->id)])'>
+                <i class="bi bi-slash-circle"></i> Suspend
+            </button>
         @endif
     </div>
 </div>
