@@ -192,9 +192,13 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator
 Route::middleware(['auth', 'role:operator_president', 'president.active'])->prefix('president')->name('president.')->group(function () {
     Route::get('/dashboard', [PresidentController::class, 'dashboard'])->name('dashboard');
     Route::get('/members', [PresidentController::class, 'members'])->name('members');
+    // President can onboard a new member (lands as a pending account for
+    // superadmin/tfrb approval) and remove one (they become a TODA-less operator).
+    Route::post('/members', [PresidentController::class, 'storeMember'])->name('members.store');
     Route::get('/members/{member}', [PresidentController::class, 'memberDetail'])->name('members.detail');
     Route::post('/members/{member}/suspend', [PresidentController::class, 'suspendMember'])->name('members.suspend');
     Route::patch('/members/{member}/suspend/end', [PresidentController::class, 'endSuspension'])->name('members.suspend.end');
+    Route::delete('/members/{member}/remove', [PresidentController::class, 'removeMember'])->name('members.remove');
 });
 
 // Notification routes (TFRB Officer, Superadmin & TODA President — operators'

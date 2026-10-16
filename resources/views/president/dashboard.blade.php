@@ -59,6 +59,7 @@
 </div>
 
 @include('partials.admin.operator-suspend-modal', ['suspendTitle' => 'Suspend Member'])
+@include('partials.president.add-member-modal')
 
 <script>
     function togglePresidentMembers() {
@@ -101,6 +102,17 @@
         document.addEventListener('DOMContentLoaded', function () {
             var wrap = document.getElementById('presidentMembersWrap');
             if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    @endif
+
+    @if ($errors->any() && (old('plate_number') || old('body_number') || old('motorcycle_model')))
+        // A failed Add Member submission bounces back here — reopen the modal so
+        // the president can see the errors and correct the form.
+        document.addEventListener('DOMContentLoaded', function () {
+            var wrap = document.getElementById('presidentMembersWrap');
+            if (wrap) wrap.classList.remove('hidden');
+            var modal = document.getElementById('presidentAddMemberModal');
+            if (modal) { modal.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
         });
     @endif
 </script>

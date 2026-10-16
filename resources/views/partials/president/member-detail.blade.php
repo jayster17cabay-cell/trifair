@@ -144,4 +144,16 @@
             </button>
         @endif
     </div>
+
+    {{-- Remove from TODA (detaches the member; the account is kept) --}}
+    <div class="mt-4 border-t border-slate-100 pt-4">
+        <form method="POST" action="{{ route('president.members.remove', $member->id) }}"
+              onsubmit="return confirm('Remove this member from the TODA? They will become a TODA-less operator. Their rating history is kept.');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger">
+                <i class="bi bi-person-dash"></i> Remove from TODA
+            </button>
+        </form>
+    </div>
 </div>

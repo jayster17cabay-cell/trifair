@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Operator;
 use App\Models\Toda;
+use App\Models\User;
 use App\Services\PresidentQueryService;
 use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class PresidentController extends Controller
 {
@@ -183,6 +187,109 @@ class PresidentController extends Controller
         );
 
         return redirect()->back()->with('success', "{$member->user->name}'s suspension has been lifted.");
+    }
+
+    /**
+     * Onboard a new TODA member on the president's behalf. The account is
+     * created in the pending state, so it still has to be reviewed and approved
+     * by a superadmin or TFRB officer before it can be used — the president
+     * cannot self-approve.
+     */
+    public function storeMember(Request $request)
+    {
+        $toda = $this->toda();
+
+        $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'contact_number' => 'required|string|max:20',
+            'plate_number' => 'required|string|max:20|unique:operators,plate_number',
+            'body_number' => 'required|string|max:20|unique:operators,body_number',
+            'motorcycle_model' => 'required|string|max:100',
+            'password' => 'required|string|min:8|confirmed',
+        ], [
+            'plate_number.unique' => 'This plate number is already registered in the system.',
+            'body_number.unique' => 'This body number is already registered in the system.',
+        ]);
+
+        $user = DB::transaction(function () use ($data, $toda) {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+                'phone' => $data['contact_number'],
+            ]);
+
+            // role/is_active are intentionally NOT mass-assignable (see User model)
+            $user->forceFill(['role' => 'operator', 'is_active' => true])->save();
+
+            Operator::create([
+                'user_id' => $user->id,
+                'toda_id' => $toda->id,
+                'contact_number' => $data['contact_number'],
+                'plate_number' => $data['plate_number'],
+                'body_number' => $data['body_number'],
+                'motorcycle_model' => $data['motorcycle_model'],
+                'qr_code' => Str::random(32),
+                'status' => 'pending',
+            ]);
+
+            return $user;
+        });
+
+        ActivityLogger::log(
+            'add_member',
+            "Added member {$user->name} ({$user->email}) to {$toda->name} — pending approval",
+            $user,
+            ActivityLogger::CATEGORY_OPERATOR
+        );
+
+        return redirect()
+            ->route('president.members', ['status' => 'pending'])
+            ->with('success', "{$user->name} added. The account is pending — superadmin/TFRB must approve it before it becomes active.");
+    }
+
+    /**
+     * Remove a member from the president's TODA. The account is kept but
+     * detached from the TODA (it becomes a TODA-less operator) so their rating
+     * history is preserved and an admin can reassign them later.
+     */
+    public function removeMember(Operator $member)
+    {
+        $toda = $this->authorizeMember($member);
+
+        // The president cannot remove their own operator record.
+        $ownOperator = $this->query->presidentOperator(Auth::user());
+        if ($ownOperator && $member->id === $ownOperator->id) {
+            return redirect()->back()->with('error', 'You cannot remove your own account from the TODA.');
+        }
+
+        $name = $member->user->name ?? 'Member';
+
+        DB::transaction(function () use ($member) {
+            // Detach from the TODA entirely: the operator row, the linked user
+            // and every franchise term that pointed at it, so the rating flow
+            // no longer attributes them to any TODA.
+            $member->update(['toda_id' => null]);
+            \App\Models\FranchiseTerm::where('operator_id', $member->id)->update(['toda_id' => null]);
+
+            if ($member->user) {
+                $member->user->forceFill(['toda_id' => null])->save();
+            }
+        });
+
+        ActivityLogger::log(
+            'remove_member',
+            "Removed member {$name} from {$toda->name} — now a TODA-less operator",
+            $member,
+            ActivityLogger::CATEGORY_OPERATOR
+        );
+
+        return redirect()
+            ->route('president.members')
+            ->with('success', "{$name} was removed from {$toda->name}.");
     }
 
     /**
