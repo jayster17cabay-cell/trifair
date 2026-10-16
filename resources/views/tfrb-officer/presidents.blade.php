@@ -80,4 +80,5 @@
 </script>
 
 @include('partials.toda-members-modal', ['membersUrl' => url('/tfrb-officer/toda'), 'addMemberUrl' => route('tfrb-officer.operators.create')])
+@include('partials.admin.operator-suspend-modal')
 @endsection

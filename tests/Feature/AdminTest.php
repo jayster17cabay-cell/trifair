@@ -1082,6 +1082,31 @@ class AdminTest extends TestCase
         $this->assertTrue($president->fresh()->isSuspended());
     }
 
+    public function test_presidents_page_exposes_suspend_control()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        $presUser = $this->makeUser('operator_president');
+        $presUser->forceFill(['toda_id' => $toda->id])->save();
+
+        $president = Operator::create([
+            'user_id' => $presUser->id,
+            'toda_id' => $toda->id,
+            'qr_code' => Str::random(32),
+            'status' => 'active',
+            'contact_number' => '09171234567',
+            'plate_number' => 'PRESIDENT',
+            'body_number' => 'P01',
+        ]);
+
+        $this->actingAs($admin)->get('/superadmin/presidents')
+            ->assertOk()
+            ->assertSee('operatorSuspendModal')
+            ->assertSee('data-suspend-open', false)
+            ->assertSee('suspendUrl', false);
+    }
+
     public function test_superadmin_can_end_a_member_suspension()
     {
         $admin = $this->makeUser('superadmin');

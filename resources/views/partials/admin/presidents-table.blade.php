@@ -12,6 +12,27 @@
             $verified = !empty($president->email_verified_at);
             $toda = $president->toda;
             $hasToda = $toda ? true : false;
+
+            // Presidents keep an Operator row, so an admin can suspend one here
+            // (they cannot suspend themselves from the president dashboard).
+            $presidentOperator = $president->operator;
+            $activeSuspension = $presidentOperator ? $presidentOperator->currentSuspension : null;
+            $presIsSuspended = $presidentOperator
+                && $presidentOperator->status === 'suspended'
+                && $activeSuspension
+                && !$activeSuspension->isExpired();
+            $presCanSuspend = $presidentOperator
+                && !$presidentOperator->isArchived()
+                && !in_array($presidentOperator->status, ['pending', 'rejected'], true);
+            $suspendData = $presidentOperator ? [
+                'id' => $presidentOperator->id,
+                'name' => $president->name,
+                'toda' => $toda->name ?? null,
+                'isSuspended' => $presIsSuspended,
+                'canSuspend' => $presCanSuspend,
+                'suspendUrl' => route($routePrefix . '.operators.suspend', $presidentOperator),
+                'endSuspensionUrl' => route($routePrefix . '.operators.suspend.end', $presidentOperator),
+            ] : null;
         @endphp
         <tr class="tw-tr-hover even:bg-slate-50/60">
             <td class="tw-td">
@@ -31,7 +52,9 @@
                 @endif
             </td>
             <td class="tw-td">
-                @if ($president->is_active)
+                @if ($presIsSuspended)
+                    <span class="tw-badge tw-badge-amber"><i class="bi bi-slash-circle-fill mr-1"></i>Suspended</span>
+                @elseif ($president->is_active)
                     <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill mr-1"></i>Active</span>
                 @else
                     <span class="tw-badge tw-badge-gray">Disabled</span>
@@ -44,6 +67,21 @@
                         <button type="button" onclick="showTodaMembers({{ $toda->id }}, @js($toda->name))" class="tw-btn tw-btn-sm tw-btn-outline" title="View members" aria-label="View {{ $toda->name }} members">
                             <i class="bi bi-people"></i>
                         </button>
+                    @endif
+                    @if ($presidentOperator)
+                        @if ($presIsSuspended)
+                            <form action="{{ route($routePrefix . '.operators.suspend.end', $presidentOperator) }}" method="POST" onsubmit="return confirm(@js('End ' . $president->name . '\'s suspension early?'))">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-success" title="End suspension" aria-label="End {{ $president->name }}'s suspension">
+                                    <i class="bi bi-play-circle"></i>
+                                </button>
+                            </form>
+                        @elseif ($presCanSuspend)
+                            <button type="button" class="tw-btn tw-btn-sm tw-btn-danger" title="Suspend president" aria-label="Suspend {{ $president->name }}" data-suspend-open='@json($suspendData)' style="background-color:#dc2626;color:#fff;">
+                                <i class="bi bi-slash-circle"></i>
+                            </button>
+                        @endif
                     @endif
                     <form action="{{ route($routePrefix . '.presidents.destroy', $president) }}" method="POST" onsubmit="return confirm('Remove ' . @js($president->name) . ' as TODA President? Their account will go back to being a regular operator.')">
                         @csrf

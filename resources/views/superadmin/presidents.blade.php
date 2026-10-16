@@ -80,4 +80,5 @@
 </script>
 
 @include('partials.toda-members-modal', ['membersUrl' => url('/superadmin/toda'), 'addMemberUrl' => route('superadmin.operators.create')])
+@include('partials.admin.operator-suspend-modal')
 @endsection
