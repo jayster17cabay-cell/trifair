@@ -44,6 +44,7 @@
                         @endif
                     @endif
                 @else
+                    <span class="tw-badge tw-badge-green"><i class="bi bi-patch-check-fill"></i>Active</span>
                     <span class="tw-badge tw-badge-gray"><i class="bi bi-infinity"></i>No expiry</span>
                 @endif
             </div>

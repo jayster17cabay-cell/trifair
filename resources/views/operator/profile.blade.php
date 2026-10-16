@@ -64,8 +64,14 @@
                         <span class="font-bold text-slate-800">
                             @if ($operator->currentTerm && $operator->currentTerm->valid_until)
                                 {{ $operator->currentTerm->valid_until->format('M d, Y') }}
+                                @if ($operator->currentTerm->isExpired())
+                                    <span class="tw-badge tw-badge-red ml-1"><i class="bi bi-exclamation-triangle-fill"></i>Expired</span>
+                                @else
+                                    <span class="tw-badge tw-badge-green ml-1"><i class="bi bi-patch-check-fill"></i>Active</span>
+                                @endif
                             @elseif ($operator->currentTerm)
-                                No expiry
+                                <span class="tw-badge tw-badge-green"><i class="bi bi-patch-check-fill"></i>Active</span>
+                                <span class="tw-badge tw-badge-gray ml-1"><i class="bi bi-infinity"></i>No expiry</span>
                             @else
                                 —
                             @endif
