@@ -1,11 +1,16 @@
 {{--
-    Franchise status + reporting-period selector for the operator app.
+    Franchise status + reporting filters for the operator app.
     Requires: $franchise (current FranchiseTerm or null), $period (string:
     all|year|month|week), $scopeRoute (route name to submit back to, e.g.
     'operator.dashboard').
+    Optional: $todas (collection of the operator's TODAs), $selectedToda
+    (currently viewed Toda or null for "all").
 --}}
 @php
     $period = $period ?? 'all';
+    $todas = $todas ?? collect();
+    $selectedToda = $selectedToda ?? null;
+    $showTodaPicker = $todas->count() > 1;
     $periodLabels = [
         'all' => 'All Time',
         'year' => 'This Year',
@@ -52,14 +57,31 @@
             <div class="mt-1 text-sm font-bold text-slate-800">No active franchise</div>
         @endif
     </div>
-    <form method="GET" action="{{ route($scopeRoute) }}" class="flex items-center gap-2">
-        <label for="operatorPeriod" class="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-            <i class="bi bi-calendar3 mr-1"></i>Show
-        </label>
-        <select name="period" id="operatorPeriod" class="tw-select py-1.5 text-xs" onchange="this.form.submit()">
-            @foreach ($periodLabels as $value => $label)
-                <option value="{{ $value }}" {{ $period === $value ? 'selected' : '' }}>{{ $label }}</option>
-            @endforeach
-        </select>
+    <form method="GET" action="{{ route($scopeRoute) }}" class="flex flex-wrap items-center gap-3">
+        @if ($showTodaPicker)
+            <div class="flex items-center gap-2">
+                <label for="operatorToda" class="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                    <i class="bi bi-diagram-3 mr-1"></i>TODA
+                </label>
+                <select name="toda" id="operatorToda" class="tw-select py-1.5 text-xs" onchange="this.form.submit()">
+                    <option value="all" {{ $selectedToda === null ? 'selected' : '' }}>All TODAs</option>
+                    @foreach ($todas as $t)
+                        <option value="{{ $t->id }}" {{ $selectedToda && $selectedToda->id === $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @elseif ($selectedToda)
+            <input type="hidden" name="toda" value="{{ $selectedToda->id }}">
+        @endif
+        <div class="flex items-center gap-2">
+            <label for="operatorPeriod" class="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                <i class="bi bi-calendar3 mr-1"></i>Show
+            </label>
+            <select name="period" id="operatorPeriod" class="tw-select py-1.5 text-xs" onchange="this.form.submit()">
+                @foreach ($periodLabels as $value => $label)
+                    <option value="{{ $value }}" {{ $period === $value ? 'selected' : '' }}>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
     </form>
 </div>

@@ -10,7 +10,7 @@
 @endsection
 
 @section('content')
-@include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'period' => $period, 'scopeRoute' => 'operator.profile'])
+@include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'period' => $period, 'scopeRoute' => 'operator.profile', 'todas' => $todas ?? collect(), 'selectedToda' => $selectedToda ?? null])
 <div class="grid gap-5 lg:grid-cols-3">
     <div class="lg:col-span-1">
         <div class="tw-card">

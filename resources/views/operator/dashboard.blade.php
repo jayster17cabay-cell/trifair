@@ -29,7 +29,18 @@
 @endsection
 
 @section('content')
-@include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'period' => $period, 'scopeRoute' => 'operator.dashboard'])
+@include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'period' => $period, 'scopeRoute' => 'operator.dashboard', 'todas' => $todas ?? collect(), 'selectedToda' => $selectedToda ?? null])
+@if (($todas ?? collect())->count() > 1)
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-navy-100 bg-navy-50/60 px-4 py-3">
+        <div class="flex items-center gap-2 text-sm font-bold text-navy-700">
+            <i class="bi bi-clipboard-data"></i> Overall (All TODAs)
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-2xl font-extrabold text-navy-700">{{ $overallAvg !== null ? number_format($overallAvg, 1) : '—' }}</span>
+            <span class="text-xs font-semibold text-slate-500">{{ $overallTotal }} {{ $overallTotal === 1 ? 'rating' : 'ratings' }}</span>
+        </div>
+    </div>
+@endif
 <div class="op-dashboard">
     @include('partials.operator.dashboard-quick-actions', ['operator' => $operator])
 

@@ -45,7 +45,7 @@ class PresidentController extends Controller
         $summary['todaArea'] = $toda->area;
 
         $members = $this->query->members($toda, request()->query('search'), request()->query('status'));
-        $ownRecentRatings = $this->query->ownRecentRatings($ownOperator);
+        $ownRecentRatings = $this->query->ownRecentRatings($toda, $ownOperator);
 
         if (request()->wantsJson()) {
             $html = view('partials.president.members-table', ['members' => $members, 'memberDetailUrl' => route('president.members')])->render();
@@ -79,7 +79,7 @@ class PresidentController extends Controller
             $request->query('search'),
             $request->query('status')
         );
-        $ownRecentRatings = $this->query->ownRecentRatings($ownOperator);
+        $ownRecentRatings = $this->query->ownRecentRatings($toda, $ownOperator);
 
         // AJAX (members search inside the dashboard) returns a JSON table fragment.
         if ($request->wantsJson()) {
@@ -109,7 +109,7 @@ class PresidentController extends Controller
         $member->load('user', 'toda');
 
         $ratings = $this->query->memberRatings($toda, $member);
-        $stats = $this->query->memberStats($member);
+        $stats = $this->query->memberStats($toda, $member);
 
         // A lapsed suspension must not linger, so reconcile before rendering.
         $member->syncSuspensionStatus();

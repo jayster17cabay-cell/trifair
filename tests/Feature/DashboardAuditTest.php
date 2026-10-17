@@ -78,6 +78,7 @@ class DashboardAuditTest extends TestCase
     {
         $rating = Rating::create([
             'operator_id' => $operator->id,
+            'toda_id' => $operator->toda_id,
             'rating' => $stars,
             'start_location' => 'Novaliches, Quezon City',
             'end_location' => 'SM Fairview, Quezon City',

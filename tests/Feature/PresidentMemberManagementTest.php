@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\FranchiseTerm;
 use App\Models\Operator;
+use App\Models\Rating;
 use App\Models\Toda;
 use App\Models\User;
+use App\Services\PresidentQueryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -329,5 +331,64 @@ class PresidentMemberManagementTest extends TestCase
         $operator = \App\Models\Operator::where('user_id', $user->id)->first();
 
         $this->assertTrue($operator->getRateableTodas()->contains('id', $toda->id));
+    }
+
+    private function makeRating(Operator $operator, Toda $toda, int $stars, string $origin): Rating
+    {
+        return Rating::create([
+            'operator_id' => $operator->id,
+            'toda_id' => $toda->id,
+            'rating' => $stars,
+            'start_location' => $origin,
+            'end_location' => $origin . ' Terminal',
+            'is_valid' => true,
+            'is_reviewed' => false,
+            'is_auto' => false,
+            'is_accepted' => true,
+        ]);
+    }
+
+    public function test_president_member_stats_are_scoped_to_own_toda()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $member = $this->makeOperator($todaA);   // home TODA A
+        $member->joinToda($todaB->id);           // also member of TODA B
+        $presB = $this->makePresident($todaB);
+
+        // The member carries a 5-star in TODA A and a 1-star in TODA B.
+        $this->makeRating($member, $todaA, 5, 'Alpha');
+        $this->makeRating($member, $todaB, 1, 'Gamma');
+
+        $svc = app(PresidentQueryService::class);
+
+        $statsB = $svc->memberStats($todaB, $member);
+        $this->assertSame(1, (int) $statsB->total);
+        $this->assertSame(1.0, (float) $statsB->avg);
+
+        $statsA = $svc->memberStats($todaA, $member);
+        $this->assertSame(1, (int) $statsA->total);
+        $this->assertSame(5.0, (float) $statsA->avg);
+    }
+
+    public function test_president_member_modal_only_exposes_own_toda_ratings()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $member = $this->makeOperator($todaA);
+        $member->joinToda($todaB->id);
+        $presB = $this->makePresident($todaB);
+
+        $this->makeRating($member, $todaA, 5, 'Alpha');
+        $this->makeRating($member, $todaB, 1, 'Gamma');
+
+        $html = $this->actingAs($presB['user'])
+            ->getJson('/president/members/' . $member->id)
+            ->assertOk()
+            ->json('html');
+
+        // Only TODA B's rating (Gamma) may leak into the modal.
+        $this->assertStringContainsString('Gamma', $html);
+        $this->assertStringNotContainsString('Alpha', $html);
     }
 }

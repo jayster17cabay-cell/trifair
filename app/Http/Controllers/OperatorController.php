@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Rating;
 use App\Models\OperatorResponse;
 use App\Models\OperatorProof;
+use App\Models\Toda;
 use App\Models\User;
 use App\Models\Notification;
 use App\Helpers\ActivityLogger;
@@ -18,10 +19,12 @@ class OperatorController extends Controller
     {
         $operator = Auth::user()->operator;
         $period = $this->resolvePeriod($request);
+        $todas = $operator->getRateableTodas();
+        $selectedToda = $this->resolveToda($request, $todas);
 
-        $base = $this->applyPeriod($operator->ratings()->isValid(), $period);
+        $base = $this->applyPeriod($this->scopeToda($operator->ratings()->isValid(), $selectedToda), $period);
 
-        $agg = $this->applyPeriod($operator->countableRatings(), $period)
+        $agg = $this->applyPeriod($this->scopeToda($operator->countableRatings(), $selectedToda), $period)
             ->selectRaw('COUNT(*) as total_ratings, AVG(rating) as avg_rating')
             ->selectRaw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as r1')
             ->selectRaw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as r2')
@@ -40,6 +43,13 @@ class OperatorController extends Controller
             5 => (int) ($agg->r5 ?? 0),
         ];
 
+        // Combined average across every TODA the operator belongs to.
+        $overallAgg = $this->applyPeriod($operator->countableRatings(), $period)
+            ->selectRaw('COUNT(*) as total, AVG(rating) as avg')
+            ->first();
+        $overallTotal = (int) ($overallAgg->total ?? 0);
+        $overallAvg = $overallTotal > 0 ? round((float) $overallAgg->avg, 1) : null;
+
         $recentRatings = (clone $base)
             ->with('proofs', 'response')
             ->latest()
@@ -56,7 +66,8 @@ class OperatorController extends Controller
 
         return view('operator.dashboard', compact(
             'operator', 'averageRating', 'totalRatings',
-            'recentRatings', 'ratingCounts', 'period'
+            'recentRatings', 'ratingCounts', 'period',
+            'todas', 'selectedToda', 'overallAvg', 'overallTotal'
         ));
     }
 
@@ -64,8 +75,10 @@ class OperatorController extends Controller
     {
         $operator = Auth::user()->operator;
         $period = $this->resolvePeriod($request);
+        $todas = $operator->getRateableTodas();
+        $selectedToda = $this->resolveToda($request, $todas);
 
-        $query = $this->applyPeriod($operator->ratings()->isValid(), $period);
+        $query = $this->applyPeriod($this->scopeToda($operator->ratings()->isValid(), $selectedToda), $period);
 
         $ratings = $query
             ->with('proofs', 'response', 'operatorProofs')
@@ -73,12 +86,13 @@ class OperatorController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $agg = $this->applyPeriod($operator->countableRatings(), $period);
+        $agg = $this->applyPeriod($this->scopeToda($operator->countableRatings(), $selectedToda), $period);
         $averageRating = (clone $agg)->avg('rating');
         $totalRatings = (clone $agg)->count();
 
         return view('operator.ratings', compact(
-            'operator', 'ratings', 'averageRating', 'totalRatings', 'period'
+            'operator', 'ratings', 'averageRating', 'totalRatings', 'period',
+            'todas', 'selectedToda'
         ));
     }
 
@@ -94,6 +108,29 @@ class OperatorController extends Controller
         $period = (string) $request->query('period', 'all');
 
         return in_array($period, ['all', 'year', 'month', 'week'], true) ? $period : 'all';
+    }
+
+    /**
+     * Resolve which TODA the operator wants to view. "all"/missing => null
+     * (every TODA combined); an unknown id is ignored (falls back to all).
+     */
+    private function resolveToda(Request $request, $todas): ?Toda
+    {
+        $todaId = $request->query('toda');
+
+        if (!$todaId || $todaId === 'all') {
+            return null;
+        }
+
+        return $todas->firstWhere('id', (int) $todaId);
+    }
+
+    /**
+     * Narrow a ratings query to a single TODA when one is selected.
+     */
+    private function scopeToda($query, ?Toda $toda)
+    {
+        return $toda ? $query->where('toda_id', $toda->id) : $query;
     }
 
     /**
@@ -195,9 +232,11 @@ class OperatorController extends Controller
     {
         $operator = Auth::user()->operator->load('user', 'toda');
         $period = $this->resolvePeriod($request);
+        $todas = $operator->getRateableTodas();
+        $selectedToda = $this->resolveToda($request, $todas);
 
-        $countable = $this->applyPeriod($operator->countableRatings(), $period);
-        $valid = $this->applyPeriod($operator->ratings()->isValid(), $period);
+        $countable = $this->applyPeriod($this->scopeToda($operator->countableRatings(), $selectedToda), $period);
+        $valid = $this->applyPeriod($this->scopeToda($operator->ratings()->isValid(), $selectedToda), $period);
 
         $stats = [
             'totalRatings' => (clone $countable)->count(),
@@ -206,7 +245,7 @@ class OperatorController extends Controller
             'responseRate' => (clone $valid)->whereHas('response')->count(),
         ];
 
-        return view('operator.profile', compact('operator', 'stats', 'period'));
+        return view('operator.profile', compact('operator', 'stats', 'period', 'todas', 'selectedToda'));
     }
 
     public function showSettings()

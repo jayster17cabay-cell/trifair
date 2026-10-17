@@ -10,7 +10,7 @@
 @endsection
 
 @section('content')
-@include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'period' => $period, 'scopeRoute' => 'operator.ratings'])
+@include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'period' => $period, 'scopeRoute' => 'operator.ratings', 'todas' => $todas ?? collect(), 'selectedToda' => $selectedToda ?? null])
 <div class="op-stat-strip">
     <div class="op-stat-strip-item">
         <small>Average</small>

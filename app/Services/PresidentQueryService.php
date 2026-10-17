@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Operator;
+use App\Models\OperatorToda;
 use App\Models\Rating;
 use App\Models\Toda;
 use App\Models\User;
@@ -10,8 +11,10 @@ use App\Models\User;
 /**
  * All data exposed to an Operator President must be scoped to the TODA they
  * govern. Every query below forces WHERE toda_id = <president's toda> at the
- * database level, so a president can never read another TODA's members no
- * matter how the URL or request parameters are manipulated.
+ * database level, so a president can never read another TODA's members or
+ * ratings no matter how the URL or request parameters are manipulated. A
+ * member of several TODAs therefore shows up only under the ratings filed
+ * against the president's own TODA.
  */
 class PresidentQueryService
 {
@@ -27,7 +30,7 @@ class PresidentQueryService
                 $q->where('toda_id', $toda->id)
                     ->orWhereHas('todaMemberships', function ($m) use ($toda) {
                         $m->where('toda_id', $toda->id)
-                            ->where('status', \App\Models\OperatorToda::STATUS_ACTIVE);
+                            ->where('status', OperatorToda::STATUS_ACTIVE);
                     });
             })
             ->notArchived();
@@ -43,7 +46,7 @@ class PresidentQueryService
     }
 
     /**
-     * Summary stats for the president's TODA.
+     * Summary stats for the president's TODA, all scoped to that TODA.
      */
     public function summary(Toda $toda, ?Operator $ownOperator): array
     {
@@ -55,6 +58,7 @@ class PresidentQueryService
 
         $memberRatingAgg = Rating::query()
             ->whereIn('operator_id', $memberIds)
+            ->where('toda_id', $toda->id)
             ->countsTowardRating()
             ->selectRaw('COUNT(*) as total, AVG(rating) as avg')
             ->first();
@@ -65,6 +69,7 @@ class PresidentQueryService
 
         $pendingComplaints = Rating::query()
             ->whereIn('operator_id', $memberIds)
+            ->where('toda_id', $toda->id)
             ->isValid()
             ->isComplaint()
             ->whereNull('is_accepted')
@@ -73,14 +78,16 @@ class PresidentQueryService
 
         $totalComplaints = Rating::query()
             ->whereIn('operator_id', $memberIds)
+            ->where('toda_id', $toda->id)
             ->isValid()
             ->isComplaint()
             ->count();
 
-        // The president's own averages/count share the same countable set, so a
-        // single aggregate is enough instead of two separate round-trips.
+        // The president's own averages/count are scoped to this TODA too, so
+        // their multi-TODA rating is never mixed across organizations.
         $ownStats = $ownOperator
             ? $ownOperator->countableRatings()
+                ->where('toda_id', $toda->id)
                 ->selectRaw('COUNT(*) as total, AVG(rating) as avg')
                 ->first()
             : null;
@@ -99,14 +106,15 @@ class PresidentQueryService
     }
 
     /**
-     * The president's own recent ratings.
+     * The president's own recent ratings within their TODA.
      */
-    public function ownRecentRatings(?Operator $ownOperator, int $limit = 8)
+    public function ownRecentRatings(Toda $toda, ?Operator $ownOperator, int $limit = 8)
     {
         if (!$ownOperator) {
             return collect();
         }
         return $ownOperator->countableRatings()
+            ->where('toda_id', $toda->id)
             ->with('response')
             ->latest()
             ->take($limit)
@@ -114,7 +122,8 @@ class PresidentQueryService
     }
 
     /**
-     * Paginated, searchable member list for the president's TODA.
+     * Paginated, searchable member list for the president's TODA. Rating and
+     * complaint counts are scoped to the TODA's own ratings.
      */
     public function members(Toda $toda, ?string $search, ?string $status)
     {
@@ -140,17 +149,18 @@ class PresidentQueryService
 
         return $base
             ->withCount([
-                'ratings' => fn ($q) => $q->isValid(),
-                'ratings as complaint_count' => fn ($q) => $q->isValid()->isComplaint(),
+                'ratings' => fn ($q) => $q->isValid()->where('toda_id', $toda->id),
+                'ratings as complaint_count' => fn ($q) => $q->isValid()->isComplaint()->where('toda_id', $toda->id),
             ])
-            ->withAvg(['ratings as valid_rating_avg' => fn ($q) => $q->isValid()], 'rating')
+            ->withAvg(['ratings as valid_rating_avg' => fn ($q) => $q->isValid()->where('toda_id', $toda->id)], 'rating')
             ->latest('id')
             ->paginate(12)
             ->withQueryString();
     }
 
     /**
-     * Per-member rating data for the breakdown chart (only their own TODA).
+     * Per-member rating data for the breakdown chart (only their own TODA's
+     * ratings).
      */
     public function memberBreakdown(Toda $toda)
     {
@@ -161,13 +171,14 @@ class PresidentQueryService
             ->whereHas('user')
             ->with('user')
             ->withCount([
-                'ratings' => fn ($q) => $q->isValid(),
-                'ratings as complaint_count' => fn ($q) => $q->isValid()->isComplaint(),
+                'ratings' => fn ($q) => $q->isValid()->where('toda_id', $toda->id),
+                'ratings as complaint_count' => fn ($q) => $q->isValid()->isComplaint()->where('toda_id', $toda->id),
             ])
             ->get();
 
         $avgs = Rating::query()
             ->whereIn('operator_id', $memberIds)
+            ->where('toda_id', $toda->id)
             ->countsTowardRating()
             ->selectRaw('operator_id, AVG(rating) as avg_rating')
             ->groupBy('operator_id')
@@ -201,7 +212,7 @@ class PresidentQueryService
     }
 
     /**
-     * A member's rating/complaint history, only reachable for own-TODA members.
+     * A member's rating/complaint history under the president's TODA only.
      */
     public function memberRatings(Toda $toda, Operator $member)
     {
@@ -209,6 +220,7 @@ class PresidentQueryService
             return collect();
         }
         return $member->ratings()
+            ->where('toda_id', $toda->id)
             ->isValid()
             ->with('response', 'proofs')
             ->latest()
@@ -217,11 +229,13 @@ class PresidentQueryService
 
     /**
      * Single aggregate (average, total, complaint count) for a member's valid
-     * ratings — one round-trip instead of three for the member detail modal.
+     * ratings under the president's TODA — one round-trip instead of three for
+     * the member detail modal.
      */
-    public function memberStats(Operator $member)
+    public function memberStats(Toda $toda, Operator $member)
     {
         return $member->validRatings()
+            ->where('toda_id', $toda->id)
             ->selectRaw(
                 'COUNT(*) as total'
                 . ', AVG(rating) as avg'

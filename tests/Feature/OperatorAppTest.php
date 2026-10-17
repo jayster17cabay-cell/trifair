@@ -186,4 +186,88 @@ class OperatorAppTest extends TestCase
             }
         }
     }
+
+    private function makeRating(Operator $operator, ?Toda $toda, int $stars, string $origin): void
+    {
+        $operator->ratings()->create([
+            'toda_id' => $toda?->id,
+            'rating' => $stars,
+            'reason' => $origin,
+            'start_location' => $origin,
+            'end_location' => $origin . ' Terminal',
+            'is_valid' => true,
+            'is_reviewed' => false,
+            'is_auto' => false,
+        ]);
+    }
+
+    private function makeMultiTodaOperator(): array
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+
+        $operator = $this->makeOperator();
+        $operator->forceFill(['toda_id' => $todaA->id])->save();
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+
+        return ['operator' => $operator, 'a' => $todaA, 'b' => $todaB];
+    }
+
+    public function test_multi_toda_operator_dashboard_shows_switcher_and_overall_average()
+    {
+        ['operator' => $operator, 'a' => $todaA, 'b' => $todaB] = $this->makeMultiTodaOperator();
+
+        $this->makeRating($operator, $todaA, 5, 'Alpha');
+        $this->makeRating($operator, $todaB, 1, 'Gamma');
+
+        // Default view = all TODAs combined -> average of 5 and 1 = 3.0.
+        $this->actingAs($operator->user)->get('/operator/dashboard')
+            ->assertOk()
+            ->assertSee('operatorToda', false)          // the TODA <select> is present
+            ->assertSee('All TODAs', false)
+            ->assertSee('Overall (All TODAs)', false)
+            ->assertSee('3.0', false);
+    }
+
+    public function test_operator_dashboard_can_scope_to_a_single_toda()
+    {
+        ['operator' => $operator, 'a' => $todaA, 'b' => $todaB] = $this->makeMultiTodaOperator();
+
+        $this->makeRating($operator, $todaA, 5, 'Alpha');
+        $this->makeRating($operator, $todaB, 1, 'Gamma');
+
+        // Scoped to TODA A -> only the 5-star counts for the headline average.
+        $this->actingAs($operator->user)->get('/operator/dashboard?toda=' . $todaA->id)
+            ->assertOk()
+            ->assertSee('5.0', false)
+            // The overall strip still reports every TODA.
+            ->assertSee('Overall (All TODAs)', false)
+            ->assertSee('3.0', false);
+    }
+
+    public function test_operator_ratings_page_filters_by_selected_toda()
+    {
+        ['operator' => $operator, 'a' => $todaA, 'b' => $todaB] = $this->makeMultiTodaOperator();
+
+        $this->makeRating($operator, $todaA, 5, 'Alpha');
+        $this->makeRating($operator, $todaB, 1, 'Gamma');
+
+        $this->actingAs($operator->user)->get('/operator/ratings?toda=' . $todaB->id)
+            ->assertOk()
+            ->assertSee('Gamma', false)
+            ->assertDontSee('Alpha', false);
+    }
+
+    public function test_single_toda_operator_has_no_toda_switcher()
+    {
+        $operator = $this->makeOperator();
+        $operator->joinToda($operator->toda_id);
+        $this->makeRating($operator, $operator->toda, 4, 'Solo');
+
+        $this->actingAs($operator->user)->get('/operator/dashboard')
+            ->assertOk()
+            ->assertDontSee('operatorToda', false)
+            ->assertDontSee('Overall (All TODAs)', false);
+    }
 }
