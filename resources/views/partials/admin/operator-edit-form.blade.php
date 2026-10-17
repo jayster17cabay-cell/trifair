@@ -16,6 +16,45 @@
         @error('toda_id') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
     </div>
 
+    @php
+        $activeMembershipIds = old(
+            'toda_ids',
+            $operator->todaMemberships
+                ->where('status', \App\Models\OperatorToda::STATUS_ACTIVE)
+                ->pluck('toda_id')
+                ->map(fn ($id) => (int) $id)
+                ->all()
+        );
+        $activeMembershipIds = is_array($activeMembershipIds) ? array_map('intval', $activeMembershipIds) : [];
+        $openMembershipIds = $operator->todaMemberships
+            ->whereIn('status', [\App\Models\OperatorToda::STATUS_PENDING, \App\Models\OperatorToda::STATUS_PENDING_ADMIN])
+            ->pluck('toda_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    @endphp
+    <div class="mb-4">
+        <label class="tw-label">TODA Memberships</label>
+        <p class="mb-2 text-xs text-slate-500">An operator keeps one account and body number; tick every TODA they may be rated under. The home TODA is always a member.</p>
+        <div class="grid gap-2 rounded-lg border border-slate-200 p-3 sm:grid-cols-2">
+            @foreach ($todas as $toda)
+                @php
+                    $isHome = (int) $operator->toda_id === (int) $toda->id;
+                    $checked = $isHome || in_array((int) $toda->id, $activeMembershipIds, true) || in_array((int) $toda->id, $openMembershipIds, true);
+                @endphp
+                <label class="flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" name="toda_ids[]" value="{{ $toda->id }}" class="rounded border-slate-300 text-navy-600 focus:ring-navy-500"
+                           {{ $checked ? 'checked' : '' }} {{ $isHome ? 'disabled' : '' }}>
+                    <span>{{ $toda->name }}{{ $isHome ? ' (home)' : '' }}</span>
+                    @if (in_array((int) $toda->id, $openMembershipIds, true) && !$isHome)
+                        <span class="tw-badge tw-badge-amber">Pending</span>
+                    @endif
+                </label>
+            @endforeach
+        </div>
+        @error('toda_ids') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
+        @error('toda_ids.*') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
+    </div>
+
     <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Account Details</div>
     <div class="grid gap-4 sm:grid-cols-2">
         <div>

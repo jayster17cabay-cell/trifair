@@ -245,7 +245,50 @@ class OperatorController extends Controller
             'responseRate' => (clone $valid)->whereHas('response')->count(),
         ];
 
-        return view('operator.profile', compact('operator', 'stats', 'period', 'todas', 'selectedToda'));
+        // TODA memberships (active + pending) and the TODAs the operator can
+        // still request to join.
+        $memberships = $operator->todaMemberships()
+            ->with('toda')
+            ->orderByDesc('id')
+            ->get();
+        $joinableTodas = app(\App\Services\TodaMembershipService::class)->joinableTodas($operator);
+
+        return view('operator.profile', compact(
+            'operator', 'stats', 'period', 'todas', 'selectedToda',
+            'memberships', 'joinableTodas'
+        ));
+    }
+
+    /**
+     * Self-service request to join another TODA. The membership lands in the
+     * target TODA president's queue (pending), then goes to superadmin/TFRB for
+     * final approval before the operator is rateable under it.
+     */
+    public function joinToda(Request $request)
+    {
+        $operator = Auth::user()->operator;
+
+        $data = $request->validate([
+            'toda_id' => ['required', 'integer', 'exists:todas,id'],
+        ]);
+
+        $toda = Toda::where('is_active', true)->find($data['toda_id']);
+
+        if (!$toda) {
+            return back()->with('error', 'That TODA is not available for membership.');
+        }
+
+        if ($operator->hasOpenOrActiveMembership($toda->id)
+            || (int) $operator->toda_id === (int) $toda->id) {
+            return back()->with('error', 'You already have a membership or a pending request for this TODA.');
+        }
+
+        app(\App\Services\TodaMembershipService::class)->requestJoin($operator, $toda);
+
+        return back()->with(
+            'success',
+            "Your request to join {$toda->name} was submitted. It will be reviewed by the TODA president and then by the TFRB/superadmin."
+        );
     }
 
     public function showSettings()

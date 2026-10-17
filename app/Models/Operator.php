@@ -155,6 +155,49 @@ class Operator extends Model
     }
 
     /**
+     * The membership row for a TODA, if any (any status).
+     */
+    public function membershipFor($todaId): ?OperatorToda
+    {
+        if (!$todaId) {
+            return null;
+        }
+
+        return $this->todaMemberships()
+            ->where('toda_id', (int) $todaId)
+            ->first();
+    }
+
+    /**
+     * True when this operator already has an open (pending at either level) or
+     * active membership for the TODA — used to block duplicate join requests.
+     */
+    public function hasOpenOrActiveMembership($todaId): bool
+    {
+        if (!$todaId) {
+            return false;
+        }
+
+        return $this->todaMemberships()
+            ->where('toda_id', (int) $todaId)
+            ->whereIn('status', [
+                OperatorToda::STATUS_ACTIVE,
+                OperatorToda::STATUS_PENDING,
+                OperatorToda::STATUS_PENDING_ADMIN,
+            ])
+            ->exists();
+    }
+
+    /**
+     * Memberships awaiting a decision at any level, newest first.
+     */
+    public function openMemberships()
+    {
+        return $this->todaMemberships()
+            ->whereIn('status', [OperatorToda::STATUS_PENDING, OperatorToda::STATUS_PENDING_ADMIN]);
+    }
+
+    /**
      * The operator's current franchise term. There is at most one active term
      * at any moment; latestOfMany() guards against stale duplicates.
      */

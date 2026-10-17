@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\SuspendsOperator;
 use App\Models\Operator;
+use App\Models\OperatorToda;
 use App\Models\Rating;
 use App\Models\SuspensionViolation;
 use App\Models\User;
@@ -15,6 +16,7 @@ use App\Services\ExportService;
 use App\Services\OperatorAdminService;
 use App\Services\RatingAdminService;
 use App\Services\SuspensionViolationService;
+use App\Services\TodaMembershipService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -378,7 +380,7 @@ class SuperadminController extends Controller
 
     public function editOperator(Operator $operator)
     {
-        $operator->load('user', 'toda');
+        $operator->load('user', 'toda', 'todaMemberships');
         $todas = Toda::orderBy('name')->get();
         return view('superadmin.operators.edit', compact('operator', 'todas'));
     }
@@ -416,6 +418,32 @@ class SuperadminController extends Controller
     public function rejectOperator(Operator $operator)
     {
         return app(OperatorAdminService::class)->reject($operator, 'superadmin.operators');
+    }
+
+    /**
+     * Final approval of a TODA membership request (a president already approved
+     * it, or added it directly). Activating makes the operator rateable there.
+     */
+    public function approveMembership(OperatorToda $membership)
+    {
+        if (!$membership->isOpen()) {
+            return back()->with('error', 'This membership is no longer awaiting final approval.');
+        }
+
+        app(TodaMembershipService::class)->finalApprove($membership, Auth::user());
+
+        return back()->with('success', "Membership approved for {$membership->operator->user->name}.");
+    }
+
+    public function rejectMembership(Request $request, OperatorToda $membership)
+    {
+        $request->validate([
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        app(TodaMembershipService::class)->reject($membership, Auth::user(), $request->input('note'));
+
+        return back()->with('success', 'Membership request rejected.');
     }
 
     public function archiveOperator(Operator $operator)

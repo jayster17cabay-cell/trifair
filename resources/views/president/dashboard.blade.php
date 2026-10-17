@@ -23,6 +23,14 @@
     @include('partials.president.own-ratings', ['ownOperator' => $ownOperator, 'ownRecentRatings' => $ownRecentRatings])
 </div>
 
+{{-- Join requests: operators asking to join this TODA (president reviews first,
+     then superadmin/TFRB gives the final approval). --}}
+@if (($joinRequests ?? collect())->isNotEmpty())
+    <div id="joinRequestsSection" class="scroll-mt-24">
+        @include('partials.president.join-requests', ['joinRequests' => $joinRequests])
+    </div>
+@endif
+
 {{-- Section 2 — Members toggle button --}}
 @php $membersActive = ($membersActive ?? false) || request()->has('search') || request()->has('status'); @endphp
 {{-- Section 2 — Members search + toggle (search is always visible) --}}
@@ -60,6 +68,7 @@
 
 @include('partials.admin.operator-suspend-modal', ['suspendTitle' => 'Suspend Member'])
 @include('partials.president.add-member-modal')
+@include('partials.president.add-existing-member-modal')
 
 <script>
     function togglePresidentMembers() {

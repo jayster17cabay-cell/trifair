@@ -98,6 +98,8 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::get('/toda/{toda}/members', [TfrbOfficerController::class, 'todaMembers'])->name('todas.members');
     Route::patch('/operators/{operator}/approve', [TfrbOfficerController::class, 'approveOperator'])->name('operators.approve');
     Route::patch('/operators/{operator}/reject', [TfrbOfficerController::class, 'rejectOperator'])->name('operators.reject');
+    Route::patch('/memberships/{membership}/approve', [TfrbOfficerController::class, 'approveMembership'])->name('operators.memberships.approve');
+    Route::patch('/memberships/{membership}/reject', [TfrbOfficerController::class, 'rejectMembership'])->name('operators.memberships.reject');
     Route::patch('/operators/{operator}/archive', [TfrbOfficerController::class, 'archiveOperator'])->name('operators.archive');
     Route::patch('/operators/{operator}/restore', [TfrbOfficerController::class, 'restoreOperator'])->name('operators.restore');
     Route::post('/operators/{operator}/suspend', [TfrbOfficerController::class, 'suspendOperator'])->name('operators.suspend');
@@ -160,6 +162,8 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::get('/toda/{toda}/members', [SuperadminController::class, 'todaMembers'])->name('todas.members');
     Route::patch('/operators/{operator}/approve', [SuperadminController::class, 'approveOperator'])->name('operators.approve');
     Route::patch('/operators/{operator}/reject', [SuperadminController::class, 'rejectOperator'])->name('operators.reject');
+    Route::patch('/memberships/{membership}/approve', [SuperadminController::class, 'approveMembership'])->name('operators.memberships.approve');
+    Route::patch('/memberships/{membership}/reject', [SuperadminController::class, 'rejectMembership'])->name('operators.memberships.reject');
     Route::patch('/operators/{operator}/archive', [SuperadminController::class, 'archiveOperator'])->name('operators.archive');
     Route::patch('/operators/{operator}/restore', [SuperadminController::class, 'restoreOperator'])->name('operators.restore');
     Route::post('/operators/{operator}/suspend', [SuperadminController::class, 'suspendOperator'])->name('operators.suspend');
@@ -192,6 +196,9 @@ Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator
         Route::get('/ratings', [OperatorController::class, 'ratings'])->name('ratings');
         Route::post('/ratings/{rating}/respond', [OperatorController::class, 'respond'])->name('ratings.respond');
         Route::get('/profile', [OperatorController::class, 'profile'])->name('profile');
+        // Self-service request to join another TODA. The request first lands in
+        // the target TODA president's queue, then needs superadmin/TFRB approval.
+        Route::post('/todas/join', [OperatorController::class, 'joinToda'])->name('todas.join');
         Route::get('/settings', [OperatorController::class, 'showSettings'])->name('settings');
         Route::put('/settings/password', [OperatorController::class, 'updatePassword'])->name('settings.password');
     });
@@ -208,6 +215,12 @@ Route::middleware(['auth', 'role:operator_president', 'president.active'])->pref
     Route::patch('/members/{member}/suspend/end', [PresidentController::class, 'endSuspension'])->name('members.suspend.end');
     Route::post('/members/{member}/violation', [PresidentController::class, 'reportViolation'])->name('members.violation');
     Route::delete('/members/{member}/remove', [PresidentController::class, 'removeMember'])->name('members.remove');
+    // Add an already-registered operator (same account, same body number) and
+    // take the TODA president's first-level decision on join requests.
+    Route::get('/operators/search', [PresidentController::class, 'searchOperators'])->name('operators.search');
+    Route::post('/members/add-existing', [PresidentController::class, 'addExistingMember'])->name('members.addExisting');
+    Route::patch('/memberships/{membership}/approve', [PresidentController::class, 'approveMembership'])->name('memberships.approve');
+    Route::patch('/memberships/{membership}/reject', [PresidentController::class, 'rejectMembership'])->name('memberships.reject');
 });
 
 // Notification routes (TFRB Officer, Superadmin & TODA President — operators'

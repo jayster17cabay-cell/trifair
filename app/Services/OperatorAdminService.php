@@ -103,6 +103,8 @@ class OperatorAdminService
             'body_number' => 'required|string|max:20|unique:operators,body_number,' . $operator->id,
             'motorcycle_model' => 'nullable|string|max:50',
             'toda_id' => 'required|exists:todas,id',
+            'toda_ids' => 'nullable|array',
+            'toda_ids.*' => 'exists:todas,id',
         ], [
             'plate_number.unique' => 'This plate number is already registered in the system.',
             'body_number.unique' => 'This body number is already registered in the system.',
@@ -118,8 +120,6 @@ class OperatorAdminService
             $operator->user->update(['password' => Hash::make($data['password'])]);
         }
 
-        $previousToda = $operator->toda_id;
-
         $operator->update([
             'address' => $data['address'] ?? null,
             'contact_number' => $data['contact_number'] ?? null,
@@ -129,14 +129,11 @@ class OperatorAdminService
             'toda_id' => $data['toda_id'],
         ]);
 
-        // Keep the membership table in step: a home-TODA change swaps the old
-        // home membership for the new one (additional memberships are untouched).
-        if ((int) $previousToda !== (int) $data['toda_id']) {
-            if ($previousToda) {
-                $operator->leaveToda($previousToda);
-            }
-            $operator->joinToda($data['toda_id']);
-        }
+        // Reconcile TODA memberships with the multi-select (the home TODA is
+        // always kept). An admin drives this form, so selected memberships are
+        // activated directly; unchecked ones stop being rateable.
+        $todaIds = array_merge($data['toda_ids'] ?? [], [$data['toda_id']]);
+        app(TodaMembershipService::class)->syncMemberships($operator, $todaIds, Auth::user());
 
         ActivityLogger::log('update_operator', "Updated operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
         app(AdminDashboardService::class)->flush();

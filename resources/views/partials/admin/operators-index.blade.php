@@ -2,6 +2,10 @@
 
 @php $currentStatus = request('status'); @endphp
 
+@if (!empty($membershipRequests) && $membershipRequests->isNotEmpty())
+    @include('partials.admin.membership-requests', ['membershipRequests' => $membershipRequests, 'routePrefix' => $routePrefix])
+@endif
+
 <div class="tw-page-head">
     <div>
         <h1 class="tw-page-title">

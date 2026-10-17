@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Operator;
+use App\Models\OperatorToda;
 use App\Models\SuspensionViolation;
 use App\Models\Toda;
 use App\Models\User;
 use App\Services\PresidentQueryService;
 use App\Services\SuspensionViolationService;
+use App\Services\TodaMembershipService;
 use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -48,6 +50,7 @@ class PresidentController extends Controller
 
         $members = $this->query->members($toda, request()->query('search'), request()->query('status'));
         $ownRecentRatings = $this->query->ownRecentRatings($toda, $ownOperator);
+        $joinRequests = app(TodaMembershipService::class)->presidentQueue($toda);
 
         if (request()->wantsJson()) {
             $html = view('partials.president.members-table', ['members' => $members, 'memberDetailUrl' => route('president.members')])->render();
@@ -62,7 +65,8 @@ class PresidentController extends Controller
             'summary',
             'members',
             'ownOperator',
-            'ownRecentRatings'
+            'ownRecentRatings',
+            'joinRequests'
         ));
     }
 
@@ -82,6 +86,7 @@ class PresidentController extends Controller
             $request->query('status')
         );
         $ownRecentRatings = $this->query->ownRecentRatings($toda, $ownOperator);
+        $joinRequests = app(TodaMembershipService::class)->presidentQueue($toda);
 
         // AJAX (members search inside the dashboard) returns a JSON table fragment.
         if ($request->wantsJson()) {
@@ -100,7 +105,8 @@ class PresidentController extends Controller
             'summary',
             'members',
             'ownOperator',
-            'ownRecentRatings'
+            'ownRecentRatings',
+            'joinRequests'
         ))->with('membersActive', true);
     }
 
@@ -365,6 +371,110 @@ class PresidentController extends Controller
         $toda = $user->presidentToda();
 
         if (!$user->isOperatorPresident() || !$toda || !$member->isMemberOfToda($toda->id)) {
+            abort(403);
+        }
+
+        return $toda;
+    }
+
+    /**
+     * AJAX: search for existing operators a president can add to their TODA
+     * (already-open or active members are excluded so nothing is duplicated).
+     */
+    public function searchOperators(Request $request)
+    {
+        $toda = $this->toda();
+
+        $operators = app(TodaMembershipService::class)
+            ->searchJoinableOperators($toda, $request->query('q'));
+
+        return response()->json([
+            'html' => view('partials.president.existing-operator-results', [
+                'operators' => $operators,
+                'toda' => $toda,
+            ])->render(),
+        ]);
+    }
+
+    /**
+     * President adds an EXISTING operator to their TODA (no new account is
+     * created — same email, same body number). The membership lands as
+     * pending_admin for the superadmin/TFRB's final approval.
+     */
+    public function addExistingMember(Request $request)
+    {
+        $toda = $this->toda();
+
+        $data = $request->validate([
+            'operator_id' => ['required', 'integer', 'exists:operators,id'],
+        ]);
+
+        $operator = Operator::with('user')->find($data['operator_id']);
+
+        if (!$operator || $operator->isArchived()) {
+            return redirect()->back()->with('error', 'That operator is no longer available.');
+        }
+
+        if ($operator->hasOpenOrActiveMembership($toda->id)
+            || (int) $operator->toda_id === (int) $toda->id) {
+            return redirect()->back()->with('error', 'That operator is already a member or has a pending request for this TODA.');
+        }
+
+        app(TodaMembershipService::class)->presidentAdd($operator, $toda, Auth::user());
+
+        return redirect()
+            ->route('president.members')
+            ->with('success', ($operator->user->name ?? 'Member') . ' was added to ' . $toda->name . ' — pending final approval by superadmin/TFRB.');
+    }
+
+    /**
+     * President's first-level decision on a self-service join request: approve
+     * (moves it to the superadmin/TFRB queue) or reject.
+     */
+    public function approveMembership(OperatorToda $membership)
+    {
+        $this->authorizeMembership($membership);
+
+        if ($membership->status !== OperatorToda::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'This membership request is no longer awaiting your approval.');
+        }
+
+        app(TodaMembershipService::class)->presidentApprove($membership, Auth::user());
+
+        return redirect()
+            ->route('president.members')
+            ->with('success', 'Approved. The request is now with superadmin/TFRB for final approval.');
+    }
+
+    public function rejectMembership(Request $request, OperatorToda $membership)
+    {
+        $this->authorizeMembership($membership);
+
+        if ($membership->status !== OperatorToda::STATUS_PENDING) {
+            return redirect()->back()->with('error', 'This membership request is no longer awaiting your decision.');
+        }
+
+        $request->validate([
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        app(TodaMembershipService::class)->reject($membership, Auth::user(), $request->input('note'));
+
+        return redirect()->route('president.members')->with('success', 'Membership request rejected.');
+    }
+
+    /**
+     * Only a membership belonging to the president's own TODA can be decided on
+     * here.
+     */
+    protected function authorizeMembership(OperatorToda $membership): Toda
+    {
+        $user = Auth::user();
+        $toda = $user->presidentToda();
+
+        if (!$user->isOperatorPresident() || !$toda
+            || !$membership
+            || (int) $membership->toda_id !== (int) $toda->id) {
             abort(403);
         }
 

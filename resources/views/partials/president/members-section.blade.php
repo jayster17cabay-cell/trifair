@@ -7,6 +7,9 @@
         <h3 class="tw-card-title text-sm !text-white"><i class="bi bi-people-fill mr-1 text-gold"></i> TODA Members</h3>
         <div class="flex items-center gap-3">
             <p class="hidden text-xs text-slate-300 sm:inline">{{ $members->total() }} {{ $members->total() === 1 ? 'member' : 'members' }}</p>
+            <button type="button" class="tw-btn tw-btn-outline px-3 py-1.5 text-xs !text-white !border-white/40 hover:!bg-white/10" data-tw-modal-open="presidentAddExistingModal">
+                <i class="bi bi-search mr-1"></i> Add Existing
+            </button>
             <button type="button" class="tw-btn tw-btn-gold px-3 py-1.5 text-xs" data-tw-modal-open="presidentAddMemberModal">
                 <i class="bi bi-person-plus-fill mr-1"></i> Add Member
             </button>

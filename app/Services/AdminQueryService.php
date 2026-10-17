@@ -467,7 +467,11 @@ class AdminQueryService
         $activeStatusCount = (int) $tally->active_status_count;
         $inactiveStatusCount = (int) $tally->inactive_status_count;
 
-        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount');
+        // TODA membership requests awaiting the final superadmin/TFRB approval
+        // (a president already approved them, or added the operator directly).
+        $membershipRequests = app(\App\Services\TodaMembershipService::class)->adminQueue();
+
+        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount', 'membershipRequests');
     }
 
     public function operatorsForExport(Request $request)

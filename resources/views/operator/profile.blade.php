@@ -151,6 +151,67 @@
                 </div>
             </div>
         </div>
+
+        <div class="tw-card mt-5">
+            <div class="tw-card-pad border-b border-slate-100">
+                <h5 class="tw-card-title"><i class="bi bi-diagram-3 mr-2 text-navy-600"></i>TODA Memberships</h5>
+                <p class="mt-1 text-xs text-slate-500">You keep one account and body number — joining another TODA only adds a membership.</p>
+            </div>
+            <div class="tw-card-pad">
+                @php
+                    $membershipBadge = [
+                        'active' => 'tw-badge-green',
+                        'pending' => 'tw-badge-amber',
+                        'pending_admin' => 'tw-badge-blue',
+                        'rejected' => 'tw-badge-red',
+                        'inactive' => 'tw-badge-gray',
+                    ];
+                    $membershipLabel = [
+                        'active' => 'Active',
+                        'pending' => 'Pending President',
+                        'pending_admin' => 'Pending Approval',
+                        'rejected' => 'Rejected',
+                        'inactive' => 'Inactive',
+                    ];
+                @endphp
+
+                @if (($memberships ?? collect())->isNotEmpty())
+                    <ul class="mb-4 divide-y divide-slate-100">
+                        @foreach ($memberships as $membership)
+                            <li class="flex items-center justify-between py-2.5">
+                                <span class="font-semibold text-slate-800">{{ $membership->toda->name ?? 'Unknown TODA' }}</span>
+                                <span class="tw-badge {{ $membershipBadge[$membership->status] ?? 'tw-badge-gray' }}">
+                                    {{ $membershipLabel[$membership->status] ?? ucfirst($membership->status) }}
+                                </span>
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="mb-4 text-sm text-slate-400">You are not a member of any TODA yet.</p>
+                @endif
+
+                @if (($joinableTodas ?? collect())->isNotEmpty())
+                    <form method="POST" action="{{ route('operator.todas.join') }}" class="flex flex-wrap items-end gap-3">
+                        @csrf
+                        <div class="min-w-[12rem] flex-1">
+                            <label for="joinTodaId" class="tw-label">Join another TODA</label>
+                            <select class="tw-select" id="joinTodaId" name="toda_id" required>
+                                <option value="">-- Select TODA --</option>
+                                @foreach ($joinableTodas as $toda)
+                                    <option value="{{ $toda->id }}">{{ $toda->name }}{{ $toda->area ? " ({$toda->area})" : '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="tw-btn tw-btn-gold">
+                            <i class="bi bi-send"></i> Request to Join
+                        </button>
+                    </form>
+                    <p class="mt-2 text-xs text-slate-500">Your request goes to the TODA president first, then to the TFRB/superadmin for final approval.</p>
+                @else
+                    <p class="text-sm text-slate-400">You already have a membership or a pending request in every available TODA.</p>
+                @endif
+            </div>
+        </div>
     </div>
 </div>
 @endsection

@@ -325,4 +325,190 @@ class MultiTodaRatingTest extends TestCase
         $this->assertNotNull($rating);
         $this->assertSame($toda->id, (int) $rating->toda_id);
     }
+
+    /**
+     * Create a live (not yet lapsed) suspension for the operator under a TODA.
+     */
+    private function suspendUnder(Operator $operator, Toda $toda): MemberSuspension
+    {
+        return MemberSuspension::create([
+            'operator_id' => $operator->id,
+            'toda_id' => $toda->id,
+            'suspended_by' => $this->makeUser('operator_president')->id,
+            'reason' => 'Overcharging.',
+            'suspended_at' => now()->toDateString(),
+            'suspended_until' => now()->addDays(5)->toDateString(),
+        ]);
+    }
+
+    public function test_single_toda_suspension_shows_identity_and_blocks_the_trip()
+    {
+        $toda = $this->makeToda('Solo TODA');
+        $operator = $this->makeOperator($toda);
+        $operator->joinToda($toda->id);
+        $this->makeTerm($operator);
+
+        $this->suspendUnder($operator, $toda);
+        $operator->update(['status' => 'suspended']);
+
+        // The driver is still identifiable, and the suspension is explained;
+        // the trip (rating) form must not be offered.
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee($operator->user->name)
+            ->assertSee('Suspended', false)
+            ->assertDontSee("How's my ride?", false);
+
+        // A direct backend POST cannot start a trip under the suspended TODA.
+        $this->post(route('rate.submit', $operator->qr_code), [
+            'rating' => 5,
+            'toda_id' => $toda->id,
+            'start_location' => 'A',
+            'end_location' => 'B',
+        ])->assertSee('Suspended', false);
+
+        $this->assertSame(0, Rating::count());
+    }
+
+    public function test_scan_with_two_todas_one_suspended_offers_only_the_active_toda()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
+
+        $this->suspendUnder($operator, $todaA);
+        $operator->update(['status' => 'suspended']);
+
+        // Scanning the permanent QR offers only the active TODA, straight to
+        // the trip form — the suspended TODA is neither offered nor shown, and
+        // no picker is needed for a single available TODA.
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee('Beta TODA')
+            ->assertDontSee('Alpha TODA')
+            ->assertDontSee('Piliin ang TODA')
+            ->assertSee("How's my ride?", false);
+    }
+
+    public function test_direct_post_cannot_start_a_trip_under_a_suspended_toda()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
+
+        $this->suspendUnder($operator, $todaA);
+        $operator->update(['status' => 'suspended']);
+
+        // Frontend filtering is bypassed here: a crafted POST straight at the
+        // suspended TODA is refused by the server and records nothing.
+        $this->post(route('rate.submit', $operator->qr_code), [
+            'rating' => 5,
+            'toda_id' => $todaA->id,
+            'start_location' => 'A',
+            'end_location' => 'B',
+        ])->assertSee('Suspended', false);
+        $this->assertSame(0, Rating::count());
+
+        // The active TODA still starts a trip normally.
+        $this->post(route('rate.submit', $operator->qr_code), [
+            'rating' => 5,
+            'toda_id' => $todaB->id,
+            'start_location' => 'A',
+            'end_location' => 'B',
+        ])->assertRedirect(route('rate.submitted', $operator->qr_code));
+
+        $this->assertSame(1, Rating::count());
+        $this->assertSame($todaB->id, (int) Rating::first()->toda_id);
+    }
+
+    public function test_three_todas_one_suspended_offers_only_the_two_active()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+        $todaC = $this->makeToda('Gamma TODA');
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $operator->joinToda($todaC->id);
+        $this->makeTerm($operator);
+
+        $this->suspendUnder($operator, $todaA);
+        $operator->update(['status' => 'suspended']);
+
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee('Piliin ang TODA')
+            ->assertSee('Beta TODA')
+            ->assertSee('Gamma TODA')
+            ->assertDontSee('Alpha TODA');
+    }
+
+    public function test_all_todas_suspended_keeps_identity_and_blocks_every_trip()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+        $todaC = $this->makeToda('Gamma TODA');
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $operator->joinToda($todaC->id);
+        $this->makeTerm($operator);
+
+        foreach ([$todaA, $todaB, $todaC] as $toda) {
+            $this->suspendUnder($operator, $toda);
+        }
+        $operator->update(['status' => 'suspended']);
+
+        // The driver stays identifiable, but no TODA is available for a trip.
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee($operator->user->name)
+            ->assertSee('Suspended', false)
+            ->assertDontSee('Piliin ang TODA')
+            ->assertDontSee("How's my ride?", false);
+
+        foreach ([$todaA, $todaB, $todaC] as $toda) {
+            $this->post(route('rate.submit', $operator->qr_code), [
+                'rating' => 5,
+                'toda_id' => $toda->id,
+                'start_location' => 'A',
+                'end_location' => 'B',
+            ])->assertSee('Suspended', false);
+        }
+
+        $this->assertSame(0, Rating::count());
+    }
+
+    public function test_reactivated_toda_reappears_in_the_selection()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
+
+        $this->suspendUnder($operator, $todaA);
+        $operator->update(['status' => 'suspended']);
+
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertDontSee('Alpha TODA');
+
+        // The president officially lifts the suspension: the assignment is
+        // available again.
+        $operator->endSuspension();
+
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee('Piliin ang TODA')
+            ->assertSee('Alpha TODA')
+            ->assertSee('Beta TODA');
+    }
 }
