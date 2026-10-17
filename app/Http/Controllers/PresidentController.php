@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Operator;
+use App\Models\SuspensionViolation;
 use App\Models\Toda;
 use App\Models\User;
 use App\Services\PresidentQueryService;
+use App\Services\SuspensionViolationService;
 use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -120,12 +122,22 @@ class PresidentController extends Controller
             ->take(10)
             ->get();
 
+        // Violation reports the president has filed against this member for
+        // this TODA, so they can track each report's review status.
+        $violations = SuspensionViolation::where('operator_id', $member->id)
+            ->where('toda_id', $toda->id)
+            ->with(['reviewer', 'proofs'])
+            ->latest()
+            ->take(10)
+            ->get();
+
         $html = view('partials.president.member-detail', [
             'member' => $member,
             'ratings' => $ratings,
             'stats' => $stats,
             'currentSuspension' => $currentSuspension,
             'suspensionHistory' => $suspensionHistory,
+            'violations' => $violations,
         ])->render();
 
         return response()->json(['html' => $html]);
@@ -187,6 +199,50 @@ class PresidentController extends Controller
         );
 
         return redirect()->back()->with('success', "{$member->user->name}'s suspension has been lifted.");
+    }
+
+    /**
+     * Report a member who was suspended but is still observed operating. The
+     * report is queued for review by a TFRB officer or superadmin, who can
+     * impose a heavier penalty. Proof attachments, incident date/time and the
+     * location are captured so the finding is actionable.
+     */
+    public function reportViolation(Request $request, Operator $member)
+    {
+        $toda = $this->authorizeMember($member);
+
+        // Only a member under an active suspension can be reported this way.
+        $suspension = $member->currentSuspensionForToda($toda->id);
+        if (!$suspension || $suspension->isExpired()) {
+            return redirect()->back()->with('error', 'This member is not currently suspended, so a violation cannot be reported.');
+        }
+
+        $validated = $request->validate([
+            'violation_type' => ['required', 'string', 'max:100'],
+            'details' => ['required', 'string', 'max:2000'],
+            'incident_at' => ['required', 'date'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'proofs' => ['nullable', 'array', 'max:5'],
+            'proofs.*' => ['file', 'mimes:jpg,jpeg,png,pdf,mp4', 'max:10240'],
+        ]);
+
+        app(SuspensionViolationService::class)->report(
+            $member,
+            $toda,
+            Auth::id(),
+            [
+                'suspension_id' => $suspension->id,
+                'violation_type' => $validated['violation_type'],
+                'details' => $validated['details'],
+                'incident_at' => $validated['incident_at'],
+                'location' => $validated['location'] ?? null,
+            ],
+            $request->file('proofs', [])
+        );
+
+        return redirect()
+            ->back()
+            ->with('success', 'Violation report submitted. A TFRB officer or superadmin will review it.');
     }
 
     /**

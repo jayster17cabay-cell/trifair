@@ -89,6 +89,10 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::patch('/complaints/{rating}/reopen', [TfrbOfficerController::class, 'complaintsReopen'])->name('complaints.reopen');
     Route::delete('/complaints/{rating}', [TfrbOfficerController::class, 'destroyComplaint'])->name('complaints.destroy');
     Route::post('/complaints/bulk-review', [TfrbOfficerController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
+    Route::get('/violations', [TfrbOfficerController::class, 'violations'])->name('violations');
+    Route::patch('/violations/{violation}/review', [TfrbOfficerController::class, 'violationsReview'])->name('violations.review');
+    Route::patch('/violations/{violation}/solve', [TfrbOfficerController::class, 'violationsSolve'])->name('violations.solve');
+    Route::patch('/violations/{violation}/reopen', [TfrbOfficerController::class, 'violationsReopen'])->name('violations.reopen');
     Route::get('/activity-logs', [TfrbOfficerController::class, 'activityLogs'])->name('activity-logs');
     Route::get('/todas', [TfrbOfficerController::class, 'todas'])->name('todas');
     Route::get('/toda/{toda}/members', [TfrbOfficerController::class, 'todaMembers'])->name('todas.members');
@@ -137,6 +141,10 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::patch('/complaints/{rating}/reopen', [SuperadminController::class, 'complaintsReopen'])->name('complaints.reopen');
     Route::delete('/complaints/{rating}', [SuperadminController::class, 'destroyComplaint'])->name('complaints.destroy');
     Route::post('/complaints/bulk-review', [SuperadminController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
+    Route::get('/violations', [SuperadminController::class, 'violations'])->name('violations');
+    Route::patch('/violations/{violation}/review', [SuperadminController::class, 'violationsReview'])->name('violations.review');
+    Route::patch('/violations/{violation}/solve', [SuperadminController::class, 'violationsSolve'])->name('violations.solve');
+    Route::patch('/violations/{violation}/reopen', [SuperadminController::class, 'violationsReopen'])->name('violations.reopen');
     Route::get('/ratings', [SuperadminController::class, 'ratings'])->name('ratings');
     Route::patch('/ratings/{rating}/review', [SuperadminController::class, 'markReviewed'])->name('ratings.review');
     Route::post('/ratings/bulk-review', [SuperadminController::class, 'ratingsBulkReview'])->name('ratings.bulkReview');
@@ -198,6 +206,7 @@ Route::middleware(['auth', 'role:operator_president', 'president.active'])->pref
     Route::get('/members/{member}', [PresidentController::class, 'memberDetail'])->name('members.detail');
     Route::post('/members/{member}/suspend', [PresidentController::class, 'suspendMember'])->name('members.suspend');
     Route::patch('/members/{member}/suspend/end', [PresidentController::class, 'endSuspension'])->name('members.suspend.end');
+    Route::post('/members/{member}/violation', [PresidentController::class, 'reportViolation'])->name('members.violation');
     Route::delete('/members/{member}/remove', [PresidentController::class, 'removeMember'])->name('members.remove');
 });
 

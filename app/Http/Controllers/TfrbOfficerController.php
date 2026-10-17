@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\SuspendsOperator;
 use App\Models\Operator;
 use App\Models\Rating;
+use App\Models\SuspensionViolation;
 use App\Models\Toda;
 use App\Models\User;
 use App\Services\AdminDashboardService;
@@ -12,6 +13,7 @@ use App\Services\AdminQueryService;
 use App\Services\ExportService;
 use App\Services\OperatorAdminService;
 use App\Services\RatingAdminService;
+use App\Services\SuspensionViolationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -310,6 +312,59 @@ class TfrbOfficerController extends Controller
     public function complaintsBulkReview(Request $request)
     {
         return app(RatingAdminService::class)->complaintsBulkReview($request);
+    }
+
+    public function violations(Request $request)
+    {
+        $data = app(AdminQueryService::class)->violationsData($request);
+
+        return view('tfrb-officer.violations', $data);
+    }
+
+    public function violationsReview(Request $request, SuspensionViolation $violation)
+    {
+        $request->validate([
+            'review_note' => 'nullable|string|max:2000',
+        ]);
+
+        app(SuspensionViolationService::class)->markReviewed(
+            $violation,
+            Auth::id(),
+            $request->input('review_note')
+        );
+
+        return back()->with('success', 'Violation report marked as reviewed.');
+    }
+
+    public function violationsSolve(Request $request, SuspensionViolation $violation)
+    {
+        $request->validate([
+            'resolution_note' => 'required|string|max:2000',
+            'recommended_action' => 'nullable|string|max:255',
+            'penalty_imposed' => 'nullable|string|max:2000',
+            'resolution_proofs' => 'nullable|array|max:5',
+            'resolution_proofs.*' => 'nullable|file|max:10240',
+        ]);
+
+        app(SuspensionViolationService::class)->markSolved(
+            $violation,
+            Auth::id(),
+            [
+                'resolution_note' => $request->input('resolution_note'),
+                'recommended_action' => $request->input('recommended_action'),
+                'penalty_imposed' => $request->input('penalty_imposed'),
+            ],
+            $request->file('resolution_proofs') ?: []
+        );
+
+        return back()->with('success', 'Violation report marked as solved.');
+    }
+
+    public function violationsReopen(SuspensionViolation $violation)
+    {
+        app(SuspensionViolationService::class)->reopen($violation);
+
+        return back()->with('success', 'Violation report reopened.');
     }
 
     public function destroyComplaint(Rating $rating)

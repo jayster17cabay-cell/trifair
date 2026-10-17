@@ -12,6 +12,7 @@
                 'links' => [
                     ['label' => 'Dashboard', 'icon' => 'bi-grid-1x2', 'route' => 'tfrb-officer.dashboard', 'match' => 'tfrb-officer.dashboard'],
                     ['label' => 'Complaints', 'icon' => 'bi-exclamation-triangle', 'route' => 'tfrb-officer.complaints', 'match' => 'tfrb-officer.complaints*'],
+                    ['label' => 'Violation Reports', 'icon' => 'bi-flag', 'route' => 'tfrb-officer.violations', 'match' => 'tfrb-officer.violations*'],
                 ],
             ],
             [

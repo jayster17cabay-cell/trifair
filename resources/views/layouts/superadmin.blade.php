@@ -13,6 +13,7 @@
                     ['label' => 'Dashboard', 'icon' => 'bi-speedometer2', 'route' => 'superadmin.dashboard', 'match' => 'superadmin.dashboard'],
                     ['label' => 'TFRB Officers', 'icon' => 'bi-shield', 'route' => 'superadmin.officers', 'match' => 'superadmin.officers*'],
                     ['label' => 'Complaints', 'icon' => 'bi-exclamation-triangle', 'route' => 'superadmin.complaints', 'match' => 'superadmin.complaints*'],
+                    ['label' => 'Violation Reports', 'icon' => 'bi-flag', 'route' => 'superadmin.violations', 'match' => 'superadmin.violations*'],
                 ],
             ],
             [

@@ -134,6 +134,54 @@
                                 <i class="bi bi-play-circle"></i>End Suspension Early
                             </button>
                         </form>
+
+                        {{-- Report a violation (still observed operating while suspended) --}}
+                        <details class="mt-3 rounded-xl border border-red-200 bg-white" data-violation-report>
+                            <summary class="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-red-600">
+                                <i class="bi bi-exclamation-octagon"></i> Report Violation (still operating)
+                            </summary>
+                            <div class="border-t border-red-100 p-4">
+                                <form method="POST" action="{{ route('president.members.violation', $member->id) }}" enctype="multipart/form-data" class="space-y-3">
+                                    @csrf
+                                    <div>
+                                        <label for="violation_type_{{ $member->id }}" class="mb-1 block text-xs font-semibold text-slate-600">Violation type</label>
+                                        <select id="violation_type_{{ $member->id }}" name="violation_type" required class="tw-select">
+                                            <option value="Operating while suspended">Operating while suspended</option>
+                                            <option value="Disregarding suspension order">Disregarding suspension order</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="incident_at_{{ $member->id }}" class="mb-1 block text-xs font-semibold text-slate-600">Incident date &amp; time</label>
+                                        <input id="incident_at_{{ $member->id }}" type="datetime-local" name="incident_at" required class="tw-input">
+                                    </div>
+                                    <div>
+                                        <label for="location_{{ $member->id }}" class="mb-1 block text-xs font-semibold text-slate-600">Location (optional)</label>
+                                        <input id="location_{{ $member->id }}" type="text" name="location" maxlength="255" class="tw-input" placeholder="e.g. Market Road, near terminal">
+                                    </div>
+                                    <div>
+                                        <label for="details_{{ $member->id }}" class="mb-1 block text-xs font-semibold text-slate-600">Details</label>
+                                        <textarea id="details_{{ $member->id }}" name="details" rows="3" required maxlength="2000" class="tw-textarea" placeholder="Describe what you observed…"></textarea>
+                                    </div>
+                                    <div>
+                                        <label for="proofs_{{ $member->id }}" class="mb-1 block text-xs font-semibold text-slate-600">Proof attachments (optional, max 5)</label>
+                                        <input id="proofs_{{ $member->id }}" type="file" name="proofs[]" multiple accept=".jpg,.jpeg,.png,.pdf,.mp4" class="tw-input">
+                                        <p class="mt-1 text-xs text-slate-400">Photos, video, or documents (up to 5 files, 10 MB each).</p>
+                                    </div>
+                                    @if ($errors->any())
+                                        <div class="rounded-lg bg-red-50 p-2 text-xs text-red-600">
+                                            @foreach ($errors->all() as $error)
+                                                <div>{{ $error }}</div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger" style="background-color:#dc2626;color:#fff;"
+                                            onclick="return confirm('Submit this violation report? It will be sent to TFRB/superadmin for review.');">
+                                        <i class="bi bi-send"></i> Submit Report
+                                    </button>
+                                </form>
+                            </div>
+                        </details>
                     </div>
                 </div>
             </div>
@@ -144,6 +192,44 @@
             </button>
         @endif
     </div>
+
+    {{-- Violation reports filed by this president against the member --}}
+    @if (($violations ?? collect())->isNotEmpty())
+        <div class="mt-4 border-t border-slate-100 pt-4">
+            <details class="rounded-xl border border-slate-200">
+                <summary class="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <i class="bi bi-flag"></i> Reported violations ({{ $violations->count() }})
+                </summary>
+                <ul class="divide-y divide-slate-100 border-t border-slate-100">
+                    @foreach ($violations as $violation)
+                        @php
+                            $vBadge = $violation->is_solved
+                                ? ['label' => 'Solved', 'class' => 'tw-badge-green']
+                                : ($violation->is_reviewed ? ['label' => 'Reviewed', 'class' => 'tw-badge-blue'] : ['label' => 'Pending', 'class' => 'tw-badge-red']);
+                        @endphp
+                        <li class="px-4 py-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="tw-badge {{ $vBadge['class'] }}">{{ $vBadge['label'] }}</span>
+                                <span class="text-xs font-semibold text-slate-600">{{ $violation->violation_type }}</span>
+                                <span class="ml-auto text-[11px] text-slate-400">{{ $violation->created_at->format('M d, Y') }}</span>
+                            </div>
+                            <p class="mt-1 text-sm text-slate-600">{{ $violation->details }}</p>
+                            <p class="mt-0.5 text-xs text-slate-400">
+                                Incident {{ $violation->incident_at?->format('M d, Y g:i A') }}
+                                @if ($violation->location) · {{ $violation->location }} @endif
+                            </p>
+                            @if ($violation->is_solved && ($violation->penalty_imposed || $violation->resolution_note))
+                                <p class="mt-1 rounded-lg bg-emerald-50/70 p-2 text-xs text-emerald-700">
+                                    @if ($violation->penalty_imposed) <strong>Penalty:</strong> {{ $violation->penalty_imposed }} @endif
+                                    @if ($violation->resolution_note) <span class="block">{{ $violation->resolution_note }}</span> @endif
+                                </p>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            </details>
+        </div>
+    @endif
 
     {{-- Remove from TODA (detaches the member; the account is kept) --}}
     <div class="mt-4 border-t border-slate-100 pt-4">

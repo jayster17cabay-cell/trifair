@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ActivityLog;
 use App\Models\Operator;
 use App\Models\Rating;
+use App\Models\SuspensionViolation;
 use App\Models\Toda;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
@@ -85,6 +86,64 @@ class AdminQueryService
             ->withQueryString();
 
         return compact('complaints', 'filter', 'ratingFilter', 'search', 'pendingCount', 'acceptedCount', 'rejectedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal');
+    }
+
+    /**
+     * Suspension-violation reports filed by TODA presidents. Shared by the
+     * superadmin and TFRB officer queues so both roles review identical data.
+     *
+     * @return array{violations: LengthAwarePaginator, filter: string, search: string, pendingCount: int, reviewedCount: int, solvedCount: int, totalCount: int, proofsTotal: int}
+     */
+    public function violationsData(Request $request): array
+    {
+        $filter = $request->query('filter', 'pending');
+        $search = trim((string) $request->query('search'));
+
+        $base = SuspensionViolation::query();
+
+        $counts = (clone $base)->selectRaw(
+            'COUNT(*) as total_count'
+            . ', SUM(CASE WHEN is_reviewed = false AND is_solved = false THEN 1 ELSE 0 END) as pending_count'
+            . ', SUM(CASE WHEN is_reviewed = true AND is_solved = false THEN 1 ELSE 0 END) as reviewed_count'
+            . ', SUM(CASE WHEN is_solved = true THEN 1 ELSE 0 END) as solved_count'
+        )->first();
+
+        $pendingCount = (int) ($counts->pending_count ?? 0);
+        $reviewedCount = (int) ($counts->reviewed_count ?? 0);
+        $solvedCount = (int) ($counts->solved_count ?? 0);
+        $totalCount = (int) ($counts->total_count ?? 0);
+
+        $proofsTotal = (int) DB::table('suspension_violation_proofs')->count();
+
+        if ($filter === 'pending') {
+            $base->where('is_reviewed', false)->where('is_solved', false);
+        } elseif ($filter === 'reviewed') {
+            $base->where('is_reviewed', true)->where('is_solved', false);
+        } elseif ($filter === 'solved') {
+            $base->where('is_solved', true);
+        } elseif (!in_array($filter, ['', 'all'], true)) {
+            $filter = 'pending';
+            $base->where('is_reviewed', false)->where('is_solved', false);
+        }
+
+        if ($search !== '') {
+            $like = '%' . $search . '%';
+            $base->where(function ($query) use ($like) {
+                $query->where('violation_type', 'like', $like)
+                    ->orWhere('details', 'like', $like)
+                    ->orWhere('location', 'like', $like)
+                    ->orWhereHas('operator.user', function ($user) use ($like) {
+                        $user->where('name', 'like', $like)->orWhere('email', 'like', $like);
+                    });
+            });
+        }
+
+        $violations = $base->with(['operator.user', 'toda', 'reporter', 'reviewer', 'proofs'])
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        return compact('violations', 'filter', 'search', 'pendingCount', 'reviewedCount', 'solvedCount', 'totalCount', 'proofsTotal');
     }
 
     /**
