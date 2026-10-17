@@ -656,10 +656,16 @@
             });
         });
         document.querySelectorAll('.tw-modal-backdrop').forEach(function (backdrop) {
+            var downX = 0, downY = 0, downOnBackdrop = false;
             backdrop.addEventListener('mousedown', function (e) {
-                if (e.target === backdrop) {
-                    closeModal(backdrop.querySelector('.tw-modal'));
-                }
+                downOnBackdrop = e.target === backdrop;
+                downX = e.clientX;
+                downY = e.clientY;
+            });
+            backdrop.addEventListener('click', function (e) {
+                if (!downOnBackdrop || e.target !== backdrop) return;
+                if (Math.abs(e.clientX - downX) > 5 || Math.abs(e.clientY - downY) > 5) return;
+                closeModal(backdrop.querySelector('.tw-modal'));
             });
         });
         document.addEventListener('keydown', function (e) {
