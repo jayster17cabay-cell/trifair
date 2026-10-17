@@ -160,5 +160,11 @@ class DatabaseSeeder extends Seeder
                 'status' => 'active',
             ]
         );
+
+        // Every operator gets a TODA membership row for their home TODA so the
+        // membership-based rating flow recognizes the seeded accounts.
+        Operator::query()->whereNotNull('toda_id')->get()->each(function ($operator) {
+            $operator->joinToda($operator->toda_id);
+        });
     }
 }

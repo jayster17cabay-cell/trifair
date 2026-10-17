@@ -72,6 +72,8 @@ class OperatorAdminService
             'status' => 'active',
         ]);
 
+        $operator->joinToda($data['toda_id']);
+
         ActivityLogger::log('create_operator', "Created operator {$user->name} ({$user->email})", $operator, 'operator');
         app(AdminDashboardService::class)->flush();
 
@@ -116,6 +118,8 @@ class OperatorAdminService
             $operator->user->update(['password' => Hash::make($data['password'])]);
         }
 
+        $previousToda = $operator->toda_id;
+
         $operator->update([
             'address' => $data['address'] ?? null,
             'contact_number' => $data['contact_number'] ?? null,
@@ -124,6 +128,15 @@ class OperatorAdminService
             'motorcycle_model' => $data['motorcycle_model'] ?? null,
             'toda_id' => $data['toda_id'],
         ]);
+
+        // Keep the membership table in step: a home-TODA change swaps the old
+        // home membership for the new one (additional memberships are untouched).
+        if ((int) $previousToda !== (int) $data['toda_id']) {
+            if ($previousToda) {
+                $operator->leaveToda($previousToda);
+            }
+            $operator->joinToda($data['toda_id']);
+        }
 
         ActivityLogger::log('update_operator', "Updated operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
         app(AdminDashboardService::class)->flush();
@@ -246,13 +259,15 @@ class OperatorAdminService
         $existing = Operator::where('user_id', $operator->user_id)->first();
         if ($existing) {
             $existing->update(['toda_id' => $operator->toda_id, 'status' => 'active']);
+            $existing->joinToda($operator->toda_id);
         } else {
-            Operator::create([
+            $created = Operator::create([
                 'user_id' => $operator->user_id,
                 'toda_id' => $operator->toda_id,
                 'status' => 'active',
                 'qr_code' => (string) Str::random(32),
             ]);
+            $created->joinToda($operator->toda_id);
         }
 
         app(AdminDashboardService::class)->flush();
@@ -294,13 +309,19 @@ class OperatorAdminService
         $row = Operator::where('user_id', $user->id)->first();
         if ($row) {
             $row->update(['toda_id' => $user->toda_id]);
+            if ($user->toda_id) {
+                $row->joinToda($user->toda_id);
+            }
         } else {
-            Operator::create([
+            $created = Operator::create([
                 'user_id' => $user->id,
                 'toda_id' => $user->toda_id,
                 'status' => 'active',
                 'qr_code' => (string) Str::random(32),
             ]);
+            if ($user->toda_id) {
+                $created->joinToda($user->toda_id);
+            }
         }
 
         app(AdminDashboardService::class)->flush();
@@ -371,10 +392,15 @@ class OperatorAdminService
         $operator->update(['status' => 'active']);
         $operator->user->forceFill(['is_active' => true])->save();
 
+        // Make sure the approved operator holds a TODA membership (covers
+        // accounts approved after the membership table was introduced).
+        if ($operator->toda_id) {
+            $operator->joinToda($operator->toda_id);
+        }
+
         if ($issueFranchise) {
             FranchiseTerm::create([
                 'operator_id' => $operator->id,
-                'toda_id' => $operator->toda_id,
                 'franchise_no' => $franchise['franchise_no'] ?? null,
                 'issued_at' => $franchise['issued_at'] ?? null,
                 'valid_until' => $franchise['valid_until'] ?? null,
@@ -441,7 +467,6 @@ class OperatorAdminService
 
         $term = FranchiseTerm::create([
             'operator_id' => $operator->id,
-            'toda_id' => $operator->toda_id,
             'franchise_no' => $data['franchise_no'] ?? null,
             'issued_at' => $data['issued_at'] ?? null,
             'valid_until' => $data['valid_until'] ?? null,
@@ -497,7 +522,6 @@ class OperatorAdminService
 
             FranchiseTerm::create([
                 'operator_id' => $operator->id,
-                'toda_id' => $operator->toda_id,
                 'franchise_no' => $data['franchise_no'] ?? $current->franchise_no,
                 'issued_at' => $data['issued_at'] ?? now()->toDateString(),
                 'valid_until' => $data['valid_until'] ?? null,

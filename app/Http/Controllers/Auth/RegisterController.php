@@ -52,7 +52,7 @@ class RegisterController extends Controller
         // Prevent session fixation by issuing a fresh session id on registration.
         $request->session()->regenerate();
 
-        Operator::create([
+        $operator = Operator::create([
             'user_id' => $user->id,
             'toda_id' => $data['toda_id'] ?? null,
             'contact_number' => $data['contact_number'],
@@ -62,6 +62,10 @@ class RegisterController extends Controller
             'qr_code' => Str::random(32),
             'status' => 'pending',
         ]);
+
+        if (!empty($data['toda_id'])) {
+            $operator->joinToda($data['toda_id']);
+        }
 
         try {
             event(new Registered($user));

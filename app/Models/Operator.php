@@ -96,6 +96,65 @@ class Operator extends Model
     }
 
     /**
+     * All TODA memberships for this operator (each row = one TODA).
+     */
+    public function todaMemberships()
+    {
+        return $this->hasMany(OperatorToda::class);
+    }
+
+    /**
+     * The TODAs this operator is a member of (pivot rows on operator_toda).
+     */
+    public function todas()
+    {
+        return $this->belongsToMany(Toda::class, 'operator_toda')
+            ->withPivot(['status', 'joined_at'])
+            ->withTimestamps();
+    }
+
+    public function activeTodas()
+    {
+        return $this->todas()->wherePivot('status', OperatorToda::STATUS_ACTIVE);
+    }
+
+    public function isMemberOfToda($todaId): bool
+    {
+        if (!$todaId) {
+            return false;
+        }
+
+        if ((int) $this->toda_id === (int) $todaId) {
+            return true;
+        }
+
+        return $this->todaMemberships()
+            ->where('toda_id', (int) $todaId)
+            ->where('status', OperatorToda::STATUS_ACTIVE)
+            ->exists();
+    }
+
+    /**
+     * Add (or reactivate) this operator's membership in a TODA.
+     */
+    public function joinToda($todaId, string $status = OperatorToda::STATUS_ACTIVE): OperatorToda
+    {
+        return $this->todaMemberships()->updateOrCreate(
+            ['toda_id' => (int) $todaId],
+            ['status' => $status, 'joined_at' => now()]
+        );
+    }
+
+    /**
+     * Remove this operator's membership in a TODA. The row is deleted so the
+     * operator is no longer rateable under it.
+     */
+    public function leaveToda($todaId): void
+    {
+        $this->todaMemberships()->where('toda_id', (int) $todaId)->delete();
+    }
+
+    /**
      * The operator's current franchise term. There is at most one active term
      * at any moment; latestOfMany() guards against stale duplicates.
      */
@@ -120,16 +179,17 @@ class Operator extends Model
     }
 
     /**
-     * The distinct TODAs this operator may be rated under. An operator can
-     * belong to more than one TODA, each through its own franchise term; when
-     * no per-TODA term exists (legacy single-TODA accounts) we fall back to the
-     * operator's own toda_id.
+     * The distinct TODAs this operator may be rated under. Membership lives in
+     * the operator_toda table (an operator can belong to more than one TODA);
+     * when no membership rows exist (legacy accounts) we fall back to the
+     * operator's own home toda_id.
      *
      * @return \Illuminate\Support\Collection<int, \App\Models\Toda>
      */
     public function getRateableTodas()
     {
-        $todaIds = $this->terms()
+        $todaIds = $this->todaMemberships()
+            ->where('status', OperatorToda::STATUS_ACTIVE)
             ->whereNotNull('toda_id')
             ->pluck('toda_id')
             ->unique()
@@ -147,32 +207,14 @@ class Operator extends Model
     }
 
     /**
-     * The active franchise term that applies when rating under a given TODA.
-     * Falls back to a TODA-less term (accounts whose terms predate per-TODA
-     * tagging) and finally to the operator's current term, matching the
-     * pre-multi-TODA behaviour.
+     * The operator's franchise applies to every TODA they belong to: there is
+     * only ever one franchise per operator, so the TODA argument only exists
+     * for backwards-compatible call sites. A lapsed franchise therefore blocks
+     * rating under every TODA at once.
      */
     public function termForToda($todaId = null): ?FranchiseTerm
     {
-        if (!$todaId) {
-            return $this->currentTerm;
-        }
-
-        $term = $this->terms()
-            ->where('toda_id', $todaId)
-            ->where('status', FranchiseTerm::STATUS_ACTIVE)
-            ->latest('id')
-            ->first();
-
-        if (!$term) {
-            $term = $this->terms()
-                ->whereNull('toda_id')
-                ->where('status', FranchiseTerm::STATUS_ACTIVE)
-                ->latest('id')
-                ->first();
-        }
-
-        return $term;
+        return $this->currentTerm;
     }
 
     /**

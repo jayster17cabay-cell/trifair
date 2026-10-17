@@ -56,13 +56,15 @@ class MultiTodaRatingTest extends TestCase
         ]);
     }
 
-    private function makeTerm(Operator $operator, Toda $toda, bool $expired = false): FranchiseTerm
+    /**
+     * The operator's single LGU franchise (operator-wide, not per TODA).
+     */
+    private function makeTerm(Operator $operator, bool $expired = false): FranchiseTerm
     {
         return FranchiseTerm::create([
             'operator_id' => $operator->id,
-            'toda_id' => $toda->id,
             'franchise_no' => 'FR-' . Str::upper(Str::random(5)),
-            'issued_at' => now()->toDateString(),
+            'issued_at' => now()->subYear()->toDateString(),
             'valid_until' => ($expired ? now()->subDay() : now()->addYear())->toDateString(),
             'status' => FranchiseTerm::STATUS_ACTIVE,
         ]);
@@ -72,7 +74,8 @@ class MultiTodaRatingTest extends TestCase
     {
         $toda = $this->makeToda();
         $operator = $this->makeOperator($toda);
-        $this->makeTerm($operator, $toda);
+        $operator->joinToda($toda->id);
+        $this->makeTerm($operator);
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
@@ -85,8 +88,9 @@ class MultiTodaRatingTest extends TestCase
         $todaA = $this->makeToda('Alpha TODA');
         $todaB = $this->makeToda('Beta TODA');
         $operator = $this->makeOperator($todaA);
-        $this->makeTerm($operator, $todaA);
-        $this->makeTerm($operator, $todaB);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
@@ -100,8 +104,9 @@ class MultiTodaRatingTest extends TestCase
         $todaA = $this->makeToda('Alpha TODA');
         $todaB = $this->makeToda('Beta TODA');
         $operator = $this->makeOperator($todaA);
-        $this->makeTerm($operator, $todaA);
-        $this->makeTerm($operator, $todaB);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
 
         $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaB->id]))
             ->assertOk()
@@ -114,8 +119,9 @@ class MultiTodaRatingTest extends TestCase
         $todaA = $this->makeToda('Alpha TODA');
         $todaB = $this->makeToda('Beta TODA');
         $operator = $this->makeOperator($todaA);
-        $termA = $this->makeTerm($operator, $todaA);
-        $termB = $this->makeTerm($operator, $todaB);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $term = $this->makeTerm($operator);
 
         $this->post(route('rate.submit', $operator->qr_code), [
             'rating' => 5,
@@ -127,8 +133,8 @@ class MultiTodaRatingTest extends TestCase
         $rating = Rating::first();
         $this->assertNotNull($rating);
         $this->assertSame($todaB->id, (int) $rating->toda_id);
-        $this->assertSame($termB->id, (int) $rating->franchise_term_id);
-        $this->assertNotSame($termA->id, (int) $rating->franchise_term_id);
+        // One franchise per operator: the rating always points at that term.
+        $this->assertSame($term->id, (int) $rating->franchise_term_id);
     }
 
     public function test_submitting_without_toda_when_multiple_exists_redirects_to_selection()
@@ -136,8 +142,9 @@ class MultiTodaRatingTest extends TestCase
         $todaA = $this->makeToda();
         $todaB = $this->makeToda();
         $operator = $this->makeOperator($todaA);
-        $this->makeTerm($operator, $todaA);
-        $this->makeTerm($operator, $todaB);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
 
         $this->post(route('rate.submit', $operator->qr_code), [
             'rating' => 5,
@@ -153,7 +160,8 @@ class MultiTodaRatingTest extends TestCase
         $todaA = $this->makeToda();
         $todaB = $this->makeToda();
         $operator = $this->makeOperator($todaA);
-        $this->makeTerm($operator, $todaA);
+        $operator->joinToda($todaA->id);
+        $this->makeTerm($operator);
 
         $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaB->id]))
             ->assertNotFound();
@@ -164,8 +172,9 @@ class MultiTodaRatingTest extends TestCase
         $todaA = $this->makeToda('Alpha TODA');
         $todaB = $this->makeToda('Beta TODA');
         $operator = $this->makeOperator($todaA);
-        $this->makeTerm($operator, $todaA);
-        $this->makeTerm($operator, $todaB);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
 
         // Suspended only under TODA A (status flips globally, but the block is
         // scoped to the TODA the president acted under).
@@ -191,13 +200,15 @@ class MultiTodaRatingTest extends TestCase
             ->assertDontSee('Suspended', false);
     }
 
-    public function test_expired_franchise_in_one_toda_does_not_block_the_other()
+    public function test_expired_franchise_blocks_every_toda()
     {
         $todaA = $this->makeToda('Alpha TODA');
         $todaB = $this->makeToda('Beta TODA');
         $operator = $this->makeOperator($todaA);
-        $this->makeTerm($operator, $todaA, true); // expired
-        $this->makeTerm($operator, $todaB);       // valid
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        // A single franchise, now lapsed — it must block all TODAs at once.
+        $this->makeTerm($operator, true);
 
         $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaA->id]))
             ->assertOk()
@@ -205,22 +216,15 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaB->id]))
             ->assertOk()
-            ->assertSee('Beta TODA')
-            ->assertDontSee('Franchise Expired', false);
+            ->assertSee('Franchise Expired', false);
     }
 
-    public function test_legacy_term_without_toda_still_applies_to_single_toda_operator()
+    public function test_legacy_operator_without_membership_falls_back_to_home_toda()
     {
         $toda = $this->makeToda();
         $operator = $this->makeOperator($toda);
-        // Legacy term created before per-TODA tagging (toda_id null).
-        FranchiseTerm::create([
-            'operator_id' => $operator->id,
-            'franchise_no' => 'FR-LEGACY',
-            'issued_at' => now()->toDateString(),
-            'valid_until' => now()->addYear()->toDateString(),
-            'status' => FranchiseTerm::STATUS_ACTIVE,
-        ]);
+        // No operator_toda rows (legacy) — falls back to the home toda_id.
+        $this->makeTerm($operator);
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()

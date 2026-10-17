@@ -225,7 +225,7 @@ class PresidentController extends Controller
             // role/is_active are intentionally NOT mass-assignable (see User model)
             $user->forceFill(['role' => 'operator', 'is_active' => true])->save();
 
-            Operator::create([
+            $operator = Operator::create([
                 'user_id' => $user->id,
                 'toda_id' => $toda->id,
                 'contact_number' => $data['contact_number'],
@@ -235,6 +235,10 @@ class PresidentController extends Controller
                 'qr_code' => Str::random(32),
                 'status' => 'pending',
             ]);
+
+            // Register the TODA membership alongside the home TODA so the
+            // rating flow recognizes the member even before approval.
+            $operator->joinToda($toda->id);
 
             return $user;
         });
@@ -268,15 +272,18 @@ class PresidentController extends Controller
 
         $name = $member->user->name ?? 'Member';
 
-        DB::transaction(function () use ($member) {
-            // Detach from the TODA entirely: the operator row, the linked user
-            // and every franchise term that pointed at it, so the rating flow
-            // no longer attributes them to any TODA.
-            $member->update(['toda_id' => null]);
-            \App\Models\FranchiseTerm::where('operator_id', $member->id)->update(['toda_id' => null]);
+        DB::transaction(function () use ($member, $toda) {
+            // Withdraw this TODA's membership. If it is also the operator's
+            // home TODA, clear that too so they become a fully TODA-less
+            // operator (rating flow then finds no TODA for them).
+            $member->leaveToda($toda->id);
 
-            if ($member->user) {
-                $member->user->forceFill(['toda_id' => null])->save();
+            if ((int) $member->toda_id === (int) $toda->id) {
+                $member->update(['toda_id' => null]);
+
+                if ($member->user) {
+                    $member->user->forceFill(['toda_id' => null])->save();
+                }
             }
         });
 
@@ -301,7 +308,7 @@ class PresidentController extends Controller
         $user = Auth::user();
         $toda = $user->presidentToda();
 
-        if (!$user->isOperatorPresident() || !$toda || (int) $member->toda_id !== (int) $toda->id) {
+        if (!$user->isOperatorPresident() || !$toda || !$member->isMemberOfToda($toda->id)) {
             abort(403);
         }
 

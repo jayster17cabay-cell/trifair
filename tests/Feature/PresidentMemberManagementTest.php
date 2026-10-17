@@ -61,7 +61,7 @@ class PresidentMemberManagementTest extends TestCase
     private function makeOperator(Toda $toda, string $status = 'active'): Operator
     {
         $user = $this->makeUser('operator', 'Operator ' . Str::upper(Str::random(4)));
-        return Operator::create([
+        $operator = Operator::create([
             'user_id' => $user->id,
             'toda_id' => $toda->id,
             'qr_code' => Str::random(32),
@@ -70,6 +70,9 @@ class PresidentMemberManagementTest extends TestCase
             'plate_number' => 'PLATE-' . Str::random(6),
             'body_number' => 'BODY-' . Str::random(6),
         ]);
+        $operator->joinToda($toda->id);
+
+        return $operator;
     }
 
     public function test_president_can_add_member_creating_a_pending_account()
@@ -98,6 +101,14 @@ class PresidentMemberManagementTest extends TestCase
             'status' => 'pending',
             'plate_number' => 'ABC 1234',
             'body_number' => 'TODA-99',
+        ]);
+
+        // A TODA membership is registered alongside the account.
+        $operatorId = \App\Models\Operator::where('user_id', $user->id)->value('id');
+        $this->assertDatabaseHas('operator_toda', [
+            'operator_id' => $operatorId,
+            'toda_id' => $toda->id,
+            'status' => 'active',
         ]);
     }
 
@@ -163,10 +174,12 @@ class PresidentMemberManagementTest extends TestCase
         $toda = $this->makeToda();
         $pres = $this->makePresident($toda);
         $member = $this->makeOperator($toda);
+        $member->joinToda($toda->id);
 
+        // A franchise term must survive the removal (the franchise belongs to
+        // the operator, not the membership).
         FranchiseTerm::create([
             'operator_id' => $member->id,
-            'toda_id' => $toda->id,
             'franchise_no' => 'FR-REMOVE',
             'status' => FranchiseTerm::STATUS_ACTIVE,
         ]);
@@ -177,9 +190,13 @@ class PresidentMemberManagementTest extends TestCase
 
         $this->assertNull($member->fresh()->toda_id);
         $this->assertNull($member->user->fresh()->toda_id);
+        $this->assertDatabaseMissing('operator_toda', [
+            'operator_id' => $member->id,
+            'toda_id' => $toda->id,
+        ]);
         $this->assertDatabaseHas('franchise_terms', [
             'operator_id' => $member->id,
-            'toda_id' => null,
+            'franchise_no' => 'FR-REMOVE',
         ]);
     }
 
@@ -252,5 +269,65 @@ class PresidentMemberManagementTest extends TestCase
         $html = $response->json('html');
         $this->assertStringContainsString('Remove from TODA', $html);
         $this->assertStringContainsString(route('president.members.remove', $member->id), $html);
+    }
+
+    public function test_member_with_secondary_membership_is_manageable_by_the_second_toda_president()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $member = $this->makeOperator($todaA);   // home TODA
+        $member->joinToda($todaB->id);           // also a member of TODA B
+        $presB = $this->makePresident($todaB);
+
+        // The second TODA's president can open the member's detail.
+        $this->actingAs($presB['user'])
+            ->getJson('/president/members/' . $member->id)
+            ->assertOk();
+    }
+
+    public function test_removing_secondary_membership_keeps_the_home_toda()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $member = $this->makeOperator($todaA);
+        $member->joinToda($todaB->id);
+        $presB = $this->makePresident($todaB);
+
+        $this->actingAs($presB['user'])
+            ->delete('/president/members/' . $member->id . '/remove')
+            ->assertRedirect(route('president.members'));
+
+        // Only the secondary membership is gone; the home TODA is untouched.
+        $this->assertSame($todaA->id, (int) $member->fresh()->toda_id);
+        $this->assertDatabaseMissing('operator_toda', [
+            'operator_id' => $member->id,
+            'toda_id' => $todaB->id,
+        ]);
+        $this->assertDatabaseHas('operator_toda', [
+            'operator_id' => $member->id,
+            'toda_id' => $todaA->id,
+        ]);
+    }
+
+    public function test_president_added_member_is_rateable_under_the_toda()
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+
+        $this->actingAs($pres['user'])->post('/president/members', [
+            'name' => 'Rateable Member',
+            'email' => 'rateable@example.com',
+            'contact_number' => '09171234567',
+            'plate_number' => 'RATE 001',
+            'body_number' => 'RATE-01',
+            'motorcycle_model' => 'Honda Beat',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $user = User::where('email', 'rateable@example.com')->first();
+        $operator = \App\Models\Operator::where('user_id', $user->id)->first();
+
+        $this->assertTrue($operator->getRateableTodas()->contains('id', $toda->id));
     }
 }

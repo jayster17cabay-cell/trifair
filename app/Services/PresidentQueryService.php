@@ -16,12 +16,20 @@ use App\Models\User;
 class PresidentQueryService
 {
     /**
-     * Operators belonging to a given TODA (excludes archived records).
+     * Operators belonging to a given TODA (excludes archived records). A
+     * member is anyone whose home TODA is this TODA, or who holds an active
+     * operator_toda membership for it.
      */
     public function todaOperators(Toda $toda)
     {
         return Operator::query()
-            ->where('toda_id', $toda->id)
+            ->where(function ($q) use ($toda) {
+                $q->where('toda_id', $toda->id)
+                    ->orWhereHas('todaMemberships', function ($m) use ($toda) {
+                        $m->where('toda_id', $toda->id)
+                            ->where('status', \App\Models\OperatorToda::STATUS_ACTIVE);
+                    });
+            })
             ->notArchived();
     }
 
@@ -197,7 +205,7 @@ class PresidentQueryService
      */
     public function memberRatings(Toda $toda, Operator $member)
     {
-        if ((int) $member->toda_id !== (int) $toda->id) {
+        if (!$member->isMemberOfToda($toda->id)) {
             return collect();
         }
         return $member->ratings()
