@@ -107,7 +107,7 @@
                 <small class="text-[0.65rem] font-bold uppercase tracking-widest text-navy-600"><i class="bi bi-paperclip mr-1"></i>Proofs</small>
                 <div class="mt-1 flex flex-wrap gap-2">
                     @foreach ($violation->proofs as $proof)
-                        <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}" target="_blank"
+                        <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}" target="_blank" rel="noopener noreferrer"
                            class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50">
                             <i class="bi bi-{{ str_contains($proof->file_type ?? '', 'image') ? 'image' : (str_contains($proof->file_type ?? '', 'video') ? 'play-circle' : 'file-earmark') }}"></i>
                             {{ $proof->original_name }}
@@ -187,9 +187,9 @@
 
 {{-- Shared resolution modal --}}
 <div id="violationResolutionModal" class="tw-modal-backdrop hidden" data-violation-modal>
-    <div class="tw-modal">
+    <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="violationResolutionTitle">
         <div class="tw-modal-head">
-            <h3 class="text-base font-bold text-slate-800" data-violation-title>Review Violation</h3>
+            <h3 id="violationResolutionTitle" class="text-base font-bold text-slate-800" data-violation-title>Review Violation</h3>
             <button type="button" class="tw-modal-close" data-violation-close aria-label="Close">
                 <i class="bi bi-x-lg"></i>
             </button>

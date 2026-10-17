@@ -14,9 +14,9 @@ document.addEventListener('keydown', function(e) {
 </script>
 
 <div id="complaintModal" class="tw-modal-backdrop hidden" onclick="if(event.target===this)closeComplaintModal()">
-    <div class="tw-modal">
+    <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="complaintModalTitle">
         <div class="tw-modal-head">
-            <h4 class="text-base font-bold text-slate-900"><i class="bi bi-flag-fill mr-2 text-gold"></i> Complaints by Type</h4>
+            <h4 id="complaintModalTitle" class="text-base font-bold text-slate-900"><i class="bi bi-flag-fill mr-2 text-gold"></i> Complaints by Type</h4>
             <button type="button" class="tw-modal-close" onclick="closeComplaintModal()" aria-label="Close">
                 <i class="bi bi-x-lg"></i>
             </button>

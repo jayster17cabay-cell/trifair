@@ -154,9 +154,9 @@
      The note is required here in the UI; the server keeps it optional so the
      plain reject/solve endpoints remain backwards compatible. --}}
 <div id="complaintResolutionModal" class="tw-modal-backdrop hidden" data-complaint-resolution-modal>
-    <div class="tw-modal">
+    <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="complaintResolutionTitle">
         <div class="tw-modal-head">
-            <h3 class="text-base font-bold text-slate-800" data-resolution-title>Review Complaint</h3>
+            <h3 id="complaintResolutionTitle" class="text-base font-bold text-slate-800" data-resolution-title>Review Complaint</h3>
             <button type="button" class="tw-modal-close" data-resolution-close aria-label="Close">
                 <i class="bi bi-x-lg"></i>
             </button>

@@ -26,7 +26,9 @@
     <td class="tw-td">
         <div class="flex items-center gap-2.5">
             <div class="tw-avatar tw-avatar-sm bg-cyan-600"><i class="bi bi-diagram-3"></i></div>
-            <span class="text-sm font-bold text-slate-800">{{ $toda->name }}</span>
+            <button type="button" class="text-sm font-bold text-slate-800 hover:text-navy-700 hover:underline"
+                    title="View members of {{ $toda->name }}"
+                    onclick="event.stopPropagation(); showTodaMembers({{ $toda->id }}, @js($toda->name))">{{ $toda->name }}</button>
         </div>
     </td>
     <td class="tw-td text-sm text-slate-500">{{ $toda->area ?? '—' }}</td>

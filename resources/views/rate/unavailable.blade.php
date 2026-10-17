@@ -97,7 +97,7 @@
         Please inform the TFRB Office so this account can be checked.
     </div>
 
-    <button class="close-btn" id="closeBtn" onclick="tryClose()">
+    <button type="button" class="close-btn" id="closeBtn" onclick="tryClose()">
         <i class="bi bi-x-lg"></i> Close
     </button>
 

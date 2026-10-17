@@ -47,11 +47,11 @@
     <table class="tw-table min-w-[38rem]">
         <thead class="tw-thead-sticky">
             <tr>
-                <th class="tw-th">Officer</th>
-                <th class="tw-th hidden md:table-cell">Phone</th>
-                <th class="tw-th">Status</th>
-                <th class="tw-th">Joined</th>
-                <th class="tw-th text-right">Actions</th>
+                <th scope="col" class="tw-th">Officer</th>
+                <th scope="col" class="tw-th hidden md:table-cell">Phone</th>
+                <th scope="col" class="tw-th">Status</th>
+                <th scope="col" class="tw-th">Joined</th>
+                <th scope="col" class="tw-th text-right">Actions</th>
             </tr>
         </thead>
         @include('partials.admin.officers-table')

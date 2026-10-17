@@ -39,11 +39,11 @@
     <table class="tw-table min-w-[38rem]">
         <thead class="tw-thead-sticky">
             <tr>
-                <th class="tw-th">President</th>
-                <th class="tw-th">TODA</th>
-                <th class="tw-th">Status</th>
-                <th class="tw-th hidden md:table-cell">Joined</th>
-                <th class="tw-th text-right">Actions</th>
+                <th scope="col" class="tw-th">President</th>
+                <th scope="col" class="tw-th">TODA</th>
+                <th scope="col" class="tw-th">Status</th>
+                <th scope="col" class="tw-th hidden md:table-cell">Joined</th>
+                <th scope="col" class="tw-th text-right">Actions</th>
             </tr>
         </thead>
         @php $routePrefix = 'superadmin'; @endphp

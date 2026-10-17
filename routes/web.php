@@ -229,7 +229,7 @@ Route::get('/file-storage/{path}', function ($path) {
     foreach ($candidates as $localPath) {
         if ($localPath === null) continue;
         $resolved = realpath($localPath);
-        if ($resolved !== false && str_starts_with($resolved, $baseDir)) {
+        if ($resolved !== false && str_starts_with($resolved, $baseDir . DIRECTORY_SEPARATOR)) {
             $mime = mime_content_type($resolved) ?: 'application/octet-stream';
             return response()->file($resolved, ['Content-Type' => $mime]);
         }
@@ -251,7 +251,7 @@ Route::get('/proof/{path}', function ($path) {
     foreach ($candidates as $localPath) {
         if ($localPath === null) continue;
         $resolved = realpath($localPath);
-        if ($resolved !== false && str_starts_with($resolved, $baseDir)) {
+        if ($resolved !== false && str_starts_with($resolved, $baseDir . DIRECTORY_SEPARATOR)) {
             $mime = mime_content_type($resolved) ?: 'application/octet-stream';
             return response()->file($resolved, [
                 'Content-Type' => $mime,

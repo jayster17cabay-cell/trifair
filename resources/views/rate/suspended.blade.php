@@ -103,7 +103,7 @@
         @endif
     </div>
 
-    <button class="close-btn" id="closeBtn" onclick="tryClose()">
+    <button type="button" class="close-btn" id="closeBtn" onclick="tryClose()">
         <i class="bi bi-x-lg"></i> Close
     </button>
 

@@ -162,7 +162,7 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        ActivityLogger::log('logout', (Auth::user()->name ?? 'Unknown') . " logged out", null, 'auth');
+        ActivityLogger::log('logout', (optional(Auth::user())->name ?? 'Unknown') . " logged out", null, 'auth');
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

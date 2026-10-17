@@ -20,7 +20,36 @@
         initTripHistoryDrawer();
         initOperatorMenu();
         initPresidentModals();
+        initSubmitGuards();
     });
+
+    function initSubmitGuards() {
+        // Prevent accidental double submissions. The first submit is left
+        // untouched (so HTML5 validation, inline confirm() handlers and the
+        // submit button's own value all keep working); only a repeat submit
+        // issued before the browser navigates away is swallowed.
+        document.addEventListener('submit', function (e) {
+            var form = e.target;
+            if (!form || form.tagName !== 'FORM') return;
+            // If an earlier handler (e.g. confirm()) already cancelled this
+            // submit, leave the form armed so the user can retry.
+            if (e.defaultPrevented) return;
+            var method = (form.getAttribute('method') || 'GET').toUpperCase();
+            if (method === 'GET') return;
+            if (form.dataset.submitting === '1') {
+                e.preventDefault();
+                return;
+            }
+            form.dataset.submitting = '1';
+        });
+
+        // Re-arm forms restored from the back/forward cache so a returning
+        // user is never stuck with a locked form.
+        window.addEventListener('pageshow', function () {
+            var forms = document.querySelectorAll('form[data-submitting]');
+            for (var i = 0; i < forms.length; i++) forms[i].removeAttribute('data-submitting');
+        });
+    }
 
     function initOperatorModals() {
         document.addEventListener('click', function (e) {

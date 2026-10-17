@@ -21,19 +21,19 @@
             <div>
                 <label for="name" class="tw-label">TODA Name <span class="text-red-600">*</span></label>
                 <input type="text" class="tw-input @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required placeholder="e.g. Brgy. San Antonio TODA">
-                @error('name') <div class="tw-error-text">{{ $message }}</div> @enderror
+                @error('name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
             </div>
             <div>
                 <label for="area" class="tw-label">Coverage Area</label>
                 <input type="text" class="tw-input @error('area') is-invalid @enderror" id="area" name="area" value="{{ old('area') }}" placeholder="e.g. Brgy. San Antonio, Sampaloc">
-                @error('area') <div class="tw-error-text">{{ $message }}</div> @enderror
+                @error('area') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
             </div>
         </div>
 
         <div class="mt-4">
             <label for="description" class="tw-label">Description</label>
             <textarea class="tw-textarea @error('description') is-invalid @enderror" id="description" name="description" rows="3" placeholder="Brief description about this TODA">{{ old('description') }}</textarea>
-            @error('description') <div class="tw-error-text">{{ $message }}</div> @enderror
+            @error('description') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
 
         <div class="mt-6 border-t border-slate-100 pt-4">

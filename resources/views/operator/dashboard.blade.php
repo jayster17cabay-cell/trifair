@@ -10,7 +10,7 @@
 
 <div class="op-header-rating">
     <div class="op-avg">
-        <span class="op-avg-num" data-live="averageRating">{{ number_format($averageRating ?? 0, 1) }}</span>
+        <span class="op-avg-num" data-live="averageRating" aria-live="polite">{{ number_format($averageRating ?? 0, 1) }}</span>
         <span class="op-avg-stars" data-live-stars="averageRating">
             @php $avg = $averageRating ?? 0; @endphp
             @for ($i = 1; $i <= 5; $i++)
@@ -18,7 +18,7 @@
             @endfor
         </span>
     </div>
-    <div class="op-avg-caption uppercase" data-live="ratingCaption">
+    <div class="op-avg-caption uppercase" data-live="ratingCaption" aria-live="polite">
         @if (($totalRatings ?? 0) > 0)
             Avg Rating · {{ $totalRatings }} {{ $totalRatings === 1 ? 'Rating' : 'Ratings' }}
         @else
@@ -52,9 +52,9 @@
 </div>
 
 <div id="howToUseModal" class="tw-modal-backdrop hidden">
-    <div class="tw-modal">
+    <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="howToUseModalTitle">
         <div class="tw-modal-head">
-            <h5 class="text-base font-bold text-slate-900"><i class="bi bi-question-circle-fill mr-2 text-navy-600"></i>How to Use TriFair</h5>
+            <h5 id="howToUseModalTitle" class="text-base font-bold text-slate-900"><i class="bi bi-question-circle-fill mr-2 text-navy-600"></i>How to Use TriFair</h5>
             <button type="button" class="tw-modal-close" data-tw-modal-close aria-label="Close"><i class="bi bi-x-lg"></i></button>
         </div>
         <div class="tw-modal-body space-y-4">

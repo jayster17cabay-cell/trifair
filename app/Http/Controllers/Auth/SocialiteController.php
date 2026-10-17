@@ -14,6 +14,12 @@ use Laravel\Socialite\Facades\Socialite;
 class SocialiteController extends Controller
 {
     /**
+     * Lifetime (seconds) of the signed OAuth state. A normal Google round-trip
+     * completes well within this window; anything older is refused.
+     */
+    private const STATE_TTL = 600;
+
+    /**
      * Remember where the passenger wants to return after linking Google, so the
      * callback knows it is a passenger "connect" flow (not the staff login) and
      * can land them back at the complaint form they were filling out.
@@ -279,7 +285,16 @@ class SocialiteController extends Controller
     private function validIntended(?string $intended): string
     {
         $intended = trim((string) $intended);
-        if ($intended === '' || str_starts_with($intended, '//') || str_contains($intended, '://')) {
+        // A leading "//" or any backslash (browsers normalise "\" to "/")
+        // would turn into a protocol-relative off-site redirect. Reject both,
+        // plus any absolute URL, so Google sign-in can only return to our own
+        // pages.
+        if (
+            $intended === ''
+            || str_starts_with($intended, '//')
+            || str_contains($intended, '://')
+            || str_contains($intended, '\\')
+        ) {
             return '/';
         }
         return '/' . ltrim($intended, '/');
@@ -291,7 +306,13 @@ class SocialiteController extends Controller
             'i' => $intended,
             'c' => $connect,
             'n' => \Illuminate\Support\Str::random(40),
+            'e' => time() + self::STATE_TTL,
         ];
+        // Bind the payload to the app key so a caller cannot hand-craft a state
+        // (the stateless fallback below trusts this payload when the session is
+        // gone, so an unsigned state would be forgeable).
+        $payload['s'] = $this->signState($payload);
+
         return rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
     }
 
@@ -308,9 +329,37 @@ class SocialiteController extends Controller
         if (!is_array($data) || !isset($data['c'])) {
             return null;
         }
+
+        // Refuse forged or expired states. Without this check an attacker could
+        // craft a plain-base64 state to drive the "connect" fallback when the
+        // session is missing.
+        if (!isset($data['s'], $data['e']) || !is_string($data['s'])) {
+            return null;
+        }
+        if (!hash_equals($this->signState($data), $data['s'])) {
+            return null;
+        }
+        if ((int) $data['e'] < time()) {
+            return null;
+        }
+
         return [
             'connect' => (bool) $data['c'],
             'intended' => isset($data['i']) ? (string) $data['i'] : '',
         ];
+    }
+
+    /**
+     * Deterministic HMAC over the state fields, keyed by the application key.
+     */
+    private function signState(array $payload): string
+    {
+        $canonical = implode('|', [
+            (string) ($payload['i'] ?? ''),
+            !empty($payload['c']) ? '1' : '0',
+            (string) ($payload['n'] ?? ''),
+            (string) ($payload['e'] ?? ''),
+        ]);
+        return hash_hmac('sha256', $canonical, (string) config('app.key'));
     }
 }

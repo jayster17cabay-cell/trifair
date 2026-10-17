@@ -87,11 +87,11 @@
     <table class="tw-table min-w-[40rem]">
         <thead class="tw-thead-sticky">
             <tr>
-                <th class="tw-th">Operator</th>
-                <th class="tw-th">Plate #</th>
-                <th class="tw-th">Status</th>
-                <th class="tw-th">Average Rating</th>
-                <th class="tw-th text-right">Total</th>
+                <th scope="col" class="tw-th">Operator</th>
+                <th scope="col" class="tw-th">Plate #</th>
+                <th scope="col" class="tw-th">Status</th>
+                <th scope="col" class="tw-th">Average Rating</th>
+                <th scope="col" class="tw-th text-right">Total</th>
             </tr>
         </thead>
         <tbody>

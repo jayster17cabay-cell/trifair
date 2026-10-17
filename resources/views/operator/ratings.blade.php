@@ -123,14 +123,14 @@
                                         <form action="{{ route('operator.ratings.respond', $rating) }}" method="POST" enctype="multipart/form-data">
                                             @csrf
                                             <textarea class="tw-textarea text-sm @error('message') is-invalid @enderror"
-                                                      name="message" rows="2" placeholder="Write your explanation here..."></textarea>
-                                            @error('message') <span class="tw-error-text">{{ $message }}</span> @enderror
+                                                      name="message" rows="2" aria-label="Your explanation" placeholder="Write your explanation here..."></textarea>
+                                            @error('message') <span class="tw-error-text" role="alert">{{ $message }}</span> @enderror
                                             <label class="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-semibold text-slate-500 transition hover:border-navy-500 hover:text-navy-600">
                                                 <i class="bi bi-paperclip"></i> Attach proof (jpg, png, pdf — max 5 files)
                                                 <input type="file" name="files[]" multiple accept="image/*,.pdf" class="sr-only" data-proof-input>
                                             </label>
                                             <div class="mt-1 text-[0.7rem] text-slate-400" data-proof-files></div>
-                                            @error('files') <span class="tw-error-text">{{ $message }}</span> @enderror
+                                            @error('files') <span class="tw-error-text" role="alert">{{ $message }}</span> @enderror
                                             <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold mt-2">
                                                 <i class="bi bi-send"></i> Submit Response
                                             </button>

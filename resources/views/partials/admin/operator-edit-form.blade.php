@@ -13,7 +13,7 @@
                 <option value="{{ $toda->id }}" {{ (string) old('toda_id', $operator->toda_id) === (string) $toda->id ? 'selected' : '' }}>{{ $toda->name }}{{ $toda->area ? " ({$toda->area})" : '' }}</option>
             @endforeach
         </select>
-        @error('toda_id') <div class="tw-error-text">{{ $message }}</div> @enderror
+        @error('toda_id') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
     </div>
 
     <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Account Details</div>
@@ -21,23 +21,23 @@
         <div>
             <label for="name" class="tw-label">Full Name <span class="text-red-600">*</span></label>
             <input type="text" class="tw-input @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $operator->user->name) }}" required>
-            @error('name') <div class="tw-error-text">{{ $message }}</div> @enderror
+            @error('name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
         <div>
             <label for="email" class="tw-label">Email Address <span class="text-red-600">*</span></label>
             <input type="email" class="tw-input @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $operator->user->email) }}" required>
-            @error('email') <div class="tw-error-text">{{ $message }}</div> @enderror
+            @error('email') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
         <div>
             <label for="password" class="tw-label">New Password</label>
             <input type="password" class="tw-input @error('password') is-invalid @enderror" id="password" name="password" placeholder="Leave empty to keep current">
             <small class="mt-1 block text-xs text-slate-500">Leave blank if you don't want to change.</small>
-            @error('password') <div class="tw-error-text">{{ $message }}</div> @enderror
+            @error('password') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
         <div>
             <label for="phone" class="tw-label">Phone Number</label>
             <input type="text" class="tw-input @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone', $operator->user->phone) }}">
-            @error('phone') <div class="tw-error-text">{{ $message }}</div> @enderror
+            @error('phone') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
     </div>
 
@@ -46,29 +46,29 @@
         <div>
             <label for="plate_number" class="tw-label">Plate Number</label>
             <input type="text" class="tw-input @error('plate_number') is-invalid @enderror" id="plate_number" name="plate_number" value="{{ old('plate_number', $operator->plate_number) }}" placeholder="e.g. ABC-123">
-            @error('plate_number') <div class="tw-error-text">{{ $message }}</div> @enderror
+            @error('plate_number') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
         <div>
             <label for="body_number" class="tw-label">Body Number</label>
             <input type="text" class="tw-input @error('body_number') is-invalid @enderror" id="body_number" name="body_number" value="{{ old('body_number', $operator->body_number) }}" placeholder="e.g. 1234">
-            @error('body_number') <div class="tw-error-text">{{ $message }}</div> @enderror
+            @error('body_number') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
         <div>
             <label for="motorcycle_model" class="tw-label">Motorcycle Model</label>
             <input type="text" class="tw-input @error('motorcycle_model') is-invalid @enderror" id="motorcycle_model" name="motorcycle_model" value="{{ old('motorcycle_model', $operator->motorcycle_model) }}" placeholder="e.g. Honda Wave 125">
-            @error('motorcycle_model') <div class="tw-error-text">{{ $message }}</div> @enderror
+            @error('motorcycle_model') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
         <div>
             <label for="contact_number" class="tw-label">Contact Number</label>
             <input type="text" class="tw-input @error('contact_number') is-invalid @enderror" id="contact_number" name="contact_number" value="{{ old('contact_number', $operator->contact_number) }}">
-            @error('contact_number') <div class="tw-error-text">{{ $message }}</div> @enderror
+            @error('contact_number') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
     </div>
 
     <div class="mt-4">
         <label for="address" class="tw-label">Address</label>
         <textarea class="tw-textarea @error('address') is-invalid @enderror" id="address" name="address" rows="2">{{ old('address', $operator->address) }}</textarea>
-        @error('address') <div class="tw-error-text">{{ $message }}</div> @enderror
+        @error('address') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
     </div>
 
     <div class="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">

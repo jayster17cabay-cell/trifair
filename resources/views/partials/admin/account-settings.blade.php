@@ -113,7 +113,7 @@
                         </button>
                     </div>
                     @error('current_password')
-                        <span class="tw-error-text">{{ $message }}</span>
+                        <span class="tw-error-text" role="alert">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -128,7 +128,7 @@
                         </button>
                     </div>
                     @error('new_password')
-                        <span class="tw-error-text">{{ $message }}</span>
+                        <span class="tw-error-text" role="alert">{{ $message }}</span>
                     @enderror
 
                     {{-- Live strength meter (progressive enhancement) --}}

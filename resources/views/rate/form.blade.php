@@ -140,6 +140,7 @@
         }
         .loc-overlay-btn:active { transform: scale(0.97); }
         .loc-overlay-skip {
+            background: none; border: 0; padding: 0; font: inherit;
             font-size: 0.78rem; color: #64748b; cursor: pointer;
             margin-top: 0.75rem; text-decoration: underline;
         }
@@ -315,15 +316,15 @@
     <div class="dev-icon"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i></div>
     <h4>Off Route!</h4>
     <p>You seem to have deviated from the planned route. The route is being recalculated.</p>
-    <button class="dev-btn" onclick="dismissDeviation()">Got it</button>
+    <button type="button" class="dev-btn" onclick="dismissDeviation()">Got it</button>
 </div>
 <div class="loc-overlay" id="locOverlay">
     <div class="loc-overlay-card">
         <div class="loc-overlay-icon"><i class="bi bi-geo-alt" aria-hidden="true"></i></div>
         <h4>Location Access Needed</h4>
         <p>Please enable your device location so we can track your trip route. You can enable it in your browser or device settings.</p>
-        <button class="loc-overlay-btn" onclick="retryLocation()"><i class="bi bi-crosshair" aria-hidden="true"></i> Try Again</button>
-        <div class="loc-overlay-skip" onclick="skipLocation()">Skip for now</div>
+        <button type="button" class="loc-overlay-btn" onclick="retryLocation()"><i class="bi bi-crosshair" aria-hidden="true"></i> Try Again</button>
+        <button type="button" class="loc-overlay-skip" onclick="skipLocation()">Skip for now</button>
     </div>
 </div>
 

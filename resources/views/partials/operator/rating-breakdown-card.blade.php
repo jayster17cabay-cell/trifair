@@ -7,7 +7,7 @@
         <h3 class="op-card-title"><i class="bi bi-bar-chart mr-1.5 text-navy-600"></i> Rating breakdown</h3>
     </div>
 
-    <div data-live-list="breakdown">
+    <div data-live-list="breakdown" aria-live="polite">
         @include('partials.dashboard-rating-breakdown')
     </div>
 </div>

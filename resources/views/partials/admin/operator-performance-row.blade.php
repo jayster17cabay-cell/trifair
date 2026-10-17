@@ -26,7 +26,9 @@
     <td class="tw-td">
         <div class="flex items-center gap-3">
             <div class="min-w-0">
-                <div class="truncate text-sm font-bold text-slate-800">{{ $name }}</div>
+                <button type="button" class="truncate text-sm font-bold text-slate-800 hover:text-navy-700 hover:underline"
+                        title="View trip history for {{ $name }}"
+                        onclick="event.stopPropagation(); this.closest('tr').click()">{{ $name }}</button>
             </div>
         </div>
     </td>

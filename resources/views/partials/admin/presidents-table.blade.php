@@ -78,7 +78,7 @@
                                 </button>
                             </form>
                         @elseif ($presCanSuspend)
-                            <button type="button" class="tw-btn tw-btn-sm tw-btn-danger" title="Suspend president" aria-label="Suspend {{ $president->name }}" data-suspend-open='@json($suspendData)' style="background-color:#dc2626;color:#fff;">
+                            <button type="button" class="tw-btn tw-btn-sm tw-btn-danger" title="Suspend president" aria-label="Suspend {{ $president->name }}" data-suspend-open='@json($suspendData)'>
                                 <i class="bi bi-slash-circle"></i>
                             </button>
                         @endif

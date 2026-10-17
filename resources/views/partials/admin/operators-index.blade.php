@@ -119,12 +119,12 @@
     <table class="tw-table min-w-[38rem]">
         <thead class="tw-thead-sticky">
             <tr>
-                <th class="tw-th">Operator</th>
-                <th class="tw-th">TODA</th>
-                <th class="tw-th hidden md:table-cell">Contact</th>
-                <th class="tw-th hidden lg:table-cell">Franchise</th>
-                <th class="tw-th">Status</th>
-                <th class="tw-th text-right">Actions</th>
+                <th scope="col" class="tw-th">Operator</th>
+                <th scope="col" class="tw-th">TODA</th>
+                <th scope="col" class="tw-th hidden md:table-cell">Contact</th>
+                <th scope="col" class="tw-th hidden lg:table-cell">Franchise</th>
+                <th scope="col" class="tw-th">Status</th>
+                <th scope="col" class="tw-th text-right">Actions</th>
             </tr>
         </thead>
         @include('partials.admin.operators-table')

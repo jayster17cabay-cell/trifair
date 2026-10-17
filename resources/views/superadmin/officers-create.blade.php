@@ -20,22 +20,22 @@
             <div>
                 <label for="name" class="tw-label">Full Name</label>
                 <input type="text" class="tw-input @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required placeholder="Enter full name">
-                @error('name') <div class="tw-error-text">{{ $message }}</div> @enderror
+                @error('name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
             </div>
             <div>
                 <label for="email" class="tw-label">Email Address</label>
                 <input type="email" class="tw-input @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required placeholder="Enter email address">
-                @error('email') <div class="tw-error-text">{{ $message }}</div> @enderror
+                @error('email') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
             </div>
             <div class="sm:col-span-2">
                 <label for="password" class="tw-label">Password</label>
                 <input type="password" class="tw-input @error('password') is-invalid @enderror" id="password" name="password" required placeholder="Min. 8 characters">
-                @error('password') <div class="tw-error-text">{{ $message }}</div> @enderror
+                @error('password') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
             </div>
             <div class="sm:col-span-2">
                 <label for="phone" class="tw-label">Phone Number</label>
                 <input type="text" class="tw-input @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone') }}" placeholder="Enter phone number">
-                @error('phone') <div class="tw-error-text">{{ $message }}</div> @enderror
+                @error('phone') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
             </div>
         </div>
         <div class="mt-6 border-t border-slate-100 pt-4">

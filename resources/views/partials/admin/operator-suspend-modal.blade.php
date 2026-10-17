@@ -42,7 +42,7 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 px-6 py-4">
-                <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger" style="background-color:#dc2626;color:#fff;">
+                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger">
                     <i class="bi bi-slash-circle"></i>Suspend
                 </button>
                 <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost ml-auto" data-tw-modal-close>

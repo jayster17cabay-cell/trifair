@@ -7,13 +7,13 @@
         <table class="min-w-full divide-y divide-slate-200">
             <thead class="bg-slate-50">
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Member</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Body #</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Rating</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Trips</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Complaints</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
-                    <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-500"></th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Member</th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Body #</th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Rating</th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Trips</th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Complaints</th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+                    <th scope="col" class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-500"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 bg-white">

@@ -141,12 +141,12 @@
             <a href="{{ $viewAllUrl }}" class="view-btn" id="viewAllBtn">
                 <i class="bi bi-list-check"></i> View All My Ratings
             </a>
-            <button class="close-btn" id="closeBtn" onclick="tryClose()" style="margin-top: 0;">
+            <button type="button" class="close-btn" id="closeBtn" onclick="tryClose()" style="margin-top: 0;">
                 <i class="bi bi-x-lg"></i> Close
             </button>
         </div>
     @else
-        <button class="close-btn" id="closeBtn" onclick="tryClose()">
+        <button type="button" class="close-btn" id="closeBtn" onclick="tryClose()">
             <i class="bi bi-x-lg"></i> Close
         </button>
     @endif

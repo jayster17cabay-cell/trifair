@@ -52,12 +52,12 @@
     <table class="tw-table min-w-[44rem]">
         <thead class="tw-thead-sticky">
             <tr>
-                <th class="tw-th w-12"></th>
-                <th class="tw-th">User</th>
-                <th class="tw-th">Description</th>
-                <th class="tw-th">Action</th>
-                <th class="tw-th">IP Address</th>
-                <th class="tw-th text-right">Time</th>
+                <th scope="col" class="tw-th w-12"></th>
+                <th scope="col" class="tw-th">User</th>
+                <th scope="col" class="tw-th">Description</th>
+                <th scope="col" class="tw-th">Action</th>
+                <th scope="col" class="tw-th">IP Address</th>
+                <th scope="col" class="tw-th text-right">Time</th>
             </tr>
         </thead>
         <tbody>

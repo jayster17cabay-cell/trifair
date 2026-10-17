@@ -27,7 +27,7 @@
 <{{ $tag }} {!! $hrefAttr !!} class="flex items-center gap-3 rounded-xl border border-slate-100 border-l-4 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md {{ $t[0] }}">
     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base {{ $t[1] }}"><i class="bi {{ $kpi['icon'] }}"></i></div>
     <div class="min-w-0">
-        <div class="text-2xl font-extrabold leading-tight tracking-tight text-slate-900"{!! $liveAttr !!}>{!! $kpi['value'] !!}</div>
+        <div class="text-2xl font-extrabold leading-tight tracking-tight text-slate-900" aria-live="polite"{!! $liveAttr !!}>{!! $kpi['value'] !!}</div>
         <div class="mt-0.5 truncate text-[11px] font-semibold uppercase tracking-wide text-slate-400">{{ $kpi['label'] }}</div>
     </div>
 </{{ $tag }}>

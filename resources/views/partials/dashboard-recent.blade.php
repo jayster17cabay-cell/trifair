@@ -16,7 +16,7 @@
                 <a href="{{ route($complaintsRoute) }}" class="tw-btn tw-btn-sm tw-btn-ghost">View all <i class="bi bi-arrow-right"></i></a>
             @endif
         </div>
-        <div class="max-h-[180px] divide-y divide-slate-100 overflow-y-auto" data-live-list="complaints">
+        <div class="max-h-[180px] divide-y divide-slate-100 overflow-y-auto" aria-live="polite" data-live-list="complaints">
             @include('partials.dashboard-list-complaints')
         </div>
     </div>
@@ -28,7 +28,7 @@
                 Top Rated Operators
             </h3>
         </div>
-        <div class="max-h-[180px] divide-y divide-slate-100 overflow-y-auto" data-live-list="top">
+        <div class="max-h-[180px] divide-y divide-slate-100 overflow-y-auto" aria-live="polite" data-live-list="top">
             @include('partials.dashboard-list-top')
         </div>
     </div>
@@ -41,7 +41,7 @@
             </h3>
             <a href="{{ route($ratingsRoute) }}" class="tw-btn tw-btn-sm tw-btn-ghost">View all <i class="bi bi-arrow-right"></i></a>
         </div>
-        <div class="max-h-[180px] divide-y divide-slate-100 overflow-y-auto" data-live-list="ratings">
+        <div class="max-h-[180px] divide-y divide-slate-100 overflow-y-auto" aria-live="polite" data-live-list="ratings">
             @include('partials.dashboard-list-ratings')
         </div>
     </div>

@@ -897,6 +897,20 @@ class DashboardAuditTest extends TestCase
         $this->assertStringContainsString('Unable to sign in with Google', $errors->first('email'));
     }
 
+    public function test_google_callback_rejects_offsite_intended_redirects()
+    {
+        // A leading "//", a backslash (normalised to "/" by browsers) or an
+        // absolute URL must never become an off-site redirect after sign-in.
+        foreach (['//evil.example.com', '/\\evil.example.com', 'https://evil.example.com'] as $intended) {
+            $this->flushSession();
+            $this->withSession([
+                'google_connect_mode' => true,
+                'google_connect_intended' => $intended,
+            ])->get('/auth/google/callback?error=access_denied')
+                ->assertRedirect('/');
+        }
+    }
+
     public function test_passenger_dashboard_shows_only_own_complaints()
     {
         $passenger = $this->makeUser('passenger');
@@ -1032,25 +1046,51 @@ class DashboardAuditTest extends TestCase
 
     public function test_google_callback_uses_state_payload_when_session_is_lost()
     {
-        // Cookies dropped mid-trip: the session keys are gone, so the callback
-        // must recover the intended complaint URL and connect mode from the
-        // state payload embedded in the OAuth redirect.
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+        config()->set('services.google.redirect', 'https://example.test/auth/google/callback');
+
         $googleUser = new \Laravel\Socialite\Two\User();
         $googleUser->id = 'google-state-1';
         $googleUser->name = 'State Passenger';
         $googleUser->email = 'state-passenger@example.com';
         $googleUser->user = ['email_verified' => true];
 
+        // Start the connect flow to obtain a properly signed state, then drop
+        // the session (the phone in-app browser scenario). Cookies dropped
+        // mid-trip must not lose the intended complaint URL.
+        $redirect = $this->get('/auth/google?intended=/rate/ABC123');
+        parse_str((string) parse_url($redirect->headers->get('Location'), PHP_URL_QUERY), $query);
+        $state = $query['state'] ?? '';
+        $this->assertNotEmpty($state, 'The authorize URL must carry our signed state.');
+
         $provider = Mockery::mock();
         $provider->shouldReceive('stateless')->andReturnSelf();
         $provider->shouldReceive('user')->andReturn($googleUser);
         \Laravel\Socialite\Facades\Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-        $state = rtrim(strtr(base64_encode(json_encode(['i' => '/rate/ABC123', 'c' => true])), '+/', '-_'), '=');
+        $this->flushSession();
+
         $this->get('/auth/google/callback?state=' . urlencode($state))
             ->assertRedirect('/rate/ABC123');
 
         $this->assertNotNull(User::where('email', 'state-passenger@example.com')->where('role', 'passenger')->first());
+    }
+
+    public function test_google_callback_rejects_forged_state()
+    {
+        // A hand-crafted, unsigned state must never be trusted: the connect
+        // payload is ignored and the flow falls back to a normal login redirect
+        // instead of honouring the attacker-supplied "intended" URL.
+        $forged = rtrim(strtr(base64_encode(json_encode([
+            'i' => '/rate/ABC123',
+            'c' => true,
+            'n' => 'forged',
+            'e' => time() + 600,
+        ])), '+/', '-_'), '=');
+
+        $this->get('/auth/google/callback?state=' . urlencode($forged) . '&error=access_denied')
+            ->assertRedirect(route('login'));
     }
 
     public function test_google_redirect_keeps_session_state_in_sync_with_authorize_url()

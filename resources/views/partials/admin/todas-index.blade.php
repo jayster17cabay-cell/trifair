@@ -31,13 +31,13 @@
     <table class="tw-table min-w-[38rem]">
         <thead class="tw-thead-sticky">
             <tr>
-                <th class="tw-th">#</th>
-                <th class="tw-th">TODA Name</th>
-                <th class="tw-th">Area</th>
-                <th class="tw-th">Members</th>
-                <th class="tw-th">Status</th>
+                <th scope="col" class="tw-th">#</th>
+                <th scope="col" class="tw-th">TODA Name</th>
+                <th scope="col" class="tw-th">Area</th>
+                <th scope="col" class="tw-th">Members</th>
+                <th scope="col" class="tw-th">Status</th>
                 @if ($showManage)
-                    <th class="tw-th text-right">Actions</th>
+                    <th scope="col" class="tw-th text-right">Actions</th>
                 @endif
             </tr>
         </thead>

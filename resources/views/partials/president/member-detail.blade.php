@@ -127,7 +127,7 @@
                             {{ $activeSuspension->suspended_at->format('M d, Y') }} – {{ $activeSuspension->suspended_until->format('M d, Y') }}
                             @if ($activeSuspension->suspender) · by {{ $activeSuspension->suspender->name }} @endif
                         </p>
-                        <form method="POST" action="{{ route('president.members.suspend.end', $member->id) }}" class="mt-3">
+                        <form method="POST" action="{{ route('president.members.suspend.end', $member->id) }}" class="mt-3" onsubmit="return confirm('End this member\'s suspension early?')">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger">
@@ -175,7 +175,7 @@
                                             @endforeach
                                         </div>
                                     @endif
-                                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger" style="background-color:#dc2626;color:#fff;"
+                                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger"
                                             onclick="return confirm('Submit this violation report? It will be sent to TFRB/superadmin for review.');">
                                         <i class="bi bi-send"></i> Submit Report
                                     </button>
@@ -186,7 +186,7 @@
                 </div>
             </div>
         @else
-            <button type="button" class="tw-btn tw-btn-sm tw-btn-danger" style="background-color:#dc2626;color:#fff;"
+            <button type="button" class="tw-btn tw-btn-sm tw-btn-danger"
                     data-suspend-open='@json($suspendPayload)'>
                 <i class="bi bi-slash-circle"></i> Suspend
             </button>
