@@ -200,6 +200,91 @@ class MultiTodaRatingTest extends TestCase
             ->assertDontSee('Suspended', false);
     }
 
+    public function test_suspended_toda_is_hidden_from_the_picker()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+        $todaC = $this->makeToda('Gamma TODA');
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $operator->joinToda($todaC->id);
+        $this->makeTerm($operator);
+
+        // Suspended only under TODA A.
+        MemberSuspension::create([
+            'operator_id' => $operator->id,
+            'toda_id' => $todaA->id,
+            'suspended_by' => $this->makeUser('operator_president')->id,
+            'reason' => 'Overcharging.',
+            'suspended_at' => now()->toDateString(),
+            'suspended_until' => now()->addDays(5)->toDateString(),
+        ]);
+        $operator->update(['status' => 'suspended']);
+
+        // The picker offers only the non-suspended TODAs; TODA A is hidden.
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee('Piliin ang TODA')
+            ->assertSee('Beta TODA')
+            ->assertSee('Gamma TODA')
+            ->assertDontSee('Alpha TODA');
+    }
+
+    public function test_picker_shows_all_todas_once_a_suspension_expires()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
+
+        // A suspension that ended yesterday (row not yet reconciled).
+        MemberSuspension::create([
+            'operator_id' => $operator->id,
+            'toda_id' => $todaA->id,
+            'suspended_by' => $this->makeUser('operator_president')->id,
+            'reason' => 'Overcharging.',
+            'suspended_at' => now()->subDays(10)->toDateString(),
+            'suspended_until' => now()->subDay()->toDateString(),
+        ]);
+        $operator->update(['status' => 'suspended']);
+
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee('Piliin ang TODA')
+            ->assertSee('Alpha TODA')
+            ->assertSee('Beta TODA');
+    }
+
+    public function test_suspended_under_every_toda_shows_notice_not_picker()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
+
+        foreach ([$todaA, $todaB] as $toda) {
+            MemberSuspension::create([
+                'operator_id' => $operator->id,
+                'toda_id' => $toda->id,
+                'suspended_by' => $this->makeUser('operator_president')->id,
+                'reason' => 'Overcharging.',
+                'suspended_at' => now()->toDateString(),
+                'suspended_until' => now()->addDays(5)->toDateString(),
+            ]);
+        }
+        $operator->update(['status' => 'suspended']);
+
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee('Suspended', false)
+            ->assertDontSee('Piliin ang TODA');
+    }
+
     public function test_expired_franchise_blocks_every_toda()
     {
         $todaA = $this->makeToda('Alpha TODA');

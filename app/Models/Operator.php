@@ -238,6 +238,19 @@ class Operator extends Model
     }
 
     /**
+     * True when a live (not yet lapsed) suspension covers the given TODA. A
+     * TODA-less suspension covers every TODA. Used to hide a suspended TODA
+     * from the passenger's TODA picker and to explain a direct block. An
+     * already-lapsed row never counts, even before it is reconciled.
+     */
+    public function isSuspendedForToda($todaId = null): bool
+    {
+        $suspension = $this->currentSuspensionForToda($todaId);
+
+        return $suspension !== null && !$suspension->isExpired();
+    }
+
+    /**
      * True when the operator has a current term that has already lapsed.
      */
     public function hasExpiredFranchise(): bool

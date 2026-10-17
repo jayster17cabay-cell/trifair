@@ -63,20 +63,33 @@ class RatingController extends Controller
         $operator = $this->findRateableOperator($qrCode);
         $todas = $operator->getRateableTodas();
 
+        // A live suspension hides its TODA from the passenger entirely: the
+        // picker must only offer TODAs the operator may currently be rated
+        // under. A TODA-less suspension hides every TODA.
+        $availableTodas = $todas
+            ->reject(fn ($toda) => $operator->isSuspendedForToda($toda->id))
+            ->values();
+
         // An operator may serve several TODAs. When more than one applies, the
         // passenger must first pick which TODA this ride belongs to so the
         // rating is filed against the right franchise — and so a suspension in
         // one TODA does not wrongly block the others.
         $selectedToda = null;
         if ($todaId !== null) {
+            // A directly-addressed TODA is validated against the full
+            // membership list so an explicitly opened (but suspended) TODA
+            // still explains itself instead of 404ing.
             $selectedToda = $todas->firstWhere('id', (int) $todaId);
             if (!$selectedToda) {
                 abort(404);
             }
-        } elseif ($todas->count() === 1) {
-            $selectedToda = $todas->first();
-        } elseif ($todas->count() > 1) {
-            return $this->selectToda($operator, $todas);
+        } elseif ($availableTodas->count() === 1) {
+            $selectedToda = $availableTodas->first();
+        } elseif ($availableTodas->count() > 1) {
+            return $this->selectToda($operator, $availableTodas);
+        } elseif ($todas->isNotEmpty()) {
+            // Every TODA this operator belongs to is under a live suspension.
+            return $this->operatorSuspended($operator);
         }
 
         if ($block = $this->rateabilityBlock($operator, $selectedToda)) {
