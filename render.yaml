@@ -3,6 +3,7 @@ services:
     name: trifair
     runtime: docker
     plan: free
+    region: singapore
     healthCheckPath: /login
     envVars:
       - key: APP_ENV
