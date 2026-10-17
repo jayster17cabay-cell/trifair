@@ -57,7 +57,9 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('PGSQL_SSLMODE', 'require'),
-            'options' => extension_loaded('pdo_pgsql') ? [] : [],
+            'options' => extension_loaded('pdo_pgsql')
+                ? [PDO::ATTR_PERSISTENT => (bool) env('PGSQL_PERSISTENT', true)]
+                : [],
         ],
 
         'sqlsrv' => [
