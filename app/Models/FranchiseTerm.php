@@ -12,6 +12,12 @@ class FranchiseTerm extends Model
     public const STATUS_ACTIVE = 'active';
     public const STATUS_ENDED = 'ended';
 
+    /**
+     * How many days before valid_until a term is flagged "Expiring Soon" on the
+     * operator dashboard and admin lists. Adjust here to change the window.
+     */
+    public const EXPIRING_SOON_DAYS = 30;
+
     protected $fillable = [
         'operator_id',
         'toda_id',
@@ -80,6 +86,32 @@ class FranchiseTerm extends Model
     public function isValid(): bool
     {
         return $this->isActive() && !$this->isExpired();
+    }
+
+    /**
+     * Whole days until valid_until (negative once lapsed, null when the term
+     * has no expiry). Used for the "N days left" hint.
+     */
+    public function daysUntilExpiry(): ?int
+    {
+        if ($this->valid_until === null) {
+            return null;
+        }
+
+        return (int) now()->startOfDay()->diffInDays($this->valid_until->copy()->startOfDay(), false);
+    }
+
+    /**
+     * True when the term is still valid but lapses within EXPIRING_SOON_DAYS,
+     * so the dashboard can warn the operator before it actually expires.
+     */
+    public function isExpiringSoon(): bool
+    {
+        if ($this->valid_until === null || $this->isExpired()) {
+            return false;
+        }
+
+        return $this->daysUntilExpiry() <= self::EXPIRING_SOON_DAYS;
     }
 
     public function scopeActive($query)

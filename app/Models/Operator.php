@@ -179,6 +179,17 @@ class Operator extends Model
     }
 
     /**
+     * True when the current franchise is still valid but lapses soon, so the
+     * dashboards can surface an "Expiring Soon" warning.
+     */
+    public function isFranchiseExpiringSoon(): bool
+    {
+        $term = $this->currentTerm;
+
+        return $term !== null && $term->isExpiringSoon();
+    }
+
+    /**
      * The distinct TODAs this operator may be rated under. Membership lives in
      * the operator_toda table (an operator can belong to more than one TODA);
      * when no membership rows exist (legacy accounts) we fall back to the

@@ -142,13 +142,18 @@
         if (franchise) {
             if (op.franchiseNo) {
                 var line = 'No. <span class="font-mono font-semibold">' + escHtml(op.franchiseNo) + '</span>';
+                if (op.franchiseIssued) {
+                    line += ' · from ' + escHtml(op.franchiseIssued);
+                }
                 if (op.franchiseValidUntil) {
-                    line += ' · until ' + escHtml(op.franchiseValidUntil);
+                    line += ' → until ' + escHtml(op.franchiseValidUntil);
                 } else {
                     line += ' · no expiry';
                 }
                 if (op.franchiseStatus === 'expired') {
                     line += ' <span class="tw-badge tw-badge-red">Expired</span>';
+                } else if (op.franchiseExpiringSoon) {
+                    line += ' <span class="tw-badge tw-badge-amber">Expiring Soon</span>';
                 } else {
                     line += ' <span class="tw-badge tw-badge-green">Valid</span>';
                 }

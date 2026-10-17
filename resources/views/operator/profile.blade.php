@@ -57,7 +57,11 @@
                     </div>
                     <div class="mb-3 flex items-center justify-between">
                         <span class="text-navy-600 font-semibold">Franchise No.</span>
-                        <span class="font-mono font-bold text-slate-800">{{ $operator->currentTerm->franchise_no ?? '—' }}</span>
+                        <span class="font-mono font-bold text-slate-800">{{ $operator->currentTerm?->franchise_no ?? '—' }}</span>
+                    </div>
+                    <div class="mb-3 flex items-center justify-between">
+                        <span class="text-navy-600 font-semibold">Date Issued</span>
+                        <span class="font-bold text-slate-800">{{ $operator->currentTerm?->issued_at?->format('M d, Y') ?? '—' }}</span>
                     </div>
                     <div class="mb-3 flex items-center justify-between">
                         <span class="text-navy-600 font-semibold">Franchise Validity</span>
@@ -66,6 +70,8 @@
                                 {{ $operator->currentTerm->valid_until->format('M d, Y') }}
                                 @if ($operator->currentTerm->isExpired())
                                     <span class="tw-badge tw-badge-red ml-1"><i class="bi bi-exclamation-triangle-fill"></i>Expired</span>
+                                @elseif ($operator->currentTerm->isExpiringSoon())
+                                    <span class="tw-badge tw-badge-amber ml-1"><i class="bi bi-exclamation-triangle-fill"></i>Expiring Soon</span>
                                 @else
                                     <span class="tw-badge tw-badge-green ml-1"><i class="bi bi-patch-check-fill"></i>Active</span>
                                 @endif

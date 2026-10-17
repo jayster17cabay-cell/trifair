@@ -17,8 +17,10 @@
         'month' => 'This Month',
         'week' => 'This Week',
     ];
+    $franchiseIssuedAt = $franchise?->issued_at;
     $franchiseValidUntil = $franchise?->valid_until;
     $franchiseExpired = $franchise ? $franchise->isExpired() : false;
+    $franchiseExpiringSoon = $franchise ? $franchise->isExpiringSoon() : false;
     $franchiseDaysLeft = $franchiseValidUntil && !$franchiseExpired
         ? (int) now()->startOfDay()->diffInDays($franchiseValidUntil->copy()->startOfDay(), false)
         : null;
@@ -31,26 +33,42 @@
         @if ($franchise)
             <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span class="font-mono text-sm font-bold text-slate-800">{{ $franchise->franchise_no ?? 'No number' }}</span>
-                @if ($franchiseValidUntil)
-                    @if ($franchiseExpired)
-                        <span class="tw-badge tw-badge-red"><i class="bi bi-exclamation-triangle-fill"></i>Expired {{ $franchiseValidUntil->format('M d, Y') }}</span>
-                    @else
-                        <span class="tw-badge tw-badge-green"><i class="bi bi-patch-check-fill"></i>Valid until {{ $franchiseValidUntil->format('M d, Y') }}</span>
-                        @if ($franchiseDaysLeft !== null)
-                            <span class="text-[11px] font-semibold text-slate-500">
-                                @if ($franchiseDaysLeft <= 0)
-                                    expires today
-                                @elseif ($franchiseDaysLeft === 1)
-                                    1 day left
-                                @else
-                                    {{ $franchiseDaysLeft }} days left
-                                @endif
-                            </span>
-                        @endif
-                    @endif
+                @if ($franchiseExpired)
+                    <span class="tw-badge tw-badge-red"><i class="bi bi-exclamation-triangle-fill"></i>Expired</span>
+                @elseif ($franchiseExpiringSoon)
+                    <span class="tw-badge tw-badge-amber"><i class="bi bi-exclamation-triangle-fill"></i>Expiring Soon</span>
+                @elseif ($franchiseValidUntil)
+                    <span class="tw-badge tw-badge-green"><i class="bi bi-patch-check-fill"></i>Active</span>
                 @else
                     <span class="tw-badge tw-badge-green"><i class="bi bi-patch-check-fill"></i>Active</span>
                     <span class="tw-badge tw-badge-gray"><i class="bi bi-infinity"></i>No expiry</span>
+                @endif
+            </div>
+            <div class="mt-0.5 text-[11px] font-semibold text-slate-500">
+                <i class="bi bi-calendar-range mr-1"></i>Issued
+                @if ($franchiseIssuedAt)
+                    {{ $franchiseIssuedAt->format('M d, Y') }}
+                @else
+                    —
+                @endif
+                &rarr;
+                @if ($franchiseValidUntil)
+                    Valid until {{ $franchiseValidUntil->format('M d, Y') }}
+                @else
+                    No expiry
+                @endif
+                @if ($franchiseExpired)
+                    <span class="text-red-500">· expired</span>
+                @elseif ($franchiseDaysLeft !== null)
+                    <span class="text-slate-400">
+                        @if ($franchiseDaysLeft <= 0)
+                            · expires today
+                        @elseif ($franchiseDaysLeft === 1)
+                            · 1 day left
+                        @else
+                            · {{ $franchiseDaysLeft }} days left
+                        @endif
+                    </span>
                 @endif
             </div>
         @else

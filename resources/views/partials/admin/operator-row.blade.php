@@ -32,6 +32,7 @@
     $currentTerm = $operator->currentTerm;
     $franchiseNo = $currentTerm->franchise_no ?? null;
     $franchiseStatus = $operator->franchiseStatus();
+    $franchiseExpiringSoon = $operator->isFranchiseExpiringSoon();
     $canIssueFranchise = !$operator->isArchived() && in_array($operator->status, ['active', 'inactive'], true);
 
     // Live (non-lapsed) TODA suspension, if the president has issued one.
@@ -72,6 +73,7 @@
         'franchiseIssuedRaw' => ($currentTerm && $currentTerm->issued_at) ? $currentTerm->issued_at->toDateString() : null,
         'franchiseValidUntilRaw' => ($currentTerm && $currentTerm->valid_until) ? $currentTerm->valid_until->toDateString() : null,
         'franchiseStatus' => $franchiseStatus,
+        'franchiseExpiringSoon' => $franchiseExpiringSoon,
         'hasTerm' => (bool) $currentTerm,
         'canIssueFranchise' => $canIssueFranchise,
         'issueUrl' => route($routePrefix . '.operators.franchise.issue', $operator),
@@ -109,8 +111,13 @@
                 <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                     @if ($franchiseStatus === 'expired')
                         <span class="tw-badge tw-badge-red"><i class="bi bi-exclamation-triangle-fill"></i>Expired</span>
+                    @elseif ($franchiseExpiringSoon)
+                        <span class="tw-badge tw-badge-amber"><i class="bi bi-exclamation-triangle-fill"></i>Expiring Soon</span>
                     @else
                         <span class="tw-badge tw-badge-green"><i class="bi bi-patch-check-fill"></i>Valid</span>
+                    @endif
+                    @if ($currentTerm && $currentTerm->issued_at)
+                        <span class="text-[11px] font-medium text-slate-500">from {{ $currentTerm->issued_at->format('M d, Y') }}</span>
                     @endif
                     @if ($currentTerm && $currentTerm->valid_until)
                         <span class="text-[11px] font-medium text-slate-500">until {{ $currentTerm->valid_until->format('M d, Y') }}</span>
