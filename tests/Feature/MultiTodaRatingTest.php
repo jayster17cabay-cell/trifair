@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\FranchiseTerm;
 use App\Models\MemberSuspension;
 use App\Models\Operator;
+use App\Models\OperatorToda;
 use App\Models\Rating;
 use App\Models\Toda;
 use App\Models\User;
@@ -510,5 +511,47 @@ class MultiTodaRatingTest extends TestCase
             ->assertSee('Piliin ang TODA')
             ->assertSee('Alpha TODA')
             ->assertSee('Beta TODA');
+    }
+
+    public function test_suspended_notice_names_the_toda_that_was_suspended()
+    {
+        $todaA = $this->makeToda('Alpha TODA'); // the driver's home TODA
+        $todaB = $this->makeToda('Beta TODA');
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaA->id);
+        $operator->joinToda($todaB->id);
+        $this->makeTerm($operator);
+
+        // Suspended only under Beta, which is NOT the driver's home TODA.
+        $this->suspendUnder($operator, $todaB);
+        $operator->update(['status' => 'suspended']);
+
+        $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaB->id]))
+            ->assertOk()
+            ->assertSee('Suspended', false)
+            ->assertSee('Beta TODA')
+            ->assertDontSee('Alpha TODA');
+    }
+
+    public function test_withdrawn_membership_is_not_treated_as_active()
+    {
+        $toda = $this->makeToda('Withdrawn TODA');
+        $operator = $this->makeOperator($toda); // home toda_id points here
+        $this->makeTerm($operator);
+        // A retained-but-not-active membership row, and no active rows.
+        $operator->joinToda($toda->id, OperatorToda::STATUS_INACTIVE);
+
+        // The home toda_id must not be silently offered as an active assignment.
+        $this->assertTrue($operator->getRateableTodas()->isEmpty());
+
+        // A direct POST to the withdrawn TODA cannot start a trip either.
+        $this->post(route('rate.submit', $operator->qr_code), [
+            'rating' => 5,
+            'toda_id' => $toda->id,
+            'start_location' => 'A',
+            'end_location' => 'B',
+        ])->assertNotFound();
+
+        $this->assertSame(0, Rating::count());
     }
 }

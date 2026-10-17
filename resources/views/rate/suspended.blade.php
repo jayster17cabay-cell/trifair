@@ -84,8 +84,8 @@
         <i class="bi bi-slash-circle-fill"></i>
     </div>
 
-    @if($operator->toda)
-        <div class="toda-tag"><i class="bi bi-building me-1"></i>{{ $operator->toda->name }}</div>
+    @if(!empty($suspendedToda))
+        <div class="toda-tag"><i class="bi bi-building me-1"></i>{{ $suspendedToda->name }}</div>
     @endif
 
     <h1>Suspended</h1>

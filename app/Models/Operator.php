@@ -249,7 +249,11 @@ class Operator extends Model
             ->unique()
             ->values();
 
-        if ($todaIds->isEmpty() && $this->toda_id) {
+        // Legacy accounts that predate the operator_toda table carry no
+        // membership rows at all, so they fall back to their home TODA. An
+        // explicit (but non-active) membership must never be treated as an
+        // active assignment, so the fallback is skipped once any row exists.
+        if ($todaIds->isEmpty() && $this->toda_id && !$this->todaMemberships()->exists()) {
             $todaIds = collect([$this->toda_id]);
         }
 

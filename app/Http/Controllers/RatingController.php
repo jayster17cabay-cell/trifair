@@ -432,8 +432,18 @@ class RatingController extends Controller
     {
         $suspension = $suspension ?? $operator->currentSuspension;
 
+        // Name the TODA the suspension actually applies to. A TODA-less
+        // suspension covers the whole driver, so no single TODA tag is shown
+        // (and the driver's unrelated home TODA is never implied).
+        $suspendedToda = null;
+        if ($suspension && $suspension->toda_id) {
+            $suspendedToda = (int) $operator->toda_id === (int) $suspension->toda_id
+                ? $operator->toda
+                : Toda::find($suspension->toda_id);
+        }
+
         return response()
-            ->view('rate.suspended', compact('operator', 'suspension'))
+            ->view('rate.suspended', compact('operator', 'suspension', 'suspendedToda'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }
