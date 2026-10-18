@@ -373,7 +373,9 @@ class AdminQueryService
 
         $query = Operator::with('user', 'toda')
             ->whereHas('user', function ($u) {
-                $u->where('role', 'operator');
+                // A TODA president is also a ratable operator, so they must be
+                // reported alongside every other driver.
+                $u->whereIn('role', ['operator', 'operator_president']);
             })
             ->whereNotIn('operators.status', ['pending', 'rejected'])
             ->whereNull('operators.archived_at')
@@ -789,7 +791,7 @@ class AdminQueryService
     {
         abort_unless(
             in_array($operator->status, ['active', 'inactive'], true)
-            && $operator->user?->role === 'operator'
+            && in_array($operator->user?->role, ['operator', 'operator_president'], true)
             && !$operator->isArchived(),
             404
         );

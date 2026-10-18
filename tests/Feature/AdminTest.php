@@ -626,6 +626,45 @@ class AdminTest extends TestCase
         $this->assertStringNotContainsString('Alpha Driver', $one->getContent());
     }
 
+    public function test_toda_president_appears_in_reports_like_any_operator()
+    {
+        $admin = $this->makeUser('superadmin');
+        $officer = $this->makeUser('tfrb_officer');
+        $toda = $this->makeToda();
+
+        // A TODA president is still a ratable operator, so they must show up in
+        // the reports list, the export, and their own trip history.
+        $presUser = $this->makeUser('operator_president');
+        $presUser->forceFill(['name' => 'President Rider', 'toda_id' => $toda->id])->save();
+        $president = Operator::create([
+            'user_id' => $presUser->id,
+            'toda_id' => $toda->id,
+            'qr_code' => Str::random(32),
+            'status' => 'active',
+            'contact_number' => '09171234567',
+            'plate_number' => 'PRESIDENT',
+            'body_number' => 'P01',
+        ]);
+        $this->makeValidRating($president, 5);
+
+        $this->actingAs($admin)->get('/superadmin/reports')
+            ->assertOk()
+            ->assertSee('President Rider', false);
+
+        $this->actingAs($officer)->get('/tfrb-officer/reports')
+            ->assertOk()
+            ->assertSee('President Rider', false);
+
+        $csv = $this->actingAs($admin)->get('/superadmin/reports/export?format=csv');
+        $csv->assertOk();
+        $this->assertStringContainsString('President Rider', $csv->getContent());
+
+        // Their trip history must resolve instead of 404-ing on the role check.
+        $this->actingAs($admin)
+            ->get('/superadmin/reports/operators/' . $president->id . '/trips')
+            ->assertOk();
+    }
+
     public function test_operators_export_scope_by_all_operator_or_toda()
     {
         $admin = $this->makeUser('superadmin');
