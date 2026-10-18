@@ -61,9 +61,34 @@ class Toda extends Model
             ->selectSub($memberCount(true), 'active_operators_count');
     }
 
+    /**
+     * The TODA's presidency: the active operator_toda membership flagged as
+     * president. Presidency lives on the membership (not the account) so that
+     * one user can preside over several TODAs. The `presidentUser()` helper
+     * resolves the underlying account.
+     */
     public function president()
     {
-        return $this->hasOne(User::class, 'toda_id')->where('role', 'operator_president');
+        return $this->hasOne(OperatorToda::class, 'toda_id')
+            ->where('is_president', true)
+            ->where('status', OperatorToda::STATUS_ACTIVE);
+    }
+
+    /**
+     * The User account of the TODA's president, if any. Kept for callers that
+     * need the person (name, etc.) rather than the membership row.
+     */
+    public function presidentUser(): ?User
+    {
+        return optional(optional($this->president)->operator)->user;
+    }
+
+    /**
+     * The Operator row of the TODA's president, if any.
+     */
+    public function presidentOperator(): ?Operator
+    {
+        return optional($this->president)->operator;
     }
 
     public function totalRatings()

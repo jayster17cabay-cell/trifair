@@ -54,7 +54,7 @@ class LoginController extends Controller
             }
 
             if ($user->isOperatorPresident()) {
-                if (!$user->presidentToda()) {
+                if ($user->presidentTodas()->isEmpty()) {
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
@@ -63,11 +63,15 @@ class LoginController extends Controller
                     ])->onlyInput('email');
                 }
                 // Presidents keep an Operator row, so an admin-issued suspension
-                // blocks sign-in the same way it does for a regular operator.
+                // blocks sign-in the same way it does for a regular operator —
+                // unless they still preside over another, unsuspended TODA.
                 $presidentOperator = $user->operator;
                 if ($presidentOperator) {
                     $presidentOperator->syncSuspensionStatus();
-                    if ($presidentOperator->isSuspended()) {
+                    $hasOpenPresidency = $user->presidentTodas()->contains(function ($presidency) use ($presidentOperator) {
+                        return !$presidentOperator->isSuspendedForToda((int) $presidency->id);
+                    });
+                    if (!$hasOpenPresidency) {
                         Auth::logout();
                         $request->session()->invalidate();
                         $request->session()->regenerateToken();
@@ -77,7 +81,7 @@ class LoginController extends Controller
                     }
                 }
                 ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
-                return redirect()->route('president.dashboard');
+                return redirect()->route('dashboard');
             }
 
             if ($user->isOperator()) {

@@ -168,7 +168,7 @@ class SocialiteController extends Controller
         }
 
         if ($user->isOperatorPresident()) {
-            if (!$user->presidentToda()) {
+            if ($user->presidentTodas()->isEmpty()) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
@@ -177,7 +177,7 @@ class SocialiteController extends Controller
                 ]);
             }
             ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
-            return redirect()->route('president.dashboard');
+            return redirect()->route('dashboard');
         }
 
         if ($user->isOperator()) {

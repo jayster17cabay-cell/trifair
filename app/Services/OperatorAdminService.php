@@ -7,6 +7,7 @@ use App\Helpers\SupabaseStorage;
 use App\Mail\OperatorCredentials;
 use App\Models\FranchiseTerm;
 use App\Models\Operator;
+use App\Models\OperatorToda;
 use App\Models\Rating;
 use App\Models\User;
 use App\Models\Toda;
@@ -229,7 +230,7 @@ class OperatorAdminService
     {
         $operator->load('user', 'toda');
 
-        if ($operator->user->role !== 'operator') {
+        if (!in_array($operator->user->role, ['operator', 'operator_president'], true)) {
             return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be assigned as president.');
         }
         if (!$operator->toda_id) {
@@ -242,26 +243,36 @@ class OperatorAdminService
             return redirect()->route($redirectRoute)->with('error', 'Only active operators can be assigned as president.');
         }
 
-        // One president per TODA. Presidents are referenced primarily by
-        // users.toda_id, but legacy presidents (or a manual state) may only
-        // carry the TODA on their Operator row — so both paths are checked.
-        $current = User::where('role', 'operator_president')
-            ->where('id', '!=', $operator->user_id)
-            ->where(function ($q) use ($operator) {
-                $q->where('toda_id', $operator->toda_id)
-                    ->orWhereHas('operator', fn ($o) => $o->where('toda_id', $operator->toda_id));
-            })
+        // One president per TODA. The presidency is a flag on the operator_toda
+        // membership, but legacy presidents may still only carry the TODA on
+        // users.toda_id — so both paths are checked (excluding this same user,
+        // who is allowed to preside over several TODAs at once).
+        $flagged = OperatorToda::where('toda_id', $operator->toda_id)
+            ->where('is_president', true)
+            ->where('operator_id', '!=', $operator->id)
+            ->with('operator.user')
             ->first();
+
+        $current = $flagged
+            ? ($flagged->operator->user ?? null)
+            : User::where('role', 'operator_president')
+                ->where('id', '!=', $operator->user_id)
+                ->where('toda_id', $operator->toda_id)
+                ->first();
 
         if ($current) {
             return redirect()->route($redirectRoute)
                 ->with('error', "This TODA already has a president ({$current->name}). Remove them as President first before assigning a new one.");
         }
 
-        $operator->user->forceFill([
-            'role' => 'operator_president',
-            'toda_id' => $operator->toda_id,
-        ])->save();
+        // Keep users.toda_id pointing at a TODA the president actually presides
+        // over. For an account that already presides over another TODA we leave
+        // the home TODA untouched so their existing presidency is not disturbed.
+        $userAttributes = ['role' => 'operator_president'];
+        if ($operator->user->role !== 'operator_president' || !$operator->user->toda_id) {
+            $userAttributes['toda_id'] = $operator->toda_id;
+        }
+        $operator->user->forceFill($userAttributes)->save();
 
         // Ensure the president can still receive their own ratings. The row
         // normally already exists (they were an operator first); the fallback
@@ -270,7 +281,7 @@ class OperatorAdminService
         $existing = Operator::where('user_id', $operator->user_id)->first();
         if ($existing) {
             $existing->update(['toda_id' => $operator->toda_id, 'status' => 'active']);
-            $existing->joinToda($operator->toda_id);
+            $existing->setTodaPresidency($operator->toda_id, true);
         } else {
             $created = Operator::create([
                 'user_id' => $operator->user_id,
@@ -278,7 +289,7 @@ class OperatorAdminService
                 'status' => 'active',
                 'qr_code' => (string) Str::random(32),
             ]);
-            $created->joinToda($operator->toda_id);
+            $created->setTodaPresidency($operator->toda_id, true);
         }
 
         app(AdminDashboardService::class)->flush();
@@ -319,6 +330,8 @@ class OperatorAdminService
         // demotion can never 500.
         $row = Operator::where('user_id', $user->id)->first();
         if ($row) {
+            // Drop every presidency flag; the membership itself is kept.
+            $row->clearTodaPresidencies();
             $row->update(['toda_id' => $user->toda_id]);
             if ($user->toda_id) {
                 $row->joinToda($user->toda_id);

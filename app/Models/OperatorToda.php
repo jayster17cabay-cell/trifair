@@ -45,12 +45,14 @@ class OperatorToda extends Model
         'operator_id',
         'toda_id',
         'status',
+        'is_president',
         'joined_at',
     ];
 
     protected $casts = [
         'operator_id' => 'integer',
         'toda_id' => 'integer',
+        'is_president' => 'boolean',
         'joined_at' => 'datetime',
     ];
 
@@ -67,6 +69,23 @@ class OperatorToda extends Model
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
+    }
+
+    /**
+     * True when this membership also carries the TODA presidency. Presidency
+     * only counts while the membership is active.
+     */
+    public function isPresident(): bool
+    {
+        return (bool) $this->is_president && $this->isActive();
+    }
+
+    /**
+     * Active memberships that carry the presidency.
+     */
+    public function scopePresident($query)
+    {
+        return $query->where('is_president', true)->where('status', self::STATUS_ACTIVE);
     }
 
     /**

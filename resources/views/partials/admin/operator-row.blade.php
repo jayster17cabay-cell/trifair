@@ -24,7 +24,7 @@
     // A TODA president is still an operator (they keep their Operator row), so
     // they appear here by name too. They are managed via the Presidents section.
     $isPresident = ($operator->user->role ?? null) === 'operator_president';
-    $todaPresident = $operator->toda ? $operator->toda->president : null;
+    $todaPresidentUser = $operator->toda ? $operator->toda->presidentUser() : null;
 
     $operatorName = $operator->user->name ?? 'Unknown';
     $todaName = $operator->toda ? $operator->toda->name : null;
@@ -196,9 +196,9 @@
                         </form>
                     @else
                         @php
-                            $hasPresidentName = $todaPresident && $todaPresident->name !== $operatorName;
+                            $hasPresidentName = $todaPresidentUser && $todaPresidentUser->name !== $operatorName;
                             if ($hasPresidentName) {
-                                $assignPrompt = 'This TODA already has a president (' . $todaPresident->name . '). Remove them as President first before assigning a new one.';
+                                $assignPrompt = 'This TODA already has a president (' . $todaPresidentUser->name . '). Remove them as President first before assigning a new one.';
                             } else {
                                 $assignPrompt = 'Assign ' . $operatorName . ' as President of ' . ($todaName ?? 'this TODA') . '? They will oversee all members of that TODA.';
                             }

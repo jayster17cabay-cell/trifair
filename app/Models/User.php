@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -35,13 +36,10 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * Memoized result of presidentToda(); the TODA is looked up once per
-     * request instead of on every guard call (the middleware, controller and
-     * views all resolve it).
+     * Memoized collection of TODAs this user presides over (see
+     * presidentTodas()); resolved once per request.
      */
-    protected $presidentTodaCache = null;
-
-    protected $presidentTodaResolved = false;
+    protected $presidentTodasCache = null;
 
     public function setEmailAttribute($value)
     {
@@ -89,21 +87,79 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * The TODA this president governs. Uses the dedicated users.toda_id when
-     * set, otherwise falls back to the president's own operator record's TODA
-     * (a president is also an operator and may carry a personal rating).
+     * Every TODA this user presides over. Presidency now lives on the
+     * operator_toda membership (so one account can preside over several TODAs
+     * while merely being a member of others). Legacy presidents that predate
+     * the flag — role operator_president with only users.toda_id set — still
+     * fall back to their home TODA so nothing regresses.
+     *
+     * @return Collection<int, \App\Models\Toda>
+     */
+    public function presidentTodas(): Collection
+    {
+        if ($this->presidentTodasCache !== null) {
+            return $this->presidentTodasCache;
+        }
+
+        $todas = collect();
+
+        if ($this->isOperatorPresident()) {
+            $operator = $this->operator;
+            if ($operator) {
+                $todas = $operator->presidentTodas()->orderBy('todas.name')->get();
+            }
+
+            if ($todas->isEmpty() && $this->toda_id) {
+                $toda = Toda::find($this->toda_id);
+                if ($toda) {
+                    $todas = collect([$toda]);
+                }
+            }
+        }
+
+        return $this->presidentTodasCache = $todas;
+    }
+
+    /**
+     * The TODA this president is currently acting on: the session's current
+     * TODA when it is one they preside over, otherwise their first presidency.
+     * Returns null when the user presides over nothing.
      */
     public function presidentToda()
     {
-        if ($this->presidentTodaResolved) {
-            return $this->presidentTodaCache;
-        }
-        $this->presidentTodaResolved = true;
+        $todas = $this->presidentTodas();
 
-        if ($this->toda_id) {
-            return $this->presidentTodaCache = Toda::find($this->toda_id);
+        if ($todas->isEmpty()) {
+            return null;
         }
-        return $this->presidentTodaCache = ($this->operator ? $this->operator->toda : null);
+
+        $currentId = (int) session('current_toda_id');
+
+        return $todas->firstWhere('id', $currentId) ?? $todas->first();
+    }
+
+    /**
+     * True when the user is the acting president of the given TODA right now:
+     * they hold the presidency there and are not suspended for that TODA (a
+     * TODA-less suspension holds every presidency at once).
+     */
+    public function isPresidentOf($todaId): bool
+    {
+        if (!$todaId || !$this->isOperatorPresident()) {
+            return false;
+        }
+
+        if (!$this->presidentTodas()->contains('id', (int) $todaId)) {
+            return false;
+        }
+
+        $operator = $this->operator;
+        if (!$operator) {
+            return true;
+        }
+
+        return !$operator->isSuspendedForToda(null)
+            && !$operator->isSuspendedForToda((int) $todaId);
     }
 
     public function isTfrbOfficerOrSuperadmin()

@@ -127,13 +127,37 @@ class Operator extends Model
     public function todas()
     {
         return $this->belongsToMany(Toda::class, 'operator_toda')
-            ->withPivot(['status', 'joined_at'])
+            ->withPivot(['status', 'is_president', 'joined_at'])
             ->withTimestamps();
     }
 
     public function activeTodas()
     {
         return $this->todas()->wherePivot('status', OperatorToda::STATUS_ACTIVE);
+    }
+
+    /**
+     * The TODAs this operator currently presides over (an active membership
+     * flagged as the presidency). Newest membership wins for the switcher.
+     */
+    public function presidentTodas()
+    {
+        return $this->todas()
+            ->wherePivot('is_president', true)
+            ->wherePivot('status', OperatorToda::STATUS_ACTIVE);
+    }
+
+    public function isPresidentOfToda($todaId): bool
+    {
+        if (!$todaId) {
+            return false;
+        }
+
+        return $this->todaMemberships()
+            ->where('toda_id', (int) $todaId)
+            ->where('status', OperatorToda::STATUS_ACTIVE)
+            ->where('is_president', true)
+            ->exists();
     }
 
     public function isMemberOfToda($todaId): bool
@@ -170,6 +194,36 @@ class Operator extends Model
     public function leaveToda($todaId): void
     {
         $this->todaMemberships()->where('toda_id', (int) $todaId)->delete();
+    }
+
+    /**
+     * Flag (or unflag) this operator as the president of a TODA, making sure an
+     * active membership row exists. Unflagging keeps the membership itself.
+     */
+    public function setTodaPresidency($todaId, bool $isPresident = true): void
+    {
+        if (!$todaId) {
+            return;
+        }
+
+        $membership = $this->todaMemberships()->firstOrNew(['toda_id' => (int) $todaId]);
+        $membership->status = OperatorToda::STATUS_ACTIVE;
+        $membership->is_president = $isPresident;
+
+        if (!$membership->exists) {
+            $membership->joined_at = now();
+        }
+
+        $membership->save();
+    }
+
+    /**
+     * Drop every presidency this operator holds (keeping the memberships).
+     * Used when an account is demoted back to a regular operator.
+     */
+    public function clearTodaPresidencies(): void
+    {
+        $this->todaMemberships()->where('is_president', true)->update(['is_president' => false]);
     }
 
     /**

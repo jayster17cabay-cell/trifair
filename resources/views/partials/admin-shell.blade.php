@@ -58,6 +58,7 @@
             <div class="hidden text-right md:block">
                 <div class="text-[11px] font-bold text-white/60" data-live-clock="datetime"></div>
             </div>
+            @include('partials.toda-switcher')
             @if ($shell['showBell'])
                 <a href="{{ route('notifications.index') }}" class="tw-topbar-icon-btn" title="Notifications" aria-label="Notifications">
                     <i class="bi bi-bell text-lg"></i>

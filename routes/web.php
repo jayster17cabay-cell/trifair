@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetOtpController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TfrbOfficerController;
 use App\Http\Controllers\SuperadminController;
 use App\Http\Controllers\OperatorController;
@@ -56,7 +57,7 @@ Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Foundation\Auth\Em
     }
 
     if ($user->role === 'operator_president') {
-        return redirect()->route('president.dashboard');
+        return redirect()->route('dashboard');
     }
 
     return redirect('/');
@@ -182,7 +183,14 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::put('/settings/password', [SuperadminController::class, 'updatePassword'])->name('settings.password');
 });
 
-Route::middleware(['auth', 'role:operator'])->prefix('operator')->name('operator.')->group(function () {
+// Smart landing after login: presidents open their TODA console, everyone else
+// the operator app. The TODA switcher changes which TODA the account acts on.
+Route::middleware(['auth', 'role:operator,operator_president'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/toda/switch', [DashboardController::class, 'switchToda'])->name('toda.switch');
+});
+
+Route::middleware(['auth', 'role:operator,operator_president'])->prefix('operator')->name('operator.')->group(function () {
     Route::get('/pending', function () {
         $operator = Auth::user()->operator;
         if ($operator && $operator->status === 'active') {
