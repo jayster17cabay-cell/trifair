@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Operator;
-use App\Models\OperatorToda;
 use App\Models\Rating;
 use App\Models\Toda;
 use App\Models\User;
@@ -26,13 +25,7 @@ class PresidentQueryService
     public function todaOperators(Toda $toda)
     {
         return Operator::query()
-            ->where(function ($q) use ($toda) {
-                $q->where('toda_id', $toda->id)
-                    ->orWhereHas('todaMemberships', function ($m) use ($toda) {
-                        $m->where('toda_id', $toda->id)
-                            ->where('status', OperatorToda::STATUS_ACTIVE);
-                    });
-            })
+            ->belongsToToda($toda->id)
             ->notArchived();
     }
 

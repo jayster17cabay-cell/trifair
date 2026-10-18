@@ -743,17 +743,8 @@ class AdminQueryService
 
     public function todasData(?string $search = null): array
     {
-        $todas = Toda::withCount([
-            'operators' => function ($query) {
-                $query->whereNull('archived_at')
-                    ->whereHas('user', fn ($u) => $u->where('role', 'operator'));
-            },
-            'operators as active_operators_count' => function ($query) {
-                $query->where('status', 'active')
-                    ->whereNull('archived_at')
-                    ->whereHas('user', fn ($u) => $u->where('role', 'operator'));
-            },
-        ])
+        $todas = Toda::query()
+            ->withMemberCounts()
             ->when($search, function ($query, $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
@@ -769,7 +760,8 @@ class AdminQueryService
 
     public function todaMembersData(Toda $toda): \Illuminate\Database\Eloquent\Collection
     {
-        return $toda->operators()
+        return Operator::query()
+            ->belongsToToda($toda->id)
             ->with('user')
             ->withCount([
                 'ratings' => fn ($q) => $q->isValid(),

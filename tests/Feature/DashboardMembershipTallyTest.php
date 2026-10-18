@@ -166,4 +166,84 @@ class DashboardMembershipTallyTest extends TestCase
         // Beta: 1 trip.
         $this->assertStringContainsString('1 trip recorded', $html);
     }
+
+    public function test_toda_activity_card_counts_members_joined_from_another_home_toda()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+
+        // Home TODA is Alpha; the driver then joins Beta ("add member").
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaB->id);
+
+        app(AdminDashboardService::class)->flush();
+
+        $stats = collect(app(AdminDashboardService::class)
+            ->stats(['includeOfficers' => true])['todaStats']);
+
+        $alpha = $stats->firstWhere('id', $todaA->id);
+        $beta = $stats->firstWhere('id', $todaB->id);
+
+        // The driver belongs to both TODAs, so both cards count them once.
+        $this->assertSame(1, (int) $alpha->operators_count);
+        $this->assertSame(1, (int) $alpha->active_operators_count);
+        $this->assertSame(1, (int) $beta->operators_count);
+        $this->assertSame(1, (int) $beta->active_operators_count);
+    }
+
+    public function test_toda_activity_card_keeps_counting_home_toda_operators_without_membership_rows()
+    {
+        $toda = $this->makeToda('Alpha TODA');
+
+        // Legacy accounts predate the operator_toda table: home TODA only.
+        $this->makeOperator($toda);
+
+        app(AdminDashboardService::class)->flush();
+
+        $stats = collect(app(AdminDashboardService::class)
+            ->stats(['includeOfficers' => true])['todaStats']);
+
+        $card = $stats->firstWhere('id', $toda->id);
+
+        $this->assertSame(1, (int) $card->operators_count);
+        $this->assertSame(1, (int) $card->active_operators_count);
+    }
+
+    public function test_toda_members_modal_lists_a_member_whose_home_toda_is_elsewhere()
+    {
+        $admin = $this->makeUser('superadmin');
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+
+        $operator = $this->makeOperator($todaA);
+        $operator->user->forceFill(['name' => 'Joined From Alpha'])->save();
+        $operator->joinToda($todaB->id);
+
+        $resp = $this->actingAs($admin)
+            ->getJson('/superadmin/toda/' . $todaB->id . '/members')
+            ->assertOk();
+
+        $this->assertEquals(1, $resp->json('count'));
+        $this->assertStringContainsString('Joined From Alpha', $resp->json('html'));
+    }
+
+    public function test_toda_activity_card_ignores_memberships_that_are_not_active_yet()
+    {
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+
+        $operator = $this->makeOperator($todaA);
+        $operator->joinToda($todaB->id, OperatorToda::STATUS_PENDING_TFRB);
+
+        app(AdminDashboardService::class)->flush();
+
+        $stats = collect(app(AdminDashboardService::class)
+            ->stats(['includeOfficers' => true])['todaStats']);
+
+        $beta = $stats->firstWhere('id', $todaB->id);
+
+        // Still awaiting TFRB approval, so Beta must not claim the member yet.
+        $this->assertSame(0, (int) $beta->operators_count);
+        $this->assertSame(0, (int) $beta->active_operators_count);
+    }
 }

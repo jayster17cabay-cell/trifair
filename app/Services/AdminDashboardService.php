@@ -160,17 +160,9 @@ class AdminDashboardService
             ->take(5)
             ->get();
 
-        $todaStats = Toda::withCount([
-            'operators' => function ($query) {
-                $query->whereNull('archived_at')
-                    ->whereHas('user', fn ($u) => $u->where('role', 'operator'));
-            },
-            'operators as active_operators_count' => function ($query) {
-                $query->where('status', 'active')
-                    ->whereNull('archived_at')
-                    ->whereHas('user', fn ($u) => $u->where('role', 'operator'));
-            },
-        ])->get();
+        $todaStats = Toda::query()
+            ->withMemberCounts()
+            ->get();
 
         $todaAverages = Rating::isValid()
             ->countsTowardRating()

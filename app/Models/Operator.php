@@ -38,6 +38,24 @@ class Operator extends Model
         return $query->whereNull('archived_at');
     }
 
+    /**
+     * Scope a query to every operator tied to a TODA: either their home
+     * toda_id, or an active membership row on operator_toda. This is the one
+     * definition of "member" shared by the TODA Activity cards, the TODA
+     * members modal and the president's queries, so every screen tallies the
+     * same numbers for the same TODA.
+     */
+    public function scopeBelongsToToda($query, $todaId)
+    {
+        return $query->where(function ($query) use ($todaId) {
+            $query->where('operators.toda_id', (int) $todaId)
+                ->orWhereHas('todaMemberships', function ($membership) use ($todaId) {
+                    $membership->where('operator_toda.toda_id', (int) $todaId)
+                        ->where('operator_toda.status', OperatorToda::STATUS_ACTIVE);
+                });
+        });
+    }
+
     public function isArchived(): bool
     {
         return $this->archived_at !== null;
