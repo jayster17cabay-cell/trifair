@@ -67,6 +67,7 @@ class Kernel extends HttpKernel
         'desktop' => \App\Http\Middleware\DesktopOnly::class,
         'operator.active' => \App\Http\Middleware\OperatorActive::class,
         'president.active' => \App\Http\Middleware\PresidentActive::class,
+        'toda.selection' => \App\Http\Middleware\TodaSelectionRequired::class,
     ];
 }
 

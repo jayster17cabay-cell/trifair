@@ -10,6 +10,24 @@
             <span class="font-extrabold">TriFair <span class="text-gold">Operator</span></span>
         </a>
 
+        @php
+            // Only an account in more than one TODA needs a way back to the
+            // picker; a single-TODA operator would have nothing to choose.
+            $opHeaderTodas = collect();
+            $opHeaderUser = auth()->user();
+            if ($opHeaderUser && ($opHeaderUser->isOperator() || $opHeaderUser->isOperatorPresident())) {
+                $opHeaderTodas = \App\Support\TodaContext::availableTodas($opHeaderUser);
+            }
+        @endphp
+        @if ($opHeaderTodas->count() > 1)
+            <a href="{{ route('toda.select') }}"
+               class="inline-flex items-center gap-1.5 rounded-lg border border-white/25 bg-white/10 px-2.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-white/20"
+               title="Change TODA" aria-label="Change TODA">
+                <i class="bi bi-arrow-left-right"></i>
+                <span class="hidden sm:inline">Change TODA</span>
+            </a>
+        @endif
+
         @include('partials.operator.nav-dropdown-menu', ['nav' => $nav ?? []])
     </div>
 

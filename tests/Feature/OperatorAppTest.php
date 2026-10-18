@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Operator;
 use App\Models\Toda;
 use App\Models\User;
+use App\Support\TodaContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -221,12 +222,23 @@ class OperatorAppTest extends TestCase
         $this->makeRating($operator, $todaA, 5, 'Alpha');
         $this->makeRating($operator, $todaB, 1, 'Gamma');
 
-        // Default view = all TODAs combined -> average of 5 and 1 = 3.0.
-        $this->actingAs($operator->user)->get('/operator/dashboard')
+        // The TODA picked at sign-in scopes the headline (5.0 for TODA A), while
+        // the overall strip keeps reporting every TODA (5 and 1 -> 3.0).
+        $this->actingAs($operator->user)
+            ->withSession([TodaContext::SESSION_KEY => $todaA->id])
+            ->get('/operator/dashboard')
             ->assertOk()
             ->assertSee('operatorToda', false)          // the TODA <select> is present
             ->assertSee('All TODAs', false)
             ->assertSee('Overall (All TODAs)', false)
+            ->assertSee('5.0', false)
+            ->assertSee('3.0', false);
+
+        // Choosing "All TODAs" explicitly still gives the combined view.
+        $this->actingAs($operator->user)
+            ->withSession([TodaContext::SESSION_KEY => $todaA->id])
+            ->get('/operator/dashboard?toda=all')
+            ->assertOk()
             ->assertSee('3.0', false);
     }
 
@@ -238,7 +250,9 @@ class OperatorAppTest extends TestCase
         $this->makeRating($operator, $todaB, 1, 'Gamma');
 
         // Scoped to TODA A -> only the 5-star counts for the headline average.
-        $this->actingAs($operator->user)->get('/operator/dashboard?toda=' . $todaA->id)
+        $this->actingAs($operator->user)
+            ->withSession([TodaContext::SESSION_KEY => $todaA->id])
+            ->get('/operator/dashboard?toda=' . $todaA->id)
             ->assertOk()
             ->assertSee('5.0', false)
             // The overall strip still reports every TODA.
@@ -253,7 +267,9 @@ class OperatorAppTest extends TestCase
         $this->makeRating($operator, $todaA, 5, 'Alpha');
         $this->makeRating($operator, $todaB, 1, 'Gamma');
 
-        $this->actingAs($operator->user)->get('/operator/ratings?toda=' . $todaB->id)
+        $this->actingAs($operator->user)
+            ->withSession([TodaContext::SESSION_KEY => $todaA->id])
+            ->get('/operator/ratings?toda=' . $todaB->id)
             ->assertOk()
             ->assertSee('Gamma', false)
             ->assertDontSee('Alpha', false);

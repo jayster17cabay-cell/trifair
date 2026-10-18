@@ -1235,7 +1235,7 @@ class AdminTest extends TestCase
             ->assertDontSee('Account Active');
     }
 
-    public function test_suspended_operator_president_is_blocked_from_dashboard_and_login()
+    public function test_suspended_operator_president_stays_signed_in_and_sees_the_suspended_screen()
     {
         $admin = $this->makeUser('superadmin');
         $toda = $this->makeToda();
@@ -1260,16 +1260,17 @@ class AdminTest extends TestCase
                 'suspended_until' => now()->addDays(10)->toDateString(),
             ]);
 
-        // An existing session is dropped at the middleware boundary.
+        // The session survives the suspension and the console reports it.
         $this->actingAs($presUser->fresh())
             ->get('/president/dashboard')
-            ->assertRedirect(route('login'));
+            ->assertOk()
+            ->assertSee('You are suspended', false);
 
-        // A fresh sign-in is refused too.
+        // A fresh sign-in is allowed too — the account lands on the same screen.
         $this->post('/login', [
             'email' => $presUser->email,
             'password' => 'password123',
-        ])->assertRedirect('/');
-        $this->assertGuest();
+        ])->assertRedirect(route('dashboard'));
+        $this->assertAuthenticated();
     }
 }

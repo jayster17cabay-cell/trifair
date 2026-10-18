@@ -48,6 +48,17 @@ class PresidentController extends Controller
         $summary['todaName'] = $toda->name;
         $summary['todaArea'] = $toda->area;
 
+        // A suspended TODA is still openable — it just reports the suspension
+        // and nothing else. The TODA chosen at sign-in is honoured as-is: there
+        // is no silent jump to a different organisation.
+        if ($ownOperator && $ownOperator->isSuspendedForToda((int) $toda->id)) {
+            if (request()->wantsJson()) {
+                return response()->json(['suspended' => true], 423);
+            }
+
+            return view('president.suspended', ['toda' => $toda, 'operator' => $ownOperator]);
+        }
+
         $members = $this->query->members($toda, request()->query('search'), request()->query('status'));
         $ownRecentRatings = $this->query->ownRecentRatings($toda, $ownOperator);
         $joinRequests = app(TodaMembershipService::class)->presidentQueue($toda);

@@ -91,6 +91,33 @@ class TodaContext
         return self::defaultId($user);
     }
 
+    /**
+     * True when the account is connected to more than one TODA and therefore
+     * has a real choice to make. Single-TODA accounts are never asked.
+     */
+    public static function hasChoice(User $user): bool
+    {
+        return self::availableTodas($user)->count() > 1;
+    }
+
+    /**
+     * True when a TODA was explicitly picked this session (not merely defaulted
+     * into). Used to decide whether the selection screen still has to be shown.
+     */
+    public static function isChosen(User $user): bool
+    {
+        $sessionId = (int) session(self::SESSION_KEY);
+
+        if (!$sessionId) {
+            return false;
+        }
+
+        return self::availableTodas($user)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->contains($sessionId);
+    }
+
     public static function current(User $user): ?Toda
     {
         $id = self::currentId($user);

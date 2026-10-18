@@ -131,7 +131,7 @@ class MemberSuspensionTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_suspended_member_cannot_login_and_is_blocked_by_middleware()
+    public function test_suspended_member_can_sign_in_and_opens_a_suspended_screen()
     {
         $toda = $this->makeToda();
         $pres = $this->makePresident($toda);
@@ -145,18 +145,21 @@ class MemberSuspensionTest extends TestCase
             ])
             ->assertRedirect();
 
-        // Login attempt should fail for suspended operator.
+        // A suspension no longer blocks sign-in — the account still opens.
         $this->post('/login', [
             'email' => $member->user->email,
             'password' => 'password123',
-        ])->assertRedirect('/');
+        ])->assertRedirect(route('operator.dashboard'));
 
-        $this->assertGuest();
+        $this->assertAuthenticated();
 
-        // Middleware should block dashboard access.
+        // The dashboard itself reports the suspension and shows nothing else.
         $this->actingAs($member->user)
             ->get('/operator/dashboard')
-            ->assertRedirect(route('login'));
+            ->assertOk()
+            ->assertSee('You are suspended', false)
+            ->assertSee('Safety concern', false)
+            ->assertDontSee('Overall (All TODAs)', false);
     }
 
     public function test_suspended_member_cannot_be_rated()

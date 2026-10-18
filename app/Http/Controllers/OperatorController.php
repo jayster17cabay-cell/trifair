@@ -22,6 +22,16 @@ class OperatorController extends Controller
         $todas = $operator->getRateableTodas();
         $selectedToda = $this->resolveToda($request, $todas);
 
+        // A suspended TODA can still be opened — it simply reports the
+        // suspension instead of any dashboard data.
+        if ($this->isSuspendedInScope($operator, $todas, $selectedToda)) {
+            if ($request->wantsJson()) {
+                return response()->json(['suspended' => true], 423);
+            }
+
+            return view('operator.suspended', ['operator' => $operator, 'toda' => $selectedToda]);
+        }
+
         $base = $this->applyPeriod($this->scopeToda($operator->ratings()->isValid(), $selectedToda), $period);
 
         $agg = $this->applyPeriod($this->scopeToda($operator->countableRatings(), $selectedToda), $period)
@@ -118,11 +128,40 @@ class OperatorController extends Controller
     {
         $todaId = $request->query('toda');
 
-        if (!$todaId || $todaId === 'all') {
+        // An explicit "all" keeps the combined view, and a supplied id wins
+        // outright. With neither, fall back to the TODA the account picked when
+        // it signed in, so the numbers on screen follow that choice.
+        if ($todaId === 'all') {
             return null;
         }
 
-        return $todas->firstWhere('id', (int) $todaId);
+        if ($todaId) {
+            return $todas->firstWhere('id', (int) $todaId);
+        }
+
+        $sessionTodaId = (int) session(\App\Support\TodaContext::SESSION_KEY);
+
+        return $sessionTodaId ? $todas->firstWhere('id', $sessionTodaId) : null;
+    }
+
+    /**
+     * True when the scope currently on screen is one the member is suspended
+     * in: a named TODA is checked directly, while the combined "All TODAs" view
+     * only counts as suspended when there is no active TODA left to use.
+     *
+     * @param  \Illuminate\Support\Collection  $todas
+     */
+    private function isSuspendedInScope($operator, $todas, ?Toda $selectedToda): bool
+    {
+        if ($selectedToda) {
+            return $operator->isSuspendedForToda((int) $selectedToda->id);
+        }
+
+        if ($todas->isEmpty()) {
+            return $operator->isSuspended();
+        }
+
+        return $todas->every(fn (Toda $toda) => $operator->isSuspendedForToda((int) $toda->id));
     }
 
     /**

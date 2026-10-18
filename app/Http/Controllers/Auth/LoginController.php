@@ -62,24 +62,8 @@ class LoginController extends Controller
                         'email' => 'Your account is not assigned to a TODA. Please contact support.',
                     ])->onlyInput('email');
                 }
-                // Presidents keep an Operator row, so an admin-issued suspension
-                // blocks sign-in the same way it does for a regular operator —
-                // unless they still preside over another, unsuspended TODA.
-                $presidentOperator = $user->operator;
-                if ($presidentOperator) {
-                    $presidentOperator->syncSuspensionStatus();
-                    $hasOpenPresidency = $user->presidentTodas()->contains(function ($presidency) use ($presidentOperator) {
-                        return !$presidentOperator->isSuspendedForToda((int) $presidency->id);
-                    });
-                    if (!$hasOpenPresidency) {
-                        Auth::logout();
-                        $request->session()->invalidate();
-                        $request->session()->regenerateToken();
-                        return back()->withErrors([
-                            'email' => 'Your account is currently suspended by the TFRB Office. Please contact support.',
-                        ])->onlyInput('email');
-                    }
-                }
+                // A suspension never blocks sign-in: the account still opens and
+                // the TODA it lands on simply reports that it is suspended.
                 ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
                 return redirect()->route('dashboard');
             }
@@ -106,14 +90,8 @@ class LoginController extends Controller
                         'email' => 'Your account has been archived. Please contact support.',
                     ])->onlyInput('email');
                 }
-                if ($operator->isSuspended()) {
-                    Auth::logout();
-                    $request->session()->invalidate();
-                    $request->session()->regenerateToken();
-                    return back()->withErrors([
-                        'email' => $this->suspensionMessage($operator),
-                    ])->onlyInput('email');
-                }
+                // A suspension does not block sign-in either — the TODA the
+                // account opens on reports it instead.
                 if ($operator->status === 'pending') {
                     ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
                     return redirect()->route('operator.pending');
@@ -171,19 +149,5 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('login');
-    }
-
-    /**
-     * Message shown when a suspended member tries to sign in, naming the end
-     * date when one is set.
-     */
-    private function suspensionMessage($operator): string
-    {
-        $suspension = $operator->currentSuspension;
-        $until = $suspension ? $suspension->suspended_until : null;
-
-        return 'Your account is currently suspended by your TODA. '
-            . ($until ? 'The suspension ends on ' . $until->format('M d, Y') . '. ' : '')
-            . 'Please contact your TODA president or the TFRB Office.';
     }
 }

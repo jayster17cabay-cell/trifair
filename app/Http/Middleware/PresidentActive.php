@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\TodaContext;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,28 +27,11 @@ class PresidentActive
             return $next($request);
         }
 
+        // Reconcile a lapsed suspension. A suspension itself no longer ends the
+        // session or silently moves the president to another TODA: whichever
+        // TODA they chose is the one they stay on, and that dashboard reports
+        // "You are suspended" (see partials/toda-suspended-screen).
         $operator->syncSuspensionStatus();
-
-        // The console is always scoped to a TODA the user actually presides
-        // over. If that presidency is suspended, the president is held: they
-        // move to another TODA they still preside over, or — when this was
-        // their only presidency — the session is dropped like any suspended
-        // operator.
-        $toda = $user->presidentToda();
-
-        if ($toda && $operator->isSuspendedForToda((int) $toda->id)) {
-            $fallback = $user->presidentTodas()->first(function ($presidency) use ($operator) {
-                return !$operator->isSuspendedForToda((int) $presidency->id);
-            });
-
-            if ($fallback) {
-                TodaContext::set((int) $fallback->id);
-
-                return redirect()->route('president.dashboard')->with('error', 'Your presidency of ' . $toda->name . ' is currently suspended. Showing your other TODA.');
-            }
-
-            return $this->logout($request, 'Your account is currently suspended by the TFRB Office. Please contact support.');
-        }
 
         return $next($request);
     }

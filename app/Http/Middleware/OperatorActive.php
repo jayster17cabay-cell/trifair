@@ -34,14 +34,9 @@ class OperatorActive
                     'email' => 'Your account has been archived. Please contact support.',
                 ]);
             }
-            if ($operator->isSuspended()) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                return redirect()->route('login')->withErrors([
-                    'email' => $this->suspensionMessage($operator),
-                ]);
-            }
+            // A suspension is not a session-killer: the account stays signed in
+            // and the TODA it opens on reports "You are suspended" instead. A
+            // lapsed suspension is still lifted here via syncSuspensionStatus().
             if ($operator->status === 'pending') {
                 return redirect()->route('operator.pending');
             }
@@ -65,19 +60,5 @@ class OperatorActive
             }
         }
         return $next($request);
-    }
-
-    /**
-     * Message shown when a suspended member's session is dropped, naming the
-     * end date when one is set.
-     */
-    private function suspensionMessage($operator): string
-    {
-        $suspension = $operator->currentSuspension;
-        $until = $suspension ? $suspension->suspended_until : null;
-
-        return 'Your account is currently suspended by your TODA. '
-            . ($until ? 'The suspension ends on ' . $until->format('M d, Y') . '. ' : '')
-            . 'Please contact your TODA president or the TFRB Office.';
     }
 }

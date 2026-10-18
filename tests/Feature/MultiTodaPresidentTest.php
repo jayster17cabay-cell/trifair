@@ -231,7 +231,7 @@ class MultiTodaPresidentTest extends TestCase
             ->assertSee('Member Bee');
     }
 
-    public function test_suspended_presidency_falls_back_to_another_unsuspended_toda(): void
+    public function test_suspended_presidency_opens_a_suspended_screen_instead_of_swapping_toda(): void
     {
         $todaA = $this->makeToda();
         $todaB = $this->makeToda();
@@ -250,17 +250,23 @@ class MultiTodaPresidentTest extends TestCase
             'suspended_until' => now()->addDays(10)->toDateString(),
         ]);
 
-        $response = $this->actingAs($user->fresh())
-            ->withSession([TodaContext::SESSION_KEY => $todaA->id])
-            ->get('/president/dashboard');
-
-        $response->assertRedirect(route('president.dashboard'));
-        $this->assertSame($todaB->id, session(TodaContext::SESSION_KEY));
-
-        // The fallback TODA's console now opens.
+        // The TODA the account picked is honoured: it stays there and reports
+        // the suspension rather than being silently moved elsewhere.
         $this->actingAs($user->fresh())
+            ->withSession([TodaContext::SESSION_KEY => $todaA->id])
             ->get('/president/dashboard')
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('You are suspended', false)
+            ->assertSee($todaA->name, false);
+
+        $this->assertSame($todaA->id, session(TodaContext::SESSION_KEY));
+
+        // The other presidency still opens normally — no screen at all.
+        $this->actingAs($user->fresh())
+            ->withSession([TodaContext::SESSION_KEY => $todaB->id])
+            ->get('/president/dashboard')
+            ->assertOk()
+            ->assertDontSee('You are suspended', false);
     }
 
     public function test_operators_list_shows_every_toda_the_operator_belongs_to(): void
@@ -359,7 +365,9 @@ class MultiTodaPresidentTest extends TestCase
         $this->rate($operator, $todaA, 5);
         $this->rate($operator, $todaB, 1);
 
+        // Picking TODA A at sign-in, as the picker now requires for 2+ TODAs.
         $this->actingAs($user->fresh())
+            ->withSession([TodaContext::SESSION_KEY => $todaA->id])
             ->get('/president/dashboard')
             ->assertOk()
             ->assertSee('Per TODA', false)
@@ -369,6 +377,7 @@ class MultiTodaPresidentTest extends TestCase
 
         // The combined total (5,5,1 -> 3.7) must be present alongside both rows.
         $this->actingAs($user->fresh())
+            ->withSession([TodaContext::SESSION_KEY => $todaA->id])
             ->get('/president/dashboard')
             ->assertSee('3.7', false);
     }

@@ -16,6 +16,7 @@ use App\Http\Controllers\GeocodeController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PassengerController;
+use App\Http\Controllers\TodaSelectionController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -185,7 +186,11 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
 
 // Smart landing after login: presidents open their TODA console, everyone else
 // the operator app. The TODA switcher changes which TODA the account acts on.
+// The picker itself deliberately sits OUTSIDE the 'toda.selection' middleware
+// (applied below to the operator and president route groups) so it cannot loop.
 Route::middleware(['auth', 'role:operator,operator_president'])->group(function () {
+    Route::get('/toda/select', [TodaSelectionController::class, 'create'])->name('toda.select');
+    Route::post('/toda/select', [TodaSelectionController::class, 'store'])->name('toda.select.store');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/toda/switch', [DashboardController::class, 'switchToda'])->name('toda.switch');
 });
@@ -199,7 +204,7 @@ Route::middleware(['auth', 'role:operator,operator_president'])->prefix('operato
         return view('operator.pending', ['operator' => $operator]);
     })->name('pending');
 
-    Route::middleware(['verified', 'operator.active'])->group(function () {
+    Route::middleware(['verified', 'operator.active', 'toda.selection'])->group(function () {
         Route::get('/dashboard', [OperatorController::class, 'dashboard'])->name('dashboard');
         Route::get('/ratings', [OperatorController::class, 'ratings'])->name('ratings');
         Route::post('/ratings/{rating}/respond', [OperatorController::class, 'respond'])->name('ratings.respond');
@@ -212,7 +217,7 @@ Route::middleware(['auth', 'role:operator,operator_president'])->prefix('operato
     });
 });
 
-Route::middleware(['auth', 'role:operator_president', 'president.active'])->prefix('president')->name('president.')->group(function () {
+Route::middleware(['auth', 'role:operator_president', 'president.active', 'toda.selection'])->prefix('president')->name('president.')->group(function () {
     Route::get('/dashboard', [PresidentController::class, 'dashboard'])->name('dashboard');
     Route::get('/members', [PresidentController::class, 'members'])->name('members');
     // President can onboard a new member (lands as a pending account for
