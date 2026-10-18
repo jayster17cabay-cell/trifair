@@ -158,6 +158,68 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertSame(2, $operator->totalRatings());
     }
 
+    public function test_review_actions_notify_the_other_officers_but_not_the_actor()
+    {
+        $admin = $this->makeUser('superadmin');
+        $officer = $this->makeUser('tfrb_officer');
+        $operator = $this->makeOperator();
+
+        $accepted = $this->makeValidComplaint($operator, 1);
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $accepted->id . '/accept')
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $officer->id,
+            'rating_id' => $accepted->id,
+            'type' => 'complaint',
+            'title' => 'Complaint Accepted',
+        ]);
+        $this->assertDatabaseMissing('notifications', [
+            'user_id' => $admin->id,
+            'title' => 'Complaint Accepted',
+        ]);
+
+        $rejected = $this->makeValidComplaint($operator, 1);
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $rejected->id . '/reject')
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $officer->id,
+            'rating_id' => $rejected->id,
+            'type' => 'complaint',
+            'title' => 'Complaint Rejected',
+        ]);
+
+        $solved = $this->makeValidComplaint($operator, 1);
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $solved->id . '/solve')
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $officer->id,
+            'rating_id' => $solved->id,
+            'type' => 'complaint',
+            'title' => 'Complaint Solved',
+        ]);
+    }
+
+    public function test_re_reviewing_a_complaint_does_not_duplicate_officer_notices()
+    {
+        $admin = $this->makeUser('superadmin');
+        $officer = $this->makeUser('tfrb_officer');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator, 1);
+
+        $this->actingAs($admin)->patch('/superadmin/complaints/' . $complaint->id . '/accept')->assertRedirect();
+        $this->actingAs($admin)->patch('/superadmin/complaints/' . $complaint->id . '/accept')->assertRedirect();
+
+        $this->assertSame(1, \App\Models\Notification::where('user_id', $officer->id)
+            ->where('title', 'Complaint Accepted')
+            ->count());
+    }
+
     public function test_undoing_review_returns_complaint_to_pending_queue()
     {
         $admin = $this->makeUser('superadmin');

@@ -722,6 +722,31 @@ class DashboardAuditTest extends TestCase
         $this->assertTrue((bool) $rating->fresh()->is_accepted);
     }
 
+    public function test_sendinblue_key_and_from_address_are_trimmed_of_whitespace()
+    {
+        // A key or sender pasted into a dashboard with a stray trailing space
+        // makes the HTTP header invalid and every send fails, so the config
+        // must normalise it on load. Dotenv writes to putenv/$_ENV/$_SERVER, so
+        // all three have to be overridden for the config file to see the value.
+        putenv('SENDINBLUE_KEY=xkeysib-trailing-space ');
+        $_ENV['SENDINBLUE_KEY'] = 'xkeysib-trailing-space ';
+        $_SERVER['SENDINBLUE_KEY'] = 'xkeysib-trailing-space ';
+        putenv('MAIL_FROM_ADDRESS=sender@example.com ');
+        $_ENV['MAIL_FROM_ADDRESS'] = 'sender@example.com ';
+        $_SERVER['MAIL_FROM_ADDRESS'] = 'sender@example.com ';
+
+        $services = include base_path('config/services.php');
+        $mail = include base_path('config/mail.php');
+
+        $this->assertSame('xkeysib-trailing-space', $services['sendinblue']['key']);
+        $this->assertSame('sender@example.com', $mail['from']['address']);
+
+        putenv('SENDINBLUE_KEY');
+        putenv('MAIL_FROM_ADDRESS');
+        unset($_ENV['SENDINBLUE_KEY'], $_ENV['MAIL_FROM_ADDRESS']);
+        unset($_SERVER['SENDINBLUE_KEY'], $_SERVER['MAIL_FROM_ADDRESS']);
+    }
+
     public function test_marking_complaint_solved_emails_the_passenger_once()
     {
         Mail::fake();

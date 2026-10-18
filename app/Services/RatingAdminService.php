@@ -8,6 +8,7 @@ use App\Mail\ComplaintStatus;
 use App\Models\Notification;
 use App\Models\Rating;
 use App\Models\ResolutionProof;
+use App\Models\User;
 use App\Services\AdminDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,6 +54,7 @@ class RatingAdminService
         if (!$wasAccepted) {
             $emailError = $this->notifyComplaintStatus($rating, 'accepted');
             $this->notifyPassengerInApp($rating, 'Complaint Accepted', 'Your complaint has been verified and accepted by the TFRB. Thank you for helping keep our transport services safe.');
+            $this->notifyAdmins($rating, 'Complaint Accepted', "Complaint {$rating->reference_number} for {$rating->operator_name} was accepted and now counts towards the operator's rating.");
         } else {
             $emailError = null;
         }
@@ -100,6 +102,7 @@ class RatingAdminService
                 $message .= ' Reason: ' . $note;
             }
             $this->notifyPassengerInApp($rating, 'Complaint Rejected', $message);
+            $this->notifyAdmins($rating, 'Complaint Rejected', "Complaint {$rating->reference_number} for {$rating->operator_name} was rejected and will not count towards the operator's rating.");
         } else {
             $emailError = null;
         }
@@ -181,6 +184,7 @@ class RatingAdminService
                 $message .= ' Details: ' . $note;
             }
             $this->notifyPassengerInApp($rating, 'Complaint Solved', $message);
+            $this->notifyAdmins($rating, 'Complaint Solved', "Complaint {$rating->reference_number} for {$rating->operator_name} was marked as solved.");
         } else {
             $emailError = null;
         }
@@ -251,6 +255,13 @@ class RatingAdminService
 
         app(AdminDashboardService::class)->flush();
 
+        if ($count > 0) {
+            $this->notifyAdminsSummary(
+                'Bulk Complaints Accepted',
+                "{$count} complaint" . ($count === 1 ? '' : 's') . ' accepted in a bulk review.'
+            );
+        }
+
         return $this->withEmailWarning(
             back()->with('success', $count > 0
                 ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' accepted.'
@@ -311,6 +322,56 @@ class RatingAdminService
             'title' => $title,
             'message' => $message,
         ]);
+    }
+
+    /**
+     * Keep the whole review team in the loop: every TFRB officer and superadmin
+     * gets an in-app notification when a complaint moves through the pipeline,
+     * except the officer who performed the action (they already saw the
+     * confirmation banner). Reuses the 'complaint' type so it lands in the
+     * Complaints tab and links straight to the report.
+     */
+    private function notifyAdmins(Rating $rating, string $title, string $message): void
+    {
+        $actorId = Auth::id();
+
+        User::whereIn('role', ['tfrb_officer', 'superadmin'])
+            ->when($actorId, function ($query) use ($actorId) {
+                $query->where('id', '!=', $actorId);
+            })
+            ->get()
+            ->each(function (User $officer) use ($rating, $title, $message) {
+                Notification::create([
+                    'user_id' => $officer->id,
+                    'rating_id' => $rating->id,
+                    'type' => 'complaint',
+                    'title' => $title,
+                    'message' => $message,
+                ]);
+            });
+    }
+
+    /**
+     * Summary notification for a bulk action, so accepting fifty complaints at
+     * once produces one notice per officer instead of flooding the list.
+     */
+    private function notifyAdminsSummary(string $title, string $message): void
+    {
+        $actorId = Auth::id();
+
+        User::whereIn('role', ['tfrb_officer', 'superadmin'])
+            ->when($actorId, function ($query) use ($actorId) {
+                $query->where('id', '!=', $actorId);
+            })
+            ->get()
+            ->each(function (User $officer) use ($title, $message) {
+                Notification::create([
+                    'user_id' => $officer->id,
+                    'type' => 'complaint',
+                    'title' => $title,
+                    'message' => $message,
+                ]);
+            });
     }
 
     /**

@@ -96,8 +96,10 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        // Trimmed for the same reason as the Brevo key: a stray trailing space in
+        // a pasted env value makes the From header invalid and the send fails.
+        'address' => trim((string) env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+        'name' => trim((string) env('MAIL_FROM_NAME', 'Example')),
     ],
 
     /*

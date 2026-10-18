@@ -47,7 +47,9 @@ return [
 
     'sendinblue' => [
         'key_identifier' => env('SENDINBLUE_KEY_IDENTIFIER', 'api-key'),
-        'key' => env('SENDINBLUE_KEY'),
+        // Trimmed so a key pasted into a dashboard with a stray space or newline
+        // still works — a raw space makes the HTTP header invalid and the send fails.
+        'key' => trim((string) env('SENDINBLUE_KEY')),
     ],
 
 ];
