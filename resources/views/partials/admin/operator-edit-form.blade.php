@@ -27,14 +27,19 @@
         );
         $activeMembershipIds = is_array($activeMembershipIds) ? array_map('intval', $activeMembershipIds) : [];
         $openMembershipIds = $operator->todaMemberships
-            ->whereIn('status', [\App\Models\OperatorToda::STATUS_PENDING, \App\Models\OperatorToda::STATUS_PENDING_ADMIN])
+            ->whereIn('status', [
+                \App\Models\OperatorToda::STATUS_PENDING,
+                \App\Models\OperatorToda::STATUS_PENDING_TFRB,
+                \App\Models\OperatorToda::STATUS_PENDING_SUPERADMIN,
+                \App\Models\OperatorToda::STATUS_PENDING_ADMIN,
+            ])
             ->pluck('toda_id')
             ->map(fn ($id) => (int) $id)
             ->all();
     @endphp
     <div class="mb-4">
         <label class="tw-label">TODA Memberships</label>
-        <p class="mb-2 text-xs text-slate-500">An operator keeps one account and body number; tick every TODA they may be rated under. The home TODA is always a member.</p>
+        <p class="mb-2 text-xs text-slate-500">An operator keeps one account and body number; tick every TODA they may be rated under (up to {{ \App\Models\OperatorToda::MAX_TODAS }}). The home TODA is always a member. Ticking a TODA here activates it directly.</p>
         <div class="grid gap-2 rounded-lg border border-slate-200 p-3 sm:grid-cols-2">
             @foreach ($todas as $toda)
                 @php

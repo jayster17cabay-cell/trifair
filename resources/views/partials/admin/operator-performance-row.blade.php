@@ -12,6 +12,7 @@
     The row exposes data-* attributes consumed by initTripHistoryDrawer().
 --}}
 @php
+    $todaBreakdown = $todaBreakdown ?? collect();
     $avg = isset($avg) ? (float) $avg : (float) ($operator->valid_ratings_avg_rating ?? 0);
     $count = (int) ($operator->valid_ratings_count ?? 0);
     $name = $operator->user->name ?? 'Unknown';
@@ -29,6 +30,19 @@
                 <button type="button" class="truncate text-sm font-bold text-slate-800 hover:text-navy-700 hover:underline"
                         title="View trip history for {{ $name }}"
                         onclick="event.stopPropagation(); this.closest('tr').click()">{{ $name }}</button>
+                @if ($todaBreakdown->count() > 1)
+                    <div class="mt-1 flex flex-wrap items-center gap-1">
+                        @foreach ($todaBreakdown as $toda)
+                            <span class="tw-badge tw-badge-gray"
+                                  title="{{ $toda['name'] }} — {{ $toda['count'] }} trip{{ $toda['count'] === 1 ? '' : 's' }} in the selected period">
+                                <span class="truncate" style="max-width: 6rem;">{{ $toda['name'] }}</span>
+                                <i class="bi bi-star-fill text-amber-400"></i>
+                                <span>{{ $toda['avg'] !== null ? number_format($toda['avg'], 1) : '—' }}</span>
+                                <span class="text-slate-400">({{ $toda['count'] }})</span>
+                            </span>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
     </td>

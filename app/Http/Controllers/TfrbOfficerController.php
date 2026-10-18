@@ -41,7 +41,7 @@ class TfrbOfficerController extends Controller
 
     public function operators(Request $request)
     {
-        $data = app(AdminQueryService::class)->operatorsData($request);
+        $data = app(AdminQueryService::class)->operatorsData($request, 'tfrb');
         $data['todas'] = \App\Models\Toda::orderBy('name')->get();
         $data['activeOperators'] = app(AdminQueryService::class)->activeOperators();
         $operators = $data['operators'];
@@ -109,22 +109,27 @@ class TfrbOfficerController extends Controller
     }
 
     /**
-     * Final approval of a TODA membership request (a president already approved
-     * it, or added it directly). Activating makes the operator rateable there.
+     * TFRB officer's verification of a TODA membership a president already
+     * approved. Moves pending_tfrb -> pending_superadmin; the superadmin then
+     * gives the final approval.
      */
     public function approveMembership(OperatorToda $membership)
     {
-        if (!$membership->isOpen()) {
-            return back()->with('error', 'This membership is no longer awaiting final approval.');
+        if (!$membership->isPendingTfrb()) {
+            return back()->with('error', 'This membership is not awaiting TFRB verification.');
         }
 
-        app(TodaMembershipService::class)->finalApprove($membership, Auth::user());
+        app(TodaMembershipService::class)->tfrbApprove($membership, Auth::user());
 
-        return back()->with('success', "Membership approved for {$membership->operator->user->name}.");
+        return back()->with('success', "Verified {$membership->operator->user->name}. The request is now with the superadmin for final approval.");
     }
 
     public function rejectMembership(Request $request, OperatorToda $membership)
     {
+        if (!$membership->isPendingTfrb()) {
+            return back()->with('error', 'This membership is not awaiting TFRB verification.');
+        }
+
         $request->validate([
             'note' => ['nullable', 'string', 'max:500'],
         ]);
@@ -259,7 +264,7 @@ class TfrbOfficerController extends Controller
         extract(app(AdminQueryService::class)->reportsData($request));
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('tfrb-officer.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating', 'period'));
+        return view('tfrb-officer.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating', 'period', 'todaBreakdown'));
     }
 
     /**

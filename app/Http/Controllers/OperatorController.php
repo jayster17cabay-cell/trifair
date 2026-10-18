@@ -246,16 +246,18 @@ class OperatorController extends Controller
         ];
 
         // TODA memberships (active + pending) and the TODAs the operator can
-        // still request to join.
+        // still request to join (empty once the three-TODA limit is reached).
         $memberships = $operator->todaMemberships()
             ->with('toda')
             ->orderByDesc('id')
             ->get();
-        $joinableTodas = app(\App\Services\TodaMembershipService::class)->joinableTodas($operator);
+        $membershipService = app(\App\Services\TodaMembershipService::class);
+        $canJoinAnother = $membershipService->canJoinAnotherToda($operator);
+        $joinableTodas = $canJoinAnother ? $membershipService->joinableTodas($operator) : collect();
 
         return view('operator.profile', compact(
             'operator', 'stats', 'period', 'todas', 'selectedToda',
-            'memberships', 'joinableTodas'
+            'memberships', 'joinableTodas', 'canJoinAnother'
         ));
     }
 
@@ -283,11 +285,17 @@ class OperatorController extends Controller
             return back()->with('error', 'You already have a membership or a pending request for this TODA.');
         }
 
-        app(\App\Services\TodaMembershipService::class)->requestJoin($operator, $toda);
+        $service = app(\App\Services\TodaMembershipService::class);
+
+        if (!$service->canJoinAnotherToda($operator)) {
+            return back()->with('error', 'You can be a member of at most ' . \App\Models\OperatorToda::MAX_TODAS . ' TODAs.');
+        }
+
+        $service->requestJoin($operator, $toda);
 
         return back()->with(
             'success',
-            "Your request to join {$toda->name} was submitted. It will be reviewed by the TODA president and then by the TFRB/superadmin."
+            "Your request to join {$toda->name} was submitted. It will be reviewed by the TODA president, then verified by the TFRB officer, and finally approved by the superadmin."
         );
     }
 

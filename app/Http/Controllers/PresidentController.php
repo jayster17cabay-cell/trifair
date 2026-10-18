@@ -420,20 +420,30 @@ class PresidentController extends Controller
             return redirect()->back()->with('error', 'That operator is already a member or has a pending request for this TODA.');
         }
 
-        app(TodaMembershipService::class)->presidentAdd($operator, $toda, Auth::user());
+        $service = app(TodaMembershipService::class);
+
+        if (!$service->canJoinAnotherToda($operator)) {
+            return redirect()->back()->with('error', 'That operator already belongs to the maximum of ' . OperatorToda::MAX_TODAS . ' TODAs.');
+        }
+
+        $service->presidentAdd($operator, $toda, Auth::user());
 
         return redirect()
             ->route('president.members')
-            ->with('success', ($operator->user->name ?? 'Member') . ' was added to ' . $toda->name . ' — pending final approval by superadmin/TFRB.');
+            ->with('success', ($operator->user->name ?? 'Member') . ' was added to ' . $toda->name . ' — pending TFRB verification and superadmin final approval.');
     }
 
     /**
      * President's first-level decision on a self-service join request: approve
-     * (moves it to the superadmin/TFRB queue) or reject.
+     * (forwards it to the TFRB officer) or reject.
      */
     public function approveMembership(OperatorToda $membership)
     {
         $this->authorizeMembership($membership);
+
+        if ($membership->operator && (int) $membership->operator->user_id === (int) Auth::id()) {
+            return redirect()->back()->with('error', 'You cannot approve your own membership request.');
+        }
 
         if ($membership->status !== OperatorToda::STATUS_PENDING) {
             return redirect()->back()->with('error', 'This membership request is no longer awaiting your approval.');
@@ -443,7 +453,7 @@ class PresidentController extends Controller
 
         return redirect()
             ->route('president.members')
-            ->with('success', 'Approved. The request is now with superadmin/TFRB for final approval.');
+            ->with('success', 'Approved. The request is now with the TFRB officer for verification.');
     }
 
     public function rejectMembership(Request $request, OperatorToda $membership)

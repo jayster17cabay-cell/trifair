@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ActivityLog;
 use App\Models\Operator;
+use App\Models\OperatorToda;
 use App\Models\Rating;
 use App\Models\SuspensionViolation;
 use App\Models\Toda;
@@ -257,7 +258,100 @@ class AdminQueryService
             ->paginate(25)
             ->withQueryString();
 
-        return array_merge(compact('operators', 'todas'), $filters);
+        // Per-TODA rating tallies for the operators on this page, so a driver
+        // who belongs to 2-3 TODAs shows the average/trips of each TODA (plus
+        // the combined figure in the table columns).
+        $todaBreakdown = $this->todaRatingBreakdown(
+            $operators->getCollection(),
+            $filters['dateFrom'] ?? null,
+            $filters['dateTo'] ?? null
+        );
+
+        return array_merge(compact('operators', 'todas', 'todaBreakdown'), $filters);
+    }
+
+    /**
+     * Average + trip count per TODA for each operator, keyed by operator id.
+     * A rating is attributed to its own `ratings.toda_id`; legacy rows without
+     * one fall back to the operator's home TODA so nothing is dropped from the
+     * tally. Only TODAs the operator is actually a member of are listed (with
+     * the home TODA used when no membership rows exist yet).
+     *
+     * @param  \Illuminate\Support\Collection<int, \App\Models\Operator>  $operators
+     * @return array<int, \Illuminate\Support\Collection<int, array<string, mixed>>>
+     */
+    private function todaRatingBreakdown($operators, ?string $dateFrom, ?string $dateTo): array
+    {
+        $ids = $operators->pluck('id')->all();
+        if (empty($ids)) {
+            return [];
+        }
+
+        $todaNames = Toda::pluck('name', 'id');
+
+        $memberships = OperatorToda::whereIn('operator_id', $ids)
+            ->where('status', OperatorToda::STATUS_ACTIVE)
+            ->get()
+            ->groupBy(fn ($row) => (int) $row->operator_id)
+            ->map(fn ($rows) => $rows->pluck('toda_id')->map(fn ($id) => (int) $id)->unique()->values()->all());
+
+        $ratingQuery = Rating::query()
+            ->join('operators', 'operators.id', '=', 'ratings.operator_id')
+            ->whereIn('ratings.operator_id', $ids)
+            ->where('ratings.is_valid', true)
+            ->where(function ($w) {
+                $w->whereNull('ratings.complaint_type')->orWhere('ratings.is_accepted', true);
+            });
+
+        // Mirror the period used by the headline average so the chips and the
+        // row always agree.
+        if ($from = $this->parseDate($dateFrom)) {
+            $ratingQuery->where('ratings.created_at', '>=', $from->copy()->startOfDay());
+        }
+        if ($to = $this->parseDate($dateTo)) {
+            $ratingQuery->where('ratings.created_at', '<=', $to->copy()->endOfDay());
+        }
+
+        $grouped = $ratingQuery
+            ->select(
+                'ratings.operator_id',
+                DB::raw('COALESCE(ratings.toda_id, operators.toda_id) as toda_id'),
+                DB::raw('avg(ratings.rating) as avg_rating'),
+                DB::raw('count(*) as total')
+            )
+            ->groupBy('ratings.operator_id', DB::raw('COALESCE(ratings.toda_id, operators.toda_id)'))
+            ->get()
+            ->groupBy(fn ($row) => (int) $row->operator_id);
+
+        $out = [];
+        foreach ($operators as $operator) {
+            // The home TODA is always listed (legacy accounts carry no
+            // membership row) alongside every TODA the operator actually
+            // joined, so the chips never hide a TODA they belong to.
+            $todaIds = collect($memberships[$operator->id] ?? [])
+                ->push((int) $operator->toda_id)
+                ->filter()
+                ->unique()
+                ->values();
+
+            $rows = ($grouped[$operator->id] ?? collect())
+                ->keyBy(fn ($row) => (int) $row->toda_id);
+
+            $breakdown = $todaIds->unique()->sort()->values()->map(function ($todaId) use ($rows, $todaNames) {
+                $row = $rows[$todaId] ?? null;
+
+                return [
+                    'toda_id' => (int) $todaId,
+                    'name' => $todaNames[$todaId] ?? 'TODA',
+                    'avg' => $row ? round((float) $row->avg_rating, 1) : null,
+                    'count' => $row ? (int) $row->total : 0,
+                ];
+            });
+
+            $out[$operator->id] = $breakdown;
+        }
+
+        return $out;
     }
 
     /**
@@ -285,7 +379,17 @@ class AdminQueryService
             ->whereNull('operators.archived_at')
             // A specific operator is more precise than the TODA it belongs to,
             // so the TODA filter only applies when no single operator is chosen.
-            ->when($todaId && ! $operatorId, fn ($q) => $q->where('operators.toda_id', $todaId))
+            // A driver who joined a TODA (home TODA aside) must still appear
+            // under it, so membership rows are matched as well.
+            ->when($todaId && ! $operatorId, function ($q) use ($todaId) {
+                $q->where(function ($w) use ($todaId) {
+                    $w->where('operators.toda_id', $todaId)
+                        ->orWhereHas('todaMemberships', function ($m) use ($todaId) {
+                            $m->where('toda_id', $todaId)
+                                ->where('status', OperatorToda::STATUS_ACTIVE);
+                        });
+                });
+            })
             ->when($operatorId, fn ($q) => $q->where('operators.id', $operatorId));
 
         // The Period presets (All Time / This Year / This Month / This Week)
@@ -429,7 +533,7 @@ class AdminQueryService
             ->select('operators.*');
     }
 
-    public function operatorsData(Request $request): array
+    public function operatorsData(Request $request, string $membershipStage = 'superadmin'): array
     {
         // Keep the visible status honest: any operator whose franchise has
         // lapsed is flipped to inactive, and any lapsed TODA suspension is
@@ -467,11 +571,16 @@ class AdminQueryService
         $activeStatusCount = (int) $tally->active_status_count;
         $inactiveStatusCount = (int) $tally->inactive_status_count;
 
-        // TODA membership requests awaiting the final superadmin/TFRB approval
-        // (a president already approved them, or added the operator directly).
-        $membershipRequests = app(\App\Services\TodaMembershipService::class)->adminQueue();
+        // TODA membership requests awaiting this admin level: the TFRB officer
+        // verifies president-approved memberships, the superadmin gives the
+        // final approval.
+        $membershipService = app(\App\Services\TodaMembershipService::class);
+        $membershipRequests = $membershipStage === 'tfrb'
+            ? $membershipService->tfrbQueue()
+            : $membershipService->adminQueue();
+        $membershipStage = $membershipStage === 'tfrb' ? 'tfrb' : 'superadmin';
 
-        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount', 'membershipRequests');
+        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount', 'membershipRequests', 'membershipStage');
     }
 
     public function operatorsForExport(Request $request)

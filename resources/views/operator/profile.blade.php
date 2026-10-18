@@ -162,14 +162,18 @@
                     $membershipBadge = [
                         'active' => 'tw-badge-green',
                         'pending' => 'tw-badge-amber',
+                        'pending_tfrb' => 'tw-badge-blue',
                         'pending_admin' => 'tw-badge-blue',
+                        'pending_superadmin' => 'tw-badge-blue',
                         'rejected' => 'tw-badge-red',
                         'inactive' => 'tw-badge-gray',
                     ];
                     $membershipLabel = [
                         'active' => 'Active',
                         'pending' => 'Pending President',
-                        'pending_admin' => 'Pending Approval',
+                        'pending_tfrb' => 'Pending TFRB',
+                        'pending_admin' => 'Pending TFRB',
+                        'pending_superadmin' => 'Pending Superadmin',
                         'rejected' => 'Rejected',
                         'inactive' => 'Inactive',
                     ];
@@ -178,11 +182,16 @@
                 @if (($memberships ?? collect())->isNotEmpty())
                     <ul class="mb-4 divide-y divide-slate-100">
                         @foreach ($memberships as $membership)
-                            <li class="flex items-center justify-between py-2.5">
-                                <span class="font-semibold text-slate-800">{{ $membership->toda->name ?? 'Unknown TODA' }}</span>
-                                <span class="tw-badge {{ $membershipBadge[$membership->status] ?? 'tw-badge-gray' }}">
-                                    {{ $membershipLabel[$membership->status] ?? ucfirst($membership->status) }}
-                                </span>
+                            <li class="py-2.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-semibold text-slate-800">{{ $membership->toda->name ?? 'Unknown TODA' }}</span>
+                                    <span class="tw-badge {{ $membershipBadge[$membership->status] ?? 'tw-badge-gray' }}">
+                                        {{ $membershipLabel[$membership->status] ?? ucfirst($membership->status) }}
+                                    </span>
+                                </div>
+                                @if ($membership->status === 'rejected' && $membership->rejectionReason())
+                                    <p class="mt-1 text-xs text-red-600"><i class="bi bi-info-circle mr-1"></i>Reason: {{ $membership->rejectionReason() }}</p>
+                                @endif
                             </li>
                         @endforeach
                     </ul>
@@ -206,9 +215,15 @@
                             <i class="bi bi-send"></i> Request to Join
                         </button>
                     </form>
-                    <p class="mt-2 text-xs text-slate-500">Your request goes to the TODA president first, then to the TFRB/superadmin for final approval.</p>
+                    <p class="mt-2 text-xs text-slate-500">Your request goes to the TODA president first, then to the TFRB officer, and finally to the superadmin. You can belong to up to {{ \App\Models\OperatorToda::MAX_TODAS }} TODAs.</p>
                 @else
-                    <p class="text-sm text-slate-400">You already have a membership or a pending request in every available TODA.</p>
+                    <p class="text-sm text-slate-400">
+                        @if (!($canJoinAnother ?? true))
+                            You have reached the maximum of {{ \App\Models\OperatorToda::MAX_TODAS }} TODA memberships.
+                        @else
+                            You already have a membership or a pending request in every available TODA.
+                        @endif
+                    </p>
                 @endif
             </div>
         </div>

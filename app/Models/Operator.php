@@ -183,6 +183,8 @@ class Operator extends Model
             ->whereIn('status', [
                 OperatorToda::STATUS_ACTIVE,
                 OperatorToda::STATUS_PENDING,
+                OperatorToda::STATUS_PENDING_TFRB,
+                OperatorToda::STATUS_PENDING_SUPERADMIN,
                 OperatorToda::STATUS_PENDING_ADMIN,
             ])
             ->exists();
@@ -193,8 +195,24 @@ class Operator extends Model
      */
     public function openMemberships()
     {
+        return $this->todaMemberships()->open();
+    }
+
+    /**
+     * Count of memberships that count toward the TODA limit: every active or
+     * in-flight application (rejected/inactive rows do not count).
+     */
+    public function todaMembershipCount(): int
+    {
         return $this->todaMemberships()
-            ->whereIn('status', [OperatorToda::STATUS_PENDING, OperatorToda::STATUS_PENDING_ADMIN]);
+            ->whereIn('status', [
+                OperatorToda::STATUS_ACTIVE,
+                OperatorToda::STATUS_PENDING,
+                OperatorToda::STATUS_PENDING_TFRB,
+                OperatorToda::STATUS_PENDING_SUPERADMIN,
+                OperatorToda::STATUS_PENDING_ADMIN,
+            ])
+            ->count();
     }
 
     /**

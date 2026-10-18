@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Notification;
 use App\Models\Operator;
 use App\Models\OperatorToda;
+use App\Models\Rating;
 use App\Models\Toda;
 use App\Models\User;
 use App\Services\TodaMembershipService;
@@ -13,9 +15,10 @@ use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
- * Multi-TODA membership join / approval workflow:
- *   operator request -> TODA president review -> superadmin/TFRB final approval
- * plus the president "add existing operator" and admin multi-select paths.
+ * Multi-TODA membership workflow with THREE required approvals:
+ *   driver request -> TODA president -> TFRB officer -> superadmin final.
+ * Also covers the three-TODA limit, duplicate prevention, rejection reasons +
+ * driver notifications, QR identity, and backend trip-start validation.
  */
 class TodaMembershipTest extends TestCase
 {
@@ -83,6 +86,13 @@ class TodaMembershipTest extends TestCase
         return $operator;
     }
 
+    private function makeAdmin(string $role = 'superadmin'): User
+    {
+        return $this->makeUser($role);
+    }
+
+    // --- Stage 1: driver request + president review -------------------------
+
     public function test_operator_can_request_to_join_another_toda()
     {
         $todaA = $this->makeToda();
@@ -99,7 +109,7 @@ class TodaMembershipTest extends TestCase
             'status' => OperatorToda::STATUS_PENDING,
         ]);
 
-        // Pending membership does not make the operator rateable yet.
+        // A pending membership is not rateable yet.
         $this->assertFalse($operator->fresh()->getRateableTodas()->contains('id', $todaB->id));
     }
 
@@ -140,6 +150,32 @@ class TodaMembershipTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
+    public function test_operator_cannot_exceed_three_toda_limit()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $todaC = $this->makeToda();
+        $todaD = $this->makeToda();
+        $operator = $this->makeOperator($todaA); // home membership = 1
+
+        $service = app(TodaMembershipService::class);
+        $service->requestJoin($operator, $todaB);
+        $service->requestJoin($operator, $todaC);
+
+        // 3 memberships now (home + B + C); a fourth is refused on the backend.
+        $this->assertSame(3, $operator->fresh()->todaMembershipCount());
+
+        $this->actingAs($operator->user)
+            ->post(route('operator.todas.join'), ['toda_id' => $todaD->id])
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('operator_toda', [
+            'operator_id' => $operator->id,
+            'toda_id' => $todaD->id,
+        ]);
+        $this->assertSame(3, $operator->fresh()->todaMembershipCount());
+    }
+
     public function test_president_sees_join_request_for_their_toda()
     {
         $todaA = $this->makeToda();
@@ -171,7 +207,7 @@ class TodaMembershipTest extends TestCase
         $this->assertSame(OperatorToda::STATUS_PENDING, $membership->fresh()->status);
     }
 
-    public function test_president_approval_moves_membership_to_pending_admin()
+    public function test_president_approval_moves_membership_to_pending_tfrb()
     {
         $todaA = $this->makeToda();
         $todaB = $this->makeToda();
@@ -183,12 +219,29 @@ class TodaMembershipTest extends TestCase
             ->patch(route('president.memberships.approve', $membership))
             ->assertRedirect(route('president.members'));
 
-        $this->assertSame(OperatorToda::STATUS_PENDING_ADMIN, $membership->fresh()->status);
-        // Still not rateable until the final approval.
+        $this->assertSame(OperatorToda::STATUS_PENDING_TFRB, $membership->fresh()->status);
         $this->assertFalse($operator->fresh()->getRateableTodas()->contains('id', $todaB->id));
     }
 
-    public function test_president_can_reject_a_join_request()
+    public function test_president_cannot_approve_their_own_request()
+    {
+        $todaB = $this->makeToda();
+        $presB = $this->makePresident($todaB);
+
+        // The president's own operator row is pushed back to a pending request.
+        $presB['operator']->todaMemberships()
+            ->where('toda_id', $todaB->id)
+            ->update(['status' => OperatorToda::STATUS_PENDING]);
+        $membership = $presB['operator']->todaMemberships()->where('toda_id', $todaB->id)->first();
+
+        $this->actingAs($presB['user'])
+            ->patch(route('president.memberships.approve', $membership))
+            ->assertSessionHas('error');
+
+        $this->assertSame(OperatorToda::STATUS_PENDING, $membership->fresh()->status);
+    }
+
+    public function test_president_rejection_records_reason_and_notifies_driver()
     {
         $todaA = $this->makeToda();
         $todaB = $this->makeToda();
@@ -200,8 +253,71 @@ class TodaMembershipTest extends TestCase
             ->patch(route('president.memberships.reject', $membership), ['note' => 'Not from our area'])
             ->assertRedirect(route('president.members'));
 
-        $this->assertSame(OperatorToda::STATUS_REJECTED, $membership->fresh()->status);
+        $membership->refresh();
+        $this->assertSame(OperatorToda::STATUS_REJECTED, $membership->status);
+        $this->assertSame('Not from our area', $membership->rejectionReason());
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $operator->user_id,
+            'type' => 'toda_membership',
+            'title' => 'TODA Membership Rejected',
+        ]);
     }
+
+    // --- Stage 2: TFRB verification -----------------------------------------
+
+    public function test_tfrb_verification_moves_membership_to_pending_superadmin()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $operator = $this->makeOperator($todaA);
+        $presB = $this->makePresident($todaB);
+        $tfrb = $this->makeAdmin('tfrb_officer');
+        $membership = app(TodaMembershipService::class)->requestJoin($operator, $todaB);
+        app(TodaMembershipService::class)->presidentApprove($membership, $presB['user']);
+
+        $this->actingAs($tfrb)
+            ->patch(route('tfrb-officer.operators.memberships.approve', $membership))
+            ->assertRedirect();
+
+        $this->assertSame(OperatorToda::STATUS_PENDING_SUPERADMIN, $membership->fresh()->status);
+        $this->assertFalse($operator->fresh()->getRateableTodas()->contains('id', $todaB->id));
+    }
+
+    public function test_tfrb_cannot_skip_the_president_stage()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $operator = $this->makeOperator($todaA);
+        $tfrb = $this->makeAdmin('tfrb_officer');
+        $membership = app(TodaMembershipService::class)->requestJoin($operator, $todaB);
+
+        $this->actingAs($tfrb)
+            ->patch(route('tfrb-officer.operators.memberships.approve', $membership))
+            ->assertSessionHas('error');
+
+        $this->assertSame(OperatorToda::STATUS_PENDING, $membership->fresh()->status);
+    }
+
+    public function test_tfrb_can_reject_at_its_stage()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $operator = $this->makeOperator($todaA);
+        $presB = $this->makePresident($todaB);
+        $tfrb = $this->makeAdmin('tfrb_officer');
+        $membership = app(TodaMembershipService::class)->requestJoin($operator, $todaB);
+        app(TodaMembershipService::class)->presidentApprove($membership, $presB['user']);
+
+        $this->actingAs($tfrb)
+            ->patch(route('tfrb-officer.operators.memberships.reject', $membership), ['note' => 'Franchise mismatch'])
+            ->assertRedirect();
+
+        $this->assertSame(OperatorToda::STATUS_REJECTED, $membership->fresh()->status);
+        $this->assertSame('Franchise mismatch', $membership->fresh()->rejectionReason());
+    }
+
+    // --- Stage 3: superadmin final approval ---------------------------------
 
     public function test_superadmin_final_approval_activates_membership()
     {
@@ -209,10 +325,12 @@ class TodaMembershipTest extends TestCase
         $todaB = $this->makeToda();
         $operator = $this->makeOperator($todaA);
         $presB = $this->makePresident($todaB);
-        $admin = $this->makeUser('superadmin');
+        $tfrb = $this->makeAdmin('tfrb_officer');
+        $admin = $this->makeAdmin('superadmin');
 
         $membership = app(TodaMembershipService::class)->requestJoin($operator, $todaB);
         app(TodaMembershipService::class)->presidentApprove($membership, $presB['user']);
+        app(TodaMembershipService::class)->tfrbApprove($membership, $tfrb);
 
         $this->actingAs($admin)
             ->patch(route('superadmin.operators.memberships.approve', $membership))
@@ -220,41 +338,85 @@ class TodaMembershipTest extends TestCase
 
         $this->assertSame(OperatorToda::STATUS_ACTIVE, $membership->fresh()->status);
         $this->assertTrue($operator->fresh()->getRateableTodas()->contains('id', $todaB->id));
+
+        // The driver is notified once the membership is fully approved.
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $operator->user_id,
+            'type' => 'toda_membership',
+            'title' => 'TODA Membership Approved',
+        ]);
     }
 
-    public function test_superadmin_can_reject_a_membership_request()
+    public function test_superadmin_cannot_skip_the_tfrb_stage()
     {
         $todaA = $this->makeToda();
         $todaB = $this->makeToda();
         $operator = $this->makeOperator($todaA);
         $presB = $this->makePresident($todaB);
-        $admin = $this->makeUser('superadmin');
-
-        $membership = app(TodaMembershipService::class)->presidentAdd($operator, $todaB, $presB['user']);
+        $admin = $this->makeAdmin('superadmin');
+        $membership = app(TodaMembershipService::class)->requestJoin($operator, $todaB);
+        app(TodaMembershipService::class)->presidentApprove($membership, $presB['user']);
 
         $this->actingAs($admin)
-            ->patch(route('superadmin.operators.memberships.reject', $membership))
+            ->patch(route('superadmin.operators.memberships.approve', $membership))
+            ->assertSessionHas('error');
+
+        $this->assertSame(OperatorToda::STATUS_PENDING_TFRB, $membership->fresh()->status);
+    }
+
+    public function test_superadmin_can_reject_the_final_stage()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $operator = $this->makeOperator($todaA);
+        $presB = $this->makePresident($todaB);
+        $tfrb = $this->makeAdmin('tfrb_officer');
+        $admin = $this->makeAdmin('superadmin');
+
+        $membership = app(TodaMembershipService::class)->requestJoin($operator, $todaB);
+        app(TodaMembershipService::class)->presidentApprove($membership, $presB['user']);
+        app(TodaMembershipService::class)->tfrbApprove($membership, $tfrb);
+
+        $this->actingAs($admin)
+            ->patch(route('superadmin.operators.memberships.reject', $membership), ['note' => 'Documents incomplete'])
             ->assertRedirect();
 
         $this->assertSame(OperatorToda::STATUS_REJECTED, $membership->fresh()->status);
     }
 
-    public function test_superadmin_sees_membership_requests_card()
+    public function test_tfrb_sees_verification_card_and_superadmin_sees_final_card()
     {
         $todaA = $this->makeToda();
         $todaB = $this->makeToda();
         $operator = $this->makeOperator($todaA);
         $presB = $this->makePresident($todaB);
-        $admin = $this->makeUser('superadmin');
+        $tfrb = $this->makeAdmin('tfrb_officer');
+        $admin = $this->makeAdmin('superadmin');
+        $membership = app(TodaMembershipService::class)->requestJoin($operator, $todaB);
+        app(TodaMembershipService::class)->presidentApprove($membership, $presB['user']);
 
-        app(TodaMembershipService::class)->presidentAdd($operator, $todaB, $presB['user']);
+        $this->actingAs($tfrb)
+            ->get(route('tfrb-officer.operators'))
+            ->assertOk()
+            ->assertSee('TODA Membership — TFRB Verification', false)
+            ->assertSee($operator->user->name, false);
+
+        // Not yet visible to the superadmin (still at the TFRB stage).
+        $this->actingAs($admin)
+            ->get(route('superadmin.operators'))
+            ->assertOk()
+            ->assertDontSee('TODA Membership — Final Approval', false);
+
+        app(TodaMembershipService::class)->tfrbApprove($membership, $tfrb);
 
         $this->actingAs($admin)
             ->get(route('superadmin.operators'))
             ->assertOk()
-            ->assertSee('TODA Membership Requests', false)
+            ->assertSee('TODA Membership — Final Approval', false)
             ->assertSee($operator->user->name, false);
     }
+
+    // --- President adds an existing operator ---------------------------------
 
     public function test_president_can_add_existing_operator_without_new_account()
     {
@@ -274,10 +436,11 @@ class TodaMembershipTest extends TestCase
         $this->assertSame($userCount, User::count());
         $this->assertSame($operatorCount, Operator::count());
 
+        // President step counts as stage 1 done -> awaits TFRB verification.
         $this->assertDatabaseHas('operator_toda', [
             'operator_id' => $operator->id,
             'toda_id' => $todaB->id,
-            'status' => OperatorToda::STATUS_PENDING_ADMIN,
+            'status' => OperatorToda::STATUS_PENDING_TFRB,
         ]);
     }
 
@@ -294,15 +457,16 @@ class TodaMembershipTest extends TestCase
             ->assertSessionHas('error');
     }
 
+    // --- Admin multi-select + limit -----------------------------------------
+
     public function test_admin_multi_select_adds_and_removes_memberships()
     {
         $todaA = $this->makeToda();
         $todaB = $this->makeToda();
         $todaC = $this->makeToda();
         $operator = $this->makeOperator($todaA);
-        $admin = $this->makeUser('superadmin');
+        $admin = $this->makeAdmin('superadmin');
 
-        // Add B, keep home A.
         $this->actingAs($admin)->put(route('superadmin.operators.update', $operator), [
             'name' => $operator->user->name,
             'email' => $operator->user->email,
@@ -318,7 +482,6 @@ class TodaMembershipTest extends TestCase
             'status' => OperatorToda::STATUS_ACTIVE,
         ]);
 
-        // Now add C and drop B (home A stays).
         $this->actingAs($admin)->put(route('superadmin.operators.update', $operator), [
             'name' => $operator->user->name,
             'email' => $operator->user->email,
@@ -337,7 +500,6 @@ class TodaMembershipTest extends TestCase
             'toda_id' => $todaC->id,
             'status' => OperatorToda::STATUS_ACTIVE,
         ]);
-        // Home TODA is always kept.
         $this->assertDatabaseHas('operator_toda', [
             'operator_id' => $operator->id,
             'toda_id' => $todaA->id,
@@ -345,12 +507,33 @@ class TodaMembershipTest extends TestCase
         ]);
     }
 
-    public function test_edit_form_shows_membership_checkboxes()
+    public function test_admin_multi_select_enforces_three_toda_limit()
     {
         $todaA = $this->makeToda();
         $todaB = $this->makeToda();
+        $todaC = $this->makeToda();
+        $todaD = $this->makeToda();
         $operator = $this->makeOperator($todaA);
-        $admin = $this->makeUser('superadmin');
+        $admin = $this->makeAdmin('superadmin');
+
+        // home A + B + C + D = 4 > 3 -> rejected on the backend.
+        $this->actingAs($admin)->put(route('superadmin.operators.update', $operator), [
+            'name' => $operator->user->name,
+            'email' => $operator->user->email,
+            'plate_number' => $operator->plate_number,
+            'body_number' => $operator->body_number,
+            'toda_id' => $todaA->id,
+            'toda_ids' => [$todaB->id, $todaC->id, $todaD->id],
+        ])->assertSessionHasErrors('toda_ids');
+
+        $this->assertSame(1, $operator->fresh()->todaMembershipCount());
+    }
+
+    public function test_edit_form_shows_membership_checkboxes()
+    {
+        $todaA = $this->makeToda();
+        $operator = $this->makeOperator($todaA);
+        $admin = $this->makeAdmin('superadmin');
 
         $this->actingAs($admin)
             ->get(route('superadmin.operators.edit', $operator))
@@ -358,6 +541,8 @@ class TodaMembershipTest extends TestCase
             ->assertSee('TODA Memberships', false)
             ->assertSee('name="toda_ids[]"', false);
     }
+
+    // --- President search ----------------------------------------------------
 
     public function test_president_search_finds_existing_operator()
     {
@@ -399,5 +584,55 @@ class TodaMembershipTest extends TestCase
         $this->actingAs($operator->user)
             ->getJson(route('president.operators.search', ['q' => 'x']))
             ->assertForbidden();
+    }
+
+    // --- QR identity + trip-start validation --------------------------------
+
+    public function test_qr_scan_identifies_driver_with_pending_membership()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $operator = $this->makeOperator($todaA);
+        app(TodaMembershipService::class)->requestJoin($operator, $todaB); // pending in B
+
+        // The permanent QR still resolves the driver even though one membership
+        // is only pending.
+        $this->get(route('rate.operator', $operator->qr_code))
+            ->assertOk()
+            ->assertSee($operator->user->name);
+    }
+
+    public function test_backend_rejects_trip_start_under_a_pending_membership()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $operator = $this->makeOperator($todaA);
+        app(TodaMembershipService::class)->requestJoin($operator, $todaB);
+
+        $this->post(route('rate.submit', $operator->qr_code), [
+            'rating' => 5,
+            'toda_id' => $todaB->id,
+            'start_location' => 'A',
+            'end_location' => 'B',
+        ])->assertNotFound();
+
+        $this->assertSame(0, Rating::count());
+    }
+
+    public function test_active_membership_is_unaffected_by_a_pending_one()
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $operator = $this->makeOperator($todaA);
+        app(TodaMembershipService::class)->requestJoin($operator, $todaB);
+
+        $rateable = $operator->fresh()->getRateableTodas();
+
+        // Only the active home TODA is offered; the pending one is excluded.
+        $this->assertTrue($rateable->contains('id', $todaA->id));
+        $this->assertFalse($rateable->contains('id', $todaB->id));
+
+        // No notification spam for a plain pending request.
+        $this->assertSame(0, Notification::where('user_id', $operator->user_id)->count());
     }
 }

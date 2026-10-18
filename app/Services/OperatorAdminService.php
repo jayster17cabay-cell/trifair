@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Write-side operator operations shared by the Superadmin and TFRB Officer
@@ -110,6 +111,20 @@ class OperatorAdminService
             'body_number.unique' => 'This body number is already registered in the system.',
         ]);
 
+        // A driver may belong to at most three TODAs, home TODA included. The
+        // home checkbox is disabled in the form, so it is merged back in here
+        // before the cap is applied.
+        $selectedTodaIds = array_values(array_unique(array_filter(array_merge(
+            $data['toda_ids'] ?? [],
+            [$data['toda_id']]
+        ))));
+
+        if (count($selectedTodaIds) > \App\Models\OperatorToda::MAX_TODAS) {
+            throw ValidationException::withMessages([
+                'toda_ids' => 'An operator may belong to at most ' . \App\Models\OperatorToda::MAX_TODAS . ' TODAs.',
+            ]);
+        }
+
         $operator->user->update([
             'name' => $data['name'],
             'email' => $data['email'],
@@ -132,8 +147,7 @@ class OperatorAdminService
         // Reconcile TODA memberships with the multi-select (the home TODA is
         // always kept). An admin drives this form, so selected memberships are
         // activated directly; unchecked ones stop being rateable.
-        $todaIds = array_merge($data['toda_ids'] ?? [], [$data['toda_id']]);
-        app(TodaMembershipService::class)->syncMemberships($operator, $todaIds, Auth::user());
+        app(TodaMembershipService::class)->syncMemberships($operator, $selectedTodaIds, Auth::user());
 
         ActivityLogger::log('update_operator', "Updated operator {$operator->user->name} ({$operator->user->email})", $operator, 'operator');
         app(AdminDashboardService::class)->flush();

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helpers\ActivityLogger;
+use App\Models\Notification;
 use App\Models\Operator;
 use App\Models\OperatorToda;
 use App\Models\Toda;
@@ -11,18 +12,21 @@ use Illuminate\Support\Collection;
 
 /**
  * TODA membership lifecycle. An operator's membership in a TODA is a row on
- * the `operator_toda` table and moves through two approval stages:
+ * the `operator_toda` table and moves through THREE approvals before it is
+ * Active:
  *
- *   pending        operator asks to join          -> TODA president reviews
- *   pending_admin  president approved / added it  -> superadmin/TFRB final approval
- *   active         fully approved                 -> rateable under the TODA
- *   rejected       declined at either stage
+ *   pending            operator asks to join            -> TODA president reviews
+ *   pending_tfrb       president approved               -> TFRB officer verifies
+ *   pending_superadmin TFRB officer approved            -> superadmin final approval
+ *   active             all three approvals done         -> rateable under the TODA
+ *   rejected           declined at any stage (reason recorded)
  *
  * A President may add an *existing* operator straight to the TODA (no new
- * account) but that still lands as pending_admin for the final approval; only a
- * superadmin/TFRB (or the operator edit form, which an admin drives) activates
- * a membership directly. Every transition is written to the activity log so the
- * two-stage review is auditable.
+ * account) — the president step counts as done, so it lands as pending_tfrb.
+ * Only a superadmin/TFRB (or the operator edit form, which an admin drives)
+ * activates a membership directly. Every decision is written to the activity
+ * log with the approving user, decision, timestamp and reason, and the driver
+ * is notified on rejection and on final activation.
  */
 class TodaMembershipService
 {
@@ -36,6 +40,8 @@ class TodaMembershipService
             ->whereIn('status', [
                 OperatorToda::STATUS_ACTIVE,
                 OperatorToda::STATUS_PENDING,
+                OperatorToda::STATUS_PENDING_TFRB,
+                OperatorToda::STATUS_PENDING_SUPERADMIN,
                 OperatorToda::STATUS_PENDING_ADMIN,
             ])
             ->pluck('toda_id')
@@ -50,20 +56,33 @@ class TodaMembershipService
     }
 
     /**
-     * Self-service join request: the operator asks to join a TODA, landing the
-     * membership in the president's review queue. Returns the membership row
-     * (unchanged when one is already open/active).
+     * Whether the operator may open one more membership without breaking the
+     * three-TODA limit.
      */
-    public function requestJoin(Operator $operator, Toda $toda): OperatorToda
+    public function canJoinAnotherToda(Operator $operator): bool
+    {
+        return $operator->todaMembershipCount() < OperatorToda::MAX_TODAS;
+    }
+
+    /**
+     * Self-service join request: the operator asks to join a TODA, landing the
+     * membership in the president's review queue. Returns the membership row,
+     * or null when the three-TODA limit is already reached.
+     */
+    public function requestJoin(Operator $operator, Toda $toda): ?OperatorToda
     {
         $existing = $operator->membershipFor($toda->id);
 
-        if ($existing && in_array($existing->status, [
-            OperatorToda::STATUS_ACTIVE,
-            OperatorToda::STATUS_PENDING,
-            OperatorToda::STATUS_PENDING_ADMIN,
-        ], true)) {
+        if ($existing && $existing->isOpen()) {
             return $existing;
+        }
+
+        if ($existing && $existing->isActive()) {
+            return $existing;
+        }
+
+        if (!$this->canJoinAnotherToda($operator)) {
+            return null;
         }
 
         $membership = $operator->todaMemberships()->updateOrCreate(
@@ -82,15 +101,18 @@ class TodaMembershipService
     }
 
     /**
-     * TODA president's first-level approval: pending -> pending_admin.
+     * Stage 1 — TODA president's approval: pending -> pending_tfrb. The
+     * president must own the TODA and cannot approve their own application.
      */
     public function presidentApprove(OperatorToda $membership, User $president): OperatorToda
     {
-        $membership->update(['status' => OperatorToda::STATUS_PENDING_ADMIN]);
+        $membership->update(['status' => OperatorToda::STATUS_PENDING_TFRB]);
+
+        app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log(
             'approve_toda_membership_president',
-            "{$president->name} approved {$this->name($membership->operator)}'s request to join {$this->todaName($membership)} — awaiting final approval",
+            "{$president->name} approved {$this->name($membership->operator)}'s request to join {$this->todaName($membership)} — awaiting TFRB verification",
             $membership,
             ActivityLogger::CATEGORY_OPERATOR
         );
@@ -99,7 +121,26 @@ class TodaMembershipService
     }
 
     /**
-     * Superadmin/TFRB final approval: any open state -> active.
+     * Stage 2 — TFRB officer's verification: pending_tfrb -> pending_superadmin.
+     */
+    public function tfrbApprove(OperatorToda $membership, User $officer): OperatorToda
+    {
+        $membership->update(['status' => OperatorToda::STATUS_PENDING_SUPERADMIN]);
+
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log(
+            'verify_toda_membership_tfrb',
+            "{$officer->name} verified {$this->name($membership->operator)}'s membership in {$this->todaName($membership)} — awaiting final superadmin approval",
+            $membership,
+            ActivityLogger::CATEGORY_OFFICER
+        );
+
+        return $membership;
+    }
+
+    /**
+     * Stage 3 — superadmin final approval: pending_superadmin -> active.
      */
     public function finalApprove(OperatorToda $membership, User $admin): OperatorToda
     {
@@ -111,14 +152,22 @@ class TodaMembershipService
             'approve_toda_membership_final',
             "{$admin->name} gave final approval for {$this->name($membership->operator)} in {$this->todaName($membership)}",
             $membership,
-            ActivityLogger::CATEGORY_OPERATOR
+            ActivityLogger::CATEGORY_OFFICER
+        );
+
+        $this->notifyDriver(
+            $membership->operator,
+            'TODA Membership Approved',
+            'Your membership in ' . $this->todaName($membership) . ' is now active. You may be rated under this TODA.'
         );
 
         return $membership;
     }
 
     /**
-     * Decline a membership request at either stage.
+     * Decline a membership application at any stage. The reason is recorded in
+     * the activity log (surfaced on the driver's membership card) and the
+     * driver is notified.
      */
     public function reject(OperatorToda $membership, User $by, ?string $note = null): OperatorToda
     {
@@ -126,32 +175,47 @@ class TodaMembershipService
 
         app(AdminDashboardService::class)->flush();
 
+        $reason = $note ? trim($note) : 'No reason provided.';
+
         ActivityLogger::log(
             'reject_toda_membership',
-            "{$by->name} rejected {$this->name($membership->operator)}'s membership in {$this->todaName($membership)}"
-                . ($note ? " — {$note}" : ''),
+            $reason,
             $membership,
-            ActivityLogger::CATEGORY_OPERATOR
+            $by->role === 'superadmin' || $by->role === 'tfrb_officer'
+                ? ActivityLogger::CATEGORY_OFFICER
+                : ActivityLogger::CATEGORY_OPERATOR
+        );
+
+        $this->notifyDriver(
+            $membership->operator,
+            'TODA Membership Rejected',
+            'Your request to join ' . $this->todaName($membership) . ' was declined. Reason: ' . $reason
         );
 
         return $membership;
     }
 
     /**
-     * A president adds an existing operator to their TODA. The membership lands
-     * as pending_admin — the president cannot self-approve the final step.
+     * A president adds an existing operator to their TODA. The president step
+     * counts as stage 1 done, so the membership lands as pending_tfrb — the
+     * president cannot skip the TFRB and superadmin stages. Returns null when
+     * the three-TODA limit is already reached.
      */
-    public function presidentAdd(Operator $operator, Toda $toda, User $president): OperatorToda
+    public function presidentAdd(Operator $operator, Toda $toda, User $president): ?OperatorToda
     {
         $existing = $operator->membershipFor($toda->id);
 
-        if ($existing && $existing->status === OperatorToda::STATUS_ACTIVE) {
+        if ($existing && $existing->isActive()) {
             return $existing;
+        }
+
+        if (!$existing && !$this->canJoinAnotherToda($operator)) {
+            return null;
         }
 
         $membership = $operator->todaMemberships()->updateOrCreate(
             ['toda_id' => $toda->id],
-            ['status' => OperatorToda::STATUS_PENDING_ADMIN, 'joined_at' => now()]
+            ['status' => OperatorToda::STATUS_PENDING_TFRB, 'joined_at' => now()]
         );
 
         // Adopting a TODA-less operator makes this TODA their home.
@@ -162,9 +226,11 @@ class TodaMembershipService
             }
         }
 
+        app(AdminDashboardService::class)->flush();
+
         ActivityLogger::log(
             'add_toda_membership_president',
-            "{$president->name} added {$this->name($operator)} to {$toda->name} — awaiting final approval",
+            "{$president->name} added {$this->name($operator)} to {$toda->name} — awaiting TFRB verification",
             $membership,
             ActivityLogger::CATEGORY_OPERATOR
         );
@@ -195,8 +261,9 @@ class TodaMembershipService
     /**
      * Reconcile an operator's active memberships with a desired set of TODA ids
      * (used by the operator edit form's multi-select). The operator's home TODA
-     * is always kept. Memberships that fall outside the desired set are removed
-     * so the operator stops being rateable under them.
+     * is always kept and the three-TODA limit is enforced. Memberships that
+     * fall outside the desired set are removed so the operator stops being
+     * rateable under them.
      *
      * @param  array<int, mixed>  $todaIds
      */
@@ -213,6 +280,9 @@ class TodaMembershipService
         if ($desired->isEmpty()) {
             return;
         }
+
+        // Enforce the three-TODA limit (home TODA first).
+        $desired = $desired->take(OperatorToda::MAX_TODAS)->values();
 
         // Drop active memberships the admin unchecked (never the home TODA).
         $operator->todaMemberships()
@@ -251,9 +321,8 @@ class TodaMembershipService
     }
 
     /**
-     * Pending memberships for a TODA awaiting its president's review, newest
-     * first, eager-loading the operator + user so a queue can be rendered
-     * without N+1 queries.
+     * Stage 1 queue: pending memberships for a TODA awaiting its president,
+     * newest first, eager-loading the operator + user.
      */
     public function presidentQueue(Toda $toda): Collection
     {
@@ -265,12 +334,24 @@ class TodaMembershipService
     }
 
     /**
-     * Memberships awaiting the superadmin/TFRB's final approval, newest first.
+     * Stage 2 queue: memberships the TFRB officer must verify (president
+     * approved; legacy pending_admin included), newest first.
+     */
+    public function tfrbQueue(): Collection
+    {
+        return OperatorToda::with(['operator.user', 'toda'])
+            ->pendingTfrb()
+            ->latest('id')
+            ->get();
+    }
+
+    /**
+     * Stage 3 queue: memberships awaiting the superadmin's final approval.
      */
     public function adminQueue(): Collection
     {
         return OperatorToda::with(['operator.user', 'toda'])
-            ->where('status', OperatorToda::STATUS_PENDING_ADMIN)
+            ->where('status', OperatorToda::STATUS_PENDING_SUPERADMIN)
             ->latest('id')
             ->get();
     }
@@ -293,6 +374,8 @@ class TodaMembershipService
                     ->whereIn('status', [
                         OperatorToda::STATUS_ACTIVE,
                         OperatorToda::STATUS_PENDING,
+                        OperatorToda::STATUS_PENDING_TFRB,
+                        OperatorToda::STATUS_PENDING_SUPERADMIN,
                         OperatorToda::STATUS_PENDING_ADMIN,
                     ]);
             })
@@ -309,6 +392,24 @@ class TodaMembershipService
             ->orderBy('id')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Notify the driver behind a membership through the existing notifications
+     * table (no schema change).
+     */
+    private function notifyDriver(?Operator $operator, string $title, string $message): void
+    {
+        if (!$operator || !$operator->user_id) {
+            return;
+        }
+
+        Notification::create([
+            'user_id' => $operator->user_id,
+            'type' => 'toda_membership',
+            'title' => $title,
+            'message' => $message,
+        ]);
     }
 
     private function name(?Operator $operator): string

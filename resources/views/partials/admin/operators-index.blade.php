@@ -3,7 +3,7 @@
 @php $currentStatus = request('status'); @endphp
 
 @if (!empty($membershipRequests) && $membershipRequests->isNotEmpty())
-    @include('partials.admin.membership-requests', ['membershipRequests' => $membershipRequests, 'routePrefix' => $routePrefix])
+    @include('partials.admin.membership-requests', ['membershipRequests' => $membershipRequests, 'routePrefix' => $routePrefix, 'membershipStage' => $membershipStage ?? ($routePrefix === 'tfrb-officer' ? 'tfrb' : 'superadmin')])
 @endif
 
 <div class="tw-page-head">

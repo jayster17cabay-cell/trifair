@@ -218,7 +218,7 @@ class SuperadminController extends Controller
         extract(app(AdminQueryService::class)->reportsData($request));
         $activeOperators = app(AdminQueryService::class)->activeOperators();
 
-        return view('superadmin.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating', 'period'));
+        return view('superadmin.reports', compact('operators', 'activeOperators', 'todas', 'dateFrom', 'dateTo', 'todaId', 'minRating', 'period', 'todaBreakdown'));
     }
 
     /**
@@ -421,13 +421,13 @@ class SuperadminController extends Controller
     }
 
     /**
-     * Final approval of a TODA membership request (a president already approved
-     * it, or added it directly). Activating makes the operator rateable there.
+     * Final approval of a TODA membership (the president and TFRB officer
+     * already approved). Activating makes the operator rateable there.
      */
     public function approveMembership(OperatorToda $membership)
     {
-        if (!$membership->isOpen()) {
-            return back()->with('error', 'This membership is no longer awaiting final approval.');
+        if (!$membership->isPendingSuperadmin()) {
+            return back()->with('error', 'This membership is not awaiting final approval.');
         }
 
         app(TodaMembershipService::class)->finalApprove($membership, Auth::user());
@@ -437,6 +437,10 @@ class SuperadminController extends Controller
 
     public function rejectMembership(Request $request, OperatorToda $membership)
     {
+        if (!$membership->isPendingSuperadmin()) {
+            return back()->with('error', 'This membership is not awaiting final approval.');
+        }
+
         $request->validate([
             'note' => ['nullable', 'string', 'max:500'],
         ]);

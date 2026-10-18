@@ -24,6 +24,7 @@
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.ratings'), 'icon' => 'bi-award', 'value' => number_format($averageRating ?? 0, 1), 'label' => 'Avg Rating', 'live' => 'averageRating']])
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.complaints'), 'icon' => 'bi-flag', 'value' => $totalComplaints, 'label' => 'Complaints', 'live' => 'totalComplaints']])
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.todas'), 'icon' => 'bi-diagram-3', 'value' => $totalTodas, 'label' => 'TODA', 'live' => 'totalTodas']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators'), 'icon' => 'bi-hourglass-split', 'value' => $pendingTodaMemberships ?? 0, 'label' => 'Pending TODA', 'live' => 'pendingTodaMemberships']])
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.officers'), 'icon' => 'bi-shield', 'value' => $totalOfficers, 'label' => 'Officers', 'live' => 'totalOfficers']])
             </div>
         </section>

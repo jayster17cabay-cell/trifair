@@ -1,17 +1,25 @@
 {{--
-    TODA Membership Requests — final superadmin/TFRB approval queue. Rows are
-    operators a TODA president already approved (or added directly); approving
-    activates the membership so the operator becomes rateable under that TODA.
-    Requires: $membershipRequests (OperatorToda collection, status=pending_admin),
-              $routePrefix (superadmin|tfrb-officer).
+    TODA Membership Requests — admin approval queue. The TFRB officer verifies
+    president-approved memberships (pending_tfrb); the superadmin gives the
+    final approval (pending_superadmin). Approving activates the membership so
+    the operator becomes rateable under that TODA.
+    Requires: $membershipRequests (OperatorToda collection), $routePrefix
+              (superadmin|tfrb-officer), $membershipStage ('tfrb'|'superadmin').
 --}}
+@php
+    $stage = ($membershipStage ?? ($routePrefix === 'tfrb-officer' ? 'tfrb' : 'superadmin'));
+    $stageTitle = $stage === 'tfrb' ? 'TODA Membership — TFRB Verification' : 'TODA Membership — Final Approval';
+    $stageNote = $stage === 'tfrb'
+        ? 'Verifying memberships a TODA president already approved. Approval forwards each to the superadmin for final approval.'
+        : 'Final approval of memberships already verified by the TFRB officer. Approving activates the membership.';
+@endphp
 <div class="tw-card mb-6 overflow-hidden">
     <div class="flex items-center justify-between px-4 py-3" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
         <h3 class="tw-card-title text-sm !text-white">
-            <i class="bi bi-diagram-3-fill mr-1 text-gold"></i> TODA Membership Requests
+            <i class="bi bi-diagram-3-fill mr-1 text-gold"></i> {{ $stageTitle }}
             <span class="tw-badge tw-badge-amber ml-2">{{ $membershipRequests->count() }}</span>
         </h3>
-        <p class="hidden text-xs text-slate-300 sm:inline">Awaiting final approval</p>
+        <p class="hidden text-xs text-slate-300 sm:inline">{{ $stage === 'tfrb' ? 'Awaiting TFRB verification' : 'Awaiting final approval' }}</p>
     </div>
 
     <div class="overflow-x-auto">
@@ -67,6 +75,6 @@
         </table>
     </div>
     <div class="border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-xs text-slate-500">
-        <i class="bi bi-info-circle mr-1"></i> Approving activates the membership; rejecting closes the request.
+        <i class="bi bi-info-circle mr-1"></i> {{ $stageNote }}
     </div>
 </div>
