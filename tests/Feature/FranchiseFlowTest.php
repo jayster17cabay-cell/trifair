@@ -431,8 +431,8 @@ class FranchiseFlowTest extends TestCase
         $valid = $this->makeOperator('active');
         $valid->forceFill(['toda_id' => $toda->id])->save();
 
-        // A TODA president keeps an Operator row but is not counted as a member
-        // (the members modal hides them, so the card must agree).
+        // A TODA president keeps an Operator row and is listed as a member
+        // alongside the riders (the members modal shows them, so the card agrees).
         $presidentUser = $this->makeUser('operator_president');
         $presidentUser->forceFill(['toda_id' => $toda->id])->save();
         Operator::create([
@@ -453,11 +453,11 @@ class FranchiseFlowTest extends TestCase
             'status' => FranchiseTerm::STATUS_ACTIVE,
         ]);
 
-        // Warm the dashboard cache while both riders still read as active.
+        // Warm the dashboard cache while all three accounts still read as active.
         $before = collect($service->stats(['includeOfficers' => true])['todaStats'])
             ->firstWhere('id', $toda->id);
-        $this->assertSame(2, (int) $before->operators_count);
-        $this->assertSame(2, (int) $before->active_operators_count);
+        $this->assertSame(3, (int) $before->operators_count);
+        $this->assertSame(3, (int) $before->active_operators_count);
 
         // The franchise lapses, and the admin list (or daily command) reconciles
         // the status — which must invalidate the stale dashboard cache.
@@ -466,8 +466,8 @@ class FranchiseFlowTest extends TestCase
 
         $after = collect($service->stats(['includeOfficers' => true])['todaStats'])
             ->firstWhere('id', $toda->id);
-        $this->assertSame(2, (int) $after->operators_count);
-        $this->assertSame(1, (int) $after->active_operators_count);
+        $this->assertSame(3, (int) $after->operators_count);
+        $this->assertSame(2, (int) $after->active_operators_count);
         $this->assertSame('inactive', $expiring->fresh()->status);
         $this->assertSame('active', $valid->fresh()->status);
     }

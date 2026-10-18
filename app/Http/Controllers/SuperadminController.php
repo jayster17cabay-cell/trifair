@@ -635,6 +635,7 @@ class SuperadminController extends Controller
         $html = view('partials.toda-member-list', [
             'members' => $members,
             'routePrefix' => 'superadmin',
+            'toda' => $toda,
         ])->render();
 
         return response()->json(['html' => $html, 'count' => $members->count()]);

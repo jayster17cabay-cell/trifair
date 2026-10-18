@@ -42,7 +42,7 @@ class Toda extends Model
     {
         $memberCount = function (bool $activeOnly) {
             return Operator::query()
-                ->whereHas('user', fn ($user) => $user->where('role', 'operator'))
+                ->whereHas('user', fn ($user) => $user->whereIn('role', ['operator', 'operator_president']))
                 ->notArchived()
                 ->when($activeOnly, fn ($query) => $query->where('operators.status', 'active'))
                 ->where(function ($query) {

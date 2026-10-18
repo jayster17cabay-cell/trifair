@@ -767,16 +767,16 @@ class AdminQueryService
     {
         return Operator::query()
             ->belongsToToda($toda->id)
-            ->with('user')
+            ->with(['user', 'presidentTodas'])
             ->withCount([
                 'ratings' => fn ($q) => $q->isValid(),
                 'ratings as complaint_count' => fn ($q) => $q->isValid()->isComplaint(),
             ])
             ->withAvg(['ratings as valid_rating_avg' => fn ($q) => $q->isValid()], 'rating')
-            // Presidents are also operators (they keep their own ratable row),
-            // but they are managed under the Presidents section — never from the
-            // TODA members modal, where they could be edited/deleted/rejected.
-            ->whereHas('user', fn ($u) => $u->where('role', 'operator'))
+            // A TODA president is also a member of that TODA, so they belong in
+            // this list. Edit/Remove stay disabled on their row (the account is
+            // managed from the Presidents section) — see todas-member-list-item.
+            ->whereHas('user', fn ($u) => $u->whereIn('role', ['operator', 'operator_president']))
             ->whereNull('archived_at')
             ->get();
     }

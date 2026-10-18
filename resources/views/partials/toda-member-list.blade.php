@@ -1,4 +1,4 @@
-{{-- AJAX-rendered TODA member list. Requires: $members (Collection of Operator with user), $routePrefix --}}
+{{-- AJAX-rendered TODA member list. Requires: $members (Collection of Operator with user), $routePrefix, $toda --}}
 
 @if ($members->isEmpty())
     <div class="py-8 text-center text-slate-400">
@@ -10,6 +10,6 @@
     </div>
 @else
     @foreach ($members as $member)
-        @include('partials.toda-member-list-item', ['member' => $member, 'routePrefix' => $routePrefix])
+        @include('partials.toda-member-list-item', ['member' => $member, 'routePrefix' => $routePrefix, 'toda' => $toda ?? null])
     @endforeach
 @endif
