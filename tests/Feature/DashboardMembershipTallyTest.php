@@ -133,4 +133,37 @@ class DashboardMembershipTallyTest extends TestCase
         $res->assertSee('5.0', false); // Beta: 5
         $res->assertSee('3.0', false); // Alpha: (4 + 2) / 2
     }
+
+    public function test_trip_history_groups_trips_per_toda_and_falls_back_to_home()
+    {
+        $admin = $this->makeUser('superadmin');
+        $todaA = $this->makeToda('Alpha TODA');
+        $todaB = $this->makeToda('Beta TODA');
+
+        // Home TODA is Alpha; the driver then joined Beta.
+        $operator = $this->makeOperator($todaA);
+        $operator->user->forceFill(['name' => 'Multi Toda Driver'])->save();
+        $operator->joinToda($todaB->id);
+
+        $this->makeRating($operator, 5, $todaA->id);
+        $this->makeRating($operator, 4, $todaA->id);
+        $this->makeRating($operator, 2, $todaB->id);
+        // Legacy rating with no TODA -> falls back to the home TODA (Alpha).
+        $this->makeRating($operator, 3, null);
+
+        $html = $this->actingAs($admin)
+            ->get('/superadmin/reports/operators/' . $operator->id . '/trips')
+            ->assertOk()
+            ->json('html');
+
+        // Each TODA is rendered as its own section with its own tally, instead
+        // of one merged trip list.
+        $this->assertStringContainsString('data-trip-group', $html);
+        $this->assertStringContainsString('Alpha TODA', $html);
+        $this->assertStringContainsString('Beta TODA', $html);
+        // Alpha: 2 tagged + 1 legacy fallback = 3 trips.
+        $this->assertStringContainsString('3 trips recorded', $html);
+        // Beta: 1 trip.
+        $this->assertStringContainsString('1 trip recorded', $html);
+    }
 }

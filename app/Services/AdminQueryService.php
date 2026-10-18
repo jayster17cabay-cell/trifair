@@ -786,7 +786,9 @@ class AdminQueryService
 
     /**
      * AJAX endpoint data for the reports page: trip history for a single
-     * operator, capped at 200 trips so the page stays fast at scale.
+     * operator, capped at 200 trips so the page stays fast at scale. The trips
+     * are grouped per TODA so a driver who belongs to 2-3 TODAs sees a separate
+     * history for each one instead of a single merged list.
      */
     public function reportTripsData(Operator $operator, ?string $dateFrom = null, ?string $dateTo = null): array
     {
@@ -812,6 +814,30 @@ class AdminQueryService
         $totalTrips = (clone $query)->count();
         $trips = $query->latest()->limit(200)->get();
 
-        return compact('operator', 'trips', 'totalTrips');
+        // Attribute each trip to the TODA it was recorded under. Legacy ratings
+        // carry no toda_id, so they fall back to the operator's home TODA —
+        // mirroring the per-TODA breakdown on the reports row so the drawer and
+        // the row always agree.
+        $homeTodaId = (int) $operator->toda_id;
+        $todaNames = Toda::pluck('name', 'id');
+
+        $todaGroups = $trips
+            ->groupBy(fn ($rating) => (int) ($rating->toda_id ?: $homeTodaId))
+            ->map(function ($group, $todaId) use ($todaNames, $homeTodaId) {
+                $todaId = (int) $todaId;
+
+                return [
+                    'toda_id' => $todaId,
+                    'name' => $todaNames[$todaId] ?? 'TODA',
+                    'is_home' => $todaId === $homeTodaId,
+                    'count' => $group->count(),
+                    'avg' => round((float) $group->avg('rating'), 1),
+                    'trips' => $group->values(),
+                ];
+            })
+            ->sortByDesc('count')
+            ->values();
+
+        return compact('operator', 'trips', 'totalTrips', 'todaGroups');
     }
 }

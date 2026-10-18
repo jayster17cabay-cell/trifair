@@ -31,14 +31,15 @@
                         title="View trip history for {{ $name }}"
                         onclick="event.stopPropagation(); this.closest('tr').click()">{{ $name }}</button>
                 @if ($todaBreakdown->count() > 1)
-                    <div class="mt-1 flex flex-wrap items-center gap-1">
+                    <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
                         @foreach ($todaBreakdown as $toda)
-                            <span class="tw-badge tw-badge-gray"
+                            <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[0.68rem] font-semibold text-slate-600"
                                   title="{{ $toda['name'] }} — {{ $toda['count'] }} trip{{ $toda['count'] === 1 ? '' : 's' }} in the selected period">
-                                <span class="truncate" style="max-width: 6rem;">{{ $toda['name'] }}</span>
-                                <i class="bi bi-star-fill text-amber-400"></i>
-                                <span>{{ $toda['avg'] !== null ? number_format($toda['avg'], 1) : '—' }}</span>
-                                <span class="text-slate-400">({{ $toda['count'] }})</span>
+                                <span class="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-navy-600"></span>
+                                <span class="truncate" style="max-width: 8rem;">{{ $toda['name'] }}</span>
+                                <i class="bi bi-star-fill text-[0.65rem] text-amber-400"></i>
+                                <span class="text-slate-700">{{ $toda['avg'] !== null ? number_format($toda['avg'], 1) : '—' }}</span>
+                                <span class="font-normal text-slate-400">({{ $toda['count'] }})</span>
                             </span>
                         @endforeach
                     </div>

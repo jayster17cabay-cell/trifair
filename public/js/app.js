@@ -997,7 +997,9 @@
         document.addEventListener('click', function (e) {
             var btn = e.target.closest('[data-trip-show-all]');
             if (!btn) return;
-            listEl.querySelectorAll('[data-trip-more]').forEach(function (el) {
+            // Trips are grouped per TODA; only reveal this group's hidden rows.
+            var scope = btn.closest('[data-trip-group]') || listEl;
+            scope.querySelectorAll('[data-trip-more]').forEach(function (el) {
                 el.classList.remove('hidden');
             });
             btn.classList.add('hidden');
