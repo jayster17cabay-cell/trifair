@@ -12,6 +12,26 @@
     $avg = $ownStats && $ownStats->total > 0 ? round((float) $ownStats->avg, 1) : 0;
     $total = $ownStats ? (int) $ownStats->total : 0;
     $complaints = $ownStats ? (int) $ownStats->complaints : 0;
+
+    // Ratings stay separated per TODA: a driver who belongs to several TODAs
+    // sees each organisation's own average/count, plus the combined total
+    // across every TODA they belong to.
+    $byToda = collect();
+    if ($ownOperator) {
+        $byToda = $ownOperator->getRateableTodas()->map(function ($t) use ($ownOperator) {
+            $s = $ownOperator->countableRatings()
+                ->where('toda_id', $t->id)
+                ->selectRaw('COUNT(*) as total, AVG(rating) as avg')
+                ->first();
+
+            return [
+                'id' => (int) $t->id,
+                'name' => $t->name,
+                'total' => (int) ($s->total ?? 0),
+                'avg' => $s && $s->total > 0 ? round((float) $s->avg, 1) : 0.0,
+            ];
+        })->values();
+    }
 @endphp
 <div class="tw-card overflow-hidden transition-shadow duration-200 hover:shadow-md">
     {{-- Header band — navy blue with gold accent --}}
@@ -44,6 +64,38 @@
             </div>
         </div>
     </div>
+
+    {{-- Per-TODA breakdown — each TODA kept separate, then the combined total --}}
+    @if ($byToda->count() > 1)
+        <div class="border-b border-slate-100 bg-slate-50/40 px-4 py-3">
+            <div class="mb-2 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                <i class="bi bi-diagram-3"></i> Per TODA
+            </div>
+            <div class="space-y-2">
+                @foreach ($byToda as $todaRow)
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0 flex items-center gap-2">
+                            <span class="truncate text-sm font-semibold text-slate-700">{{ $todaRow['name'] }}</span>
+                            <span class="shrink-0 text-xs text-slate-400">{{ $todaRow['total'] }} {{ $todaRow['total'] === 1 ? 'rating' : 'ratings' }}</span>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
+                            @for ($i = 1; $i <= 5; $i++)
+                                <i class="bi {{ $i <= round($todaRow['avg']) ? 'bi-star-fill text-gold' : 'bi-star text-slate-300' }} text-xs"></i>
+                            @endfor
+                            <span class="w-8 text-right text-sm font-bold text-navy-800">{{ number_format($todaRow['avg'], 1) }}</span>
+                        </div>
+                    </div>
+                @endforeach
+                <div class="flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
+                    <span class="text-sm font-bold text-navy-800">Total ({{ $byToda->count() }} TODAs)</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">{{ $total }} {{ $total === 1 ? 'rating' : 'ratings' }}</span>
+                        <span class="w-8 text-right text-sm font-extrabold text-navy-800">{{ number_format($avg, 1) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- Recent ratings list --}}
     <div class="divide-y divide-slate-100">

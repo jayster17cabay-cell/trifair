@@ -325,4 +325,87 @@ class MultiTodaPresidentTest extends TestCase
         $this->assertSame('operator', $user->fresh()->role);
         $this->assertSame(0, $todaB->fresh()->president()->count());
     }
+
+    /** Rate a driver under a specific TODA so per-TODA averages can be asserted. */
+    private function rate(Operator $operator, Toda $toda, int $stars): void
+    {
+        $operator->ratings()->create([
+            'toda_id' => $toda->id,
+            'rating' => $stars,
+            'reason' => 'Trip feedback',
+            'start_location' => 'Pickup',
+            'end_location' => 'Dropoff',
+            'is_valid' => true,
+            'is_reviewed' => false,
+            'is_auto' => false,
+        ]);
+    }
+
+    public function test_president_dashboard_separates_own_ratings_per_toda_with_total(): void
+    {
+        $admin = $this->makeUser('superadmin');
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+
+        $user = $this->makeUser('operator');
+        $operator = $this->makeOperator($user, $todaA);
+        $operator->joinToda($todaB->id);
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $operator->id . '/assign-president', ['toda_id' => $todaA->id]);
+
+        // 5 stars under TODA A, 1 star under TODA B -> 3.0 combined.
+        $this->rate($operator, $todaA, 5);
+        $this->rate($operator, $todaA, 5);
+        $this->rate($operator, $todaB, 1);
+
+        $this->actingAs($user->fresh())
+            ->get('/president/dashboard')
+            ->assertOk()
+            ->assertSee('Per TODA', false)
+            ->assertSee($todaA->name, false)
+            ->assertSee($todaB->name, false)
+            ->assertSee('Total (2 TODAs)', false);
+
+        // The combined total (5,5,1 -> 3.7) must be present alongside both rows.
+        $this->actingAs($user->fresh())
+            ->get('/president/dashboard')
+            ->assertSee('3.7', false);
+    }
+
+    public function test_president_sidebar_section_shows_only_the_selected_block(): void
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makeUser('operator_president');
+        $pres->forceFill(['toda_id' => $toda->id])->save();
+        $operator = $this->makeOperator($pres, $toda);
+        $operator->setTodaPresidency($toda->id, true);
+
+        $member = $this->makeUser('operator', 'Member Rider');
+        $memberOperator = $this->makeOperator($member, $toda);
+        $this->rate($memberOperator, $toda, 5);
+
+        // Text that only exists inside the ratings block (the sidebar also has a
+        // "My Ratings" link, so the block is tracked by its own container id).
+        $ratingsCopy = 'Passenger ratings for your own driving will appear here.';
+
+        // Overview (no section) shows everything.
+        $this->actingAs($pres)
+            ->get('/president/dashboard')
+            ->assertOk()
+            ->assertSee($ratingsCopy, false)
+            ->assertSee('id="membersSection"', false);
+
+        // ?section=ratings shows the ratings block but hides the members block.
+        $this->actingAs($pres)->get('/president/dashboard?section=ratings')
+            ->assertOk()
+            ->assertSee($ratingsCopy, false)
+            ->assertDontSee('id="membersSection"', false);
+
+        // ?section=members shows members but hides the ratings block.
+        $this->actingAs($pres)->get('/president/dashboard?section=members')
+            ->assertOk()
+            ->assertSee('id="membersSection"', false)
+            ->assertDontSee($ratingsCopy, false);
+    }
 }

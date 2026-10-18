@@ -8,9 +8,17 @@
         'showBell' => true,
         'groups' => [
             [
-                'label' => 'Main Menu',
+                'label' => 'Dashboard',
                 'links' => [
-                    ['label' => 'TODA Overview', 'icon' => 'bi-speedometer2', 'route' => 'president.dashboard', 'match' => 'president.dashboard'],
+                    ['label' => 'Overview', 'icon' => 'bi-grid-1x2', 'route' => 'president.dashboard', 'match' => 'president.dashboard', 'active' => !request()->filled('section')],
+                    ['label' => 'My Ratings', 'icon' => 'bi-star', 'href' => route('president.dashboard', ['section' => 'ratings']), 'match' => 'president.dashboard', 'active' => request()->query('section') === 'ratings'],
+                    ['label' => 'Join Requests', 'icon' => 'bi-box-arrow-in-down', 'href' => route('president.dashboard', ['section' => 'join-requests']), 'match' => 'president.dashboard', 'active' => request()->query('section') === 'join-requests'],
+                    ['label' => 'Members', 'icon' => 'bi-people', 'href' => route('president.dashboard', ['section' => 'members']), 'match' => 'president.dashboard', 'active' => request()->query('section') === 'members'],
+                ],
+            ],
+            [
+                'label' => 'Management',
+                'links' => [
                     ['label' => 'Members', 'icon' => 'bi-people', 'route' => 'president.members', 'match' => 'president.members*'],
                 ],
             ],

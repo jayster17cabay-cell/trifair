@@ -3,6 +3,16 @@
 @section('title', 'TODA President Dashboard')
 
 @section('content')
+@php
+    // Sidebar-driven view filtering: picking a section in the sidebar shows only
+    // that block on the dashboard. No section (= Overview) shows everything.
+    $section = request()->query('section');
+    $showAll = !$section || !in_array($section, ['ratings', 'join-requests', 'members'], true);
+    $showRatings = $showAll || $section === 'ratings';
+    $showJoin = $showAll || $section === 'join-requests';
+    $showMembers = $showAll || $section === 'members';
+@endphp
+
 @include('partials.dashboard-hero', [
     'eyebrow' => 'TriFair TODA President',
     'subtitle' => $summary['todaArea'] ? ($summary['todaArea'] . ' · ' . $summary['totalMembers'] . ' members in ' . $toda->name) : ($summary['totalMembers'] . ($summary['totalMembers'] === 1 ? ' member' : ' members') . ' in ' . $toda->name),
@@ -10,8 +20,8 @@
 
 {{-- KPI cards --}}
 <div class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#ownRatings', 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => '#membersSection', 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
     @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-star-half', 'value' => number_format($summary['avgMemberRating'], 1), 'label' => 'Avg Rating']])
     @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-flag', 'value' => $summary['totalComplaints'], 'label' => 'Complaints']])
 </div>
@@ -19,13 +29,15 @@
 {{-- Section 1 — My Ratings (the president's own performance as an operator).
      Member-level ratings are intentionally omitted here; the president reviews
      them per member from the TODA members list below. --}}
+@if ($showRatings)
 <div id="ownRatings" class="mb-4 scroll-mt-24">
     @include('partials.president.own-ratings', ['ownOperator' => $ownOperator, 'ownRecentRatings' => $ownRecentRatings])
 </div>
+@endif
 
 {{-- Join requests: operators asking to join this TODA (president reviews first,
      then superadmin/TFRB gives the final approval). --}}
-@if (($joinRequests ?? collect())->isNotEmpty())
+@if ($showJoin && ($joinRequests ?? collect())->isNotEmpty())
     <div id="joinRequestsSection" class="scroll-mt-24">
         @include('partials.president.join-requests', ['joinRequests' => $joinRequests])
     </div>
@@ -34,6 +46,7 @@
 {{-- Section 2 — Members toggle button --}}
 @php $membersActive = ($membersActive ?? false) || request()->has('search') || request()->has('status'); @endphp
 {{-- Section 2 — Members search + toggle (search is always visible) --}}
+@if ($showMembers)
 <div id="membersSection" class="scroll-mt-24 tw-card mb-4 overflow-hidden">
     <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
         <div class="flex items-center gap-2">
@@ -59,6 +72,7 @@
 <div id="presidentMembersWrap" class="mt-3 {{ $membersActive ? '' : 'hidden' }}">
     @include('partials.president.members-section', ['members' => $members, 'memberDetailUrl' => route('president.members')])
 </div>
+@endif
 
 <div id="presidentMemberModal" class="tw-modal-backdrop hidden">
     <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="presidentMemberModalBody">
