@@ -48,5 +48,22 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
+
+        // Passenger rating/trip submission.
+        //
+        // Keyed on the per-device cookie rather than the IP address, for exactly
+        // the reason documented on RatingController::existingRatingFor(): carriers,
+        // terminals and other NAT'd networks put many unrelated passengers behind
+        // one public IP, so an IP bucket would start returning 429s for innocent
+        // riders the moment traffic spikes. The cookie is APP_KEY-signed, so a bot
+        // cannot mint its own bucket — omitting it falls back to the IP key and
+        // keeps the usual protection against cookie-less floods.
+        RateLimiter::for('rate-submit', function (Request $request) {
+            $deviceId = (string) $request->cookie('tf_pid');
+
+            return $deviceId !== ''
+                ? Limit::perMinute(30)->by('device:' . $deviceId)
+                : Limit::perMinute(30)->by('ip:' . $request->ip());
+        });
     }
 }

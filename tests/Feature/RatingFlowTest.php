@@ -373,4 +373,36 @@ class RatingFlowTest extends TestCase
             ->assertOk()
             ->assertSee('Operator/Staff account');
     }
+
+    public function test_rate_submit_throttle_is_keyed_per_device_not_per_ip()
+    {
+        $submit = fn () => $this->post('/rate/qr-that-does-not-exist', ['rating' => 5]);
+
+        $this->withCookie('tf_pid', 'device-a');
+
+        foreach (range(1, 30) as $attempt) {
+            $submit()->assertStatus(404);
+        }
+
+        $submit()->assertStatus(429);
+
+        // A second device behind the very same public IP keeps its own bucket,
+        // so carrier/NAT sharing must not lock innocent riders out.
+        $this->withCookie('tf_pid', 'device-b');
+
+        $submit()->assertStatus(404);
+    }
+
+    public function test_rate_submit_throttle_falls_back_to_ip_when_device_cookie_is_absent()
+    {
+        $submit = fn () => $this->post('/rate/qr-that-does-not-exist', ['rating' => 5]);
+
+        // No device cookie at all: the IP bucket must still apply, so a
+        // cookie-less flood cannot bypass the limit.
+        foreach (range(1, 30) as $attempt) {
+            $submit()->assertStatus(404);
+        }
+
+        $submit()->assertStatus(429);
+    }
 }
