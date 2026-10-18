@@ -134,6 +134,14 @@
                 </div>
             @endif
 
+            @if (session('warning'))
+                <div class="tw-alert tw-alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill tw-alert-icon"></i>
+                    <span>{{ session('warning') }}</span>
+                    <button type="button" class="tw-alert-close" data-tw-dismiss aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
+                </div>
+            @endif
+
             @if ($errors->any())
                 <div class="tw-alert tw-alert-danger">
                     <i class="bi bi-exclamation-triangle-fill tw-alert-icon"></i>

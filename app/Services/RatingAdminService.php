@@ -51,11 +51,16 @@ class RatingAdminService
         ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
 
         if (!$wasAccepted) {
-            $this->notifyComplaintStatus($rating, 'accepted');
+            $emailError = $this->notifyComplaintStatus($rating, 'accepted');
             $this->notifyPassengerInApp($rating, 'Complaint Accepted', 'Your complaint has been verified and accepted by the TFRB. Thank you for helping keep our transport services safe.');
+        } else {
+            $emailError = null;
         }
 
-        return back()->with('success', 'Complaint accepted. It now counts towards the operator\'s rating.');
+        return $this->withEmailWarning(
+            back()->with('success', 'Complaint accepted. It now counts towards the operator\'s rating.'),
+            $emailError
+        );
     }
 
     /**
@@ -89,15 +94,20 @@ class RatingAdminService
         ActivityLogger::log('reject_complaint', "Rejected complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
 
         if (!$wasRejected) {
-            $this->notifyComplaintStatus($rating, 'rejected');
+            $emailError = $this->notifyComplaintStatus($rating, 'rejected');
             $message = 'After review, your complaint was not validated and will not affect the operator\'s record. Thank you for your report.';
             if ($note) {
                 $message .= ' Reason: ' . $note;
             }
             $this->notifyPassengerInApp($rating, 'Complaint Rejected', $message);
+        } else {
+            $emailError = null;
         }
 
-        return back()->with('success', 'Complaint rejected. It will not count towards the operator\'s rating.');
+        return $this->withEmailWarning(
+            back()->with('success', 'Complaint rejected. It will not count towards the operator\'s rating.'),
+            $emailError
+        );
     }
 
     /**
@@ -165,15 +175,20 @@ class RatingAdminService
         ActivityLogger::log('mark_solved', "Marked complaint #{$rating->id} as solved (operator: {$rating->operator_name})", $rating, 'review');
 
         if (!$wasSolved) {
-            $this->notifyComplaintStatus($rating, 'solved');
+            $emailError = $this->notifyComplaintStatus($rating, 'solved');
             $message = 'Your complaint has been marked as solved.';
             if ($note) {
                 $message .= ' Details: ' . $note;
             }
             $this->notifyPassengerInApp($rating, 'Complaint Solved', $message);
+        } else {
+            $emailError = null;
         }
 
-        return back()->with('success', 'Complaint marked as solved.');
+        return $this->withEmailWarning(
+            back()->with('success', 'Complaint marked as solved.'),
+            $emailError
+        );
     }
 
     public function complaintsReopen(Rating $rating): RedirectResponse
@@ -217,46 +232,66 @@ class RatingAdminService
         }
 
         $count = 0;
+        $emailFailures = 0;
         Rating::whereIn('id', $ids)
             ->isValid()
             ->whereNotNull('complaint_type')
             ->whereNull('is_accepted')
             ->with('operator.user')
             ->get()
-            ->each(function ($rating) use (&$count) {
+            ->each(function ($rating) use (&$count, &$emailFailures) {
                 $rating->update(['is_reviewed' => true, 'is_accepted' => true]);
                 ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (bulk, operator: {$rating->operator_name})", $rating, 'review');
-                $this->notifyComplaintStatus($rating, 'accepted');
+                if ($this->notifyComplaintStatus($rating, 'accepted')) {
+                    $emailFailures++;
+                }
                 $this->notifyPassengerInApp($rating, 'Complaint Accepted', 'Your complaint has been verified and accepted by the TFRB. Thank you for helping keep our transport services safe.');
                 $count++;
             });
 
         app(AdminDashboardService::class)->flush();
 
-        return back()->with('success', $count > 0
-            ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' accepted.'
-            : 'No pending complaints were accepted.');
+        return $this->withEmailWarning(
+            back()->with('success', $count > 0
+                ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' accepted.'
+                : 'No pending complaints were accepted.'),
+            $emailFailures > 0 ? "{$emailFailures} passenger" . ($emailFailures === 1 ? '' : 's') . ' could not be emailed about this update. Check the server log.' : null
+        );
     }
 
     /**
      * Email the passenger the moment their complaint changes status, but only if
      * they left an email address. A delivery failure must never break the admin
-     * action, so the send is guarded and the error is logged instead.
+     * action, so the send is guarded: the error is logged and also returned so
+     * the caller can surface it, instead of failing silently where nobody sees it.
      */
-    private function notifyComplaintStatus(Rating $rating, string $status): void
+    private function notifyComplaintStatus(Rating $rating, string $status): ?string
     {
         // Prefer the address stored on the complaint, which for connected
         // passengers is their linked Google account email.
         $email = $rating->passenger_email ?: ($rating->passenger?->email);
         if (!$email) {
-            return;
+            return null;
         }
 
         try {
             Mail::to($email)->send(new ComplaintStatus($rating, $status));
+
+            return null;
         } catch (\Throwable $e) {
             Log::error('Complaint status email failed: ' . get_class($e) . ': ' . $e->getMessage());
+
+            return "The passenger could not be emailed about this update ({$e->getMessage()}).";
         }
+    }
+
+    /**
+     * Attach an email-delivery failure to the redirect as a warning banner so the
+     * officer immediately sees that the passenger was not notified.
+     */
+    private function withEmailWarning(RedirectResponse $redirect, ?string $emailError): RedirectResponse
+    {
+        return $emailError ? $redirect->with('warning', $emailError) : $redirect;
     }
 
     /**

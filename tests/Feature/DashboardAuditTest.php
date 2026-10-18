@@ -701,6 +701,27 @@ class DashboardAuditTest extends TestCase
         Mail::assertSent(ComplaintStatus::class, 1);
     }
 
+    public function test_complaint_email_failure_is_surfaced_and_does_not_break_the_action()
+    {
+        $officer = $this->makeUser('tfrb_officer');
+        $op = $this->makeOperator();
+        $rating = $this->makeRating($op, 1, true, true);
+        $rating->update(['passenger_email' => 'passenger@example.com']);
+
+        // Simulate a broken mail transport (e.g. a missing or invalid Brevo key)
+        // so the guarded send throws instead of silently succeeding.
+        Mail::shouldReceive('to')->andThrow(new \RuntimeException('SMTP transport unavailable'));
+
+        $this->actingAs($officer)
+            ->patch('/tfrb-officer/complaints/' . $rating->id . '/accept')
+            ->assertRedirect()
+            ->assertSessionHas('success')
+            ->assertSessionHas('warning');
+
+        // The email failure must never block the officer's decision.
+        $this->assertTrue((bool) $rating->fresh()->is_accepted);
+    }
+
     public function test_marking_complaint_solved_emails_the_passenger_once()
     {
         Mail::fake();
