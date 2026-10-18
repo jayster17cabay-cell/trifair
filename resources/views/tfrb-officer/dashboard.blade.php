@@ -5,7 +5,7 @@
 @section('content')
 @include('partials.dashboard-hero', [
     'eyebrow' => 'TFRB Officer',
-    'subtitle' => "Here's what's happening in your TODA today",
+    'subtitle' => "Here's what's happening across all TODAs",
     'actionHref' => route('tfrb-officer.reports'),
     'actionLabel' => 'View Reports',
     'actionIcon' => 'bi-bar-chart-line',

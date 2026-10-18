@@ -13,17 +13,37 @@
     $showMembers = $showAll || $section === 'members';
 @endphp
 
+{{-- Primary hero action: pending join requests are the president's most urgent
+     job, so surface them first; otherwise fall back to the members list. --}}
+@php
+    $heroJoinCount = ($joinRequests ?? collect())->count();
+    if ($heroJoinCount > 0) {
+        $heroActionLabel = $heroJoinCount . ' Pending Join ' . ($heroJoinCount === 1 ? 'Request' : 'Requests');
+        $heroActionHref = route('president.dashboard', ['section' => 'join-requests']);
+        $heroActionIcon = 'bi-box-arrow-in-down';
+    } else {
+        $heroActionLabel = 'View Members';
+        $heroActionHref = route('president.dashboard', ['section' => 'members']);
+        $heroActionIcon = 'bi-people';
+    }
+@endphp
 @include('partials.dashboard-hero', [
     'eyebrow' => 'TriFair TODA President',
     'subtitle' => $summary['todaArea'] ? ($summary['todaArea'] . ' · ' . $summary['totalMembers'] . ' members in ' . $toda->name) : ($summary['totalMembers'] . ($summary['totalMembers'] === 1 ? ' member' : ' members') . ' in ' . $toda->name),
+    'actionHref' => $heroActionHref,
+    'actionLabel' => $heroActionLabel,
+    'actionIcon' => $heroActionIcon,
 ])
 
 {{-- KPI cards --}}
 <div class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
-    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-star-half', 'value' => number_format($summary['avgMemberRating'], 1), 'label' => 'Avg Rating']])
-    @include('partials.dashboard-kpi', ['kpi' => ['icon' => 'bi-flag', 'value' => $summary['totalComplaints'], 'label' => 'Complaints']])
+    {{-- Member-level averages and complaints are reviewed per member, so both
+         cards deep-link into the members section (same table the summary counts
+         are drawn from) instead of being dead panels. --}}
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-star-half', 'value' => number_format($summary['avgMemberRating'], 1), 'label' => 'Avg Rating']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-flag', 'value' => $summary['totalComplaints'], 'label' => 'Complaints']])
 </div>
 
 {{-- Section 1 — My Ratings (the president's own performance as an operator).
@@ -44,7 +64,15 @@
 @endif
 
 {{-- Section 2 — Members toggle button --}}
-@php $membersActive = ($membersActive ?? false) || request()->has('search') || request()->has('status'); @endphp
+{{-- Members must open as soon as the sidebar section is picked (or a search/status
+     filter is applied) — otherwise the section shows only its header/toggle and
+     the list stays hidden behind a second click. --}}
+@php
+    $membersActive = ($membersActive ?? false)
+        || request()->has('search')
+        || request()->has('status')
+        || $section === 'members';
+@endphp
 {{-- Section 2 — Members search + toggle (search is always visible) --}}
 @if ($showMembers)
 <div id="membersSection" class="scroll-mt-24 tw-card mb-4 overflow-hidden">

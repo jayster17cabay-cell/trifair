@@ -408,4 +408,42 @@ class MultiTodaPresidentTest extends TestCase
             ->assertSee('id="membersSection"', false)
             ->assertDontSee($ratingsCopy, false);
     }
+
+    public function test_sidebar_members_link_reveals_the_list_and_summary_cards_are_actionable(): void
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makeUser('operator_president');
+        $pres->forceFill(['toda_id' => $toda->id])->save();
+        $operator = $this->makeOperator($pres, $toda);
+        $operator->setTodaPresidency($toda->id, true);
+
+        $member = $this->makeUser('operator', 'Member Rider');
+        $memberOperator = $this->makeOperator($member, $toda);
+        $this->rate($memberOperator, $toda, 5);
+
+        $html = $this->actingAs($pres)
+            ->get('/president/dashboard?section=members')
+            ->assertOk()
+            ->getContent();
+
+        // Picking Members in the sidebar must open the list itself, not just its
+        // header plus a second "View Members" toggle.
+        $this->assertStringNotContainsString('id="presidentMembersWrap" class="mt-3 hidden"', $html);
+        $this->assertStringContainsString('id="presidentMembersWrap"', $html);
+        $this->assertStringContainsString('Hide Members', $html);
+
+        // Exactly one Members entry in the sidebar — the duplicated Management
+        // copy used to send people to a differently-filtered copy of this page.
+        $asideStart = strpos($html, '<aside');
+        $aside = substr($html, $asideStart, strpos($html, '</aside>') - $asideStart);
+        $this->assertSame(1, substr_count($aside, '?section=members'));
+        $this->assertStringNotContainsString('Management', $aside);
+
+        // The hero always carries a primary action (members when nothing is pending).
+        $this->assertStringContainsString('View Members', $html);
+
+        // Summary KPI cards deep-link to the members table instead of being dead panels.
+        $membersUrl = route('president.dashboard', ['section' => 'members']);
+        $this->assertStringContainsString('href="' . $membersUrl . '"', $html);
+    }
 }
