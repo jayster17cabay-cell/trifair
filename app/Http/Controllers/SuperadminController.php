@@ -455,9 +455,13 @@ class SuperadminController extends Controller
         return app(OperatorAdminService::class)->archive($operator, 'superadmin.operators');
     }
 
-    public function assignPresident(Operator $operator)
+    public function assignPresident(Request $request, Operator $operator)
     {
-        return app(OperatorAdminService::class)->assignPresident($operator, 'superadmin.operators');
+        return app(OperatorAdminService::class)->assignPresident(
+            $operator,
+            'superadmin.operators',
+            $request->filled('toda_id') ? (int) $request->input('toda_id') : null
+        );
     }
 
     public function resetPassword(Operator $operator)

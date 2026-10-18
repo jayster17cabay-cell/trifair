@@ -221,19 +221,24 @@ class OperatorAdminService
     }
 
     /**
-     * Assign the operator as the President of their TODA. A TODA can have only
-     * one president at a time: if the TODA already has a president, the
-     * assignment is blocked and the current president must be removed first.
+     * Assign the operator as the President of a TODA they belong to. A TODA can
+     * have only one president at a time: if the TODA already has a president,
+     * the assignment is blocked and the current president must be removed first.
+     * An operator who is a member of several TODAs may preside over more than
+     * one, so the target TODA is chosen explicitly ($todaId); when omitted the
+     * operator's home TODA is used (the historic behaviour).
      * Presidents keep their own Operator row so they can still receive ratings.
      */
-    public function assignPresident(Operator $operator, string $redirectRoute): RedirectResponse
+    public function assignPresident(Operator $operator, string $redirectRoute, ?int $todaId = null): RedirectResponse
     {
         $operator->load('user', 'toda');
 
         if (!in_array($operator->user->role, ['operator', 'operator_president'], true)) {
             return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be assigned as president.');
         }
-        if (!$operator->toda_id) {
+
+        $todaId = (int) ($todaId ?: $operator->toda_id);
+        if (!$todaId) {
             return redirect()->route($redirectRoute)->with('error', 'Assign this operator to a TODA first.');
         }
         if ($operator->isArchived()) {
@@ -243,11 +248,21 @@ class OperatorAdminService
             return redirect()->route($redirectRoute)->with('error', 'Only active operators can be assigned as president.');
         }
 
+        $toda = Toda::find($todaId);
+        if (!$toda) {
+            return redirect()->route($redirectRoute)->with('error', 'That TODA no longer exists.');
+        }
+
+        // The president must actually belong to the TODA they will preside over.
+        if (!$operator->isMemberOfToda($todaId)) {
+            return redirect()->route($redirectRoute)->with('error', "This operator is not a member of {$toda->name}.");
+        }
+
         // One president per TODA. The presidency is a flag on the operator_toda
         // membership, but legacy presidents may still only carry the TODA on
         // users.toda_id — so both paths are checked (excluding this same user,
         // who is allowed to preside over several TODAs at once).
-        $flagged = OperatorToda::where('toda_id', $operator->toda_id)
+        $flagged = OperatorToda::where('toda_id', $todaId)
             ->where('is_president', true)
             ->where('operator_id', '!=', $operator->id)
             ->with('operator.user')
@@ -257,12 +272,12 @@ class OperatorAdminService
             ? ($flagged->operator->user ?? null)
             : User::where('role', 'operator_president')
                 ->where('id', '!=', $operator->user_id)
-                ->where('toda_id', $operator->toda_id)
+                ->where('toda_id', $todaId)
                 ->first();
 
         if ($current) {
             return redirect()->route($redirectRoute)
-                ->with('error', "This TODA already has a president ({$current->name}). Remove them as President first before assigning a new one.");
+                ->with('error', "{$toda->name} already has a president ({$current->name}). Remove them as President first before assigning a new one.");
         }
 
         // Keep users.toda_id pointing at a TODA the president actually presides
@@ -270,7 +285,7 @@ class OperatorAdminService
         // the home TODA untouched so their existing presidency is not disturbed.
         $userAttributes = ['role' => 'operator_president'];
         if ($operator->user->role !== 'operator_president' || !$operator->user->toda_id) {
-            $userAttributes['toda_id'] = $operator->toda_id;
+            $userAttributes['toda_id'] = $todaId;
         }
         $operator->user->forceFill($userAttributes)->save();
 
@@ -280,29 +295,29 @@ class OperatorAdminService
         // NOT NULL column can never blow up the promotion.
         $existing = Operator::where('user_id', $operator->user_id)->first();
         if ($existing) {
-            $existing->update(['toda_id' => $operator->toda_id, 'status' => 'active']);
-            $existing->setTodaPresidency($operator->toda_id, true);
+            $existing->update(['status' => 'active']);
+            $existing->setTodaPresidency($todaId, true);
         } else {
             $created = Operator::create([
                 'user_id' => $operator->user_id,
-                'toda_id' => $operator->toda_id,
+                'toda_id' => $todaId,
                 'status' => 'active',
                 'qr_code' => (string) Str::random(32),
             ]);
-            $created->setTodaPresidency($operator->toda_id, true);
+            $created->setTodaPresidency($todaId, true);
         }
 
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log(
             'assign_toda_president',
-            "Promoted {$operator->user->name} as President of TODA #{$operator->toda_id}",
+            "Promoted {$operator->user->name} as President of {$toda->name} (#{$todaId})",
             $operator,
             'tfrb_officer'
         );
 
         return redirect()->route($redirectRoute)
-            ->with('success', "{$operator->user->name} is now the President of {$operator->toda->name}.");
+            ->with('success', "{$operator->user->name} is now the President of {$toda->name}.");
     }
 
     /**

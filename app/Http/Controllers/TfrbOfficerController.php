@@ -144,9 +144,13 @@ class TfrbOfficerController extends Controller
         return app(OperatorAdminService::class)->archive($operator, 'tfrb-officer.operators');
     }
 
-    public function assignPresident(Operator $operator)
+    public function assignPresident(Request $request, Operator $operator)
     {
-        return app(OperatorAdminService::class)->assignPresident($operator, 'tfrb-officer.operators');
+        return app(OperatorAdminService::class)->assignPresident(
+            $operator,
+            'tfrb-officer.operators',
+            $request->filled('toda_id') ? (int) $request->input('toda_id') : null
+        );
     }
 
     public function resetPassword(Operator $operator)

@@ -24,10 +24,32 @@
     // A TODA president is still an operator (they keep their Operator row), so
     // they appear here by name too. They are managed via the Presidents section.
     $isPresident = ($operator->user->role ?? null) === 'operator_president';
-    $todaPresidentUser = $operator->toda ? $operator->toda->presidentUser() : null;
 
     $operatorName = $operator->user->name ?? 'Unknown';
     $todaName = $operator->toda ? $operator->toda->name : null;
+
+    // Every TODA this operator belongs to: the home TODA plus each active
+    // membership (a driver may belong to up to three TODAs). De-duplicated and
+    // sorted so the TODA column can show them all and the assign-as-president
+    // action can offer the right choices.
+    $operatorTodaList = collect();
+    if ($operator->toda) {
+        $operatorTodaList->push($operator->toda);
+    }
+    foreach ($operator->todas as $membershipToda) {
+        if (($membershipToda->pivot->status ?? null) === \App\Models\OperatorToda::STATUS_ACTIVE
+            && !$operatorTodaList->contains('id', $membershipToda->id)) {
+            $operatorTodaList->push($membershipToda);
+        }
+    }
+    $operatorTodaList = $operatorTodaList->sortBy('name')->values();
+
+    // TODAs this operator already presides over, and those still free to take
+    // the presidency (no president yet). When every TODA is already presided
+    // over by this operator there is nothing to assign.
+    $presidedTodas = $operatorTodaList->filter(fn ($t) => $t->president && (int) optional($t->president)->operator_id === (int) $operator->id);
+    $assignableTodas = $operatorTodaList->filter(fn ($t) => !$t->president)->values();
+    $allTodasPresided = $operatorTodaList->isNotEmpty() && $presidedTodas->count() === $operatorTodaList->count();
 
     $currentTerm = $operator->currentTerm;
     $franchiseNo = $currentTerm->franchise_no ?? null;
@@ -96,11 +118,20 @@
     </td>
     <td class="tw-td">
         <div class="space-y-1">
-            @if ($todaName)
-                <span class="tw-badge tw-badge-navy"><i class="bi bi-diagram-3"></i>{{ $todaName }}</span>
-            @else
+            @forelse ($operatorTodaList as $todaEntry)
+                @php
+                    $entryPresident = $todaEntry->president;
+                    $entryIsThisOperator = $entryPresident && (int) optional($entryPresident)->operator_id === (int) $operator->id;
+                @endphp
+                <span class="tw-badge tw-badge-navy">
+                    <i class="bi bi-diagram-3"></i>{{ $todaEntry->name }}
+                    @if ($entryIsThisOperator)
+                        <i class="bi bi-award-fill text-gold" title="President of this TODA"></i>
+                    @endif
+                </span>
+            @empty
                 <span class="tw-badge tw-badge-gray">Unassigned</span>
-            @endif
+            @endforelse
         </div>
     </td>
     <td class="tw-td hidden text-sm text-slate-500 md:table-cell">{{ $operator->contact_number ?? '—' }}</td>
@@ -196,12 +227,6 @@
                         </form>
                     @else
                         @php
-                            $hasPresidentName = $todaPresidentUser && $todaPresidentUser->name !== $operatorName;
-                            if ($hasPresidentName) {
-                                $assignPrompt = 'This TODA already has a president (' . $todaPresidentUser->name . '). Remove them as President first before assigning a new one.';
-                            } else {
-                                $assignPrompt = 'Assign ' . $operatorName . ' as President of ' . ($todaName ?? 'this TODA') . '? They will oversee all members of that TODA.';
-                            }
                             $suspendPayload = ['name' => $operatorName, 'toda' => $todaName, 'suspendUrl' => route($routePrefix . '.operators.suspend', $operator)];
                         @endphp
 
@@ -209,18 +234,37 @@
                         <a href="{{ route($routePrefix . '.operators.edit', $operator) }}" class="tw-dropdown-item">
                             <i class="bi bi-pencil"></i>Edit details
                         </a>
-                        @unless ($isPresident)
-                            @if ($hasPresidentName)
+                        @unless ($allTodasPresided)
+                            @if ($assignableTodas->isEmpty())
+                                @php
+                                    $blockingPresident = $operatorTodaList->first(fn ($t) => $t->president && (int) optional($t->president)->operator_id !== (int) $operator->id);
+                                    $blockingName = $blockingPresident ? optional(optional(optional($blockingPresident->president)->operator)->user)->name : null;
+                                    $assignPrompt = $blockingName
+                                        ? 'This TODA already has a president (' . $blockingName . '). Remove them as President first before assigning a new one.'
+                                        : 'This operator has no TODA available to preside over.';
+                                @endphp
                                 <button type="button" class="tw-dropdown-item" title="{{ $assignPrompt }}" aria-label="President already assigned" disabled style="opacity:.45;cursor:not-allowed">
                                     <i class="bi bi-award"></i>Assign as President
                                 </button>
-                            @else
+                            @elseif ($operatorTodaList->count() === 1)
                                 <form action="{{ route($routePrefix . '.operators.assignPresident', $operator) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js($assignPrompt))">
+                                    <input type="hidden" name="toda_id" value="{{ $assignableTodas->first()->id }}">
+                                    <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js('Assign ' . $operatorName . ' as President of ' . $assignableTodas->first()->name . '? They will oversee all members of that TODA.'))">
                                         <i class="bi bi-award"></i>Assign as President
                                     </button>
                                 </form>
+                            @else
+                                <div class="tw-dropdown-label">Assign as President of…</div>
+                                @foreach ($assignableTodas as $assignToda)
+                                    <form action="{{ route($routePrefix . '.operators.assignPresident', $operator) }}" method="POST">
+                                        @csrf
+                                        <input type="hidden" name="toda_id" value="{{ $assignToda->id }}">
+                                        <button type="submit" class="tw-dropdown-item" onclick="return confirm(@js('Assign ' . $operatorName . ' as President of ' . $assignToda->name . '? They will oversee all members of that TODA.'))">
+                                            <i class="bi bi-award"></i>{{ $assignToda->name }}
+                                        </button>
+                                    </form>
+                                @endforeach
                             @endif
                         @endunless
 

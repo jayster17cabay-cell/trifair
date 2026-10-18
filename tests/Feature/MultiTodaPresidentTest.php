@@ -262,4 +262,67 @@ class MultiTodaPresidentTest extends TestCase
             ->get('/president/dashboard')
             ->assertOk();
     }
+
+    public function test_operators_list_shows_every_toda_the_operator_belongs_to(): void
+    {
+        $admin = $this->makeUser('superadmin');
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+
+        $operator = $this->makeOperator($this->makeUser('operator'), $todaA);
+        $operator->joinToda($todaB->id);
+
+        $this->actingAs($admin)
+            ->get('/superadmin/operators')
+            ->assertOk()
+            ->assertSee($todaA->name, false)
+            ->assertSee($todaB->name, false);
+    }
+
+    public function test_assign_president_can_target_a_chosen_toda(): void
+    {
+        $admin = $this->makeUser('superadmin');
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+
+        $user = $this->makeUser('operator');
+        $operator = $this->makeOperator($user, $todaA);
+        $operator->joinToda($todaB->id);
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $operator->id . '/assign-president', ['toda_id' => $todaB->id])
+            ->assertRedirect(route('superadmin.operators'))
+            ->assertSessionHas('success');
+
+        $user = $user->fresh();
+        $this->assertSame('operator_president', $user->role);
+        $this->assertTrue($user->isPresidentOf($todaB->id));
+        $this->assertFalse($user->isPresidentOf($todaA->id));
+
+        $this->assertDatabaseHas('operator_toda', [
+            'operator_id' => $operator->id,
+            'toda_id' => $todaB->id,
+            'is_president' => true,
+        ]);
+        $this->assertSame(1, $todaB->fresh()->president()->count());
+        $this->assertSame(0, $todaA->fresh()->president()->count());
+    }
+
+    public function test_assign_president_rejects_a_toda_the_operator_is_not_a_member_of(): void
+    {
+        $admin = $this->makeUser('superadmin');
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+
+        $user = $this->makeUser('operator');
+        $operator = $this->makeOperator($user, $todaA); // member of A only
+
+        $this->actingAs($admin)
+            ->post('/superadmin/operators/' . $operator->id . '/assign-president', ['toda_id' => $todaB->id])
+            ->assertRedirect(route('superadmin.operators'))
+            ->assertSessionHas('error');
+
+        $this->assertSame('operator', $user->fresh()->role);
+        $this->assertSame(0, $todaB->fresh()->president()->count());
+    }
 }

@@ -482,8 +482,11 @@ class AdminQueryService
 
         // A TODA president is also an operator (they keep their own Operator row
         // so they can carry a rating), so they still appear here by name — they
-        // are additionally managed under the Presidents section.
-        $query = Operator::with('user', 'toda.president', 'currentTerm', 'currentSuspension.suspender')
+        // are additionally managed under the Presidents section. The membership
+        // TODAs (plus each TODA's president) are eager-loaded so the list can
+        // show every TODA a driver belongs to and offer the correct
+        // assign-as-president choices without N+1 queries.
+        $query = Operator::with('user', 'toda.president', 'todas.president', 'currentTerm', 'currentSuspension.suspender')
             ->whereHas('user', function ($u) {
                 $u->whereIn('role', ['operator', 'operator_president']);
             });
