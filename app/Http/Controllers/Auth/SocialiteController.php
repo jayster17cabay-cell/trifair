@@ -8,7 +8,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -93,15 +92,9 @@ class SocialiteController extends Controller
         // generic failure, and keep them on the complaint form they were on.
         $oauthError = trim((string) $request->query('error'));
         if ($oauthError !== '') {
-            // Google's own reason (e.g. "Access blocked: this app is in
-            // testing mode") is far more useful than a generic "you cancelled"
-            // message, which reads like a bug when the passenger never saw a
-            // cancel button at all.
-            $message = $this->googleErrorMessage(
-                $oauthError,
-                trim((string) $request->query('error_description'))
-            );
-
+            $message = $oauthError === 'access_denied'
+                ? 'Kinansela mo ang Google sign-in. Pwede mong subukan muli gamit ang form sa ibaba.'
+                : 'Hindi natuloy ang Google sign-in. Pakisubukan muli.';
             return $this->connectFailure($request, $message, $isConnect, $intended);
         }
 
@@ -117,13 +110,6 @@ class SocialiteController extends Controller
             $provider = Socialite::driver('google');
             $googleUser = $stateLost ? $provider->stateless()->user() : $provider->user();
         } catch (\Exception $e) {
-            // The reason (wrong secret, revoked consent, Google outage) is
-            // invisible to the passenger otherwise — keep it in the logs.
-            Log::warning('Google OAuth sign-in failed', [
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-            ]);
-
             return $this->connectFailure($request, 'Unable to sign in with Google. Please try again.', $isConnect, $intended);
         }
 
@@ -311,28 +297,6 @@ class SocialiteController extends Controller
             return redirect($this->validIntended($intended))->withErrors(['email' => $message]);
         }
         return redirect()->route('login')->withErrors(['email' => $message]);
-    }
-
-    /**
-     * Turn Google's OAuth error code + description into a message a passenger
-     * can act on. Google sends the description URL-encoded and unfiltered, so
-     * it is stripped of markup and clipped before it reaches the view.
-     */
-    private function googleErrorMessage(string $error, string $description): string
-    {
-        $description = (string) preg_replace('/\s+/', ' ', strip_tags($description));
-
-        if ($error === 'access_denied' && $description === '') {
-            return 'Kinansela mo ang Google sign-in. Pwede mong subukan muli gamit ang form sa ibaba.';
-        }
-
-        if ($description === '') {
-            return 'Hindi natuloy ang Google sign-in. Pakisubukan muli.';
-        }
-
-        return 'Hindi natuloy ang Google sign-in: '
-            . mb_substr($description, 0, 240)
-            . ' Pakisubukan muli.';
     }
 
     private function validIntended(?string $intended): string

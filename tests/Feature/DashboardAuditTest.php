@@ -926,40 +926,6 @@ class DashboardAuditTest extends TestCase
         $this->assertStringContainsString('Kinansela', $errors->first('email'));
     }
 
-    public function test_google_callback_shows_google_reason_when_google_reports_one()
-    {
-        // "Access blocked: only authorized users can sign in" is the usual
-        // answer for an OAuth app still in Testing mode. Reporting it verbatim
-        // is the difference between a passenger knowing where to look and a
-        // passenger thinking the button is simply broken.
-        $description = 'Access blocked: This app is in testing mode and only authorized users can sign in.';
-
-        $this->withSession([
-            'google_connect_mode' => true,
-            'google_connect_intended' => '/rate/ABC123',
-        ])->get('/auth/google/callback?error=access_denied&error_description=' . urlencode($description))
-            ->assertRedirect('/rate/ABC123');
-
-        $errors = session('errors');
-        $this->assertTrue($errors->has('email'));
-        $this->assertStringContainsString('Access blocked', $errors->first('email'));
-        $this->assertStringNotContainsString('Kinansela', $errors->first('email'));
-    }
-
-    public function test_google_callback_strips_markup_from_google_error_description()
-    {
-        $this->withSession([
-            'google_connect_mode' => true,
-            'google_connect_intended' => '/rate/ABC123',
-        ])->get('/auth/google/callback?error=server_error&error_description=' . urlencode('<b>Something</b> went wrong'))
-            ->assertRedirect('/rate/ABC123');
-
-        $errors = session('errors');
-        $this->assertTrue($errors->has('email'));
-        $this->assertStringContainsString('Something went wrong', $errors->first('email'));
-        $this->assertStringNotContainsString('<b>', $errors->first('email'));
-    }
-
     public function test_google_callback_connect_exception_returns_to_intended_with_message()
     {
         $provider = Mockery::mock();
