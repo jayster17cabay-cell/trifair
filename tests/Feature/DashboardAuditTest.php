@@ -1182,6 +1182,36 @@ class DashboardAuditTest extends TestCase
         $this->assertNotEmpty($query['state'] ?? null, 'The signed state must survive the extra parameter.');
     }
 
+    public function test_google_redirect_derives_the_callback_when_no_redirect_uri_is_configured()
+    {
+        // A deploy that sets only the client id/secret must still send Google a
+        // callback that matches the host the passenger is actually browsing.
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+        config()->set('services.google.redirect', null);
+
+        $response = $this->get('/auth/google?intended=passenger/dashboard');
+        $response->assertRedirect();
+
+        parse_str((string) parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+
+        $this->assertSame('http://localhost/auth/google/callback', $query['redirect_uri'] ?? null);
+    }
+
+    public function test_an_explicit_redirect_uri_still_wins_over_the_derived_one()
+    {
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+        config()->set('services.google.redirect', 'https://example.test/auth/google/callback');
+
+        $response = $this->get('/auth/google?intended=passenger/dashboard');
+        $response->assertRedirect();
+
+        parse_str((string) parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+
+        $this->assertSame('https://example.test/auth/google/callback', $query['redirect_uri'] ?? null);
+    }
+
     public function test_dashboard_operator_counts_and_rating_distribution_reconcile()
     {
         $this->makeUser('superadmin');
