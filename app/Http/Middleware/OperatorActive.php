@@ -11,7 +11,10 @@ class OperatorActive
     public function handle(Request $request, Closure $next)
     {
         $user = Auth::user();
-        if ($user && $user->isOperator()) {
+        // TODA presidents hold an Operator row and use these same screens, so a
+        // lapsed franchise locks them out here too (the /president group runs
+        // PresidentActive, which enforces the same rule).
+        if ($user && ($user->isOperator() || $user->isOperatorPresident())) {
             $user->loadMissing('operator.currentTerm', 'operator.currentSuspension');
             $operator = $user->operator;
             if (!$operator) {

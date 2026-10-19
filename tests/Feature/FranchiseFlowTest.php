@@ -618,4 +618,80 @@ class FranchiseFlowTest extends TestCase
         $this->assertSame(2, $stats['activeOperators']);
         $this->assertSame(0, $stats['inactiveOperators']);
     }
+
+    /**
+     * The lapsed term every member picks up in the daily sweep: it deactivates
+     * a president's Operator row exactly like anyone else's.
+     */
+    private function lapseFranchiseOf(Operator $operator): FranchiseTerm
+    {
+        $term = FranchiseTerm::create([
+            'operator_id' => $operator->id,
+            'franchise_no' => 'FR-LAPSED-' . Str::upper(Str::random(4)),
+            'issued_at' => now()->subYear()->toDateString(),
+            'valid_until' => now()->subDay()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        Operator::deactivateExpiredFranchises();
+
+        return $term;
+    }
+
+    public function test_expired_president_cannot_sign_in_until_the_franchise_is_renewed()
+    {
+        $admin = $this->makeUser('superadmin');
+        $president = $this->makePresidentOperator();
+        $credentials = ['email' => $president->user->email, 'password' => 'password123'];
+
+        $this->lapseFranchiseOf($president);
+        $this->assertSame('inactive', $president->fresh()->status);
+
+        $this->post('/login', $credentials)->assertSessionHasErrors([
+            'email' => 'Your franchise has expired. Please contact the TFRB Office to renew it.',
+        ]);
+
+        $this->actingAs($admin)->post(route('superadmin.operators.franchise.renew', $president), [
+            'franchise_no' => 'FR-PRES-FRESH',
+            'valid_until' => now()->addYear()->toDateString(),
+        ])->assertRedirect();
+
+        $this->post('/login', $credentials)->assertRedirect(route('dashboard'));
+    }
+
+    public function test_lapsed_president_is_logged_out_of_the_president_console()
+    {
+        $president = $this->makePresidentOperator();
+        $this->lapseFranchiseOf($president);
+
+        $this->actingAs($president->user)
+            ->get('/president/dashboard')
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors([
+                'email' => 'Your franchise has expired. Please contact the TFRB Office to renew it.',
+            ]);
+
+        $admin = $this->makeUser('superadmin');
+        $this->actingAs($admin)->post(route('superadmin.operators.franchise.renew', $president), [
+            'franchise_no' => 'FR-PRES-OPEN',
+            'valid_until' => now()->addYear()->toDateString(),
+        ])->assertRedirect();
+
+        $this->actingAs($president->user->fresh())
+            ->get('/president/dashboard')
+            ->assertOk();
+    }
+
+    public function test_lapsed_president_is_locked_out_of_the_operator_screens_too()
+    {
+        $president = $this->makePresidentOperator();
+        $this->lapseFranchiseOf($president);
+
+        $this->actingAs($president->user)
+            ->get('/operator/dashboard')
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors([
+                'email' => 'Your franchise has expired. Please contact the TFRB Office to renew it.',
+            ]);
+    }
 }

@@ -62,8 +62,36 @@ class LoginController extends Controller
                         'email' => 'Your account is not assigned to a TODA. Please contact support.',
                     ])->onlyInput('email');
                 }
-                // A suspension never blocks sign-in: the account still opens and
-                // the TODA it lands on simply reports that it is suspended.
+                // A president is an operator too: a lapsed or archived franchise
+                // keeps them out until an admin renews it, exactly like any
+                // member. A suspension still never blocks sign-in — the TODA it
+                // lands on simply reports that it is suspended.
+                $operator = $user->operator;
+                if ($operator) {
+                    $operator->syncFranchiseStatus();
+                    $operator->syncSuspensionStatus();
+
+                    if ($operator->isArchived()) {
+                        Auth::logout();
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+                        return back()->withErrors([
+                            'email' => 'Your account has been archived. Please contact support.',
+                        ])->onlyInput('email');
+                    }
+
+                    if ($operator->status === 'inactive') {
+                        Auth::logout();
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+                        return back()->withErrors([
+                            'email' => $operator->hasExpiredFranchise()
+                                ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
+                                : 'Your account has been deactivated. Please contact support.',
+                        ])->onlyInput('email');
+                    }
+                }
+
                 ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in", null, 'auth');
                 return redirect()->route('dashboard');
             }

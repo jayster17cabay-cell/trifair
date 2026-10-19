@@ -33,6 +33,21 @@ class PresidentActive
         // "You are suspended" (see partials/toda-suspended-screen).
         $operator->syncSuspensionStatus();
 
+        // A president rides with their members, so a lapsed franchise closes
+        // their session exactly like it does for a regular operator — the
+        // renewal reopens it. Archiving works the same way.
+        $operator->syncFranchiseStatus();
+
+        if ($operator->isArchived()) {
+            return $this->logout($request, 'Your account has been archived. Please contact support.');
+        }
+
+        if ($operator->status === 'inactive') {
+            return $this->logout($request, $operator->hasExpiredFranchise()
+                ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
+                : 'Your account has been deactivated. Please contact support.');
+        }
+
         return $next($request);
     }
 

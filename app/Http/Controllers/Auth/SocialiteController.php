@@ -206,6 +206,36 @@ class SocialiteController extends Controller
                     'email' => 'Your account is not assigned to a TODA. Please contact support.',
                 ]);
             }
+
+            // A president is an operator too: a lapsed or archived franchise
+            // keeps them out until an admin renews it. A suspension never
+            // blocks sign-in — the TODA console reports it instead.
+            $operator = $user->operator;
+            if ($operator) {
+                $operator->syncFranchiseStatus();
+                $operator->syncSuspensionStatus();
+
+                if ($operator->isArchived()) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return redirect()->route('login')->withErrors([
+                        'email' => 'Your account has been archived. Please contact support.',
+                    ]);
+                }
+
+                if ($operator->status === 'inactive') {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return redirect()->route('login')->withErrors([
+                        'email' => $operator->hasExpiredFranchise()
+                            ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
+                            : 'Your account has been deactivated. Please contact support.',
+                    ]);
+                }
+            }
+
             ActivityLogger::log('login', "{$user->name} ({$user->email}) logged in via Google", null, 'auth');
             return redirect()->route('dashboard');
         }
