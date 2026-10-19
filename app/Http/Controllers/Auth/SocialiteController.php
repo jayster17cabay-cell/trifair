@@ -46,6 +46,13 @@ class SocialiteController extends Controller
         $url = Socialite::driver('google')->redirect()->getTargetUrl();
         $url = preg_replace('/([?&])state=[^&]*/', '$1state=' . urlencode($state), $url);
 
+        // Always offer Google's account chooser. A phone signed into three or
+        // four Google accounts must pick which one to use for their complaints,
+        // instead of Google silently continuing with whatever it considers the
+        // primary account. Applied to the authorize URL only — never to the
+        // token exchange below, which must keep its original fields.
+        $url .= (str_contains($url, '?') ? '&' : '?') . 'prompt=select_account';
+
         $request->session()->put('state', $state);
 
         return redirect()->away($url);

@@ -1165,6 +1165,23 @@ class DashboardAuditTest extends TestCase
         $this->assertTrue((bool) ($decoded['c'] ?? false));
     }
 
+    public function test_google_redirect_forces_the_account_chooser()
+    {
+        // A passenger signed into several Google accounts in the same browser
+        // must be asked which account to use, rather than Google picking one.
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+        config()->set('services.google.redirect', 'https://example.test/auth/google/callback');
+
+        $response = $this->get('/auth/google?intended=passenger/dashboard');
+        $response->assertRedirect();
+
+        parse_str((string) parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+
+        $this->assertSame('select_account', $query['prompt'] ?? null);
+        $this->assertNotEmpty($query['state'] ?? null, 'The signed state must survive the extra parameter.');
+    }
+
     public function test_dashboard_operator_counts_and_rating_distribution_reconcile()
     {
         $this->makeUser('superadmin');
