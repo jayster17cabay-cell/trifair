@@ -4,10 +4,13 @@
 
 @section('content')
 @include('auth.partials.auth-shell-open')
-                <div class="mb-6">
-                    <h4 class="text-2xl font-extrabold tracking-tight text-navy-700">Welcome</h4>
+                <div class="mb-5 text-center">
+                    <div class="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-navy-600/10 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-navy-600">
+                        <i class="bi bi-person-badge"></i> Passenger &amp; Staff Sign In
+                    </div>
+                    <h4 class="text-xl font-extrabold tracking-tight text-navy-700">Welcome back</h4>
                     <p class="mt-1 text-sm text-slate-500">Log in to your TriFair account to continue.</p>
-                    <div class="mt-4 h-1 w-16 rounded-full bg-gradient-to-r from-gold to-navy-600"></div>
+                    <div class="mx-auto mt-3 h-1 w-16 rounded-full bg-gradient-to-r from-gold to-navy-600"></div>
                 </div>
 
                 @if (session('status'))
@@ -54,7 +57,7 @@
                         @enderror
                     </div>
 
-                    <label class="mb-6 flex cursor-pointer items-center gap-2 text-sm text-slate-500">
+                    <label class="mb-5 flex cursor-pointer items-center gap-2 text-sm text-slate-500">
                         <input type="checkbox" class="tw-check" id="remember" name="remember">
                         Remember Me
                     </label>
@@ -65,18 +68,18 @@
                 </form>
 
                 @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
-                    <div class="mt-7">
+                    <div class="mt-6 rounded-2xl border border-slate-200/70 bg-slate-50/60 p-4">
                         <div class="flex items-center gap-3">
-                            <span class="h-px flex-1 bg-gradient-to-r from-transparent to-slate-200"></span>
-                            <span class="text-[0.7rem] font-extrabold uppercase tracking-widest text-slate-400">Para sa Pasahero</span>
-                            <span class="h-px flex-1 bg-gradient-to-l from-transparent to-slate-200"></span>
+                            <span class="h-px flex-1 bg-gradient-to-r from-transparent to-slate-300"></span>
+                            <span class="text-[0.7rem] font-extrabold uppercase tracking-widest text-slate-400">For Passengers</span>
+                            <span class="h-px flex-1 bg-gradient-to-l from-transparent to-slate-300"></span>
                         </div>
 
                         {{-- Connect mode: a first-time passenger is created on the
                              spot and lands straight on their complaints, where they
                              can follow each one up. Staff emails are refused. --}}
                         <a href="{{ route('login.google', ['intended' => 'passenger/dashboard']) }}"
-                           class="group mt-4 grid w-full grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:border-navy-500 hover:shadow-lift focus:outline-none focus:ring-4 focus:ring-navy-600/15 active:translate-y-0"
+                           class="group mt-4 grid w-full grid-cols-[1.25rem_1fr_1.25rem] items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:border-navy-500 hover:shadow-lift focus:outline-none focus:ring-4 focus:ring-navy-600/15 active:translate-y-0"
                            id="googleLoginBtn">
                             @include('partials.google-g', ['class' => 'h-5 w-5 transition-transform duration-200 group-hover:scale-110'])
                             <span class="text-center text-sm font-extrabold text-slate-700 group-hover:text-navy-700" data-google-label>Continue with Google</span>
@@ -84,7 +87,7 @@
                         </a>
 
                         <p class="mt-3 text-center text-[0.7rem] leading-relaxed text-slate-400">
-                            Walang bagong password na kailangan — sign in lang gamit ang Google.
+                            No new password needed — just sign in with Google.
                         </p>
 
                         <script>
@@ -95,14 +98,14 @@
                                     if (btn.getAttribute('aria-busy') === 'true') return;
                                     btn.setAttribute('aria-busy', 'true');
                                     var label = btn.querySelector('[data-google-label]');
-                                    if (label) label.textContent = 'Binubuksan ang Google account chooser...';
+                                    if (label) label.textContent = 'Opening the Google account chooser...';
                                 });
                             })();
                         </script>
                     </div>
                 @endif
 
-                <div class="mt-7 border-t border-slate-100 pt-5 text-center text-sm text-slate-500">
+                <div class="mt-6 border-t border-slate-100 pt-4 text-center text-sm text-slate-500">
                     Don't have an account?
                     <a href="{{ route('register') }}" class="font-semibold text-navy-600 transition hover:text-navy-700 hover:underline">Sign Up</a>
                 </div>
