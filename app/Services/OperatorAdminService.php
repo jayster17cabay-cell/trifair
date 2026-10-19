@@ -484,6 +484,16 @@ class OperatorAdminService
     }
 
     /**
+     * A TODA president keeps their own Operator row and rides like any other
+     * member, so the franchise lifecycle must cover both roles. Only staff
+     * accounts (superadmin/TFRB officer) and passengers fall outside it.
+     */
+    private function isFranchisable(User $user): bool
+    {
+        return in_array($user->role, ['operator', 'operator_president'], true);
+    }
+
+    /**
      * Issue the operator's first franchise term. Only operators without a
      * current term can be issued one; an existing term must be renewed instead
      * so the previous term is preserved in the history.
@@ -492,8 +502,8 @@ class OperatorAdminService
     {
         $operator->load('user', 'toda');
 
-        if ($operator->user->role !== 'operator') {
-            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be issued a franchise.');
+        if (!$this->isFranchisable($operator->user)) {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator and TODA president accounts can be issued a franchise.');
         }
         if ($operator->isArchived()) {
             return redirect()->route($redirectRoute)->with('error', 'Archived operators cannot be issued a franchise. Restore them first.');
@@ -542,8 +552,8 @@ class OperatorAdminService
     {
         $operator->load('user', 'toda');
 
-        if ($operator->user->role !== 'operator') {
-            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can have a franchise renewed.');
+        if (!$this->isFranchisable($operator->user)) {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator and TODA president accounts can have a franchise renewed.');
         }
         if ($operator->isArchived()) {
             return redirect()->route($redirectRoute)->with('error', 'Archived operators cannot have a franchise renewed. Restore them first.');
@@ -600,8 +610,8 @@ class OperatorAdminService
     {
         $operator->load('user');
 
-        if ($operator->user->role !== 'operator') {
-            return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can have a franchise edited.');
+        if (!$this->isFranchisable($operator->user)) {
+            return redirect()->route($redirectRoute)->with('error', 'Only operator and TODA president accounts can have a franchise edited.');
         }
 
         $current = $operator->currentTerm;

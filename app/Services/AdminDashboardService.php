@@ -80,11 +80,13 @@ class AdminDashboardService
         $data = [
             // "Operators" counts real, live operators only. Registrations that
             // are still pending or were rejected are not operators yet, so the
-            // total always equals active + inactive + suspended.
-            'totalOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->whereNotIn('status', ['pending', 'rejected'])->count(),
-            'activeOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'active')->count(),
-            'inactiveOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'inactive')->count(),
-            'suspendedOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->where('role', 'operator'))->where('status', 'suspended')->count(),
+            // total always equals active + inactive + suspended. TODA presidents
+            // keep an Operator row and ride with their members, so they count
+            // here too (the same way the TODA member lists already count them).
+            'totalOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->whereIn('role', ['operator', 'operator_president']))->whereNotIn('status', ['pending', 'rejected'])->count(),
+            'activeOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->whereIn('role', ['operator', 'operator_president']))->where('status', 'active')->count(),
+            'inactiveOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->whereIn('role', ['operator', 'operator_president']))->where('status', 'inactive')->count(),
+            'suspendedOperators' => Operator::notArchived()->whereHas('user', fn ($q) => $q->whereIn('role', ['operator', 'operator_president']))->where('status', 'suspended')->count(),
             'totalRatings' => Rating::isValid()->countsTowardRating()->count(),
             // Averages only consider accepted complaints so pending/rejected
             // complaints can never drag an operator's score down.
@@ -147,7 +149,7 @@ class AdminDashboardService
 
         $data['topOperators'] = Operator::with('user', 'toda')
             ->whereNull('operators.archived_at')
-            ->whereHas('user', fn ($q) => $q->where('role', 'operator'))
+            ->whereHas('user', fn ($q) => $q->whereIn('role', ['operator', 'operator_president']))
             ->leftJoin(
                 DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true and (complaint_type is null or is_accepted = true) group by operator_id) as vr'),
                 'vr.operator_id',

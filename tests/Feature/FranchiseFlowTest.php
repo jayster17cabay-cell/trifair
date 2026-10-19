@@ -506,4 +506,116 @@ class FranchiseFlowTest extends TestCase
         $this->assertSame(1, (int) $card->operators_count);
         $this->assertSame(1, (int) $card->active_operators_count);
     }
+
+    /**
+     * A TODA president keeps their own Operator row and rides with the members,
+     * so they get a franchise like any other operator.
+     */
+    private function makePresidentOperator(string $status = 'active'): Operator
+    {
+        $toda = $this->makeToda();
+        $user = $this->makeUser('operator_president');
+        $user->forceFill(['toda_id' => $toda->id])->save();
+
+        return Operator::create([
+            'user_id' => $user->id,
+            'toda_id' => $toda->id,
+            'qr_code' => Str::random(32),
+            'status' => $status,
+            'contact_number' => '09171234567',
+            'plate_number' => 'PLATE-' . Str::random(6),
+            'body_number' => 'BODY-' . Str::random(6),
+        ]);
+    }
+
+    public function test_admin_can_issue_a_franchise_to_a_toda_president()
+    {
+        $admin = $this->makeUser('superadmin');
+        $president = $this->makePresidentOperator();
+
+        $this->actingAs($admin)->post(route('superadmin.operators.franchise.issue', $president), [
+            'franchise_no' => 'FR-PRES-1',
+            'issued_at' => '2026-01-01',
+            'valid_until' => '2027-01-01',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('franchise_terms', [
+            'operator_id' => $president->id,
+            'franchise_no' => 'FR-PRES-1',
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($admin)->get('/superadmin/operators')
+            ->assertOk()
+            ->assertSee('FR-PRES-1', false);
+    }
+
+    public function test_admin_can_renew_a_toda_presidents_franchise()
+    {
+        $admin = $this->makeUser('superadmin');
+        $president = $this->makePresidentOperator();
+
+        $this->actingAs($admin)->post(route('superadmin.operators.franchise.issue', $president), [
+            'franchise_no' => 'FR-PRES-2',
+            'issued_at' => now()->subYear()->toDateString(),
+            'valid_until' => now()->subDay()->toDateString(),
+        ])->assertRedirect();
+
+        // The lapsed term deactivates a president exactly like it deactivates
+        // any member — which is only useful if an admin can renew them back.
+        Operator::deactivateExpiredFranchises();
+        $this->assertSame('inactive', $president->fresh()->status);
+
+        $president->unsetRelation('currentTerm');
+        $oldTerm = $president->currentTerm;
+
+        $this->actingAs($admin)->post(route('superadmin.operators.franchise.renew', $president), [
+            'franchise_no' => 'FR-PRES-3',
+            'valid_until' => now()->addYear()->toDateString(),
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->assertSame(FranchiseTerm::STATUS_ENDED, $oldTerm->fresh()->status);
+
+        $president->unsetRelation('currentTerm');
+        $newTerm = $president->currentTerm;
+        $this->assertNotNull($newTerm);
+        $this->assertSame('FR-PRES-3', $newTerm->franchise_no);
+        $this->assertSame($oldTerm->id, $newTerm->renewed_from_id);
+        $this->assertSame('active', $president->fresh()->status);
+    }
+
+    public function test_tfrb_officer_can_renew_a_toda_presidents_franchise()
+    {
+        $officer = $this->makeUser('tfrb_officer');
+        $president = $this->makePresidentOperator();
+
+        $this->actingAs($officer)->post(route('tfrb-officer.operators.franchise.issue', $president), [
+            'franchise_no' => 'FR-PRES-4',
+            'valid_until' => now()->addYear()->toDateString(),
+        ])->assertRedirect();
+
+        $this->actingAs($officer)->post(route('tfrb-officer.operators.franchise.renew', $president), [
+            'franchise_no' => 'FR-PRES-5',
+            'valid_until' => now()->addYears(2)->toDateString(),
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $president->unsetRelation('currentTerm');
+        $this->assertSame('FR-PRES-5', $president->currentTerm->franchise_no);
+    }
+
+    public function test_dashboard_operator_counts_include_toda_presidents()
+    {
+        $service = app(\App\Services\AdminDashboardService::class);
+        $service->flush();
+
+        $this->makeUser('superadmin');
+        $this->makeOperator('active');
+        $this->makePresidentOperator('active');
+
+        $stats = $service->stats(['includeOfficers' => true]);
+
+        $this->assertSame(2, $stats['totalOperators'], 'A TODA president is an operator too');
+        $this->assertSame(2, $stats['activeOperators']);
+        $this->assertSame(0, $stats['inactiveOperators']);
+    }
 }
