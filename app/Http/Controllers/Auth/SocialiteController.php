@@ -175,7 +175,16 @@ class SocialiteController extends Controller
 
         if ($isConnect) {
             ActivityLogger::log('login', "{$user->name} ({$user->email}) connected via Google as passenger", null, 'auth');
-            return redirect()->to($this->validIntended($intended));
+
+            // Land the passenger back on the exact screen they left and say
+            // what to do next: the complaint form keeps its draft, so the only
+            // thing left is attaching proof and submitting.
+            $target = $this->validIntended($intended);
+            $status = str_starts_with(ltrim($target, '/'), 'rate/')
+                ? "Naka-connect ka na sa {$user->email}. Ituloy ang complaint — magdagdag ng proof, tapos i-submit ang rating."
+                : "Naka-sign in ka na sa {$user->email}.";
+
+            return redirect()->to($target)->with('status', $status);
         }
 
         if ($user->isSuperadmin()) {

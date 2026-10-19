@@ -48,6 +48,11 @@
             align-items: flex-start;
         }
         .rate-alert ul { margin: 0.25rem 0 0 1.1rem; padding: 0; }
+        .rate-alert-success {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid rgba(5, 150, 105, 0.28);
+        }
 
         /* Already rated screen */
         .screen-center { text-align: center; padding: 0.5rem 0; }
@@ -185,6 +190,16 @@
             </div>
         @endif
 
+        @if (session('status'))
+            {{-- "Naka-connect ka na sa … ituloy ang complaint" — shown right after
+                 the Google round-trip so the passenger knows to add proof and
+                 submit instead of wondering whether they went backwards. --}}
+            <div class="rate-alert rate-alert-success" role="status">
+                <i class="bi bi-check-circle-fill" aria-hidden="true" style="margin-top: 0.15rem;"></i>
+                <div><strong>{{ session('status') }}</strong></div>
+            </div>
+        @endif
+
         @if ($staffBlocked)
             <div class="rate-alert">
                 <i class="bi bi-shield-exclamation" aria-hidden="true" style="margin-top: 0.15rem;"></i>
@@ -266,10 +281,24 @@
                             </div>
                             <div style="margin-top:0.6rem;">
                                 <label for="passenger_email" class="rate-label"><i class="bi bi-envelope" style="color:#4f46e5;"></i> Email (for status updates)</label>
-                                <input type="email" name="passenger_email" id="passenger_email" class="rate-field" placeholder="juan@gmail.com" value="{{ auth()->check() && auth()->user()->isPassenger() ? auth()->user()->email : '' }}">
+                                @php $linkedPassenger = auth()->check() && auth()->user()->isPassenger(); @endphp
+                                {{-- Signed-in passengers get their Google address
+                                     locked in: the controller ignores anything typed
+                                     here while they are signed in, so a read-only
+                                     field tells the truth about where updates go. --}}
+                                <input type="email" name="passenger_email" id="passenger_email" class="rate-field"
+                                       placeholder="juan@gmail.com" autocomplete="email" inputmode="email"
+                                       value="{{ $linkedPassenger ? auth()->user()->email : '' }}"
+                                       @if ($linkedPassenger) readonly @endif>
+                                @if ($linkedPassenger)
+                                    <p class="rate-connect-note" style="margin-top:0.4rem;">
+                                        <i class="bi bi-google" aria-hidden="true" style="color:#ea4335;"></i>
+                                        <span>Galing ito sa iyong Google account — awtomatikong dito papunta ang status updates, at dito rin lalabas ang complaint sa iyong Passenger Dashboard.</span>
+                                    </p>
+                                @endif
                                 @if (config('services.google.client_id') && config('services.google.client_secret'))
                                     <div class="rate-connect">
-                                        @if (auth()->check() && auth()->user()->isPassenger())
+                                        @if ($linkedPassenger)
                                             <div class="rate-connect-done">
                                                 <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
                                                 <span>Nakakonekta ka sa <strong>{{ auth()->user()->email }}</strong>. Makikita mo ang iyong mga complaint at status sa <a href="{{ route('passenger.dashboard') }}" style="color:#0A2A5E;text-decoration:underline;font-weight:700;">Passenger Dashboard</a>.</span>
@@ -1235,11 +1264,20 @@
             complaintType.value = draft.complaint_type;
             document.getElementById('othersBox').style.display = (draft.complaint_type === 'Others') ? 'block' : 'none';
         }
-        ['complaintDetails', 'passenger_name', 'passenger_contact', 'passenger_email', 'rateMapEnd']
+        ['complaintDetails', 'passenger_name', 'passenger_contact', 'rateMapStart', 'rateMapEnd']
             .forEach(function (id) {
                 var el = document.getElementById(id);
                 if (el && typeof draft[id] === 'string' && draft[id]) el.value = draft[id];
             });
+
+        // The signed-in Google address always wins over whatever was typed
+        // before the round-trip: the field is read-only while connected and the
+        // server bills updates to the account address, not the typed one.
+        var emailEl = document.getElementById('passenger_email');
+        if (emailEl && !emailEl.value && typeof draft.passenger_email === 'string' && draft.passenger_email) {
+            emailEl.value = draft.passenger_email;
+        }
+
         refreshSubmitAvailability();
     }
 

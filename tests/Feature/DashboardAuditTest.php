@@ -1332,6 +1332,97 @@ class DashboardAuditTest extends TestCase
             ->assertSee('Kinansela', false);
     }
 
+    public function test_google_connect_lands_back_on_the_complaint_form_with_a_continue_message()
+    {
+        // The passenger was mid-complaint when they hit Continue with Google.
+        // Coming back must return them to that very form — not the dashboard —
+        // and tell them the only steps left: attach proof, then submit.
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+        $op = $this->makeOperator('active');
+
+        $googleUser = new \Laravel\Socialite\Two\User();
+        $googleUser->id = 'google-continue-id';
+        $googleUser->name = 'Continue Passenger';
+        $googleUser->email = 'continue@example.com';
+        $googleUser->user = ['email_verified' => true];
+
+        $provider = Mockery::mock();
+        $provider->shouldReceive('user')->andReturn($googleUser);
+        \Laravel\Socialite\Facades\Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $this->withSession([
+            'google_connect_mode' => true,
+            'google_connect_intended' => 'rate/' . $op->qr_code,
+        ])->get('/auth/google/callback')
+            ->assertRedirect('/rate/' . $op->qr_code)
+            ->assertSessionHas('status');
+
+        $status = (string) session('status');
+        $this->assertStringContainsString('continue@example.com', $status);
+        $this->assertStringContainsString('Ituloy ang complaint', $status);
+
+        $this->get('/rate/' . $op->qr_code)
+            ->assertOk()
+            ->assertSee('Ituloy ang complaint', false)
+            // Connected, back on the same form, ready for proof + submit.
+            ->assertSee('Nakakonekta ka sa', false)
+            ->assertSee('continue@example.com', false)
+            ->assertSee('Palitan ang Google account', false);
+    }
+
+    public function test_complaint_form_locks_in_the_signed_in_google_email()
+    {
+        $passenger = $this->makeUser('passenger');
+        $passenger->forceFill(['provider' => 'google', 'provider_id' => 'gid-lock'])->save();
+        $op = $this->makeOperator('active');
+
+        $this->actingAs($passenger)->get('/rate/' . $op->qr_code)
+            ->assertOk()
+            ->assertSee($passenger->email, false)
+            ->assertSee('Galing ito sa iyong Google account', false);
+    }
+
+    public function test_complaint_form_does_not_claim_a_link_for_signed_out_visitors()
+    {
+        $op = $this->makeOperator('active');
+
+        $this->get('/rate/' . $op->qr_code)
+            ->assertOk()
+            ->assertDontSee('Galing ito sa iyong Google account', false);
+    }
+
+    public function test_guest_complaint_typed_with_a_passengers_google_email_lands_in_their_list()
+    {
+        Mail::fake();
+
+        $passenger = $this->makeUser('passenger');
+        $passenger->forceFill(['provider' => 'google', 'provider_id' => 'gid-claim-mail'])->save();
+        $op = $this->makeOperator('active');
+
+        // Signed out, but the passenger types the address their Google account
+        // uses (in a different case, as people often do). The ticket must land
+        // in that account's list straight away — no waiting for a sign-in.
+        $this->post('/rate/' . $op->qr_code, [
+            'rating' => 2,
+            'start_location' => 'Novaliches, Quezon City',
+            'end_location' => 'SM Fairview, Quezon City',
+            'complaint_type' => 'Rude Driver',
+            'complaint_details' => 'Rude to passenger',
+            'passenger_email' => strtoupper($passenger->email),
+            'proofs' => [UploadedFile::fake()->create('proof.jpg', 100, 'image/jpeg')],
+        ])->assertRedirect(route('rate.submitted', $op->qr_code));
+
+        $rating = Rating::where('operator_id', $op->id)->latest()->first();
+        $this->assertNotNull($rating);
+        $this->assertSame($passenger->id, (int) $rating->passenger_user_id);
+        $this->assertSame($passenger->email, $rating->passenger_email);
+
+        $this->actingAs($passenger)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee($rating->reference_number, false);
+    }
+
     public function test_dashboard_operator_counts_and_rating_distribution_reconcile()
     {
         $this->makeUser('superadmin');

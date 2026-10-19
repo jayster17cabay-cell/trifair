@@ -202,6 +202,25 @@ class RatingController extends Controller
         // their own inbox. The typed field is only a fallback for guests.
         $passengerEmail = $passengerUser ? $passengerUser->email : ($data['passenger_email'] ?? null);
 
+        // A guest who types an address that already belongs to a TriFair
+        // passenger has that complaint filed straight into the account's list —
+        // the same list the status updates are headed for — instead of waiting
+        // for a later Google sign-in to claim it. Staff/operator addresses are
+        // never picked up here; only passenger accounts qualify, and the
+        // address is still what drives the emails either way.
+        if (!$passengerUser && filled($passengerEmail)) {
+            $match = User::query()
+                ->where('role', 'passenger')
+                ->where('is_active', true)
+                ->whereRaw('LOWER(email) = ?', [strtolower((string) $passengerEmail)])
+                ->first();
+
+            if ($match) {
+                $passengerUser = $match;
+                $passengerEmail = $match->email;
+            }
+        }
+
         $rating = DB::transaction(function () use ($request, $operator, $clientId, $data, $passengerUser, $passengerEmail, $selectedToda) {
             // Re-check inside the transaction (with a row lock) so two
             // simultaneous submissions cannot both pass the dedup check.
