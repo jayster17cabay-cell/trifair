@@ -43,7 +43,7 @@
         <div>
             <label for="violation_filter" class="sr-only">Status</label>
             <select name="filter" id="violation_filter" class="tw-select py-2 text-xs" onchange="this.form.submit()" aria-label="Filter violations by status">
-                <option value="all" {{ $filter === 'all' ? 'selected' : '' }}>All statuses ({{ $totalCount }})</option>
+                <option value="all" {{ $filter === 'all' ? 'selected' : '' }}>All status ({{ $totalCount }})</option>
                 <option value="pending" {{ $filter === 'pending' ? 'selected' : '' }}>Pending ({{ $pendingCount }})</option>
                 <option value="reviewed" {{ $filter === 'reviewed' ? 'selected' : '' }}>Reviewed ({{ $reviewedCount }})</option>
                 <option value="solved" {{ $filter === 'solved' ? 'selected' : '' }}>Solved ({{ $solvedCount }})</option>
