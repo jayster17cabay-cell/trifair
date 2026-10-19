@@ -64,6 +64,31 @@
                     </button>
                 </form>
 
+                @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
+                    <div class="mt-6">
+                        <div class="flex items-center gap-3">
+                            <span class="h-px flex-1 bg-slate-200"></span>
+                            <span class="text-[0.7rem] font-extrabold uppercase tracking-widest text-slate-400">Pasahero</span>
+                            <span class="h-px flex-1 bg-slate-200"></span>
+                        </div>
+
+                        {{-- Connect mode: a first-time passenger is created on the
+                             spot and lands straight on their complaints, where they
+                             can follow each one up. Staff emails are refused. --}}
+                        <a href="{{ route('login.google', ['intended' => 'passenger/dashboard']) }}"
+                           class="mt-4 flex w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-navy-600/30"
+                           id="googleLoginBtn">
+                            <i class="bi bi-google text-lg text-red-500" aria-hidden="true"></i>
+                            Continue with Google
+                            <i class="bi bi-arrow-right-circle text-navy-500" aria-hidden="true"></i>
+                        </a>
+
+                        <p class="mt-2.5 text-center text-xs leading-relaxed text-slate-400">
+                            Dito mo makikita at maa-follow up ang iyong mga complaint — walang bagong password na kailangan.
+                        </p>
+                    </div>
+                @endif
+
                 <div class="mt-7 border-t border-slate-100 pt-5 text-center text-sm text-slate-500">
                     Don't have an account?
                     <a href="{{ route('register') }}" class="font-semibold text-navy-600 transition hover:text-navy-700 hover:underline">Sign Up</a>

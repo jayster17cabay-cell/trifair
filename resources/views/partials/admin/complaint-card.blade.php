@@ -50,6 +50,11 @@
                 <span class="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold {{ $typeChipClass }}">
                     <i class="bi bi-exclamation-triangle"></i>{{ $rating->complaint_type ?: 'Complaint' }}
                 </span>
+                @if ($rating->passengerFollowUps->count() > 0)
+                    <span class="inline-flex items-center gap-1 rounded-md border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700" title="Passenger follow-up">
+                        <i class="bi bi-chat-left-text"></i>{{ $rating->passengerFollowUps->count() }} follow-up{{ $rating->passengerFollowUps->count() > 1 ? 's' : '' }}
+                    </span>
+                @endif
             </div>
         </div>
 
@@ -163,6 +168,31 @@
                         </div>
                     </div>
                 @endif
+            </div>
+        @endif
+
+        {{-- Extra messages the filing passenger added after submitting, so a
+             reviewer sees added context or a status nudge in one place. --}}
+        @if ($rating->passengerFollowUps->isNotEmpty())
+            <div class="mx-4 mb-4 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3 sm:mx-5">
+                <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
+                    <i class="bi bi-chat-left-text-fill text-violet-600"></i>
+                    <span class="text-[0.7rem] font-bold uppercase tracking-widest text-violet-700">Passenger Follow-ups</span>
+                    <span class="ml-auto text-xs text-slate-500">
+                        {{ $rating->passengerFollowUps->count() }} message{{ $rating->passengerFollowUps->count() > 1 ? 's' : '' }}
+                    </span>
+                </div>
+                <div class="space-y-2">
+                    @foreach ($rating->passengerFollowUps as $followUp)
+                        <div class="border-t border-violet-100 pt-2 first:border-t-0 first:pt-0">
+                            <p class="mb-0.5 text-sm leading-relaxed text-slate-700">{{ $followUp->message }}</p>
+                            <div class="flex flex-wrap items-center gap-x-3 text-[0.65rem] text-slate-500">
+                                <span><i class="bi bi-person mr-1"></i>{{ $rating->passenger_name ?: 'Passenger' }}</span>
+                                <span><i class="bi bi-clock-history mr-1"></i>{{ $followUp->created_at->format('M j, Y g:i A') }}</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         @endif
 

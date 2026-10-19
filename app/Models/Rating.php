@@ -175,6 +175,15 @@ class Rating extends Model
     }
 
     /**
+     * Extra messages the filing passenger added after submitting the complaint
+     * (oldest first, so a ticket reads as a conversation in order).
+     */
+    public function passengerFollowUps()
+    {
+        return $this->hasMany(PassengerFollowUp::class)->orderBy('created_at');
+    }
+
+    /**
      * The officer/superadmin who reviewed the complaint (accepted, rejected or
      * solved it). Null for pending complaints and legacy rows reviewed before
      * reviewer tracking existed.

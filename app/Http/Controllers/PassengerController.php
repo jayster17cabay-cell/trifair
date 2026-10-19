@@ -33,7 +33,7 @@ class PassengerController extends Controller
         $solvedCount = (int) $tally->solved_count;
 
         $complaints = (clone $base)
-            ->with(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer'])
+            ->with(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps'])
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -45,5 +45,42 @@ class PassengerController extends Controller
             ->get();
 
         return view('passenger.dashboard', compact('complaints', 'totalCount', 'pendingCount', 'acceptedCount', 'rejectedCount', 'solvedCount', 'notifications'));
+    }
+
+    /**
+     * Add a follow-up message to the passenger's own complaint so they can ask
+     * for an update or supply extra context while the ticket is still open.
+     */
+    public function followUp(Request $request, Rating $rating)
+    {
+        $user = $request->user();
+
+        // Only the passenger who filed it may follow up, and only while it is
+        // still open — a solved ticket has nothing left to chase.
+        abort_unless((int) $rating->passenger_user_id === (int) $user->id, 403);
+        abort_unless($rating->complaint_type !== null, 404);
+
+        if ($rating->is_solved) {
+            return back()->withErrors([
+                'follow_up' => 'Nasolusyunan na ang complaint na ito. Kung may bagong isyu, mag-file ng bagong complaint.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'message' => 'required|string|min:3|max:1000',
+        ], [
+            'message.required' => 'Ilagay ang iyong follow-up message bago mag-submit.',
+            'message.min' => 'Pasokin mo ang hindi bababa sa 3 characters.',
+            'message.max' => 'Ang follow-up message ay hindi dapat lumagpas sa 1,000 characters.',
+        ]);
+
+        $rating->passengerFollowUps()->create([
+            'user_id' => $user->id,
+            'message' => $data['message'],
+        ]);
+
+        return redirect()
+            ->route('passenger.dashboard')
+            ->with('status', 'Naipadala ang iyong follow-up. Ipapakita ito sa TFRB/superadmin para sa iyong complaint.');
     }
 }

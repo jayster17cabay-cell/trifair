@@ -382,6 +382,10 @@ Route::get('/rate/{qrCode}/submitted', [RatingController::class, 'showSubmitted'
 
 Route::group(['prefix' => 'passenger', 'middleware' => ['auth', 'role:passenger']], function () {
     Route::get('/dashboard', [PassengerController::class, 'dashboard'])->name('passenger.dashboard');
+    // A passenger follows up on their own complaint while it is still open.
+    Route::post('/complaints/{rating}/follow-up', [PassengerController::class, 'followUp'])
+        ->middleware('throttle:10,1')
+        ->name('passenger.complaints.followUp');
 });
 
 // Server-side route lookup for the passenger map (cached)

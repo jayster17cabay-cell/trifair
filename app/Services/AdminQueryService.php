@@ -81,7 +81,7 @@ class AdminQueryService
             $this->applyReferenceSearch($base, $search);
         }
 
-        $complaints = $base->with(['operator.user', 'proofs', 'response', 'operatorProofs', 'resolutionProofs', 'reviewer'])
+        $complaints = $base->with(['operator.user', 'proofs', 'response', 'operatorProofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user'])
             ->latest()
             ->paginate(20)
             ->withQueryString();

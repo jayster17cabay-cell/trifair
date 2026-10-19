@@ -172,16 +172,26 @@ class PageRenderTest extends TestCase
             ->assertDontSee('aria-label="Home"', false);
     }
 
-    public function test_login_page_has_no_google_button()
+    public function test_login_page_offers_continue_with_google_only_when_configured()
     {
-        config()->set('services.google.client_id', 'test-client-id');
-        config()->set('services.google.client_secret', 'test-client-secret');
+        // Unconfigured install: nothing to connect to, so no button at all.
+        config()->set('services.google.client_id', '');
+        config()->set('services.google.client_secret', '');
 
-        // Staff log in with email + password (no Google account linked), so the
-        // login page must never offer "Continue with Google".
         $this->get('/login')
             ->assertOk()
             ->assertDontSee('Continue with Google')
+            ->assertDontSee('or log in with email');
+
+        // Once Google is configured the passenger option appears, pointed at
+        // the complaints screen (connect mode creates the account on the spot).
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('Continue with Google', false)
+            ->assertSee('auth/google?intended=passenger%2Fdashboard', false)
             ->assertDontSee('or log in with email');
     }
 }

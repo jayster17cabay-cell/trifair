@@ -32,6 +32,20 @@
 
     <main class="mx-auto max-w-4xl px-4 py-8 sm:px-6">
 
+        @if (session('status'))
+            <div class="tw-alert tw-alert-success mb-6">
+                <i class="bi bi-check-circle-fill tw-alert-icon"></i>
+                <span>{{ session('status') }}</span>
+            </div>
+        @endif
+
+        @if ($errors->has('follow_up'))
+            <div class="tw-alert tw-alert-danger mb-6">
+                <i class="bi bi-exclamation-triangle-fill mt-0.5"></i>
+                <span>{{ $errors->first('follow_up') }}</span>
+            </div>
+        @endif
+
         <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h1 class="text-xl font-extrabold text-slate-900 sm:text-2xl">My Complaints</h1>
@@ -244,6 +258,54 @@
                                 @endif
                             </div>
                         </div>
+                    @endif
+
+                    @if ($rating->passengerFollowUps->isNotEmpty())
+                        <div class="mt-3 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3">
+                            <div class="mb-1.5 flex items-center gap-1.5">
+                                <i class="bi bi-chat-left-text-fill text-violet-600"></i>
+                                <span class="text-[0.7rem] font-bold uppercase tracking-widest text-violet-700">
+                                    Your follow-ups ({{ $rating->passengerFollowUps->count() }})
+                                </span>
+                            </div>
+                            <div class="space-y-2">
+                                @foreach ($rating->passengerFollowUps as $followUp)
+                                    <div class="border-t border-violet-100 pt-2 first:border-t-0 first:pt-0">
+                                        <p class="text-sm leading-relaxed text-slate-700">{{ $followUp->message }}</p>
+                                        <div class="mt-0.5 text-[0.68rem] text-slate-400">
+                                            {{ $followUp->created_at->format('M d, Y h:i A') }}
+                                            <span class="ml-1 rounded bg-violet-100 px-1.5 py-0.5 font-semibold text-violet-700">Sent</span>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($rating->is_solved)
+                        <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
+                            <i class="bi bi-check2-all text-emerald-500"></i>
+                            Nasolusyunan na ang complaint na ito — hindi na po pwedeng mag-follow up.
+                        </p>
+                    @else
+                        <form action="{{ route('passenger.complaints.followUp', $rating) }}" method="POST" class="mt-3 border-t border-slate-100 pt-3">
+                            @csrf
+                            <input type="hidden" name="follow_up_rating_id" value="{{ $rating->id }}">
+                            <label for="followup-{{ $rating->id }}" class="tw-label mb-1">
+                                <i class="bi bi-send-fill mr-1 text-violet-500"></i>Follow up this complaint
+                            </label>
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-start">
+                                <textarea id="followup-{{ $rating->id }}" name="message" rows="2" maxlength="1000"
+                                          class="tw-textarea flex-1"
+                                          placeholder="Magdagdag ng detalye o hilingin ang status update...">{{ old('follow_up_rating_id') == $rating->id ? old('message') : '' }}</textarea>
+                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy shrink-0 self-stretch sm:self-start">
+                                    <i class="bi bi-send"></i> Send
+                                </button>
+                            </div>
+                            @if ($errors->has('message') && old('follow_up_rating_id') == $rating->id)
+                                <span class="tw-error-text" role="alert">{{ $errors->first('message') }}</span>
+                            @endif
+                        </form>
                     @endif
                 </div>
             </div>
