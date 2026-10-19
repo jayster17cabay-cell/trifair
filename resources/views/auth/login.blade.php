@@ -5,11 +5,7 @@
 @section('content')
 @include('auth.partials.auth-shell-open')
                 <div class="mb-5 text-center">
-                    <div class="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-navy-600/10 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-navy-600">
-                        <i class="bi bi-person-badge"></i> Passenger &amp; Staff Sign In
-                    </div>
-                    <h4 class="text-xl font-extrabold tracking-tight text-navy-700">Welcome back</h4>
-                    <p class="mt-1 text-sm text-slate-500">Log in to your TriFair account to continue.</p>
+                    <p class="text-sm text-slate-500">Log in to your TriFair account to continue.</p>
                     <div class="mx-auto mt-3 h-1 w-16 rounded-full bg-gradient-to-r from-gold to-navy-600"></div>
                 </div>
 
