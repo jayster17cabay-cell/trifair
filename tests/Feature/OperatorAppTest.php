@@ -228,8 +228,8 @@ class OperatorAppTest extends TestCase
             ->withSession([TodaContext::SESSION_KEY => $todaA->id])
             ->get('/operator/dashboard')
             ->assertOk()
-            ->assertSee('operatorToda', false)          // the TODA <select> is present
-            ->assertSee('All TODAs', false)
+            ->assertDontSee('operatorToda', false)      // the in-bar TODA <select> is gone
+            ->assertSee('Change TODA', false)           // header switcher is how a multi-TODA account changes TODA
             ->assertSee('Overall (All TODAs)', false)
             ->assertSee('5.0', false)
             ->assertSee('3.0', false);
