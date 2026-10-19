@@ -39,21 +39,11 @@ class SocialiteController extends Controller
         // so it survives even when a phone browser drops the session cookie.
         $state = $this->encodeConnectState($intended, $isConnect);
 
-        $provider = Socialite::driver('google');
-
-        // Without an explicit GOOGLE_REDIRECT_URI, derive the callback from the
-        // host/path the passenger is actually on. A redirect URI configured for
-        // one environment (a local `artisan serve` port) but deployed to another
-        // is the classic reason Google rejects the hand-off outright.
-        if (!filled(config('services.google.redirect'))) {
-            $provider->redirectUrl(url('/auth/google/callback'));
-        }
-
         // Socialite's redirect() stores its own random state in the session and
         // builds the authorize URL with it. We swap that value for our payload so
         // the URL and the session agree; otherwise the callback's hash_equals()
         // check would always fail and silently disable CSRF validation.
-        $url = $provider->redirect()->getTargetUrl();
+        $url = Socialite::driver('google')->redirect()->getTargetUrl();
         $url = preg_replace('/([?&])state=[^&]*/', '$1state=' . urlencode($state), $url);
 
         // Always offer Google's account chooser. A phone signed into three or
