@@ -272,11 +272,20 @@
                                         @if (auth()->check() && auth()->user()->isPassenger())
                                             <div class="rate-connect-done">
                                                 <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
-                                                <span>Connected as <strong>{{ auth()->user()->email }}</strong> — makikita sa iyong Google (Gmail) ang updates ng iyong complaint.</span>
+                                                <span>Nakakonekta ka sa <strong>{{ auth()->user()->email }}</strong>. Makikita mo ang iyong mga complaint at status sa <a href="{{ route('passenger.dashboard') }}" style="color:#0A2A5E;text-decoration:underline;font-weight:700;">Passenger Dashboard</a>.</span>
                                             </div>
+                                            <a href="{{ route('login.google', ['intended' => request()->path()]) }}"
+                                               class="rate-connect-btn"
+                                               id="googleSwitchBtn"
+                                               title="Pumili ng ibang Google account">
+                                                @include('partials.google-g', ['class' => 'h-4 w-4 shrink-0'])
+                                                Palitan ang Google account
+                                                <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+                                            </a>
                                         @else
                                             <a href="{{ route('login.google', ['intended' => request()->path()]) }}" class="rate-connect-btn" id="googleConnectBtn">
-                                                <i class="bi bi-google"></i> Continue with Google
+                                                @include('partials.google-g', ['class' => 'h-4 w-4 shrink-0'])
+                                                Continue with Google
                                                 <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
                                             </a>
                                         @endif
@@ -1237,6 +1246,12 @@
     var connectBtn = document.getElementById('googleConnectBtn');
     if (connectBtn) {
         connectBtn.addEventListener('click', function () {
+            saveRateDraft();
+        });
+    }
+    var switchBtn = document.getElementById('googleSwitchBtn');
+    if (switchBtn) {
+        switchBtn.addEventListener('click', function () {
             saveRateDraft();
         });
     }

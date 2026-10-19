@@ -17,9 +17,6 @@
                 <span class="rounded bg-white/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-widest">Passenger</span>
             </div>
             <div class="flex items-center gap-3 text-sm">
-                <span class="hidden items-center gap-1.5 sm:flex">
-                    <i class="bi bi-person-circle"></i>{{ Auth::user()->email }}
-                </span>
                 <form action="{{ route('logout') }}" method="POST" onsubmit="return confirm('Sign out of your TriFair account?')">
                     @csrf
                     <button type="submit" class="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold transition hover:bg-white/20">
@@ -29,6 +26,31 @@
             </div>
         </div>
     </header>
+
+    {{-- Which Google account these complaints belong to — a passenger juggling
+         two or three accounts must never wonder whose tickets are on screen. --}}
+    <div class="border-b border-slate-200 bg-white">
+        <div class="mx-auto flex max-w-4xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6">
+            <span class="inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-1.5 pr-3 text-xs font-bold text-slate-600">
+                @if (Auth::user()->provider === 'google')
+                    @include('partials.google-g', ['class' => 'h-4 w-4 shrink-0'])
+                @else
+                    <i class="bi bi-person-circle text-sm text-navy-500" aria-hidden="true"></i>
+                @endif
+                <span class="truncate">{{ Auth::user()->email }}</span>
+            </span>
+            <span class="hidden text-[0.7rem] text-slate-400 sm:inline">
+                Ang mga complaint sa ibaba ay para sa account na ito.
+            </span>
+            @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
+                <a href="{{ route('login.google', ['intended' => 'passenger/dashboard']) }}"
+                   class="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-navy-600 transition hover:border-navy-500 hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-600/20"
+                   title="Pumili ng ibang Google account upang makita ang mga complaint nito">
+                    <i class="bi bi-arrow-left-right" aria-hidden="true"></i> Palitan ang account
+                </a>
+            @endif
+        </div>
+    </div>
 
     <main class="mx-auto max-w-4xl px-4 py-8 sm:px-6">
 
@@ -44,12 +66,20 @@
                 <i class="bi bi-exclamation-triangle-fill mt-0.5"></i>
                 <span>{{ $errors->first('follow_up') }}</span>
             </div>
+        @elseif ($errors->any())
+            {{-- Google sign-in failures (cancelled chooser, unverified address)
+                 land here after a switch attempt — without this they would be
+                 swallowed, because only the follow-up error was ever rendered. --}}
+            <div class="tw-alert tw-alert-danger mb-6">
+                <i class="bi bi-exclamation-triangle-fill mt-0.5"></i>
+                <span>{{ $errors->first() }}</span>
+            </div>
         @endif
 
         <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h1 class="text-xl font-extrabold text-slate-900 sm:text-2xl">My Complaints</h1>
-                <p class="mt-1 text-sm text-slate-500">Mag-log in ka lang sa umpisa para makita at ma-track ang iyong mga complaint.</p>
+                <p class="mt-1 text-sm text-slate-500">Naka-link ang listahan sa Google account sa itaas — palitan ito kung iba ang ginamit mong account sa pag-complaint.</p>
             </div>
             <a href="/" class="tw-btn tw-btn-sm tw-btn-outline">
                 <i class="bi bi-qr-code-scan"></i> Scan a QR code
@@ -314,6 +344,25 @@
                 <div class="tw-empty-icon"><i class="bi bi-inbox text-slate-300"></i></div>
                 <h3 class="tw-card-title mb-1">No complaints yet</h3>
                 <p class="text-sm text-slate-500">Kapag nag-rate ka ng isang sakay gamit ang QR code habang naka-log in, lalabas dito ang iyong mga complaint at ang kanilang status.</p>
+
+                <div class="mx-auto mt-5 max-w-md rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3.5 text-left">
+                    <p class="text-xs leading-relaxed text-slate-500">
+                        <strong class="font-bold text-slate-700">Walang laman ang listahan?</strong>
+                        Baka naka-iba ang Google account na ginamit mo sa pag-complain. Naka-sign in ka ngayon bilang
+                        <span class="font-semibold text-navy-700">{{ Auth::user()->email }}</span>
+                        @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
+                            — piliin ang ibang account para doon lumabas ang mga complaint nito.
+                        @endif
+                    </p>
+                    @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
+                        <a href="{{ route('login.google', ['intended' => 'passenger/dashboard']) }}"
+                           class="group mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-navy-500 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-navy-600/15">
+                            @include('partials.google-g', ['class' => 'h-4 w-4 transition-transform duration-200 group-hover:scale-110'])
+                            Subukan ang ibang Google account
+                            <i class="bi bi-arrow-right-circle text-navy-500" aria-hidden="true"></i>
+                        </a>
+                    @endif
+                </div>
             </div>
         @endforelse
 

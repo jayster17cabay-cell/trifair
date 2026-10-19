@@ -26,8 +26,12 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/auth/google', [SocialiteController::class, 'redirect'])->middleware('guest')->name('login.google');
-Route::get('/auth/google/callback', [SocialiteController::class, 'callback'])->middleware('guest')->name('login.google.callback');
+// No `guest` middleware here on purpose: a passenger signed in with one
+// Google account comes back to switch to another one (their complaints are
+// kept per account), and the callback simply logs the newly chosen account in
+// over the old session.
+Route::get('/auth/google', [SocialiteController::class, 'redirect'])->name('login.google');
+Route::get('/auth/google/callback', [SocialiteController::class, 'callback'])->name('login.google.callback');
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('throttle:5,1');

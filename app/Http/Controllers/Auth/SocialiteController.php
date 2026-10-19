@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Helpers\ActivityLogger;
 use App\Http\Controllers\Controller;
+use App\Models\Rating;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,7 +44,18 @@ class SocialiteController extends Controller
         // builds the authorize URL with it. We swap that value for our payload so
         // the URL and the session agree; otherwise the callback's hash_equals()
         // check would always fail and silently disable CSRF validation.
-        $url = Socialite::driver('google')->redirect()->getTargetUrl();
+        //
+        // prompt=select_account forces Google's account chooser open on every
+        // tap. A passenger who complains from two or three Google accounts in
+        // the same browser must pick the one they want — otherwise Google
+        // silently continues with whatever it considers the primary account and
+        // they land on an empty (or wrong) complaint list. It is set through
+        // with() rather than glued onto the URL, so a `prompt` entry can never
+        // end up duplicated with Google honouring the wrong one.
+        $url = Socialite::driver('google')
+            ->with(['prompt' => 'select_account'])
+            ->redirect()
+            ->getTargetUrl();
         $url = preg_replace('/([?&])state=[^&]*/', '$1state=' . urlencode($state), $url);
 
         $request->session()->put('state', $state);
@@ -151,6 +163,15 @@ class SocialiteController extends Controller
         Auth::login($user, true);
 
         $request->session()->regenerate();
+
+        // Complaints filed before signing in only carry the typed email. Now
+        // that Google has proved ownership of that address, hand those tickets
+        // over to the account so they show up under "My Complaints" instead of
+        // staying invisible behind a passenger_user_id of null.
+        $claimed = $user->isPassenger() ? $this->claimGuestComplaints($user) : 0;
+        if ($claimed > 0) {
+            ActivityLogger::log('login', "{$user->email} claimed {$claimed} guest complaint(s) after signing in with Google", $user, 'auth');
+        }
 
         if ($isConnect) {
             ActivityLogger::log('login', "{$user->name} ({$user->email}) connected via Google as passenger", null, 'auth');
@@ -274,11 +295,42 @@ class SocialiteController extends Controller
         return $user;
     }
 
+    /**
+     * Attach guest-filed complaints that carry this address to the account, so
+     * a passenger who typed their email before signing in sees them as soon as
+     * they pick that Google account. Comparison is case-insensitive because the
+     * typed field is free text while Google always returns a canonical form.
+     */
+    private function claimGuestComplaints(User $user): int
+    {
+        $email = strtolower(trim((string) $user->email));
+
+        if ($email === '') {
+            return 0;
+        }
+
+        return Rating::query()
+            ->whereNull('passenger_user_id')
+            ->whereRaw('LOWER(passenger_email) = ?', [$email])
+            ->update(['passenger_user_id' => $user->id]);
+    }
+
     private function connectFailure(Request $request, string $message, $isConnect, ?string $intended)
     {
         if ($isConnect && $intended) {
-            return redirect($this->validIntended($intended))->withErrors(['email' => $message]);
+            $target = $this->validIntended($intended);
+
+            // An auth-only page cannot render for a signed-out visitor: the
+            // guard would bounce them to /login and spend the flash message on
+            // the way there, so the explanation would never be read. Go
+            // straight to the screen that can show it instead. The complaint
+            // form is public, so it keeps the passenger exactly where they were.
+            $needsAuth = str_starts_with(ltrim($target, '/'), 'passenger/');
+            if (Auth::check() || !$needsAuth) {
+                return redirect($target)->withErrors(['email' => $message]);
+            }
         }
+
         return redirect()->route('login')->withErrors(['email' => $message]);
     }
 

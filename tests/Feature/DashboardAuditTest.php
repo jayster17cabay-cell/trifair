@@ -1165,6 +1165,173 @@ class DashboardAuditTest extends TestCase
         $this->assertTrue((bool) ($decoded['c'] ?? false));
     }
 
+    public function test_google_redirect_forces_the_account_chooser()
+    {
+        // A passenger signed into three Google accounts in the same browser has
+        // to pick which one they are complaining under. Left to itself Google
+        // continues with whatever account it considers primary and the
+        // passenger lands on the wrong (or an empty) complaint list.
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+        config()->set('services.google.redirect', 'https://example.test/auth/google/callback');
+
+        $response = $this->get('/auth/google?intended=passenger/dashboard');
+        $response->assertRedirect();
+
+        $location = (string) $response->headers->get('Location');
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+
+        $this->assertSame('select_account', $query['prompt'] ?? null);
+        $this->assertSame(1, substr_count($location, 'prompt='), 'The chooser prompt must appear exactly once.');
+        $this->assertNotEmpty($query['state'] ?? null, 'The signed state must survive the extra parameter.');
+    }
+
+    public function test_signed_in_passenger_can_switch_google_account_and_sees_only_its_complaints()
+    {
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+        config()->set('services.google.redirect', 'https://example.test/auth/google/callback');
+
+        $first = $this->makeUser('passenger');
+        $op = $this->makeOperator();
+
+        $firstTicket = $this->makeRating($op, 1, true, true);
+        $firstTicket->update(['passenger_user_id' => $first->id]);
+
+        // Filed as a guest with the second address typed into the form — it
+        // only becomes part of that account's list once Google proves the
+        // address belongs to the person signing in.
+        $secondTicket = $this->makeRating($op, 2, true, true);
+        $secondTicket->update(['passenger_user_id' => null, 'passenger_email' => 'second.account@example.com']);
+
+        // Starting the flow while signed in must reach Google, not bounce the
+        // passenger back to /login — otherwise "switch account" is a dead link.
+        $start = $this->actingAs($first)->get('/auth/google?intended=passenger/dashboard');
+        $start->assertRedirect();
+
+        $location = (string) $start->headers->get('Location');
+        $this->assertStringStartsWith('https://accounts.google.com', $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->assertSame('select_account', $query['prompt'] ?? null);
+
+        $googleUser = new \Laravel\Socialite\Two\User();
+        $googleUser->id = 'google-second-id';
+        $googleUser->name = 'Second Account';
+        $googleUser->email = 'second.account@example.com';
+        $googleUser->user = ['email_verified' => true];
+
+        $provider = Mockery::mock();
+        $provider->shouldReceive('user')->andReturn($googleUser);
+        \Laravel\Socialite\Facades\Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $this->actingAs($first)
+            ->withSession([
+                'google_connect_mode' => true,
+                'google_connect_intended' => 'passenger/dashboard',
+            ])->get('/auth/google/callback')
+            ->assertRedirect('/passenger/dashboard');
+
+        $second = User::where('email', 'second.account@example.com')->first();
+        $this->assertNotNull($second, 'The chosen Google account must be signed in.');
+        $this->assertAuthenticatedAs($second);
+        $this->assertSame($second->id, (int) $secondTicket->fresh()->passenger_user_id);
+
+        $this->actingAs($second)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee($secondTicket->reference_number, false)
+            ->assertDontSee($firstTicket->reference_number, false);
+    }
+
+    public function test_google_signin_claims_guest_complaints_typed_with_the_same_email()
+    {
+        $op = $this->makeOperator();
+        $guestTicket = $this->makeRating($op, 1, true, true);
+        $guestTicket->update(['passenger_user_id' => null, 'passenger_email' => 'Mixed.Case@Example.com']);
+
+        $googleUser = new \Laravel\Socialite\Two\User();
+        $googleUser->id = 'google-claim-id';
+        $googleUser->name = 'Claim Passenger';
+        $googleUser->email = 'mixed.case@example.com';
+        $googleUser->user = ['email_verified' => true];
+
+        $provider = Mockery::mock();
+        $provider->shouldReceive('user')->andReturn($googleUser);
+        \Laravel\Socialite\Facades\Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $this->withSession([
+            'google_connect_mode' => true,
+            'google_connect_intended' => 'passenger/dashboard',
+        ])->get('/auth/google/callback')
+            ->assertRedirect('/passenger/dashboard');
+
+        $user = User::where('email', 'mixed.case@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame($user->id, (int) $guestTicket->fresh()->passenger_user_id);
+
+        $this->actingAs($user)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee($guestTicket->reference_number, false);
+    }
+
+    public function test_passenger_dashboard_shows_the_active_account_and_switch_action()
+    {
+        config()->set('services.google.client_id', 'test-client-id');
+        config()->set('services.google.client_secret', 'test-client-secret');
+
+        $passenger = $this->makeUser('passenger');
+        $passenger->forceFill(['provider' => 'google', 'provider_id' => 'gid-1'])->save();
+
+        $this->actingAs($passenger)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee($passenger->email, false)
+            ->assertSee('Ang mga complaint sa ibaba ay para sa account na ito.', false)
+            ->assertSee('Palitan ang account', false)
+            ->assertSee('auth/google?intended=passenger%2Fdashboard', false);
+
+        // Without OAuth credentials there is nothing to switch to, so the
+        // action must disappear instead of leading to a broken provider call.
+        config()->set('services.google.client_id', '');
+        config()->set('services.google.client_secret', '');
+
+        $this->actingAs($passenger)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertDontSee('Palitan ang account');
+    }
+
+    public function test_google_cancel_from_the_login_page_reports_it_on_the_login_screen()
+    {
+        // The passenger gave up in Google's chooser from the login page. The
+        // intended dashboard is auth-only, so sending them there first would
+        // spend the flash message on the guard's bounce and they would see a
+        // silent, empty login form instead of the reason.
+        $this->withSession([
+            'google_connect_mode' => true,
+            'google_connect_intended' => 'passenger/dashboard',
+        ])->get('/auth/google/callback?error=access_denied')
+            ->assertRedirect(route('login'));
+
+        $errors = session('errors');
+        $this->assertNotNull($errors);
+        $this->assertStringContainsString('Kinansela', $errors->first('email'));
+    }
+
+    public function test_google_switch_failure_is_reported_on_the_passenger_dashboard()
+    {
+        $passenger = $this->makeUser('passenger');
+
+        $this->actingAs($passenger)
+            ->withSession([
+                'google_connect_mode' => true,
+                'google_connect_intended' => 'passenger/dashboard',
+            ])->get('/auth/google/callback?error=access_denied')
+            ->assertRedirect('/passenger/dashboard');
+
+        $this->actingAs($passenger)->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee('Kinansela', false);
+    }
+
     public function test_dashboard_operator_counts_and_rating_distribution_reconcile()
     {
         $this->makeUser('superadmin');
