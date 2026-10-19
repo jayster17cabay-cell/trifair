@@ -576,14 +576,12 @@ class AdminQueryService
         $activeStatusCount = (int) $tally->active_status_count;
         $inactiveStatusCount = (int) $tally->inactive_status_count;
 
-        // TODA membership requests awaiting this admin level: the TFRB officer
-        // verifies president-approved memberships, the superadmin gives the
-        // final approval.
+        // TODA membership requests awaiting this admin level: after the
+        // president approves, either the TFRB officer or the superadmin may
+        // give the single final approval.
         $membershipService = app(\App\Services\TodaMembershipService::class);
-        $membershipRequests = $membershipStage === 'tfrb'
-            ? $membershipService->tfrbQueue()
-            : $membershipService->adminQueue();
-        $membershipStage = $membershipStage === 'tfrb' ? 'tfrb' : 'superadmin';
+        $membershipRequests = $membershipService->finalApprovalQueue();
+        $membershipStage = 'final';
 
         return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount', 'membershipRequests', 'membershipStage');
     }

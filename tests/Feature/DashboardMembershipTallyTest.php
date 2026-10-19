@@ -90,15 +90,15 @@ class DashboardMembershipTallyTest extends TestCase
 
         app(AdminDashboardService::class)->flush();
 
-        // Superadmin only acts on the final (superadmin) stage.
+        // Now either TFRB officer or superadmin may give the single final
+        // approval, so both dashboards see the same pending count.
         $this->actingAs($admin)->getJson('/superadmin/dashboard')
             ->assertOk()
-            ->assertJsonPath('pendingTodaMemberships', 1);
+            ->assertJsonPath('pendingTodaMemberships', 3);
 
-        // TFRB verifies president-approved requests (legacy pending_admin included).
         $this->actingAs($officer)->getJson('/tfrb-officer/dashboard')
             ->assertOk()
-            ->assertJsonPath('pendingTodaMemberships', 2);
+            ->assertJsonPath('pendingTodaMemberships', 3);
 
         // The KPI card renders on both dashboards.
         $this->actingAs($admin)->get('/superadmin/dashboard')->assertOk()->assertSee('Pending TODA', false);

@@ -56,7 +56,7 @@
 @endif
 
 {{-- Join requests: operators asking to join this TODA (president reviews first,
-     then superadmin/TFRB gives the final approval). --}}
+     then either the TFRB officer or the superadmin gives the final approval). --}}
 @if ($showJoin && ($joinRequests ?? collect())->isNotEmpty())
     <div id="joinRequestsSection" class="scroll-mt-24">
         @include('partials.president.join-requests', ['joinRequests' => $joinRequests])

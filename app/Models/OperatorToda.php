@@ -10,17 +10,18 @@ use Illuminate\Database\Eloquent\Model;
  * franchise but may be a member of several TODAs (up to MAX_TODAS), so
  * rateability is derived from these rows rather than from the franchise.
  *
- * Status lifecycle (three approvals required before a membership is Active):
+ * Status lifecycle (two approvals required before a membership is Active):
  *   pending            -> the operator asked to join; the TODA president reviews it first
- *   pending_tfrb       -> the TODA president approved; the TFRB officer verifies it next
- *   pending_superadmin -> the TFRB officer approved; the superadmin gives the final approval
- *   active             -> all three approvals done; the operator is rateable under this TODA
+ *   pending_tfrb       -> the TODA president approved; the TFRB officer OR the
+ *                         superadmin gives the final approval (whichever gets
+ *                         to it first — it does not take both)
+ *   active             -> both approvals done; the operator is rateable under this TODA
  *   rejected           -> declined at any stage (reason recorded)
  *   inactive           -> withdrawn but kept for history (not rateable)
  *
- * `pending_admin` is a legacy value from the earlier two-stage flow: a
- * president-approved row that was simply waiting for the last approver. It is
- * treated as awaiting the TFRB so in-flight memberships keep progressing.
+ * `pending_superadmin` (in-flight rows from the old three-step chain) and the
+ * legacy `pending_admin` value are both treated as awaiting the same single
+ * final approval, so nothing already moving keeps progressing.
  */
 class OperatorToda extends Model
 {
@@ -97,19 +98,17 @@ class OperatorToda extends Model
     }
 
     /**
-     * Waiting on the TFRB officer (includes the legacy pending_admin value).
+     * Awaiting the single final approval — the TFRB officer or the superadmin,
+     * whichever signs off first. Includes the legacy pending_admin value and
+     * in-flight pending_superadmin rows from the old three-step chain.
      */
-    public function isPendingTfrb(): bool
+    public function isAwaitingFinalApproval(): bool
     {
-        return in_array($this->status, [self::STATUS_PENDING_TFRB, self::STATUS_PENDING_ADMIN], true);
-    }
-
-    /**
-     * Waiting on the superadmin for the final approval.
-     */
-    public function isPendingSuperadmin(): bool
-    {
-        return $this->status === self::STATUS_PENDING_SUPERADMIN;
+        return in_array($this->status, [
+            self::STATUS_PENDING_TFRB,
+            self::STATUS_PENDING_SUPERADMIN,
+            self::STATUS_PENDING_ADMIN,
+        ], true);
     }
 
     /**
@@ -149,14 +148,17 @@ class OperatorToda extends Model
         return $query->where('status', self::STATUS_PENDING);
     }
 
-    public function scopePendingTfrb($query)
+    /**
+     * Everything past the president stage that still needs the one final
+     * approval (TFRB officer or superadmin).
+     */
+    public function scopeAwaitingFinalApproval($query)
     {
-        return $query->whereIn('status', [self::STATUS_PENDING_TFRB, self::STATUS_PENDING_ADMIN]);
-    }
-
-    public function scopePendingSuperadmin($query)
-    {
-        return $query->where('status', self::STATUS_PENDING_SUPERADMIN);
+        return $query->whereIn('status', [
+            self::STATUS_PENDING_TFRB,
+            self::STATUS_PENDING_SUPERADMIN,
+            self::STATUS_PENDING_ADMIN,
+        ]);
     }
 
     /**
@@ -166,9 +168,9 @@ class OperatorToda extends Model
     {
         return [
             self::STATUS_PENDING => 'Pending President',
-            self::STATUS_PENDING_TFRB => 'Pending TFRB',
-            self::STATUS_PENDING_ADMIN => 'Pending TFRB',
-            self::STATUS_PENDING_SUPERADMIN => 'Pending Superadmin',
+            self::STATUS_PENDING_TFRB => 'Pending Final Approval',
+            self::STATUS_PENDING_ADMIN => 'Pending Final Approval',
+            self::STATUS_PENDING_SUPERADMIN => 'Pending Final Approval',
             self::STATUS_ACTIVE => 'Active',
             self::STATUS_REJECTED => 'Rejected',
             self::STATUS_INACTIVE => 'Inactive',

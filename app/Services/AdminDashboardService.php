@@ -98,8 +98,8 @@ class AdminDashboardService
             // gives the final approval. Surfaced as a KPI so pending memberships
             // are visible on the dashboard, not only on the Operators page.
             'pendingTodaMemberships' => ($options['includeOfficers'] ?? false)
-                ? OperatorToda::pendingSuperadmin()->count()
-                : OperatorToda::pendingTfrb()->count(),
+                ? OperatorToda::awaitingFinalApproval()->count()
+                : OperatorToda::awaitingFinalApproval()->count(),
         ];
 
         if ($options['includeOfficers'] ?? false) {

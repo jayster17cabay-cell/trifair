@@ -334,7 +334,7 @@ class OperatorController extends Controller
 
         return back()->with(
             'success',
-            "Your request to join {$toda->name} was submitted. It will be reviewed by the TODA president, then verified by the TFRB officer, and finally approved by the superadmin."
+            "Your request to join {$toda->name} was submitted. It will be reviewed by the TODA president, then either the TFRB officer or the superadmin will give the final approval."
         );
     }
 

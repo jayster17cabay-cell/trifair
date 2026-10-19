@@ -12,14 +12,17 @@ use Illuminate\Support\Collection;
 
 /**
  * TODA membership lifecycle. An operator's membership in a TODA is a row on
- * the `operator_toda` table and moves through THREE approvals before it is
+ * the `operator_toda` table and moves through TWO approvals before it is
  * Active:
  *
  *   pending            operator asks to join            -> TODA president reviews
- *   pending_tfrb       president approved               -> TFRB officer verifies
- *   pending_superadmin TFRB officer approved            -> superadmin final approval
- *   active             all three approvals done         -> rateable under the TODA
+ *   pending_tfrb       president approved               -> TFRB officer OR superadmin finalizes
+ *   active             both approvals done              -> rateable under the TODA
  *   rejected           declined at any stage (reason recorded)
+ *
+ * The final approval is deliberately single-approver: after the president
+ * signs off, whoever of the TFRB officer / superadmin gets to the request
+ * first gives the final approval — the membership does not pass through both.
  *
  * A President may add an *existing* operator straight to the TODA (no new
  * account) — the president step counts as done, so it lands as pending_tfrb.
@@ -112,7 +115,7 @@ class TodaMembershipService
 
         ActivityLogger::log(
             'approve_toda_membership_president',
-            "{$president->name} approved {$this->name($membership->operator)}'s request to join {$this->todaName($membership)} — awaiting TFRB verification",
+            "{$president->name} approved {$this->name($membership->operator)}'s request to join {$this->todaName($membership)} — awaiting final approval (TFRB officer or superadmin)",
             $membership,
             ActivityLogger::CATEGORY_OPERATOR
         );
@@ -121,26 +124,10 @@ class TodaMembershipService
     }
 
     /**
-     * Stage 2 — TFRB officer's verification: pending_tfrb -> pending_superadmin.
-     */
-    public function tfrbApprove(OperatorToda $membership, User $officer): OperatorToda
-    {
-        $membership->update(['status' => OperatorToda::STATUS_PENDING_SUPERADMIN]);
-
-        app(AdminDashboardService::class)->flush();
-
-        ActivityLogger::log(
-            'verify_toda_membership_tfrb',
-            "{$officer->name} verified {$this->name($membership->operator)}'s membership in {$this->todaName($membership)} — awaiting final superadmin approval",
-            $membership,
-            ActivityLogger::CATEGORY_OFFICER
-        );
-
-        return $membership;
-    }
-
-    /**
-     * Stage 3 — superadmin final approval: pending_superadmin -> active.
+     * Stage 2 — the single final approval, given by EITHER the TFRB officer
+     * or the superadmin (whichever signs off first): pending_tfrb -> active.
+     * In-flight rows still sitting at the old pending_superadmin stage are
+     * finalized the same way.
      */
     public function finalApprove(OperatorToda $membership, User $admin): OperatorToda
     {
@@ -198,8 +185,8 @@ class TodaMembershipService
     /**
      * A president adds an existing operator to their TODA. The president step
      * counts as stage 1 done, so the membership lands as pending_tfrb — the
-     * president cannot skip the TFRB and superadmin stages. Returns null when
-     * the three-TODA limit is already reached.
+     * president cannot skip the final approval. Returns null when the
+     * three-TODA limit is already reached.
      */
     public function presidentAdd(Operator $operator, Toda $toda, User $president): ?OperatorToda
     {
@@ -230,7 +217,7 @@ class TodaMembershipService
 
         ActivityLogger::log(
             'add_toda_membership_president',
-            "{$president->name} added {$this->name($operator)} to {$toda->name} — awaiting TFRB verification",
+            "{$president->name} added {$this->name($operator)} to {$toda->name} — awaiting final approval (TFRB officer or superadmin)",
             $membership,
             ActivityLogger::CATEGORY_OPERATOR
         );
@@ -334,24 +321,15 @@ class TodaMembershipService
     }
 
     /**
-     * Stage 2 queue: memberships the TFRB officer must verify (president
-     * approved; legacy pending_admin included), newest first.
+     * Queue for final approval: memberships the TFRB officer or superadmin
+     * may finalize (president approved). This includes legacy pending_admin
+     * and in-flight pending_superadmin rows so they close out cleanly. Returns
+     * newest first.
      */
-    public function tfrbQueue(): Collection
+    public function finalApprovalQueue(): Collection
     {
         return OperatorToda::with(['operator.user', 'toda'])
-            ->pendingTfrb()
-            ->latest('id')
-            ->get();
-    }
-
-    /**
-     * Stage 3 queue: memberships awaiting the superadmin's final approval.
-     */
-    public function adminQueue(): Collection
-    {
-        return OperatorToda::with(['operator.user', 'toda'])
-            ->where('status', OperatorToda::STATUS_PENDING_SUPERADMIN)
+            ->awaitingFinalApproval()
             ->latest('id')
             ->get();
     }

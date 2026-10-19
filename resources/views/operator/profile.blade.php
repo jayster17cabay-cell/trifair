@@ -215,7 +215,7 @@
                             <i class="bi bi-send"></i> Request to Join
                         </button>
                     </form>
-                    <p class="mt-2 text-xs text-slate-500">Your request goes to the TODA president first, then to the TFRB officer, and finally to the superadmin. You can belong to up to {{ \App\Models\OperatorToda::MAX_TODAS }} TODAs.</p>
+                    <p class="mt-2 text-xs text-slate-500">Your request goes to the TODA president first, then either the TFRB officer or the superadmin gives the final approval. You can belong to up to {{ \App\Models\OperatorToda::MAX_TODAS }} TODAs.</p>
                 @else
                     <p class="text-sm text-slate-400">
                         @if (!($canJoinAnother ?? true))

@@ -421,23 +421,31 @@ class SuperadminController extends Controller
     }
 
     /**
-     * Final approval of a TODA membership (the president and TFRB officer
-     * already approved). Activating makes the operator rateable there.
+     * Single final approval of a TODA membership (the president already
+     * approved); either TFRB officer or superadmin may give it.
      */
     public function approveMembership(OperatorToda $membership)
     {
-        if (!$membership->isPendingSuperadmin()) {
+        if ($membership->isPendingPresident()) {
+            return back()->with('error', 'This membership is still awaiting the TODA president\'s approval.');
+        }
+
+        if (!$membership->isAwaitingFinalApproval() && !$membership->isPendingTfrb() && !$membership->isPendingSuperadmin()) {
             return back()->with('error', 'This membership is not awaiting final approval.');
         }
 
         app(TodaMembershipService::class)->finalApprove($membership, Auth::user());
 
-        return back()->with('success', "Membership approved for {$membership->operator->user->name}.");
+        return back()->with('success', "Final approval given for {$membership->operator->user->name}.");
     }
 
     public function rejectMembership(Request $request, OperatorToda $membership)
     {
-        if (!$membership->isPendingSuperadmin()) {
+        if ($membership->isPendingPresident()) {
+            return back()->with('error', 'This membership is still awaiting the TODA president\'s approval.');
+        }
+
+        if (!$membership->isAwaitingFinalApproval() && !$membership->isPendingTfrb() && !$membership->isPendingSuperadmin()) {
             return back()->with('error', 'This membership is not awaiting final approval.');
         }
 

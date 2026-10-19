@@ -7,11 +7,9 @@
               (superadmin|tfrb-officer), $membershipStage ('tfrb'|'superadmin').
 --}}
 @php
-    $stage = ($membershipStage ?? ($routePrefix === 'tfrb-officer' ? 'tfrb' : 'superadmin'));
-    $stageTitle = $stage === 'tfrb' ? 'TODA Membership — TFRB Verification' : 'TODA Membership — Final Approval';
-    $stageNote = $stage === 'tfrb'
-        ? 'Verifying memberships a TODA president already approved. Approval forwards each to the superadmin for final approval.'
-        : 'Final approval of memberships already verified by the TFRB officer. Approving activates the membership.';
+    $stage = ($membershipStage ?? 'final');
+    $stageTitle = 'TODA Membership — Final Approval';
+    $stageNote = 'After the TODA president approves, either the TFRB officer or the superadmin gives the single final approval to activate the membership.';
 @endphp
 <div class="tw-card mb-6 overflow-hidden">
     <div class="flex items-center justify-between px-4 py-3" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
@@ -19,7 +17,7 @@
             <i class="bi bi-diagram-3-fill mr-1 text-gold"></i> {{ $stageTitle }}
             <span class="tw-badge tw-badge-amber ml-2">{{ $membershipRequests->count() }}</span>
         </h3>
-        <p class="hidden text-xs text-slate-300 sm:inline">{{ $stage === 'tfrb' ? 'Awaiting TFRB verification' : 'Awaiting final approval' }}</p>
+        <p class="hidden text-xs text-slate-300 sm:inline">Awaiting final approval</p>
     </div>
 
     <div class="overflow-x-auto">

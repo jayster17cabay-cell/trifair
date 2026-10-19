@@ -109,25 +109,36 @@ class TfrbOfficerController extends Controller
     }
 
     /**
-     * TFRB officer's verification of a TODA membership a president already
-     * approved. Moves pending_tfrb -> pending_superadmin; the superadmin then
-     * gives the final approval.
+     * Single final approval of a TODA membership, given by the TFRB officer
+     * after the president has approved (no TFRB–superadmin handoff).
      */
     public function approveMembership(OperatorToda $membership)
     {
-        if (!$membership->isPendingTfrb()) {
-            return back()->with('error', 'This membership is not awaiting TFRB verification.');
+        if ($membership->isPendingPresident()) {
+            return back()->with('error', 'This membership is still awaiting the TODA president\'s approval.');
         }
 
-        app(TodaMembershipService::class)->tfrbApprove($membership, Auth::user());
+        if (!$membership->isAwaitingFinalApproval() && !$membership->isPendingTfrb() && !$membership->isPendingSuperadmin()) {
+            return back()->with('error', 'This membership is not awaiting final approval.');
+        }
 
-        return back()->with('success', "Verified {$membership->operator->user->name}. The request is now with the superadmin for final approval.");
+        app(TodaMembershipService::class)->finalApprove($membership, Auth::user());
+
+        return back()->with('success', "Final approval given for {$membership->operator->user->name}.");
     }
 
     public function rejectMembership(Request $request, OperatorToda $membership)
     {
-        if (!$membership->isPendingTfrb()) {
-            return back()->with('error', 'This membership is not awaiting TFRB verification.');
+        if ($membership->isPendingPresident()) {
+            return back()->with('error', 'This membership is still awaiting the TODA president\'s approval.');
+        }
+
+        if (!$membership->isAwaitingFinalApproval() && !$membership->isPendingTfrb() && !$membership->isPendingSuperadmin()) {
+            return back()->with('error', 'This membership is not awaiting final approval.');
+        }
+
+        if (!$membership->isAwaitingFinalApproval() && !$membership->isPendingTfrb() && !$membership->isPendingSuperadmin()) {
+            return back()->with('error', 'This membership is not awaiting final approval.');
         }
 
         $request->validate([
