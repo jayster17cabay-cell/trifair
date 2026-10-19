@@ -11,14 +11,14 @@
                 </div>
 
                 @if (session('status'))
-                    <div class="tw-alert tw-alert-success mt-4">
+                    <div class="tw-alert tw-alert-success mb-4">
                         <i class="bi bi-check-circle-fill tw-alert-icon"></i>
                         <span>{{ session('status') }}</span>
                     </div>
                 @endif
 
                 @if ($errors->any())
-                    <div class="tw-alert tw-alert-danger mt-4">
+                    <div class="tw-alert tw-alert-danger mb-4">
                         <i class="bi bi-exclamation-triangle-fill mt-0.5"></i>
                         <span>{{ $errors->first('email') ?: $errors->first() }}</span>
                     </div>
@@ -65,7 +65,7 @@
                 </form>
 
                 @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
-                    <div class="mt-6">
+                    <div class="mt-7">
                         <div class="flex items-center gap-3">
                             <span class="h-px flex-1 bg-gradient-to-r from-transparent to-slate-200"></span>
                             <span class="text-[0.7rem] font-extrabold uppercase tracking-widest text-slate-400">Para sa Pasahero</span>
@@ -83,15 +83,7 @@
                             <i class="bi bi-arrow-right-circle text-navy-500 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true"></i>
                         </a>
 
-                        <div class="mt-3 flex items-start gap-2.5 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3.5 py-3">
-                            <i class="bi bi-people-fill mt-0.5 text-navy-500" aria-hidden="true"></i>
-                            <p class="text-xs leading-relaxed text-slate-500">
-                                <strong class="font-bold text-slate-700">Gamit ka ba ng higit sa isang Google account?</strong>
-                                Ipapakita ng Google ang listahan ng mga naka-sign in na account — piliin ang ginamit mo sa pag-complaint at doon mismo lalabas ang mga complaint nito, kasama ang status at follow-ups.
-                            </p>
-                        </div>
-
-                        <p class="mt-2.5 text-center text-[0.7rem] leading-relaxed text-slate-400">
+                        <p class="mt-3 text-center text-[0.7rem] leading-relaxed text-slate-400">
                             Walang bagong password na kailangan — sign in lang gamit ang Google.
                         </p>
 
