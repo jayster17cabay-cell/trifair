@@ -80,7 +80,7 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertDontSee('Piliin ang TODA')
+            ->assertDontSee('Select the TODA')
             ->assertSee("How's my ride?", false);
     }
 
@@ -95,7 +95,7 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertSee('Piliin ang TODA')
+            ->assertSee('Select the TODA')
             ->assertSee('Alpha TODA')
             ->assertSee('Beta TODA');
     }
@@ -226,7 +226,7 @@ class MultiTodaRatingTest extends TestCase
         // The picker offers only the non-suspended TODAs; TODA A is hidden.
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertSee('Piliin ang TODA')
+            ->assertSee('Select the TODA')
             ->assertSee('Beta TODA')
             ->assertSee('Gamma TODA')
             ->assertDontSee('Alpha TODA');
@@ -254,7 +254,7 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertSee('Piliin ang TODA')
+            ->assertSee('Select the TODA')
             ->assertSee('Alpha TODA')
             ->assertSee('Beta TODA');
     }
@@ -283,7 +283,7 @@ class MultiTodaRatingTest extends TestCase
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
             ->assertSee('Suspended', false)
-            ->assertDontSee('Piliin ang TODA');
+            ->assertDontSee('Select the TODA');
     }
 
     public function test_expired_franchise_blocks_every_toda()
@@ -314,7 +314,7 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertDontSee('Piliin ang TODA');
+            ->assertDontSee('Select the TODA');
 
         $this->post(route('rate.submit', $operator->qr_code), [
             'rating' => 5,
@@ -390,7 +390,7 @@ class MultiTodaRatingTest extends TestCase
             ->assertOk()
             ->assertSee('Beta TODA')
             ->assertDontSee('Alpha TODA')
-            ->assertDontSee('Piliin ang TODA')
+            ->assertDontSee('Select the TODA')
             ->assertSee("How's my ride?", false);
     }
 
@@ -444,7 +444,7 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertSee('Piliin ang TODA')
+            ->assertSee('Select the TODA')
             ->assertSee('Beta TODA')
             ->assertSee('Gamma TODA')
             ->assertDontSee('Alpha TODA');
@@ -471,7 +471,7 @@ class MultiTodaRatingTest extends TestCase
             ->assertOk()
             ->assertSee($operator->user->name)
             ->assertSee('Suspended', false)
-            ->assertDontSee('Piliin ang TODA')
+            ->assertDontSee('Select the TODA')
             ->assertDontSee("How's my ride?", false);
 
         foreach ([$todaA, $todaB, $todaC] as $toda) {
@@ -508,7 +508,7 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertSee('Piliin ang TODA')
+            ->assertSee('Select the TODA')
             ->assertSee('Alpha TODA')
             ->assertSee('Beta TODA');
     }

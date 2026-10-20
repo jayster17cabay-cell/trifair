@@ -88,8 +88,8 @@ class SocialiteController extends Controller
         $oauthError = trim((string) $request->query('error'));
         if ($oauthError !== '') {
             $message = $oauthError === 'access_denied'
-                ? 'Kinansela mo ang Google sign-in. Pwede mong subukan muli gamit ang form sa ibaba.'
-                : 'Hindi natuloy ang Google sign-in. Pakisubukan muli.';
+                ? 'You cancelled the Google sign-in. You can try again using the form below.'
+                : 'The Google sign-in did not complete. Please try again.';
             return $this->connectFailure($request, $message, $isConnect, $intended);
         }
 
@@ -181,8 +181,8 @@ class SocialiteController extends Controller
             // thing left is attaching proof and submitting.
             $target = $this->validIntended($intended);
             $status = str_starts_with(ltrim($target, '/'), 'rate/')
-                ? "Naka-connect ka na sa {$user->email}. Ituloy ang complaint — magdagdag ng proof, tapos i-submit ang rating."
-                : "Naka-sign in ka na sa {$user->email}.";
+                ? "You are now connected as {$user->email}. Continue your complaint — add proof, then submit the rating."
+                : "You are now signed in as {$user->email}.";
 
             return redirect()->to($target)->with('status', $status);
         }

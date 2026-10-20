@@ -83,7 +83,7 @@ class PassengerFollowUpTest extends TestCase
         $this->actingAs($passenger)
             ->post(route('passenger.complaints.followUp', $rating), [
                 'follow_up_rating_id' => (string) $rating->id,
-                'message' => 'Kumusta po ang status nito?',
+                'message' => 'What is the status of this complaint?',
             ])
             ->assertRedirect(route('passenger.dashboard'))
             ->assertSessionHas('status');
@@ -91,7 +91,7 @@ class PassengerFollowUpTest extends TestCase
         $this->assertDatabaseHas('passenger_follow_ups', [
             'rating_id' => $rating->id,
             'user_id' => $passenger->id,
-            'message' => 'Kumusta po ang status nito?',
+            'message' => 'What is the status of this complaint?',
         ]);
 
         // The thread reads back on their own complaints page.
@@ -99,7 +99,7 @@ class PassengerFollowUpTest extends TestCase
             ->get('/passenger/dashboard')
             ->assertOk()
             ->assertSee('Your follow-ups (1)')
-            ->assertSee('Kumusta po ang status nito?');
+            ->assertSee('What is the status of this complaint?');
     }
 
     public function test_passenger_cannot_follow_up_on_another_passengers_complaint()
@@ -128,7 +128,7 @@ class PassengerFollowUpTest extends TestCase
             ->from('/passenger/dashboard')
             ->post(route('passenger.complaints.followUp', $rating), [
                 'follow_up_rating_id' => (string) $rating->id,
-                'message' => 'Sana ma-solve na po.',
+                'message' => 'Hope this gets resolved.',
             ])
             ->assertRedirect('/passenger/dashboard')
             ->assertSessionHasErrors('follow_up');
@@ -140,7 +140,7 @@ class PassengerFollowUpTest extends TestCase
             ->get('/passenger/dashboard')
             ->assertOk()
             ->assertDontSee('Follow up this complaint', false)
-            ->assertSee('hindi na po pwedeng mag-follow up', false);
+            ->assertSee('you can no longer follow up', false);
     }
 
     public function test_follow_up_requires_a_message()
@@ -211,7 +211,7 @@ class PassengerFollowUpTest extends TestCase
         $this->actingAs($passenger)
             ->post(route('passenger.complaints.followUp', $rating), [
                 'follow_up_rating_id' => (string) $rating->id,
-                'message' => 'May dagdag po akong ebidensya sa NBI clearance ko.',
+                'message' => 'I have additional evidence for my NBI clearance.',
             ])->assertRedirect();
 
         $html = $this->actingAs($admin)
@@ -220,7 +220,7 @@ class PassengerFollowUpTest extends TestCase
             ->getContent();
 
         $this->assertStringContainsString('Passenger Follow-ups', $html);
-        $this->assertStringContainsString('May dagdag po akong ebidensya sa NBI clearance ko.', $html);
+        $this->assertStringContainsString('I have additional evidence for my NBI clearance.', $html);
         $this->assertStringContainsString('1 follow-up', $html);
     }
 

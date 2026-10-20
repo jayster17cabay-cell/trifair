@@ -337,17 +337,17 @@ class ComplaintReviewFlowTest extends TestCase
 
         $this->actingAs($admin)
             ->patch('/superadmin/complaints/' . $complaint->id . '/reject', [
-                'resolution_note' => 'Walang sapat na ebidensya para mapatunayan ang reklamo.',
+                'resolution_note' => 'There is not enough evidence to prove the complaint.',
             ])
             ->assertRedirect();
 
         $fresh = $complaint->fresh();
-        $this->assertSame('Walang sapat na ebidensya para mapatunayan ang reklamo.', $fresh->resolution_note);
+        $this->assertSame('There is not enough evidence to prove the complaint.', $fresh->resolution_note);
 
         $this->actingAs($passenger)->get('/passenger/dashboard')
             ->assertOk()
             ->assertSee('Reason for rejection')
-            ->assertSee('Walang sapat na ebidensya para mapatunayan ang reklamo.');
+            ->assertSee('There is not enough evidence to prove the complaint.');
     }
 
     public function test_solving_with_a_note_stores_and_displays_the_resolution()
@@ -360,12 +360,12 @@ class ComplaintReviewFlowTest extends TestCase
 
         $this->actingAs($admin)
             ->patch('/superadmin/complaints/' . $complaint->id . '/solve', [
-                'resolution_note' => 'Nakausap na ang driver at nagbigay ng apology.',
+                'resolution_note' => 'The driver was contacted and issued an apology.',
             ])
             ->assertRedirect();
 
         $fresh = $complaint->fresh();
-        $this->assertSame('Nakausap na ang driver at nagbigay ng apology.', $fresh->resolution_note);
+        $this->assertSame('The driver was contacted and issued an apology.', $fresh->resolution_note);
         $this->assertTrue($fresh->is_solved);
 
         // A stored proof file is surfaced to the passenger as resolution proof.
@@ -379,7 +379,7 @@ class ComplaintReviewFlowTest extends TestCase
         $this->actingAs($passenger)->get('/passenger/dashboard')
             ->assertOk()
             ->assertSee('Resolution details')
-            ->assertSee('Nakausap na ang driver at nagbigay ng apology.')
+            ->assertSee('The driver was contacted and issued an apology.')
             ->assertSee('resolved.jpg');
     }
 
@@ -459,7 +459,7 @@ class ComplaintReviewFlowTest extends TestCase
 
         $this->actingAs($admin)
             ->patch('/superadmin/complaints/' . $complaint->id . '/reject', [
-                'resolution_note' => 'Hindi mapatunayan ang reklamo.',
+                'resolution_note' => 'The complaint could not be proven.',
             ])
             ->assertRedirect();
 

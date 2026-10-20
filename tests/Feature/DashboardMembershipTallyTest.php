@@ -121,8 +121,8 @@ class DashboardMembershipTallyTest extends TestCase
         $this->makeRating($operator, 5, $todaB->id);
 
         // Filtering by the JOINED TODA (Beta) must still list the driver, whose
-        // home TODA is Alpha — this is the "wala sa may toda kung saan sya
-        // sumali" bug.
+        // home TODA is Alpha — this is the "driver missing from the TODA
+        // they joined" bug.
         $res = $this->actingAs($admin)->get('/superadmin/reports?toda_id=' . $todaB->id);
 
         $res->assertOk();

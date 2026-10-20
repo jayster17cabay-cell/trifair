@@ -194,7 +194,7 @@ class PageRenderTest extends TestCase
             ->assertSee('auth/google?intended=passenger%2Fdashboard', false)
             // The multi-account chooser explainer was trimmed from the login
             // screen; Google's own chooser does that job now.
-            ->assertDontSee('Ipapakita ng Google ang listahan', false)
+            ->assertDontSee('Google will show the account list', false)
             ->assertDontSee('or log in with email');
     }
 }

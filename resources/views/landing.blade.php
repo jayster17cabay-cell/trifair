@@ -67,7 +67,7 @@
         {{-- Left --}}
         <div class="text-center lg:text-left">
             <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-gold">
-                <i class="bi bi-shield-check"></i> Bayan ng Solano, Nueva Vizcaya
+                <i class="bi bi-shield-check"></i> Municipality of Solano, Nueva Vizcaya
             </div>
             <h1 class="mb-6 text-[2.5rem] font-black leading-[1.08] tracking-tight text-white md:text-6xl">
                 Every ride counts.<br>
@@ -482,7 +482,7 @@
         </div>
         <div class="mt-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-center text-xs text-white/40 md:flex-row">
             <p>&copy; {{ date('Y') }} <a href="/" class="font-semibold text-gold hover:underline">TriFair</a> &mdash; Motorcycle Operator Rating System.</p>
-            <p>Built for the commuters of <span class="text-white/60">Bayan ng Solano</span>.</p>
+            <p>Built for the commuters of <span class="text-white/60">the Municipality of Solano</span>.</p>
         </div>
     </div>
 </footer>

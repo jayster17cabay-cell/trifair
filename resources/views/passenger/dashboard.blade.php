@@ -40,13 +40,13 @@
                 <span class="truncate">{{ Auth::user()->email }}</span>
             </span>
             <span class="hidden text-[0.7rem] text-slate-400 sm:inline">
-                Ang mga complaint sa ibaba ay para sa account na ito.
+                The complaints below belong to this account.
             </span>
             @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
                 <a href="{{ route('login.google', ['intended' => 'passenger/dashboard']) }}"
                    class="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-navy-600 transition hover:border-navy-500 hover:bg-navy-50 focus:outline-none focus:ring-2 focus:ring-navy-600/20"
-                   title="Pumili ng ibang Google account upang makita ang mga complaint nito">
-                    <i class="bi bi-arrow-left-right" aria-hidden="true"></i> Palitan ang account
+                   title="Choose a different Google account to see its complaints">
+                    <i class="bi bi-arrow-left-right" aria-hidden="true"></i> Switch account
                 </a>
             @endif
         </div>
@@ -79,7 +79,7 @@
         <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h1 class="text-xl font-extrabold text-slate-900 sm:text-2xl">My Complaints</h1>
-                <p class="mt-1 text-sm text-slate-500">Naka-link ang listahan sa Google account sa itaas — palitan ito kung iba ang ginamit mong account sa pag-complaint.</p>
+                <p class="mt-1 text-sm text-slate-500">This list is linked to the Google account above — switch it if you used a different account when complaining.</p>
             </div>
             <a href="/" class="tw-btn tw-btn-sm tw-btn-outline">
                 <i class="bi bi-qr-code-scan"></i> Scan a QR code
@@ -92,10 +92,10 @@
         <div class="mb-6 flex items-start gap-3 rounded-2xl border border-navy-200 bg-navy-600/5 px-4 py-3.5">
             <i class="bi bi-shield-lock-fill mt-0.5 text-navy-600" aria-hidden="true"></i>
             <div>
-                <div class="text-sm font-bold text-navy-700">Walang makakakita ng iyong identity</div>
+                <div class="text-sm font-bold text-navy-700">No one can see your identity</div>
                 <p class="mt-0.5 text-xs leading-relaxed text-navy-700/80">
-                    <strong>HINDI nakikita ng driver ang iyong pangalan, email, o contact number.</strong>
-                    Ang iyong mga detalye ay para lamang sa TriFair/TFRB para sa status updates at imbestigasyon — hindi ito ipinapakita sa driver o ibang pasahero.
+                    <strong>The driver CANNOT see your name, email, or contact number.</strong>
+                    Your details are used only by TriFair/TFRB for status updates and investigation — they are never shown to the driver or other passengers.
                 </p>
             </div>
         </div>
@@ -315,7 +315,7 @@
                     @if ($rating->is_solved)
                         <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
                             <i class="bi bi-check2-all text-emerald-500"></i>
-                            Nasolusyunan na ang complaint na ito — hindi na po pwedeng mag-follow up.
+                            This complaint has been resolved — you can no longer follow up.
                         </p>
                     @else
                         <form action="{{ route('passenger.complaints.followUp', $rating) }}" method="POST" class="mt-3 border-t border-slate-100 pt-3">
@@ -327,7 +327,7 @@
                             <div class="flex flex-col gap-2 sm:flex-row sm:items-start">
                                 <textarea id="followup-{{ $rating->id }}" name="message" rows="2" maxlength="1000"
                                           class="tw-textarea flex-1"
-                                          placeholder="Magdagdag ng detalye o hilingin ang status update...">{{ old('follow_up_rating_id') == $rating->id ? old('message') : '' }}</textarea>
+                                          placeholder="Add details or request a status update...">{{ old('follow_up_rating_id') == $rating->id ? old('message') : '' }}</textarea>
                                 <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy shrink-0 self-stretch sm:self-start">
                                     <i class="bi bi-send"></i> Send
                                 </button>
@@ -343,22 +343,22 @@
             <div class="tw-empty py-16">
                 <div class="tw-empty-icon"><i class="bi bi-inbox text-slate-300"></i></div>
                 <h3 class="tw-card-title mb-1">No complaints yet</h3>
-                <p class="text-sm text-slate-500">Kapag nag-rate ka ng isang sakay gamit ang QR code habang naka-log in, lalabas dito ang iyong mga complaint at ang kanilang status.</p>
+                <p class="text-sm text-slate-500">When you rate a ride with the QR code while signed in, your complaints and their status will appear here.</p>
 
                 <div class="mx-auto mt-5 max-w-md rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3.5 text-left">
                     <p class="text-xs leading-relaxed text-slate-500">
-                        <strong class="font-bold text-slate-700">Walang laman ang listahan?</strong>
-                        Baka naka-iba ang Google account na ginamit mo sa pag-complain. Naka-sign in ka ngayon bilang
+                        <strong class="font-bold text-slate-700">Is the list empty?</strong>
+                        You may have used a different Google account when you complained. You are currently signed in as
                         <span class="font-semibold text-navy-700">{{ Auth::user()->email }}</span>
                         @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
-                            — piliin ang ibang account para doon lumabas ang mga complaint nito.
+                            — choose that account to see its complaints there.
                         @endif
                     </p>
                     @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
                         <a href="{{ route('login.google', ['intended' => 'passenger/dashboard']) }}"
                            class="group mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-navy-500 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-navy-600/15">
                             @include('partials.google-g', ['class' => 'h-4 w-4 transition-transform duration-200 group-hover:scale-110'])
-                            Subukan ang ibang Google account
+                            Try a different Google account
                             <i class="bi bi-arrow-right-circle text-navy-500" aria-hidden="true"></i>
                         </a>
                     @endif
@@ -373,7 +373,7 @@
         @endif
 
         <p class="mt-10 border-t border-slate-200 pt-6 text-center text-xs text-slate-400">
-            TriFair — Passenger Feedback System. Ang iyong identity ay nananatiling pribado mula sa mga driver.
+            TriFair — Passenger Feedback System. Your identity stays private from drivers.
         </p>
     </main>
 
@@ -384,7 +384,7 @@
             if (closed) return;
             closed = true;
             // Browsers only let JS close scripts-opened tabs (the QR-code scan
-            // flow). Kapag hindi nagsara ang tab, dalhin na lang sa homepage.
+            // flow). If the tab does not close, just take the user to the homepage.
             try { window.close(); } catch (e) {}
             try { self.close(); } catch (e) {}
             try { top.close(); } catch (e) {}

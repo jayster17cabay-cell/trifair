@@ -123,7 +123,7 @@
     @if (session('rating_value') !== null && (int) session('rating_value') <= 2)
         <p style="font-size: 0.85rem; color: var(--gray-600); line-height: 1.5; margin: 0.75rem auto 0; max-width: 280px;">
             <i class="bi bi-envelope-check" aria-hidden="true"></i>
-            A confirmation will be sent to your email or Google (Gmail) account. Doon mo makikita ang updates ng iyong complaint.
+            A confirmation will be sent to your email or Google (Gmail) account. That is where you will see updates for your complaint.
         </p>
     @endif
 
@@ -132,7 +132,7 @@
     </div>
     <noscript>
         <div class="auto-close-note">
-            <i class="bi bi-x-circle"></i> Naitala na ang iyong rating — maaari mo nang isara ang tab na ito.
+            <i class="bi bi-x-circle"></i> Your rating has been recorded — you can now close this tab.
         </div>
     </noscript>
 

@@ -62,16 +62,16 @@ class PassengerController extends Controller
 
         if ($rating->is_solved) {
             return back()->withErrors([
-                'follow_up' => 'Nasolusyunan na ang complaint na ito. Kung may bagong isyu, mag-file ng bagong complaint.',
+                'follow_up' => 'This complaint has already been resolved. If you have a new issue, file a new complaint.',
             ]);
         }
 
         $data = $request->validate([
             'message' => 'required|string|min:3|max:1000',
         ], [
-            'message.required' => 'Ilagay ang iyong follow-up message bago mag-submit.',
-            'message.min' => 'Pasokin mo ang hindi bababa sa 3 characters.',
-            'message.max' => 'Ang follow-up message ay hindi dapat lumagpas sa 1,000 characters.',
+            'message.required' => 'Enter your follow-up message before submitting.',
+            'message.min' => 'Enter at least 3 characters.',
+            'message.max' => 'The follow-up message must not exceed 1,000 characters.',
         ]);
 
         $rating->passengerFollowUps()->create([
@@ -81,6 +81,6 @@ class PassengerController extends Controller
 
         return redirect()
             ->route('passenger.dashboard')
-            ->with('status', 'Naipadala ang iyong follow-up. Ipapakita ito sa TFRB/superadmin para sa iyong complaint.');
+            ->with('status', 'Your follow-up has been sent. It will be shown to the TFRB/superadmin for your complaint.');
     }
 }

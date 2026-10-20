@@ -923,7 +923,7 @@ class DashboardAuditTest extends TestCase
 
         $errors = session('errors');
         $this->assertTrue($errors->has('email'));
-        $this->assertStringContainsString('Kinansela', $errors->first('email'));
+        $this->assertStringContainsString('cancelled', $errors->first('email'));
     }
 
     public function test_google_callback_connect_exception_returns_to_intended_with_message()
@@ -970,7 +970,7 @@ class DashboardAuditTest extends TestCase
 
         $this->actingAs($passenger)->get('/passenger/dashboard')
             ->assertOk()
-            ->assertSee('Walang makakakita ng iyong identity', false)
+            ->assertSee('No one can see your identity', false)
             ->assertSee($own->reference_number, false)
             ->assertDontSee($theirs->reference_number, false);
     }
@@ -1034,7 +1034,7 @@ class DashboardAuditTest extends TestCase
         $this->get('/rate/' . $op->qr_code)
             ->assertOk()
             ->assertSee('Email (for status updates)', false)
-            ->assertSee('Walang makakakita ng iyong identity', false);
+            ->assertSee('No one can see your identity', false);
     }
 
     public function test_rate_form_shows_google_connect_when_configured()
@@ -1285,8 +1285,8 @@ class DashboardAuditTest extends TestCase
         $this->actingAs($passenger)->get('/passenger/dashboard')
             ->assertOk()
             ->assertSee($passenger->email, false)
-            ->assertSee('Ang mga complaint sa ibaba ay para sa account na ito.', false)
-            ->assertSee('Palitan ang account', false)
+            ->assertSee('The complaints below belong to this account.', false)
+            ->assertSee('Switch account', false)
             ->assertSee('auth/google?intended=passenger%2Fdashboard', false);
 
         // Without OAuth credentials there is nothing to switch to, so the
@@ -1296,7 +1296,7 @@ class DashboardAuditTest extends TestCase
 
         $this->actingAs($passenger)->get('/passenger/dashboard')
             ->assertOk()
-            ->assertDontSee('Palitan ang account');
+            ->assertDontSee('Switch account');
     }
 
     public function test_google_cancel_from_the_login_page_reports_it_on_the_login_screen()
@@ -1313,7 +1313,7 @@ class DashboardAuditTest extends TestCase
 
         $errors = session('errors');
         $this->assertNotNull($errors);
-        $this->assertStringContainsString('Kinansela', $errors->first('email'));
+        $this->assertStringContainsString('cancelled', $errors->first('email'));
     }
 
     public function test_google_switch_failure_is_reported_on_the_passenger_dashboard()
@@ -1329,7 +1329,7 @@ class DashboardAuditTest extends TestCase
 
         $this->actingAs($passenger)->get('/passenger/dashboard')
             ->assertOk()
-            ->assertSee('Kinansela', false);
+            ->assertSee('cancelled', false);
     }
 
     public function test_google_connect_lands_back_on_the_complaint_form_with_a_continue_message()
@@ -1360,15 +1360,15 @@ class DashboardAuditTest extends TestCase
 
         $status = (string) session('status');
         $this->assertStringContainsString('continue@example.com', $status);
-        $this->assertStringContainsString('Ituloy ang complaint', $status);
+        $this->assertStringContainsString('Continue your complaint', $status);
 
         $this->get('/rate/' . $op->qr_code)
             ->assertOk()
-            ->assertSee('Ituloy ang complaint', false)
+            ->assertSee('Continue your complaint', false)
             // Connected, back on the same form, ready for proof + submit.
-            ->assertSee('Nakakonekta ka sa', false)
+            ->assertSee('You are connected as', false)
             ->assertSee('continue@example.com', false)
-            ->assertSee('Palitan ang Google account', false);
+            ->assertSee('Switch Google account', false);
     }
 
     public function test_complaint_form_locks_in_the_signed_in_google_email()
@@ -1380,7 +1380,7 @@ class DashboardAuditTest extends TestCase
         $this->actingAs($passenger)->get('/rate/' . $op->qr_code)
             ->assertOk()
             ->assertSee($passenger->email, false)
-            ->assertSee('Galing ito sa iyong Google account', false);
+            ->assertSee('This comes from your Google account', false);
     }
 
     public function test_complaint_form_does_not_claim_a_link_for_signed_out_visitors()
@@ -1389,7 +1389,7 @@ class DashboardAuditTest extends TestCase
 
         $this->get('/rate/' . $op->qr_code)
             ->assertOk()
-            ->assertDontSee('Galing ito sa iyong Google account', false);
+            ->assertDontSee('This comes from your Google account', false);
     }
 
     public function test_guest_complaint_typed_with_a_passengers_google_email_lands_in_their_list()

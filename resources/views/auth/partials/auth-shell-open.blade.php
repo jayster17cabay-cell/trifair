@@ -20,5 +20,5 @@
                     <i class="bi bi-bicycle"></i>
                 </span>
                 <span class="text-xl font-black tracking-tight text-navy-700">Tri<span class="text-gold">Fair</span></span>
-                <p class="mt-0.5 text-[0.68rem] font-medium uppercase tracking-widest text-slate-400">Bayan ng Solano</p>
+                <p class="mt-0.5 text-[0.68rem] font-medium uppercase tracking-widest text-slate-400">Municipality of Solano</p>
             </div>

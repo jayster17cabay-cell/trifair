@@ -829,7 +829,7 @@ class AdminTest extends TestCase
         $complaint = $this->makeValidComplaint($operator);
         OperatorResponse::create([
             'rating_id' => $complaint->id,
-            'message' => 'Hindi ako nag-counterflow, may dashcam po ako.',
+            'message' => 'I was not counterflowing, I have a dashcam.',
         ]);
         Notification::create([
             'user_id' => $admin->id,
@@ -845,7 +845,7 @@ class AdminTest extends TestCase
         $response->assertOk();
         $response->assertSee($complaint->reference_number, false);
         $response->assertSee("Driver's Response", false);
-        $response->assertSee('Hindi ako nag-counterflow', false);
+        $response->assertSee('I was not counterflowing', false);
     }
 
     public function test_positive_ratings_have_no_reference_number()

@@ -84,10 +84,10 @@
         <i class="bi bi-buildings-fill"></i>
     </div>
 
-    <h1>Piliin ang TODA</h1>
+    <h1>Select the TODA</h1>
     <p>
-        Si <span class="operator-name">{{ $operator->user->name ?? 'operator' }}</span>
-        ay kabilang sa mahigit isang TODA. Piliin kung aling TODA napunta ang biyaheng ito.
+        <span class="operator-name">{{ $operator->user->name ?? 'operator' }}</span>
+        belongs to more than one TODA. Select which TODA this trip belongs to.
     </p>
 
     <div class="toda-list">

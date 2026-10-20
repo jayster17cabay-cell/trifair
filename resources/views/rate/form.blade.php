@@ -167,7 +167,7 @@
 <noscript>
     <div class="rate-alert" style="margin:1rem auto;max-width:640px;">
         <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-        <div><strong>JavaScript is disabled.</strong> Kailangan mong i-enable ang JavaScript sa iyong browser para makapag-rate. Pindutin ang tatlong tuldok at piliin ang "Enable JavaScript" o buksan ito sa ibang browser.</div>
+        <div><strong>JavaScript is disabled.</strong> You need to enable JavaScript in your browser to rate. Tap the three dots and choose "Enable JavaScript", or open this page in another browser.</div>
     </div>
 </noscript>
 
@@ -191,7 +191,7 @@
         @endif
 
         @if (session('status'))
-            {{-- "Naka-connect ka na sa … ituloy ang complaint" — shown right after
+            {{-- "You are now connected to … continue your complaint" — shown right after
                  the Google round-trip so the passenger knows to add proof and
                  submit instead of wondering whether they went backwards. --}}
             <div class="rate-alert rate-alert-success" role="status">
@@ -204,10 +204,10 @@
             <div class="rate-alert">
                 <i class="bi bi-shield-exclamation" aria-hidden="true" style="margin-top: 0.15rem;"></i>
                 <div>
-                    <strong>Operator/Staff account — hindi makakapag-rate.</strong>
+                    <strong>Operator/Staff account — you cannot rate.</strong>
                     <p style="margin-top: 0.35rem; margin-bottom: 0;">
-                        Naka-log in ka bilang <strong>{{ auth()->user()->name }}</strong>. Hindi maaaring mag-rate ang
-                        operator o staff bilang pasahero — mag-sign out muna bago mag-rate, o gumamit ng ibang device.
+                        You are signed in as <strong>{{ auth()->user()->name }}</strong>. Operators and staff
+                        cannot rate as passengers — sign out first before rating, or use another device.
                     </p>
                     <form action="{{ route('logout') }}" method="POST" style="margin-top: 0.5rem;">
                         @csrf
@@ -293,7 +293,7 @@
                                 @if ($linkedPassenger)
                                     <p class="rate-connect-note" style="margin-top:0.4rem;">
                                         <i class="bi bi-google" aria-hidden="true" style="color:#ea4335;"></i>
-                                        <span>Galing ito sa iyong Google account — awtomatikong dito papunta ang status updates, at dito rin lalabas ang complaint sa iyong Passenger Dashboard.</span>
+                                        <span>This comes from your Google account — status updates are sent here automatically, and your complaint also appears in your Passenger Dashboard.</span>
                                     </p>
                                 @endif
                                 @if (config('services.google.client_id') && config('services.google.client_secret'))
@@ -301,14 +301,14 @@
                                         @if ($linkedPassenger)
                                             <div class="rate-connect-done">
                                                 <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
-                                                <span>Nakakonekta ka sa <strong>{{ auth()->user()->email }}</strong>. Makikita mo ang iyong mga complaint at status sa <a href="{{ route('passenger.dashboard') }}" style="color:#0A2A5E;text-decoration:underline;font-weight:700;">Passenger Dashboard</a>.</span>
+                                                <span>You are connected as <strong>{{ auth()->user()->email }}</strong>. You can see your complaints and their status in your <a href="{{ route('passenger.dashboard') }}" style="color:#0A2A5E;text-decoration:underline;font-weight:700;">Passenger Dashboard</a>.</span>
                                             </div>
                                             <a href="{{ route('login.google', ['intended' => request()->path()]) }}"
                                                class="rate-connect-btn"
                                                id="googleSwitchBtn"
-                                               title="Pumili ng ibang Google account">
+                                               title="Choose a different Google account">
                                                 @include('partials.google-g', ['class' => 'h-4 w-4 shrink-0'])
-                                                Palitan ang Google account
+                                                Switch Google account
                                                 <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
                                             </a>
                                         @else
@@ -322,7 +322,7 @@
                                 @endif
                                 <p class="rate-connect-note" style="margin-top:0.55rem;">
                                     <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
-                                    <span><strong>Walang makakakita ng iyong identity.</strong> HINDI makikita ng driver ang iyong pangalan, email, o contact number — ang iyong mga detalye ay para lang sa TriFair/TFRB para sa status updates at imbestigasyon. Pindutin lang ang Google button sa itaas para hindi ka na mag-type ng email.</span>
+                                    <span><strong>No one can see your identity.</strong> The driver CANNOT see your name, email, or contact number — your details are used only by TriFair/TFRB for status updates and investigation. Just tap the Google button above so you do not have to type your email.</span>
                                 </p>
                             </div>
                             <div class="rate-upload" id="uploadZone">
@@ -900,7 +900,7 @@
         if (note) {
             note.hidden = false;
             note.className = 'map-note';
-            note.innerHTML = '<i class="bi bi-info-circle" aria-hidden="true"></i> The map could not load here — i-type mo pa rin ang iyong From at To (trip) para makapag-rate.';
+            note.innerHTML = '<i class="bi bi-info-circle" aria-hidden="true"></i> The map could not load here — just type your From and To (trip) so you can rate.';
         }
         revealStars();
     }
@@ -956,10 +956,10 @@
                 hint.textContent = 'Tap a star above to rate';
             } else if (!tripOk) {
                 hint.style.display = '';
-                hint.textContent = 'Pumili ka muna ng From at To (trip) bago i-submit.';
+                hint.textContent = 'Choose your From and To (trip) first before submitting.';
             } else if (!complaintOk) {
                 hint.style.display = '';
-                hint.textContent = 'Kumpletuhin mo muna ang complaint form — kasama ang evidence (photo/video/file) — bago i-submit.';
+                hint.textContent = 'Complete the complaint form first — including the evidence (photo/video/file) — before submitting.';
             } else {
                 hint.style.display = 'none';
             }
@@ -1364,8 +1364,8 @@
                     hint.textContent = !selectedRating
                         ? 'Tap a star above to rate'
                         : !tripReady()
-                            ? 'Pumili ka muna ng From at To (trip) bago i-submit.'
-                            : 'Kumpletuhin mo muna ang complaint form — kasama ang evidence (photo/video/file) — bago i-submit.';
+                            ? 'Choose your From and To (trip) first before submitting.'
+                            : 'Complete the complaint form first — including the evidence (photo/video/file) — before submitting.';
                 }
                 var tripCard = document.querySelector('.rate-card.trip-card');
                 if (tripCard && tripCard.scrollIntoView) {
