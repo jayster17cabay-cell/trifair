@@ -63,42 +63,37 @@
     </div>
 @endif
 
-{{-- Section 2 — Members toggle button --}}
-{{-- Members must open as soon as the sidebar section is picked (or a search/status
-     filter is applied) — otherwise the section shows only its header/toggle and
-     the list stays hidden behind a second click. --}}
-@php
-    $membersActive = ($membersActive ?? false)
-        || request()->has('search')
-        || request()->has('status')
-        || $section === 'members';
-@endphp
-{{-- Section 2 — Members search + toggle (search is always visible) --}}
+{{-- Section 2 — Members --}}
 @if ($showMembers)
-<div id="membersSection" class="scroll-mt-24 tw-card mb-4 overflow-hidden">
+<div id="membersSection" class="mb-4 scroll-mt-24 tw-card overflow-hidden">
     <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
-        <div class="flex items-center gap-2">
-            <button id="presidentMembersToggle" type="button" class="tw-btn tw-btn-gold px-4 py-2 text-sm" onclick="togglePresidentMembers()">
-                <i class="bi bi-people-fill mr-1"></i><span id="presidentMembersToggleLabel">{{ $membersActive ? 'Hide Members' : 'View Members' }}</span>
+        <div class="flex items-center gap-3">
+            <button id="presidentMembersToggle" type="button" class="tw-btn tw-btn-gold px-3 py-1.5 text-sm" onclick="togglePresidentMembers()">
+                <i class="bi bi-people-fill mr-1"></i><span>TODA Members</span>
+                <span class="tw-badge tw-badge-amber ml-2">{{ ($members ?? collect())->total() }}</span>
                 <i id="presidentMembersToggleChevron" class="bi {{ $membersActive ? 'bi-chevron-up' : 'bi-chevron-down' }} ml-1"></i>
             </button>
         </div>
-        <form id="presidentMemberFilter" class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center" method="GET" action="{{ route('president.dashboard') }}">
-            <input type="text" id="presidentMemberSearch" name="search" value="{{ request('search') }}" placeholder="Search name, body #, plate…" aria-label="Search members by name, body number, or plate"
-                   class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold sm:w-56">
-            <select id="presidentMemberStatus" name="status" aria-label="Filter members by status" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
-                <option value="">All status</option>
-                @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $val => $label)
-                    <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
-                @endforeach
-            </select>
-        </form>
+        <div class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+            <form id="presidentMemberFilter" class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center" method="GET" action="{{ route('president.dashboard') }}">
+                <input type="text" id="presidentMemberSearch" name="search" value="{{ request('search') }}" placeholder="Search name, body #, plate…" aria-label="Search members by name, body number, or plate"
+                       class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold sm:w-56">
+                <select id="presidentMemberStatus" name="status" aria-label="Filter members by status" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
+                    <option value="">All status</option>
+                    @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $val => $label)
+                        <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </form>
+            <button type="button" class="tw-btn tw-btn-gold px-3 py-1.5 text-xs" data-tw-modal-open="presidentAddMemberModal">
+                <i class="bi bi-person-plus-fill mr-1"></i> Add Member
+            </button>
+        </div>
     </div>
-</div>
 
-{{-- Section 4 — members list (hidden until toggled / search active), each member opens their ratings --}}
-<div id="presidentMembersWrap" class="mt-3 {{ $membersActive ? '' : 'hidden' }}">
-    @include('partials.president.members-section', ['members' => $members, 'memberDetailUrl' => route('president.members')])
+    <div id="presidentMembersWrap" class="{{ $membersActive ? '' : 'hidden' }}">
+        @include('partials.president.members-table', ['members' => $members, 'memberDetailUrl' => route('president.members')])
+    </div>
 </div>
 @endif
 
@@ -110,18 +105,16 @@
 
 @include('partials.admin.operator-suspend-modal', ['suspendTitle' => 'Suspend Member'])
 @include('partials.president.add-member-modal')
-@include('partials.president.add-existing-member-modal')
 
 <script>
     function togglePresidentMembers() {
         var wrap = document.getElementById('presidentMembersWrap');
-        var label = document.getElementById('presidentMembersToggleLabel');
         var chevron = document.getElementById('presidentMembersToggleChevron');
+        if (!wrap || !chevron) return;
         var hidden = wrap.classList.contains('hidden');
         wrap.classList.toggle('hidden');
-        label.textContent = hidden ? 'Hide Members' : 'View Members';
-        chevron.classList.toggle('bi-chevron-down', !hidden);
-        chevron.classList.toggle('bi-chevron-up', hidden);
+        chevron.classList.toggle('bi-chevron-down', hidden);
+        chevron.classList.toggle('bi-chevron-up', !hidden);
         if (hidden) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 

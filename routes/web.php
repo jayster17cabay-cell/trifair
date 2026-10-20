@@ -232,10 +232,7 @@ Route::middleware(['auth', 'role:operator_president', 'president.active', 'toda.
     Route::patch('/members/{member}/suspend/end', [PresidentController::class, 'endSuspension'])->name('members.suspend.end');
     Route::post('/members/{member}/violation', [PresidentController::class, 'reportViolation'])->name('members.violation');
     Route::delete('/members/{member}/remove', [PresidentController::class, 'removeMember'])->name('members.remove');
-    // Add an already-registered operator (same account, same body number) and
-    // take the TODA president's first-level decision on join requests.
-    Route::get('/operators/search', [PresidentController::class, 'searchOperators'])->name('operators.search');
-    Route::post('/members/add-existing', [PresidentController::class, 'addExistingMember'])->name('members.addExisting');
+    // Take the TODA president's first-level decision on join requests.
     Route::patch('/memberships/{membership}/approve', [PresidentController::class, 'approveMembership'])->name('memberships.approve');
     Route::patch('/memberships/{membership}/reject', [PresidentController::class, 'rejectMembership'])->name('memberships.reject');
 });

@@ -183,49 +183,6 @@ class TodaMembershipService
     }
 
     /**
-     * A president adds an existing operator to their TODA. The president step
-     * counts as stage 1 done, so the membership lands as pending_tfrb — the
-     * president cannot skip the final approval. Returns null when the
-     * three-TODA limit is already reached.
-     */
-    public function presidentAdd(Operator $operator, Toda $toda, User $president): ?OperatorToda
-    {
-        $existing = $operator->membershipFor($toda->id);
-
-        if ($existing && $existing->isActive()) {
-            return $existing;
-        }
-
-        if (!$existing && !$this->canJoinAnotherToda($operator)) {
-            return null;
-        }
-
-        $membership = $operator->todaMemberships()->updateOrCreate(
-            ['toda_id' => $toda->id],
-            ['status' => OperatorToda::STATUS_PENDING_TFRB, 'joined_at' => now()]
-        );
-
-        // Adopting a TODA-less operator makes this TODA their home.
-        if (!$operator->toda_id) {
-            $operator->update(['toda_id' => $toda->id]);
-            if ($operator->user) {
-                $operator->user->forceFill(['toda_id' => $toda->id])->save();
-            }
-        }
-
-        app(AdminDashboardService::class)->flush();
-
-        ActivityLogger::log(
-            'add_toda_membership_president',
-            "{$president->name} added {$this->name($operator)} to {$toda->name} — awaiting final approval (TFRB officer or superadmin)",
-            $membership,
-            ActivityLogger::CATEGORY_OPERATOR
-        );
-
-        return $membership;
-    }
-
-    /**
      * A superadmin/TFRB adds an operator to a TODA directly (they are the final
      * approver, so the membership becomes active immediately).
      */
@@ -331,44 +288,6 @@ class TodaMembershipService
         return OperatorToda::with(['operator.user', 'toda'])
             ->awaitingFinalApproval()
             ->latest('id')
-            ->get();
-    }
-
-    /**
-     * Operators that a president could add to their TODA: matching the search
-     * term, not already an open/active member, and not the president's own row.
-     */
-    public function searchJoinableOperators(Toda $toda, ?string $search, int $limit = 20): Collection
-    {
-        $search = trim((string) $search);
-
-        return Operator::query()
-            ->with(['user', 'toda'])
-            ->whereHas('user', fn ($q) => $q->whereIn('role', ['operator', 'operator_president']))
-            ->whereNull('archived_at')
-            ->where('toda_id', '!=', $toda->id)
-            ->whereDoesntHave('todaMemberships', function ($q) use ($toda) {
-                $q->where('toda_id', $toda->id)
-                    ->whereIn('status', [
-                        OperatorToda::STATUS_ACTIVE,
-                        OperatorToda::STATUS_PENDING,
-                        OperatorToda::STATUS_PENDING_TFRB,
-                        OperatorToda::STATUS_PENDING_SUPERADMIN,
-                        OperatorToda::STATUS_PENDING_ADMIN,
-                    ]);
-            })
-            ->when($search !== '', function ($q) use ($search) {
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('body_number', 'like', "%{$search}%")
-                        ->orWhere('plate_number', 'like', "%{$search}%")
-                        ->orWhereHas('user', function ($u) use ($search) {
-                            $u->where('name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%");
-                        });
-                });
-            })
-            ->orderBy('id')
-            ->limit($limit)
             ->get();
     }
 

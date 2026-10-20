@@ -342,47 +342,6 @@ class TodaMembershipTest extends TestCase
             ->assertSee($operator->user->name, false);
     }
 
-    // --- President adds an existing operator ---------------------------------
-
-    public function test_president_can_add_existing_operator_without_new_account()
-    {
-        $todaA = $this->makeToda();
-        $todaB = $this->makeToda();
-        $operator = $this->makeOperator($todaA);
-        $presB = $this->makePresident($todaB);
-
-        $userCount = User::count();
-        $operatorCount = Operator::count();
-
-        $this->actingAs($presB['user'])
-            ->post(route('president.members.addExisting'), ['operator_id' => $operator->id])
-            ->assertRedirect(route('president.members'));
-
-        // Same account, same body number — no duplicate created.
-        $this->assertSame($userCount, User::count());
-        $this->assertSame($operatorCount, Operator::count());
-
-        // President step counts as stage 1 done -> awaits TFRB verification.
-        $this->assertDatabaseHas('operator_toda', [
-            'operator_id' => $operator->id,
-            'toda_id' => $todaB->id,
-            'status' => OperatorToda::STATUS_PENDING_TFRB,
-        ]);
-    }
-
-    public function test_president_add_existing_rejects_operator_already_in_toda()
-    {
-        $todaA = $this->makeToda();
-        $todaB = $this->makeToda();
-        $operator = $this->makeOperator($todaA);
-        $operator->joinToda($todaB->id); // already an active member of B
-        $presB = $this->makePresident($todaB);
-
-        $this->actingAs($presB['user'])
-            ->post(route('president.members.addExisting'), ['operator_id' => $operator->id])
-            ->assertSessionHas('error');
-    }
-
     // --- Admin multi-select + limit -----------------------------------------
 
     public function test_admin_multi_select_adds_and_removes_memberships()
@@ -466,50 +425,6 @@ class TodaMembershipTest extends TestCase
             ->assertOk()
             ->assertSee('TODA Memberships', false)
             ->assertSee('name="toda_ids[]"', false);
-    }
-
-    // --- President search ----------------------------------------------------
-
-    public function test_president_search_finds_existing_operator()
-    {
-        $todaA = $this->makeToda();
-        $todaB = $this->makeToda();
-        $operator = $this->makeOperator($todaA, 'active');
-        $operator->user->forceFill(['name' => 'Juan Dela Cruz'])->save();
-        $presB = $this->makePresident($todaB);
-
-        $response = $this->actingAs($presB['user'])
-            ->getJson(route('president.operators.search', ['q' => 'Juan Dela Cruz']))
-            ->assertOk();
-
-        $this->assertStringContainsString('Juan Dela Cruz', $response->json('html'));
-        $this->assertStringContainsString(route('president.members.addExisting'), $response->json('html'));
-    }
-
-    public function test_president_search_excludes_existing_members()
-    {
-        $todaA = $this->makeToda();
-        $todaB = $this->makeToda();
-        $operator = $this->makeOperator($todaA);
-        $operator->user->forceFill(['name' => 'Member Mark'])->save();
-        $operator->joinToda($todaB->id); // already a member of B
-        $presB = $this->makePresident($todaB);
-
-        $response = $this->actingAs($presB['user'])
-            ->getJson(route('president.operators.search', ['q' => 'Member Mark']))
-            ->assertOk();
-
-        $this->assertStringNotContainsString('Member Mark', $response->json('html'));
-    }
-
-    public function test_non_president_cannot_use_the_search_endpoint()
-    {
-        $toda = $this->makeToda();
-        $operator = $this->makeOperator($toda);
-
-        $this->actingAs($operator->user)
-            ->getJson(route('president.operators.search', ['q' => 'x']))
-            ->assertForbidden();
     }
 
     // --- QR identity + trip-start validation --------------------------------

@@ -389,62 +389,6 @@ class PresidentController extends Controller
     }
 
     /**
-     * AJAX: search for existing operators a president can add to their TODA
-     * (already-open or active members are excluded so nothing is duplicated).
-     */
-    public function searchOperators(Request $request)
-    {
-        $toda = $this->toda();
-
-        $operators = app(TodaMembershipService::class)
-            ->searchJoinableOperators($toda, $request->query('q'));
-
-        return response()->json([
-            'html' => view('partials.president.existing-operator-results', [
-                'operators' => $operators,
-                'toda' => $toda,
-            ])->render(),
-        ]);
-    }
-
-    /**
-     * President adds an EXISTING operator to their TODA (no new account is
-     * created — same email, same body number). The membership lands as
-     * pending_admin for the superadmin/TFRB's final approval.
-     */
-    public function addExistingMember(Request $request)
-    {
-        $toda = $this->toda();
-
-        $data = $request->validate([
-            'operator_id' => ['required', 'integer', 'exists:operators,id'],
-        ]);
-
-        $operator = Operator::with('user')->find($data['operator_id']);
-
-        if (!$operator || $operator->isArchived()) {
-            return redirect()->back()->with('error', 'That operator is no longer available.');
-        }
-
-        if ($operator->hasOpenOrActiveMembership($toda->id)
-            || (int) $operator->toda_id === (int) $toda->id) {
-            return redirect()->back()->with('error', 'That operator is already a member or has a pending request for this TODA.');
-        }
-
-        $service = app(TodaMembershipService::class);
-
-        if (!$service->canJoinAnotherToda($operator)) {
-            return redirect()->back()->with('error', 'That operator already belongs to the maximum of ' . OperatorToda::MAX_TODAS . ' TODAs.');
-        }
-
-        $service->presidentAdd($operator, $toda, Auth::user());
-
-        return redirect()
-            ->route('president.members')
-            ->with('success', ($operator->user->name ?? 'Member') . ' was added to ' . $toda->name . ' — pending TFRB verification and superadmin final approval.');
-    }
-
-    /**
      * President's first-level decision on a self-service join request: approve
      * (forwards it to the TFRB officer) or reject.
      */
