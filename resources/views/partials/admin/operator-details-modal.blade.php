@@ -56,27 +56,26 @@
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 px-6 py-4">
-            <a id="opModalEdit" href="#" class="tw-btn tw-btn-sm tw-btn-gold">
-                <i class="bi bi-pencil"></i>Edit Operator
-            </a>
-            <a id="opModalQr" href="#" class="tw-btn tw-btn-sm tw-btn-outline">
-                <i class="bi bi-qr-code"></i>View QR Code
-            </a>
-            <button type="button" id="opModalRenewBtn" class="tw-btn tw-btn-sm tw-btn-outline hidden" data-franchise-open="{}" data-franchise-mode="renew">
-                <i class="bi bi-arrow-repeat"></i>Renew Franchise
-            </button>
+        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-6 py-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <a id="opModalEdit" href="#" class="tw-btn tw-btn-sm tw-btn-gold">
+                    <i class="bi bi-pencil"></i>Edit Operator
+                </a>
+                <a id="opModalQr" href="#" class="tw-btn tw-btn-sm tw-btn-outline">
+                    <i class="bi bi-qr-code"></i>View QR Code
+                </a>
             <button type="button" id="opModalSuspendBtn" class="tw-btn tw-btn-sm tw-btn-danger hidden" data-suspend-open="{}">
-                <i class="bi bi-slash-circle"></i>Suspend
+                <i class="bi bi-slash-circle"></i>Suspend Account
             </button>
-            <form id="opModalEndSuspendForm" method="POST" action="#" class="hidden">
-                @csrf
-                <input type="hidden" name="_method" value="PATCH">
-                <button type="submit" class="tw-btn tw-btn-sm tw-btn-success" onclick="return confirm('End this operator\'s suspension early?')">
-                    <i class="bi bi-play-circle"></i>End Suspension
-                </button>
-            </form>
-            <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost ml-auto" data-tw-modal-close>
+                <form id="opModalEndSuspendForm" method="POST" action="#" class="hidden">
+                    @csrf
+                    <input type="hidden" name="_method" value="PATCH">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-success" onclick="return confirm('End this operator\'s suspension early?')">
+                        <i class="bi bi-play-circle"></i>End Suspension
+                    </button>
+                </form>
+            </div>
+            <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost" data-tw-modal-close>
                 Close
             </button>
         </div>

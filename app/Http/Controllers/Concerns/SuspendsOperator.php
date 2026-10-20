@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Concerns;
 
 use App\Helpers\ActivityLogger;
 use App\Models\Operator;
+use App\Models\OperatorToda;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,18 +17,33 @@ trait SuspendsOperator
 {
     public function suspendOperator(Request $request, Operator $operator)
     {
-        if ($operator->isSuspended()) {
-            return redirect()->back()->with('error', 'This operator is already suspended.');
-        }
-
         $validated = $request->validate([
             'reason' => ['required', 'string', 'max:1000'],
             'suspended_at' => ['required', 'date'],
             'suspended_until' => ['required', 'date', 'after_or_equal:suspended_at'],
+            'toda_id' => ['nullable', 'integer'],
         ]);
 
+        $todaId = null;
+        if (!empty($validated['toda_id'])) {
+            $todaId = (int) $validated['toda_id'];
+            if (!$operator->isMemberOfToda($todaId) && (int) $operator->toda_id !== $todaId) {
+                return redirect()->back()->with('error', 'Invalid TODA selected for this operator.');
+            }
+        }
+
+        if ($todaId) {
+            if ($operator->isSuspendedForToda($todaId)) {
+                return redirect()->back()->with('error', 'This operator is already suspended for that TODA.');
+            }
+        } else {
+            if ($operator->isSuspended()) {
+                return redirect()->back()->with('error', 'This operator is already suspended.');
+            }
+        }
+
         $operator->suspend([
-            'toda_id' => $operator->toda_id,
+            'toda_id' => $todaId,
             'suspended_by' => Auth::id(),
             'reason' => $validated['reason'],
             'suspended_at' => $validated['suspended_at'],
@@ -35,10 +51,11 @@ trait SuspendsOperator
         ]);
 
         $name = $operator->user->name ?? 'Operator';
+        $todaLabel = $todaId ? ($operator->operatorTodas()->with('toda')->get()->firstWhere('toda_id', $todaId)->toda->name ?? 'selected TODA') : 'all TODAs';
 
         ActivityLogger::log(
             'suspend_operator',
-            "Suspended operator {$name} until {$validated['suspended_until']}",
+            "Suspended operator {$name} until {$validated['suspended_until']} ({$todaLabel})",
             $operator,
             ActivityLogger::CATEGORY_OPERATOR
         );

@@ -87,6 +87,7 @@
         'suspensionFrom' => $isSuspended ? $suspension->suspended_at->format('M d, Y') : null,
         'suspensionUntil' => $isSuspended ? $suspension->suspended_until->format('M d, Y') : null,
         'suspensionBy' => ($isSuspended && $suspension->suspender) ? $suspension->suspender->name : null,
+        'todas' => $operatorTodaList->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
         'editUrl' => route($routePrefix . '.operators.edit', $operator),
         'qrUrl' => route($routePrefix . '.operators.qrcode', $operator),
         'franchiseNo' => $franchiseNo,

@@ -194,12 +194,7 @@
 
         var renewBtn = document.getElementById('opModalRenewBtn');
         if (renewBtn) {
-            if (op.canIssueFranchise && op.hasTerm) {
-                renewBtn.classList.remove('hidden');
-                renewBtn.setAttribute('data-franchise-open', JSON.stringify(op));
-            } else {
-                renewBtn.classList.add('hidden');
-            }
+            renewBtn.classList.add('hidden');
         }
 
         showSuspensionControls(op);
@@ -292,6 +287,25 @@
             var subtitle = document.getElementById('suspendModalSubtitle');
             if (subtitle) {
                 subtitle.textContent = (op.name || '') + (op.toda ? ' · ' + op.toda : '');
+            }
+
+            var wrap = document.getElementById('suspendTodaWrap');
+            var select = document.getElementById('suspendTodaId');
+            if (wrap && select) {
+                wrap.classList.add('hidden');
+                select.innerHTML = '<option value="">All TODAs</option>';
+                if (Array.isArray(op.todas) && op.todas.length > 1) {
+                    op.todas.forEach(function (t) {
+                        var opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = t.name;
+                        select.appendChild(opt);
+                    });
+                    wrap.classList.remove('hidden');
+                } else {
+                    // single TODA or none, default to blank (all)
+                    wrap.classList.add('hidden');
+                }
             }
 
             closeModal(document.querySelector('#operatorDetailsModal .tw-modal'));

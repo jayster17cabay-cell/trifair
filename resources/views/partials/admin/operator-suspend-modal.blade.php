@@ -8,7 +8,7 @@
     <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="suspendModalTitle">
         <div class="tw-modal-head">
             <div class="min-w-0 flex-1">
-                <div id="suspendModalTitle" class="truncate text-base font-bold text-slate-900">{{ $suspendTitle ?? 'Suspend Operator' }}</div>
+                <div id="suspendModalTitle" class="truncate text-base font-bold text-slate-900">{{ $suspendTitle ?? 'Suspend Account' }}</div>
                 <div id="suspendModalSubtitle" class="truncate text-xs text-slate-500">&nbsp;</div>
             </div>
             <button type="button" class="tw-modal-close" data-tw-modal-close aria-label="Close">
@@ -23,6 +23,13 @@
                     <i class="bi bi-exclamation-triangle-fill mr-1"></i>
                     Suspending blocks this account from signing in and from being rated until the end date.
                 </div>
+                <div id="suspendTodaWrap" class="mb-4 hidden">
+                    <label for="suspendTodaId" class="tw-stat-label mb-1 block">Suspend for TODA</label>
+                    <select id="suspendTodaId" name="toda_id" class="tw-select">
+                        <option value="">All TODAs</option>
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500">For operators in multiple TODAs, choose which one to suspend. Leaving blank suspends across all TODAs.</p>
+                </div>
                 <div class="space-y-4">
                     <div>
                         <label for="suspendFormReason" class="tw-stat-label mb-1 block">Resolution / Reason</label>
@@ -32,17 +39,17 @@
                     <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
                         <div>
                             <label for="suspendFormStart" class="tw-stat-label mb-1 block">Start date</label>
-                        <input type="date" id="suspendFormStart" name="suspended_at" class="tw-input" required value="{{ now()->toDateString() }}">
-                    </div>
-                    <div>
-                        <label for="suspendFormEnd" class="tw-stat-label mb-1 block">End date</label>
-                        <input type="date" id="suspendFormEnd" name="suspended_until" class="tw-input" required value="{{ now()->addDays(7)->toDateString() }}">
+                            <input type="date" id="suspendFormStart" name="suspended_at" class="tw-input" required value="{{ now()->toDateString() }}">
+                        </div>
+                        <div>
+                            <label for="suspendFormEnd" class="tw-stat-label mb-1 block">End date</label>
+                            <input type="date" id="suspendFormEnd" name="suspended_until" class="tw-input" required value="{{ now()->addDays(7)->toDateString() }}">
                         </div>
                     </div>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 px-6 py-4">
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger">
+                <button type="submit" class="tw-btn tw-btn-sm tw-btn-danger">
                     <i class="bi bi-slash-circle"></i>Suspend
                 </button>
                 <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost ml-auto" data-tw-modal-close>
