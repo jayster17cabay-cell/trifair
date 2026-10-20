@@ -11,6 +11,11 @@
     $showRatings = $showAll || $section === 'ratings';
     $showJoin = $showAll || $section === 'join-requests';
     $showMembers = $showAll || $section === 'members';
+
+    $membersActive = ($membersActive ?? false)
+        || request()->has('search')
+        || request()->has('status')
+        || $section === 'members';
 @endphp
 
 {{-- Primary hero action: pending join requests are the president's most urgent
@@ -69,7 +74,7 @@
     <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
         <div class="flex items-center gap-3">
             <button id="presidentMembersToggle" type="button" class="tw-btn tw-btn-gold px-3 py-1.5 text-sm" onclick="togglePresidentMembers()">
-                <i class="bi bi-people-fill mr-1"></i><span>TODA Members</span>
+                <i class="bi bi-people-fill mr-1"></i><span id="presidentMembersToggleLabel">TODA Members</span>
                 <span class="tw-badge tw-badge-amber ml-2">{{ ($members ?? collect())->total() }}</span>
                 <i id="presidentMembersToggleChevron" class="bi {{ $membersActive ? 'bi-chevron-up' : 'bi-chevron-down' }} ml-1"></i>
             </button>
@@ -110,11 +115,17 @@
     function togglePresidentMembers() {
         var wrap = document.getElementById('presidentMembersWrap');
         var chevron = document.getElementById('presidentMembersToggleChevron');
-        if (!wrap || !chevron) return;
+        var label = document.getElementById('presidentMembersToggleLabel');
+        if (!wrap) return;
         var hidden = wrap.classList.contains('hidden');
         wrap.classList.toggle('hidden');
-        chevron.classList.toggle('bi-chevron-down', hidden);
-        chevron.classList.toggle('bi-chevron-up', !hidden);
+        if (chevron) {
+            chevron.classList.toggle('bi-chevron-down', hidden);
+            chevron.classList.toggle('bi-chevron-up', !hidden);
+        }
+        if (label) {
+            label.textContent = hidden ? 'Hide Members' : 'TODA Members';
+        }
         if (hidden) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
