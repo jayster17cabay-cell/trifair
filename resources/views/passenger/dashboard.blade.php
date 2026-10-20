@@ -79,14 +79,16 @@
         <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h1 class="text-xl font-extrabold text-slate-900 sm:text-2xl">My Complaints</h1>
-                <p class="mt-1 text-sm text-slate-500">This list is linked to the Google account above — switch it if you used a different account when complaining.</p>
+                <p class="mt-1 text-sm text-slate-500">Track every complaint you filed — open tickets stay on top, resolved ones at the bottom.</p>
             </div>
-            <a href="/" class="tw-btn tw-btn-sm tw-btn-outline">
-                <i class="bi bi-qr-code-scan"></i> Scan a QR code
-            </a>
-            <button type="button" onclick="tryClose()" class="tw-btn tw-btn-sm tw-btn-outline">
-                <i class="bi bi-x-lg"></i> Close
-            </button>
+            <div class="flex shrink-0 items-center gap-2">
+                <a href="/" class="tw-btn tw-btn-sm tw-btn-navy">
+                    <i class="bi bi-qr-code-scan"></i> Scan a QR code
+                </a>
+                <button type="button" onclick="tryClose()" class="tw-btn tw-btn-sm tw-btn-outline">
+                    <i class="bi bi-x-lg"></i> Close
+                </button>
+            </div>
         </div>
 
         <div class="mb-6 flex items-start gap-3 rounded-2xl border border-navy-200 bg-navy-600/5 px-4 py-3.5">
@@ -100,33 +102,45 @@
             </div>
         </div>
 
-        <div class="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <div class="tw-stat">
-                <div class="tw-stat-icon tw-stat-icon-violet"><i class="bi bi-list-ul"></i></div>
-                <div class="tw-stat-num">{{ $totalCount }}</div>
-                <div class="tw-stat-label">Total</div>
-            </div>
-            <div class="tw-stat">
-                <div class="tw-stat-icon tw-stat-icon-amber"><i class="bi bi-clock-history"></i></div>
-                <div class="tw-stat-num">{{ $pendingCount }}</div>
-                <div class="tw-stat-label">Pending</div>
-            </div>
-            <div class="tw-stat">
-                <div class="tw-stat-icon tw-stat-icon-emerald"><i class="bi bi-check-circle"></i></div>
-                <div class="tw-stat-num">{{ $acceptedCount }}</div>
-                <div class="tw-stat-label">Accepted</div>
-            </div>
-            <div class="tw-stat">
-                <div class="tw-stat-icon tw-stat-icon-red"><i class="bi bi-x-circle"></i></div>
-                <div class="tw-stat-num">{{ $rejectedCount }}</div>
-                <div class="tw-stat-label">Rejected</div>
-            </div>
-            <div class="tw-stat">
-                <div class="tw-stat-icon tw-stat-icon-navy"><i class="bi bi-patch-check"></i></div>
-                <div class="tw-stat-num">{{ $solvedCount }}</div>
-                <div class="tw-stat-label">Solved</div>
-            </div>
+        {{-- Status overview — each card doubles as a filter for the list below. --}}
+        @php
+            $statusTabs = [
+                ['key' => null, 'label' => 'Total', 'count' => $totalCount, 'icon' => 'bi-list-ul', 'color' => 'violet'],
+                ['key' => 'pending', 'label' => 'Pending', 'count' => $pendingCount, 'icon' => 'bi-clock-history', 'color' => 'amber'],
+                ['key' => 'accepted', 'label' => 'Accepted', 'count' => $acceptedCount, 'icon' => 'bi-check-circle', 'color' => 'emerald'],
+                ['key' => 'rejected', 'label' => 'Rejected', 'count' => $rejectedCount, 'icon' => 'bi-x-circle', 'color' => 'red'],
+                ['key' => 'solved', 'label' => 'Solved', 'count' => $solvedCount, 'icon' => 'bi-patch-check', 'color' => 'navy'],
+            ];
+        @endphp
+        <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            @foreach ($statusTabs as $tab)
+                @php
+                    $isActive = $tab['key'] === null ? $activeStatus === null : $activeStatus === $tab['key'];
+                    $tabHref = $tab['key'] === null
+                        ? route('passenger.dashboard')
+                        : route('passenger.dashboard', ['status' => $tab['key']]);
+                @endphp
+                <a href="{{ $tabHref }}"
+                   @if ($isActive) aria-current="page" @endif
+                   class="tw-stat block no-underline transition hover:-translate-y-0.5 hover:border-navy-500 hover:shadow-md {{ $isActive ? 'border-navy-600 bg-navy-50 ring-2 ring-navy-600' : '' }}">
+                    <div class="tw-stat-icon tw-stat-icon-{{ $tab['color'] }}"><i class="bi {{ $tab['icon'] }}"></i></div>
+                    <div class="tw-stat-num">{{ $tab['count'] }}</div>
+                    <div class="tw-stat-label">{{ $tab['label'] }}</div>
+                </a>
+            @endforeach
         </div>
+
+        @if ($activeStatus !== null)
+            @php $activeStatusLabel = ucfirst($activeStatus); @endphp
+            <div class="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-navy-100 bg-navy-50 px-4 py-2.5 text-sm text-navy-700">
+                <i class="bi bi-funnel-fill" aria-hidden="true"></i>
+                <span>
+                    Showing only <strong>{{ $activeStatusLabel }}</strong> complaints
+                    ({{ $complaints->total() }} {{ $complaints->total() === 1 ? 'ticket' : 'tickets' }}).
+                </span>
+                <a href="{{ route('passenger.dashboard') }}" class="font-bold text-navy-600 underline hover:text-navy-800">Show all</a>
+            </div>
+        @endif
 
         @if ($notifications->isNotEmpty())
             <section class="mb-8">
@@ -154,7 +168,9 @@
         @endif
 
         <h2 class="mb-3 text-sm font-bold uppercase tracking-widest text-slate-400">
-            <i class="bi bi-exclamation-triangle mr-1 text-amber-500"></i>Complaint history
+            <i class="bi {{ $activeStatus !== null ? 'bi-funnel' : 'bi-exclamation-triangle' }} mr-1 text-amber-500"></i>
+            {{ $activeStatus !== null ? $activeStatusLabel . ' complaints' : 'Complaint history' }}
+            <span class="ml-1 font-semibold text-slate-300">({{ $complaints->total() }})</span>
         </h2>
 
         @forelse ($complaints as $rating)
@@ -162,35 +178,47 @@
                 $operator = $rating->operator;
                 $operatorName = $operator->user->name ?? 'Unknown';
                 $bodyNumber = $operator ? $operator->body_number : null;
+
+                // Same precedence as the model's status_label: solved wins,
+                // then accepted, rejected, and finally pending.
+                if ($rating->is_solved) {
+                    $statusKey = 'solved';
+                } elseif ($rating->is_accepted === true) {
+                    $statusKey = 'accepted';
+                } elseif ($rating->is_accepted === false) {
+                    $statusKey = 'rejected';
+                } else {
+                    $statusKey = 'pending';
+                }
+                $statusMap = [
+                    'pending' => ['label' => 'Pending', 'icon' => 'bi-clock-fill', 'badge' => 'tw-badge tw-badge-amber', 'border' => 'border-l-amber-400'],
+                    'accepted' => ['label' => 'Accepted', 'icon' => 'bi-check-circle-fill', 'badge' => 'tw-badge tw-badge-green', 'border' => 'border-l-emerald-500'],
+                    'rejected' => ['label' => 'Rejected', 'icon' => 'bi-x-circle-fill', 'badge' => 'tw-badge tw-badge-red', 'border' => 'border-l-red-500'],
+                    'solved' => ['label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'badge' => 'tw-badge tw-badge-navy', 'border' => 'border-l-navy-600'],
+                ];
+                $status = $statusMap[$statusKey];
+                $followUpOpen = $errors->has('message') && old('follow_up_rating_id') == $rating->id;
             @endphp
-            <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $rating->rating === 1 ? 'border-l-red-500' : 'border-l-amber-400' }}">
+            <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $status['border'] }}">
                 <div class="px-4 py-4 sm:px-5">
-                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                         <span class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.7rem] font-semibold text-navy-600">{{ $rating->reference_number }}</span>
                         @if ($bodyNumber)
                             <span class="text-xs text-slate-400">B#{{ $bodyNumber }} — {{ $operatorName }}</span>
                         @else
                             <span class="text-xs text-slate-400">{{ $operatorName }}</span>
                         @endif
+                        <span class="ml-auto {{ $status['badge'] }}"><i class="bi {{ $status['icon'] }}"></i> {{ $status['label'] }}</span>
+                    </div>
+
+                    <div class="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-400">
+                        <span><i class="bi bi-calendar3 mr-1" aria-hidden="true"></i>Filed {{ $rating->created_at->format('M d, Y h:i A') }}</span>
+                        @if ($rating->solved_at)
+                            <span><i class="bi bi-check2-all mr-1" aria-hidden="true"></i>Resolved {{ $rating->solved_at->diffForHumans() }}</span>
+                        @endif
                         <span class="ml-auto inline-flex items-center gap-1 rounded-md border border-amber-100 bg-amber-50 px-2 py-0.5 text-[0.7rem] font-semibold text-amber-700">
                             <i class="bi bi-exclamation-triangle"></i>{{ $rating->complaint_type }}
                         </span>
-                    </div>
-
-                    <div class="mt-2 flex flex-wrap items-center gap-2">
-                        @if ($rating->status_label === 'Solved')
-                            <span class="tw-badge tw-badge-navy"><i class="bi bi-patch-check-fill"></i> Solved</span>
-                        @elseif ($rating->status_label === 'Accepted')
-                            <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Accepted</span>
-                        @elseif ($rating->status_label === 'Rejected')
-                            <span class="tw-badge tw-badge-red"><i class="bi bi-x-circle-fill"></i> Rejected</span>
-                        @else
-                            <span class="tw-badge tw-badge-amber"><i class="bi bi-clock-fill"></i> Pending</span>
-                        @endif
-                        <span class="text-xs text-slate-400">{{ $rating->created_at->format('M d, Y h:i A') }}</span>
-                        @if ($rating->solved_at)
-                            <span class="text-xs text-slate-400">· solved {{ $rating->solved_at->diffForHumans() }}</span>
-                        @endif
                     </div>
 
                     @if ($rating->complaint_details)
@@ -318,24 +346,42 @@
                             This complaint has been resolved — you can no longer follow up.
                         </p>
                     @else
-                        <form action="{{ route('passenger.complaints.followUp', $rating) }}" method="POST" class="mt-3 border-t border-slate-100 pt-3">
-                            @csrf
-                            <input type="hidden" name="follow_up_rating_id" value="{{ $rating->id }}">
-                            <label for="followup-{{ $rating->id }}" class="tw-label mb-1">
-                                <i class="bi bi-send-fill mr-1 text-violet-500"></i>Follow up this complaint
-                            </label>
-                            <div class="flex flex-col gap-2 sm:flex-row sm:items-start">
-                                <textarea id="followup-{{ $rating->id }}" name="message" rows="2" maxlength="1000"
-                                          class="tw-textarea flex-1"
-                                          placeholder="Add details or request a status update...">{{ old('follow_up_rating_id') == $rating->id ? old('message') : '' }}</textarea>
-                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy shrink-0 self-stretch sm:self-start">
-                                    <i class="bi bi-send"></i> Send
-                                </button>
+                        {{-- One collapsed follow-up action per card — the form only
+                             appears after the passenger asks for it. --}}
+                        <div class="mt-3 border-t border-slate-100 pt-3">
+                            <button type="button"
+                                    onclick="toggleFollowUp({{ $rating->id }})"
+                                    aria-expanded="{{ $followUpOpen ? 'true' : 'false' }}"
+                                    aria-controls="followup-panel-{{ $rating->id }}"
+                                    class="tw-btn tw-btn-sm tw-btn-outline">
+                                <i class="bi bi-chat-left-text text-violet-500"></i> Follow up this complaint
+                            </button>
+                            <div id="followup-panel-{{ $rating->id }}" class="{{ $followUpOpen ? '' : 'hidden' }} mt-3">
+                                <form action="{{ route('passenger.complaints.followUp', $rating) }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="follow_up_rating_id" value="{{ $rating->id }}">
+                                    <label for="followup-{{ $rating->id }}" class="tw-label mb-1">
+                                        <i class="bi bi-send-fill mr-1 text-violet-500"></i>Follow up this complaint
+                                    </label>
+                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-start">
+                                        <textarea id="followup-{{ $rating->id }}" name="message" rows="2" maxlength="1000"
+                                                  class="tw-textarea flex-1"
+                                                  placeholder="Add details or request a status update...">{{ old('follow_up_rating_id') == $rating->id ? old('message') : '' }}</textarea>
+                                        <div class="flex shrink-0 gap-2">
+                                            <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy">
+                                                <i class="bi bi-send"></i> Send
+                                            </button>
+                                            <button type="button" onclick="toggleFollowUp({{ $rating->id }})" class="tw-btn tw-btn-sm tw-btn-ghost">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                    @if ($errors->has('message') && old('follow_up_rating_id') == $rating->id)
+                                        <span class="tw-error-text" role="alert">{{ $errors->first('message') }}</span>
+                                    @endif
+                                </form>
                             </div>
-                            @if ($errors->has('message') && old('follow_up_rating_id') == $rating->id)
-                                <span class="tw-error-text" role="alert">{{ $errors->first('message') }}</span>
-                            @endif
-                        </form>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -392,6 +438,20 @@
                 if (document.hidden) return;
                 window.location.replace('/');
             }, 350);
+        }
+
+        function toggleFollowUp(id) {
+            var panel = document.getElementById('followup-panel-' + id);
+            if (!panel) return;
+            var nowOpen = panel.classList.toggle('hidden') === false;
+            var button = panel.previousElementSibling;
+            if (button && button.hasAttribute('aria-expanded')) {
+                button.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+            }
+            if (nowOpen) {
+                var textarea = panel.querySelector('textarea');
+                if (textarea) textarea.focus();
+            }
         }
     </script>
 </body>

@@ -32,11 +32,35 @@ class PassengerController extends Controller
         $rejectedCount = (int) $tally->rejected_count;
         $solvedCount = (int) $tally->solved_count;
 
-        $complaints = (clone $base)
-            ->with(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps'])
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+        $statusFilters = ['pending', 'accepted', 'rejected', 'solved'];
+        $activeStatus = $request->query('status');
+        $activeStatus = in_array($activeStatus, $statusFilters, true) ? $activeStatus : null;
+
+        $query = (clone $base)
+            ->with(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps']);
+
+        if ($activeStatus === 'pending') {
+            $query->whereNull('is_accepted')->where('is_solved', false);
+        } elseif ($activeStatus === 'accepted') {
+            $query->where('is_accepted', true)->where('is_solved', false);
+        } elseif ($activeStatus === 'rejected') {
+            $query->where('is_accepted', false);
+        } elseif ($activeStatus === 'solved') {
+            $query->where('is_solved', true);
+        }
+
+        // Group the list so tickets that still need attention (pending, then
+        // accepted) always sit above closed ones (rejected, then solved) —
+        // newest first inside each group.
+        $query->orderByRaw(
+            'CASE'
+            . ' WHEN is_solved = true THEN 3'
+            . ' WHEN is_accepted IS NULL THEN 0'
+            . ' WHEN is_accepted = true THEN 1'
+            . ' ELSE 2 END'
+        )->orderByDesc('created_at');
+
+        $complaints = $query->paginate(15)->withQueryString();
 
         $notifications = Notification::where('user_id', $user->id)
             ->with('rating')
@@ -44,7 +68,16 @@ class PassengerController extends Controller
             ->limit(10)
             ->get();
 
-        return view('passenger.dashboard', compact('complaints', 'totalCount', 'pendingCount', 'acceptedCount', 'rejectedCount', 'solvedCount', 'notifications'));
+        return view('passenger.dashboard', compact(
+            'complaints',
+            'totalCount',
+            'pendingCount',
+            'acceptedCount',
+            'rejectedCount',
+            'solvedCount',
+            'notifications',
+            'activeStatus'
+        ));
     }
 
     /**

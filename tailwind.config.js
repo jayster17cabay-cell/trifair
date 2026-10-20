@@ -10,6 +10,11 @@ module.exports = {
         'border-l-amber-400',
         'border-l-emerald-500',
         'border-l-slate-300',
+        'border-l-navy-600',
+        'border-navy-600',
+        'bg-navy-50',
+        'ring-2',
+        'ring-navy-600',
     ],
     theme: {
         extend: {
