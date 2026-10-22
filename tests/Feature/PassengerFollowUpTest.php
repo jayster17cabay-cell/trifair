@@ -86,7 +86,8 @@ class PassengerFollowUpTest extends TestCase
                 'message' => 'What is the status of this complaint?',
             ])
             ->assertRedirect(route('passenger.dashboard'))
-            ->assertSessionHas('status');
+            ->assertSessionHas('status')
+            ->assertSessionHas('open_follow_up', $rating->id);
 
         $this->assertDatabaseHas('passenger_follow_ups', [
             'rating_id' => $rating->id,
@@ -94,12 +95,15 @@ class PassengerFollowUpTest extends TestCase
             'message' => 'What is the status of this complaint?',
         ]);
 
-        // The thread reads back on their own complaints page.
+        // The thread reads back on their own complaints page, and the card plus
+        // chat arrive already expanded so their own message is on screen.
         $this->actingAs($passenger)
             ->get('/passenger/dashboard')
             ->assertOk()
             ->assertSee('Your follow-ups (1)')
-            ->assertSee('What is the status of this complaint?');
+            ->assertSee('What is the status of this complaint?')
+            ->assertDontSee('data-chat-body class="hidden', false)
+            ->assertDontSee('data-complaint-details class="hidden', false);
     }
 
     public function test_passenger_cannot_follow_up_on_another_passengers_complaint()
@@ -269,12 +273,14 @@ class PassengerFollowUpTest extends TestCase
             'message' => 'We have summoned the driver for a hearing.',
         ]);
 
-        // The passenger reads the staff reply inside their chat thread.
+        // The passenger reads the staff reply — labelled by role only, never
+        // the reviewer's personal name.
         $this->actingAs($passenger)
             ->get('/passenger/dashboard')
             ->assertOk()
             ->assertSee('We have summoned the driver for a hearing.')
-            ->assertSee($admin->name);
+            ->assertSee('Superadmin')
+            ->assertDontSee($admin->name);
 
         // An in-app notification tells them to come back and read it.
         $this->assertDatabaseHas('notifications', [
@@ -303,6 +309,14 @@ class PassengerFollowUpTest extends TestCase
             'sender_role' => 'staff',
             'message' => 'Please check your email for the hearing schedule.',
         ]);
+
+        // The passenger sees the reply under the officer's role, not their name.
+        $this->actingAs($passenger)
+            ->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee('Please check your email for the hearing schedule.')
+            ->assertSee('TFRB Officer')
+            ->assertDontSee($officer->name);
     }
 
     public function test_staff_chat_is_closed_once_the_complaint_is_solved()

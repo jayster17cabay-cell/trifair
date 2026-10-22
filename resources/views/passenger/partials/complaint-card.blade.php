@@ -22,8 +22,11 @@
     ];
     $status = $statusMap[$statusKey];
 
-    // A failed follow-up submission reopens this card and its chat thread.
-    $detailsOpen = $errors->has('message') && old('follow_up_rating_id') == $rating->id;
+    // A failed follow-up submission reopens this card and its chat thread, as
+    // does the redirect right after a successful send, so the passenger always
+    // lands on their own message instead of a collapsed card.
+    $detailsOpen = ($errors->has('message') && old('follow_up_rating_id') == $rating->id)
+        || (int) session('open_follow_up') === (int) $rating->id;
 @endphp
 <div class="tw-card mb-3.5 overflow-hidden border-l-4 {{ $status['border'] }}">
     <button type="button"

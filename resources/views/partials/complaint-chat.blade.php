@@ -21,7 +21,7 @@
 @endphp
 <div class="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
     <button type="button"
-            onclick="var b=this.parentElement.querySelector('[data-chat-body]');var o=b.classList.toggle('hidden')===false;this.setAttribute('aria-expanded',o?'true':'false');var c=this.querySelector('[data-chat-chevron]');if(c)c.classList.toggle('rotate-180',o);"
+            onclick="var b=this.parentElement.querySelector('[data-chat-body]');var o=b.classList.toggle('hidden')===false;this.setAttribute('aria-expanded',o?'true':'false');var c=this.querySelector('[data-chat-chevron]');if(c)c.classList.toggle('rotate-180',o);var t=b.querySelector('[data-chat-thread]');if(o&&t)t.scrollTop=t.scrollHeight;"
             aria-expanded="{{ $chatOpen ? 'true' : 'false' }}"
             class="flex w-full items-center gap-1.5 bg-slate-50/70 px-4 py-2.5 text-left transition-colors hover:bg-slate-100">
         <i class="bi bi-chat-left-text-fill text-violet-600" aria-hidden="true"></i>
@@ -39,15 +39,21 @@
     </button>
 
     <div data-chat-body class="{{ $chatOpen ? '' : 'hidden' }} border-t border-slate-100">
-        <div class="max-h-80 space-y-2.5 overflow-y-auto px-3.5 py-3">
+        <div id="chat-thread-{{ $rating->id }}" data-chat-thread class="max-h-80 space-y-2.5 overflow-y-auto px-3.5 py-3">
             @forelse ($thread as $followUp)
                 @if ($followUp->isFromStaff())
+                    @php
+                        $sender = $followUp->user;
+                        $staffLabel = $sender && $sender->isSuperadmin()
+                            ? 'Superadmin'
+                            : ($sender && $sender->isTfrbOfficer() ? 'TFRB Officer' : 'TFRB Staff');
+                    @endphp
                     <div class="flex justify-start">
                         <div class="max-w-[85%] rounded-2xl rounded-tl-md border border-navy-100 bg-navy-50 px-3.5 py-2">
                             <div class="mb-0.5 flex flex-wrap items-center gap-1.5 text-[0.65rem] font-bold text-navy-600">
                                 <i class="bi bi-person-badge" aria-hidden="true"></i>
-                                {{ $followUp->user->name ?? 'TFRB staff' }}
-                                <span class="rounded bg-navy-600 px-1.5 py-px text-[0.55rem] font-bold uppercase tracking-wider text-white">TFRB</span>
+                                {{ $staffLabel }}
+                                <span class="rounded bg-navy-600 px-1.5 py-px text-[0.55rem] font-bold uppercase tracking-wider text-white">{{ $staffLabel === 'Superadmin' ? 'Admin' : 'TFRB' }}</span>
                             </div>
                             <p class="text-sm leading-relaxed text-slate-700">{{ $followUp->message }}</p>
                             <div class="mt-1 text-right text-[0.62rem] text-slate-400">{{ $followUp->created_at->format('M j, g:i A') }}</div>
@@ -100,4 +106,7 @@
             </div>
         @endif
     </div>
+    @if ($chatOpen)
+        <script>(function(){var t=document.getElementById('chat-thread-{{ $rating->id }}');if(t)t.scrollTop=t.scrollHeight;})()</script>
+    @endif
 </div>

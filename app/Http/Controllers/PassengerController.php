@@ -115,6 +115,7 @@ class PassengerController extends Controller
 
         return redirect()
             ->route('passenger.dashboard')
-            ->with('status', 'Your follow-up has been sent. It will be shown to the TFRB/superadmin for your complaint.');
+            ->with('status', 'Your follow-up has been sent. It will be shown to the TFRB/superadmin for your complaint.')
+            ->with('open_follow_up', $rating->id);
     }
 }
