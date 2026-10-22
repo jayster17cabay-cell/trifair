@@ -59,12 +59,22 @@ class PresidentQueryService
         $user = \Illuminate\Support\Facades\Auth::user();
         $memberQuery = $this->todaOperators($toda, $user);
 
-        $memberIds = (clone $memberQuery)->pluck('id');
+        $memberIdsForList = (clone $memberQuery)->pluck('id');
+        $totalMembers = $memberIdsForList->count();
 
-        $totalMembers = $memberIds->count();
+        // The average must still count the president's own operator record —
+        // they are excluded from the members list only because they preside
+        // over the TODA, not because their ratings stopped mattering.
+        $ratingIds = $memberIdsForList->all();
+        if ($ownOperator
+            && ($ownOperator->isMemberOfToda($toda->id) || (int) $ownOperator->toda_id === (int) $toda->id)
+            && !in_array($ownOperator->id, $ratingIds)
+        ) {
+            $ratingIds[] = $ownOperator->id;
+        }
 
         $memberRatingAgg = Rating::query()
-            ->whereIn('operator_id', $memberIds)
+            ->whereIn('operator_id', $ratingIds)
             ->where('toda_id', $toda->id)
             ->countsTowardRating()
             ->selectRaw('COUNT(*) as total, AVG(rating) as avg')
@@ -75,7 +85,7 @@ class PresidentQueryService
             : 0;
 
         $pendingComplaints = Rating::query()
-            ->whereIn('operator_id', $memberIds)
+            ->whereIn('operator_id', $memberIdsForList)
             ->where('toda_id', $toda->id)
             ->isValid()
             ->isComplaint()
@@ -84,7 +94,7 @@ class PresidentQueryService
             ->count();
 
         $totalComplaints = Rating::query()
-            ->whereIn('operator_id', $memberIds)
+            ->whereIn('operator_id', $memberIdsForList)
             ->where('toda_id', $toda->id)
             ->isValid()
             ->isComplaint()
