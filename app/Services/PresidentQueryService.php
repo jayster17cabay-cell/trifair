@@ -20,13 +20,26 @@ class PresidentQueryService
     /**
      * Operators belonging to a given TODA (excludes archived records). A
      * member is anyone whose home TODA is this TODA, or who holds an active
-     * operator_toda membership for it.
+     * operator_toda membership for it. The current TODA president's own
+     * operator record is excluded from the members list/count so they do not
+     * appear as a "member" of the TODA they preside over.
      */
-    public function todaOperators(Toda $toda)
+    public function todaOperators(Toda $toda, ?User $user = null)
     {
-        return Operator::query()
+        $query = Operator::query()
             ->belongsToToda($toda->id)
             ->notArchived();
+
+        if ($user && method_exists($user, 'isOperatorPresident') && $user->isOperatorPresident()) {
+            if (method_exists($user, 'isPresidentOf') && $user->isPresidentOf($toda->id)) {
+                $own = $user->operator;
+                if ($own) {
+                    $query->where('operators.id', '!=', $own->id);
+                }
+            }
+        }
+
+        return $query;
     }
 
     /**
@@ -43,7 +56,8 @@ class PresidentQueryService
      */
     public function summary(Toda $toda, ?Operator $ownOperator): array
     {
-        $memberQuery = $this->todaOperators($toda);
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $memberQuery = $this->todaOperators($toda, $user);
 
         $memberIds = (clone $memberQuery)->pluck('id');
 
@@ -124,7 +138,8 @@ class PresidentQueryService
         // bucket, so reconcile before the list (and its counts) are built.
         Operator::endExpiredSuspensions();
 
-        $base = $this->todaOperators($toda)->with('user')->whereHas('user');
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $base = $this->todaOperators($toda, $user)->with('user')->whereHas('user');
 
         if ($search) {
             $base->where(function ($q) use ($search) {
@@ -157,7 +172,8 @@ class PresidentQueryService
      */
     public function memberBreakdown(Toda $toda)
     {
-        $memberIds = $this->todaOperators($toda)->pluck('id');
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $memberIds = $this->todaOperators($toda, $user)->pluck('id');
 
         $members = Operator::query()
             ->whereIn('id', $memberIds)
@@ -199,7 +215,8 @@ class PresidentQueryService
      */
     public function member(Toda $toda, int $id): ?Operator
     {
-        return $this->todaOperators($toda)
+        $user = \Illuminate\Support\Facades\Auth::user();
+        return $this->todaOperators($toda, $user)
             ->with('user')
             ->find($id);
     }
@@ -211,6 +228,12 @@ class PresidentQueryService
     {
         if (!$member->isMemberOfToda($toda->id)) {
             return collect();
+        }
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if ($user && method_exists($user, 'isOperatorPresident') && $user->isPresidentOf($toda->id)) {
+            if ($user->operator && (int) $user->operator->id === (int) $member->id) {
+                abort(403);
+            }
         }
         return $member->ratings()
             ->where('toda_id', $toda->id)
