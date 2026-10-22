@@ -22,21 +22,11 @@
         'neutral' => 'border-slate-200 bg-slate-100 text-slate-600',
     ][$severity];
 
-    $avatarClass = [
-        'danger' => 'bg-red-500/10 text-red-600',
-        'warning' => 'bg-amber-500/10 text-amber-700',
-        'neutral' => 'bg-navy-600/10 text-navy-700',
-    ][$severity];
-
     $typeIconClass = $severity === 'danger' ? 'text-red-500' : ($severity === 'warning' ? 'text-amber-500' : 'text-slate-400');
-    $initials = strtoupper(substr(trim($operatorName), 0, 1));
 @endphp
 
 <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
     <div class="flex cursor-pointer select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:px-5" data-complaint-toggle role="button" tabindex="0" aria-expanded="false">
-        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $avatarClass }} text-sm font-extrabold"
-              title="{{ $severity === 'danger' ? 'High severity complaint' : ($severity === 'warning' ? 'Moderate severity complaint' : 'Low severity complaint') }}">{{ $initials }}</span>
-
         <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <span class="truncate text-sm font-bold text-slate-800">{{ $operatorName }}</span>
