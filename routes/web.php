@@ -93,6 +93,7 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::patch('/complaints/{rating}/reset', [TfrbOfficerController::class, 'complaintsResetReview'])->name('complaints.reset');
     Route::patch('/complaints/{rating}/solve', [TfrbOfficerController::class, 'complaintsMarkSolved'])->name('complaints.solve');
     Route::patch('/complaints/{rating}/reopen', [TfrbOfficerController::class, 'complaintsReopen'])->name('complaints.reopen');
+    Route::post('/complaints/{rating}/reply', [TfrbOfficerController::class, 'complaintsReply'])->name('complaints.reply');
     Route::delete('/complaints/{rating}', [TfrbOfficerController::class, 'destroyComplaint'])->name('complaints.destroy');
     Route::post('/complaints/bulk-review', [TfrbOfficerController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
     Route::get('/violations', [TfrbOfficerController::class, 'violations'])->name('violations');
@@ -147,6 +148,7 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
         Route::patch('/complaints/{rating}/reset', [SuperadminController::class, 'complaintsResetReview'])->name('complaints.reset');
     Route::patch('/complaints/{rating}/solve', [SuperadminController::class, 'complaintsMarkSolved'])->name('complaints.solve');
     Route::patch('/complaints/{rating}/reopen', [SuperadminController::class, 'complaintsReopen'])->name('complaints.reopen');
+    Route::post('/complaints/{rating}/reply', [SuperadminController::class, 'complaintsReply'])->name('complaints.reply');
     Route::delete('/complaints/{rating}', [SuperadminController::class, 'destroyComplaint'])->name('complaints.destroy');
     Route::post('/complaints/bulk-review', [SuperadminController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
     Route::get('/violations', [SuperadminController::class, 'violations'])->name('violations');

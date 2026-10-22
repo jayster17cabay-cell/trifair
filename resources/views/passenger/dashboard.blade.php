@@ -252,21 +252,5 @@
             TriFair — Passenger Feedback System. Your identity stays private from drivers.
         </p>
     </main>
-
-    <script>
-        function toggleFollowUp(id) {
-            var panel = document.getElementById('followup-panel-' + id);
-            if (!panel) return;
-            var nowOpen = panel.classList.toggle('hidden') === false;
-            var button = panel.previousElementSibling;
-            if (button && button.hasAttribute('aria-expanded')) {
-                button.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
-            }
-            if (nowOpen) {
-                var textarea = panel.querySelector('textarea');
-                if (textarea) textarea.focus();
-            }
-        }
-    </script>
 </body>
 </html>

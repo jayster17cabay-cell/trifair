@@ -5,8 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * One message a passenger adds to their own complaint after filing it — the
- * "follow-up" that keeps a ticket moving (extra context, a status nudge).
+ * One message in a complaint's chat thread — the passenger adds context or a
+ * status nudge, the TFRB/superadmin answers with an update. sender_role
+ * records which side wrote it ('passenger' or 'staff').
  */
 class PassengerFollowUp extends Model
 {
@@ -16,6 +17,7 @@ class PassengerFollowUp extends Model
         'rating_id',
         'user_id',
         'message',
+        'sender_role',
     ];
 
     protected $casts = [
@@ -31,5 +33,10 @@ class PassengerFollowUp extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isFromStaff(): bool
+    {
+        return $this->sender_role === 'staff';
     }
 }

@@ -37,7 +37,7 @@ class PassengerController extends Controller
         $activeStatus = in_array($activeStatus, $statusFilters, true) ? $activeStatus : null;
 
         $query = (clone $base)
-            ->with(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps']);
+            ->with(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user']);
 
         if ($activeStatus === 'pending') {
             $query->whereNull('is_accepted')->where('is_solved', false);
@@ -110,6 +110,7 @@ class PassengerController extends Controller
         $rating->passengerFollowUps()->create([
             'user_id' => $user->id,
             'message' => $data['message'],
+            'sender_role' => 'passenger',
         ]);
 
         return redirect()

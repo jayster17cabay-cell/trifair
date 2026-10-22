@@ -222,6 +222,43 @@ class RatingAdminService
         return back()->with('success', 'Complaint reopened.');
     }
 
+    /**
+     * Send an update into the complaint's chat thread from the TFRB/superadmin
+     * side. The passenger sees it on their dashboard and gets an in-app
+     * notification. Once a complaint is solved the chat is closed for both
+     * sides — there is nothing left to discuss on a resolved ticket.
+     */
+    public function complaintsReply(Request $request, Rating $rating): RedirectResponse
+    {
+        if (!$rating->complaint_type) {
+            return back()->withErrors(['error' => 'Only complaints with a complaint type can be replied to here.']);
+        }
+
+        if ($rating->is_solved) {
+            return back()->withErrors(['chat' => 'This complaint is already resolved — the chat is closed.']);
+        }
+
+        $data = $request->validate([
+            'message' => 'required|string|min:3|max:1000',
+        ], [
+            'message.required' => 'Enter your update before sending.',
+            'message.min' => 'Enter at least 3 characters.',
+            'message.max' => 'The message must not exceed 1,000 characters.',
+        ]);
+
+        $rating->passengerFollowUps()->create([
+            'user_id' => Auth::id(),
+            'message' => $data['message'],
+            'sender_role' => 'staff',
+        ]);
+
+        ActivityLogger::log('reply_complaint', "Replied to complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
+
+        $this->notifyPassengerInApp($rating, 'Complaint Update', 'The TFRB team replied to your complaint. Open My Complaints to read their message.');
+
+        return back()->with('success', 'Your update has been sent to the passenger.');
+    }
+
     public function complaintsBulkReview(Request $request): RedirectResponse
     {
         $raw = $request->input('ids');

@@ -283,6 +283,11 @@ class SuperadminController extends Controller
         return app(RatingAdminService::class)->complaintsReopen($rating);
     }
 
+    public function complaintsReply(Request $request, Rating $rating)
+    {
+        return app(RatingAdminService::class)->complaintsReply($request, $rating);
+    }
+
     public function ratingsBulkReview(Request $request)
     {
         return app(RatingAdminService::class)->ratingsBulkReview($request);

@@ -357,6 +357,11 @@ class TfrbOfficerController extends Controller
         return app(RatingAdminService::class)->complaintsReopen($rating);
     }
 
+    public function complaintsReply(Request $request, Rating $rating)
+    {
+        return app(RatingAdminService::class)->complaintsReply($request, $rating);
+    }
+
     public function complaintsBulkReview(Request $request)
     {
         return app(RatingAdminService::class)->complaintsBulkReview($request);

@@ -243,4 +243,122 @@ class PassengerFollowUpTest extends TestCase
             ->assertDontSee('Only the filing passenger should read this.', false)
             ->assertSee('No complaints yet');
     }
+
+    public function test_superadmin_can_reply_to_the_passenger_chat()
+    {
+        $passenger = $this->makeUser('passenger');
+        $rating = $this->makeComplaint($this->makeOperator(), $passenger);
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($passenger)
+            ->post(route('passenger.complaints.followUp', $rating), [
+                'follow_up_rating_id' => (string) $rating->id,
+                'message' => 'Any update on my complaint?',
+            ])->assertRedirect();
+
+        $this->actingAs($admin)
+            ->post(route('superadmin.complaints.reply', $rating), [
+                'message' => 'We have summoned the driver for a hearing.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('passenger_follow_ups', [
+            'rating_id' => $rating->id,
+            'user_id' => $admin->id,
+            'sender_role' => 'staff',
+            'message' => 'We have summoned the driver for a hearing.',
+        ]);
+
+        // The passenger reads the staff reply inside their chat thread.
+        $this->actingAs($passenger)
+            ->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee('We have summoned the driver for a hearing.')
+            ->assertSee($admin->name);
+
+        // An in-app notification tells them to come back and read it.
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $passenger->id,
+            'rating_id' => $rating->id,
+            'type' => 'complaint_status',
+            'title' => 'Complaint Update',
+        ]);
+    }
+
+    public function test_tfrb_officer_can_reply_to_the_passenger_chat()
+    {
+        $passenger = $this->makeUser('passenger');
+        $rating = $this->makeComplaint($this->makeOperator(), $passenger);
+        $officer = $this->makeUser('tfrb_officer');
+
+        $this->actingAs($officer)
+            ->post(route('tfrb-officer.complaints.reply', $rating), [
+                'message' => 'Please check your email for the hearing schedule.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('passenger_follow_ups', [
+            'rating_id' => $rating->id,
+            'user_id' => $officer->id,
+            'sender_role' => 'staff',
+            'message' => 'Please check your email for the hearing schedule.',
+        ]);
+    }
+
+    public function test_staff_chat_is_closed_once_the_complaint_is_solved()
+    {
+        $passenger = $this->makeUser('passenger');
+        $rating = $this->makeComplaint($this->makeOperator(), $passenger);
+        $rating->update(['is_solved' => true, 'is_accepted' => true]);
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($admin)
+            ->from('/superadmin/complaints')
+            ->post(route('superadmin.complaints.reply', $rating), [
+                'message' => 'Closing note after resolution.',
+            ])
+            ->assertRedirect('/superadmin/complaints')
+            ->assertSessionHasErrors('chat');
+
+        $this->assertDatabaseCount('passenger_follow_ups', 0);
+
+        // The staff composer is withdrawn from the admin card, same as the passenger side.
+        $html = $this->actingAs($admin)
+            ->get('/superadmin/complaints')
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('the chat is closed', $html);
+        $this->assertStringNotContainsString('Send an update to the passenger', $html);
+    }
+
+    public function test_staff_reply_requires_a_message()
+    {
+        $passenger = $this->makeUser('passenger');
+        $rating = $this->makeComplaint($this->makeOperator(), $passenger);
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($admin)
+            ->from('/superadmin/complaints')
+            ->post(route('superadmin.complaints.reply', $rating), [
+                'message' => '',
+            ])
+            ->assertRedirect('/superadmin/complaints')
+            ->assertSessionHasErrors('message');
+
+        $this->assertDatabaseCount('passenger_follow_ups', 0);
+    }
+
+    public function test_passenger_cannot_use_the_staff_reply_route()
+    {
+        $passenger = $this->makeUser('passenger');
+        $rating = $this->makeComplaint($this->makeOperator(), $passenger);
+
+        $this->actingAs($passenger)
+            ->post(route('superadmin.complaints.reply', $rating), [
+                'message' => 'Writing as if I were staff.',
+            ])->assertForbidden();
+
+        $this->assertDatabaseCount('passenger_follow_ups', 0);
+    }
 }

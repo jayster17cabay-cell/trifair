@@ -2,7 +2,6 @@
     $operator = $rating->operator;
     $operatorName = $operator->user->name ?? 'Unknown';
     $bodyNumber = $operator ? $operator->body_number : null;
-    $followUpOpen = $errors->has('message') && old('follow_up_rating_id') == $rating->id;
 @endphp
 <div class="tw-card mb-3.5 overflow-hidden border-l-4 {{ $statusBorder }}">
     <div class="px-4 py-4 sm:px-5">
@@ -122,70 +121,19 @@
             </div>
         @endif
 
-        @if ($rating->passengerFollowUps->isNotEmpty())
-            <div class="mt-3 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3">
-                <div class="mb-1.5 flex items-center gap-1.5">
-                    <i class="bi bi-chat-left-text-fill text-violet-600"></i>
-                    <span class="text-[0.7rem] font-bold uppercase tracking-widest text-violet-700">
-                        Your follow-ups ({{ $rating->passengerFollowUps->count() }})
-                    </span>
-                </div>
-                <div class="space-y-2">
-                    @foreach ($rating->passengerFollowUps as $followUp)
-                        <div class="border-t border-violet-100 pt-2 first:border-t-0 first:pt-0">
-                            <p class="text-sm leading-relaxed text-slate-700">{{ $followUp->message }}</p>
-                            <div class="mt-0.5 text-[0.68rem] text-slate-400">
-                                {{ $followUp->created_at->format('M d, Y h:i A') }}
-                                <span class="ml-1 rounded bg-violet-100 px-1.5 py-0.5 font-semibold text-violet-700">Sent</span>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
-
-        @if ($rating->is_solved)
+        {{-- Chat with the TFRB/superadmin on this complaint — the thread stays
+             readable after solving, but the composer is withdrawn. --}}
+        @if ($rating->is_solved && $rating->passengerFollowUps->isEmpty())
             <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
                 <i class="bi bi-check2-all text-emerald-500"></i>
                 This complaint has been resolved — you can no longer follow up.
             </p>
         @else
-            {{-- One collapsed follow-up action per card — the form only
-                 appears after the passenger asks for it. --}}
-            <div class="mt-3 border-t border-slate-100 pt-3">
-                <button type="button"
-                        onclick="toggleFollowUp({{ $rating->id }})"
-                        aria-expanded="{{ $followUpOpen ? 'true' : 'false' }}"
-                        aria-controls="followup-panel-{{ $rating->id }}"
-                        class="tw-btn tw-btn-sm tw-btn-outline">
-                    <i class="bi bi-chat-left-text text-violet-500"></i> Follow up this complaint
-                </button>
-                <div id="followup-panel-{{ $rating->id }}" class="{{ $followUpOpen ? '' : 'hidden' }} mt-3">
-                    <form action="{{ route('passenger.complaints.followUp', $rating) }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="follow_up_rating_id" value="{{ $rating->id }}">
-                        <label for="followup-{{ $rating->id }}" class="tw-label mb-1">
-                            <i class="bi bi-send-fill mr-1 text-violet-500"></i>Follow up this complaint
-                        </label>
-                        <div class="flex flex-col gap-2 sm:flex-row sm:items-start">
-                            <textarea id="followup-{{ $rating->id }}" name="message" rows="2" maxlength="1000"
-                                      class="tw-textarea flex-1"
-                                      placeholder="Add details or request a status update...">{{ old('follow_up_rating_id') == $rating->id ? old('message') : '' }}</textarea>
-                            <div class="flex shrink-0 gap-2">
-                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy">
-                                    <i class="bi bi-send"></i> Send
-                                </button>
-                                <button type="button" onclick="toggleFollowUp({{ $rating->id }})" class="tw-btn tw-btn-sm tw-btn-ghost">
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                        @if ($errors->has('message') && old('follow_up_rating_id') == $rating->id)
-                            <span class="tw-error-text" role="alert">{{ $errors->first('message') }}</span>
-                        @endif
-                    </form>
-                </div>
-            </div>
+            @include('partials.complaint-chat', [
+                'rating' => $rating,
+                'viewSide' => 'passenger',
+                'composerAction' => route('passenger.complaints.followUp', $rating),
+            ])
         @endif
     </div>
 </div>

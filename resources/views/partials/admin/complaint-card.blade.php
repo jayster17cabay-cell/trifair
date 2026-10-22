@@ -171,30 +171,15 @@
             </div>
         @endif
 
-        {{-- Extra messages the filing passenger added after submitting, so a
-             reviewer sees added context or a status nudge in one place. --}}
-        @if ($rating->passengerFollowUps->isNotEmpty())
-            <div class="mx-4 mb-4 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3 sm:mx-5">
-                <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
-                    <i class="bi bi-chat-left-text-fill text-violet-600"></i>
-                    <span class="text-[0.7rem] font-bold uppercase tracking-widest text-violet-700">Passenger Follow-ups</span>
-                    <span class="ml-auto text-xs text-slate-500">
-                        {{ $rating->passengerFollowUps->count() }} message{{ $rating->passengerFollowUps->count() > 1 ? 's' : '' }}
-                    </span>
-                </div>
-                <div class="space-y-2">
-                    @foreach ($rating->passengerFollowUps as $followUp)
-                        <div class="border-t border-violet-100 pt-2 first:border-t-0 first:pt-0">
-                            <p class="mb-0.5 text-sm leading-relaxed text-slate-700">{{ $followUp->message }}</p>
-                            <div class="flex flex-wrap items-center gap-x-3 text-[0.65rem] text-slate-500">
-                                <span><i class="bi bi-person mr-1"></i>{{ $rating->passenger_name ?: 'Passenger' }}</span>
-                                <span><i class="bi bi-clock-history mr-1"></i>{{ $followUp->created_at->format('M j, Y g:i A') }}</span>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
+        {{-- Chat thread with the filing passenger: their follow-ups plus any
+             TFRB/superadmin updates, with a composer while the ticket is open. --}}
+        <div class="mx-4 mb-4 sm:mx-5">
+            @include('partials.complaint-chat', [
+                'rating' => $rating,
+                'viewSide' => 'staff',
+                'composerAction' => route($routePrefix . '.complaints.reply', $rating),
+            ])
+        </div>
 
         {{-- Resolution details captured when the officer rejected or solved the
              complaint. Shown here so reviewers can see the recorded reason,
