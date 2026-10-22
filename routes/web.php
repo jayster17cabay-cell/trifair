@@ -225,6 +225,10 @@ Route::middleware(['auth', 'role:operator,operator_president'])->prefix('operato
 
 Route::middleware(['auth', 'role:operator_president', 'president.active', 'toda.selection'])->prefix('president')->name('president.')->group(function () {
     Route::get('/dashboard', [PresidentController::class, 'dashboard'])->name('dashboard');
+    // The president's own ratings and complaints (as an operator), listed like
+    // the operator ratings page but scoped to the TODA they govern.
+    Route::get('/ratings', [PresidentController::class, 'ratings'])->name('ratings');
+    Route::post('/ratings/{rating}/respond', [OperatorController::class, 'respond'])->name('ratings.respond');
     Route::get('/members', [PresidentController::class, 'members'])->name('members');
     // President can onboard a new member (lands as a pending account for
     // superadmin/tfrb approval) and remove one (they become a TODA-less operator).

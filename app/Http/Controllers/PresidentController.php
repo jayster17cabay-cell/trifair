@@ -81,6 +81,39 @@ class PresidentController extends Controller
         ));
     }
 
+    /**
+     * The president's own ratings and complaints as an operator — the same
+     * picture the operator ratings page gives, scoped to the TODA they govern
+     * and filterable down to complaints or the low ratings awaiting a response.
+     */
+    public function ratings(Request $request)
+    {
+        $toda = $this->toda();
+        $user = Auth::user();
+
+        $ownOperator = $this->query->presidentOperator($user);
+
+        if ($ownOperator && $ownOperator->isSuspendedForToda((int) $toda->id)) {
+            return view('president.suspended', ['toda' => $toda, 'operator' => $ownOperator]);
+        }
+
+        $filter = (string) $request->query('filter', 'all');
+        if (!in_array($filter, ['all', 'complaints', 'needs_response'], true)) {
+            $filter = 'all';
+        }
+
+        $stats = $this->query->ownRatingsPageStats($toda, $ownOperator);
+        $ratings = $this->query->ownRatings($toda, $ownOperator, $filter);
+
+        return view('president.ratings', compact(
+            'toda',
+            'ownOperator',
+            'stats',
+            'ratings',
+            'filter'
+        ));
+    }
+
     public function members(Request $request)
     {
         $toda = $this->toda();

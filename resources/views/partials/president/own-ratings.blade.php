@@ -32,12 +32,30 @@
             ];
         })->values();
     }
+
+    // Chips for each recent row: where a complaint stands in review, and
+    // whether a low rating still needs the president's own response.
+    $statusTone = [
+        'Solved' => 'tw-badge tw-badge-navy',
+        'Accepted' => 'tw-badge tw-badge-green',
+        'Rejected' => 'tw-badge tw-badge-red',
+        'Pending' => 'tw-badge tw-badge-amber',
+    ];
+    $statusText = [
+        'Solved' => 'Solved',
+        'Accepted' => 'Accepted',
+        'Rejected' => 'Rejected',
+        'Pending' => 'Under review',
+    ];
 @endphp
 <div class="tw-card overflow-hidden transition-shadow duration-200 hover:shadow-md">
     {{-- Header band — navy blue with gold accent --}}
-    <div class="flex items-center justify-between px-4 py-3" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
+    <div class="flex items-center justify-between gap-2 px-4 py-3" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
         <h3 class="tw-card-title text-sm !text-white"><i class="bi bi-star-fill mr-1 text-gold"></i> My Ratings</h3>
-        <span class="tw-badge !bg-gold !text-navy-800">{{ $total }} {{ $total === 1 ? 'Rating' : 'Ratings' }}</span>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('president.ratings') }}" class="text-[11px] font-bold uppercase tracking-wider text-white/70 transition hover:text-gold">View all <i class="bi bi-arrow-right"></i></a>
+            <span class="tw-badge !bg-gold !text-navy-800">{{ $total }} {{ $total === 1 ? 'Rating' : 'Ratings' }}</span>
+        </div>
     </div>
 
     {{-- Average summary --}}
@@ -54,14 +72,14 @@
             </div>
         </div>
         <div class="ml-auto flex gap-4 text-center">
-            <div>
+            <a href="{{ route('president.ratings') }}" class="block rounded-lg px-2 py-1 transition hover:bg-slate-100" title="See all my ratings">
                 <div class="text-xl font-bold text-navy-800">{{ $total }}</div>
                 <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Ratings</div>
-            </div>
-            <div>
+            </a>
+            <a href="{{ route('president.ratings', ['filter' => 'complaints']) }}" class="block rounded-lg px-2 py-1 transition hover:bg-red-50" title="See my complaints">
                 <div class="text-xl font-bold text-red-500">{{ $complaints }}</div>
                 <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Complaints</div>
-            </div>
+            </a>
         </div>
     </div>
 
@@ -102,7 +120,7 @@
         @forelse ($ownRecentRatings as $rating)
             <div class="flex items-start justify-between gap-3 px-4 py-3 transition-colors hover:bg-slate-50">
                 <div class="min-w-0">
-                    <div class="flex items-center gap-1.5">
+                    <div class="flex flex-wrap items-center gap-1.5">
                         @for ($i = 1; $i <= 5; $i++)
                             <i class="bi {{ $i <= $rating->rating ? 'bi-star-fill text-gold' : 'bi-star text-slate-300' }} text-sm"></i>
                         @endfor
@@ -110,6 +128,20 @@
                             <span class="tw-badge tw-badge-red ml-1"><i class="bi bi-exclamation-triangle-fill"></i> {{ $rating->complaint_type }}</span>
                         @endif
                     </div>
+                    @if ((!empty($rating->complaint_type) && isset($statusText[$rating->status_label])) || $rating->rating <= 2)
+                        <div class="mt-1.5 flex flex-wrap gap-1.5">
+                            @if (!empty($rating->complaint_type) && isset($statusText[$rating->status_label]))
+                                <span class="{{ $statusTone[$rating->status_label] }}"><i class="bi bi-clipboard-check"></i> {{ $statusText[$rating->status_label] }}</span>
+                            @endif
+                            @if ($rating->rating <= 2)
+                                @if ($rating->response)
+                                    <span class="tw-badge tw-badge-green"><i class="bi bi-check2-circle"></i> Responded</span>
+                                @else
+                                    <a href="{{ route('president.ratings', ['filter' => 'needs_response']) }}" title="Open the response form" class="tw-badge tw-badge-amber transition hover:opacity-80"><i class="bi bi-exclamation-circle"></i> Needs response</a>
+                                @endif
+                            @endif
+                        </div>
+                    @endif
                     <p class="mt-1 text-sm text-slate-600">{{ $rating->complaint_details ?? $rating->reason ?? '—' }}</p>
                     <p class="mt-0.5 text-xs text-slate-400"><i class="bi bi-calendar3 mr-1"></i>{{ $rating->created_at->format('M d, Y') }}</p>
                 </div>

@@ -123,19 +123,79 @@ class PresidentQueryService
     }
 
     /**
-     * The president's own recent ratings within their TODA.
+     * The president's own recent ratings within their TODA. Valid rows only —
+     * a pending complaint counts here so the president always sees feedback
+     * filed against them (the star averages stay on countableRatings).
      */
     public function ownRecentRatings(Toda $toda, ?Operator $ownOperator, int $limit = 8)
     {
         if (!$ownOperator) {
             return collect();
         }
-        return $ownOperator->countableRatings()
+        return $ownOperator->ratings()
+            ->isValid()
             ->where('toda_id', $toda->id)
             ->with('response')
             ->latest()
             ->take($limit)
             ->get();
+    }
+
+    /**
+     * The president's own ratings within the TODA they govern, paginated for
+     * the Ratings & Complaints page. $filter is one of:
+     *  - all            every valid rating row
+     *  - complaints     only rows carrying a complaint type (any review state)
+     *  - needs_response the 1–2 star ratings that still have no response
+     */
+    public function ownRatings(Toda $toda, ?Operator $ownOperator, string $filter = 'all')
+    {
+        $query = $ownOperator
+            ? $ownOperator->ratings()->isValid()->where('toda_id', $toda->id)
+            : Rating::query()->whereRaw('1 = 0');
+
+        if ($filter === 'complaints') {
+            $query->isComplaint();
+        } elseif ($filter === 'needs_response') {
+            $query->where('rating', '<=', 2)->whereDoesntHave('response');
+        }
+
+        return $query
+            ->with(['proofs', 'response', 'operatorProofs'])
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+    }
+
+    /**
+     * Headline stats and per-tab counts for the Ratings & Complaints page,
+     * scoped to the TODA. Averages follow countableRatings (pending/rejected
+     * complaints never drag the number down) while the counts cover every
+     * valid row so nothing a passenger filed stays invisible.
+     */
+    public function ownRatingsPageStats(Toda $toda, ?Operator $ownOperator): array
+    {
+        $counts = ['all' => 0, 'complaints' => 0, 'needs_response' => 0];
+
+        if (!$ownOperator) {
+            return ['average' => null, 'total' => 0, 'counts' => $counts];
+        }
+
+        $valid = $ownOperator->ratings()->isValid()->where('toda_id', $toda->id);
+        $counts['all'] = (clone $valid)->count();
+        $counts['complaints'] = (clone $valid)->isComplaint()->count();
+        $counts['needs_response'] = (clone $valid)->where('rating', '<=', 2)->whereDoesntHave('response')->count();
+
+        $agg = $ownOperator->countableRatings()
+            ->where('toda_id', $toda->id)
+            ->selectRaw('COUNT(*) as total, AVG(rating) as avg')
+            ->first();
+
+        return [
+            'average' => $agg && $agg->total > 0 ? round((float) $agg->avg, 1) : null,
+            'total' => $agg ? (int) $agg->total : 0,
+            'counts' => $counts,
+        ];
     }
 
     /**

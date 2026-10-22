@@ -189,7 +189,7 @@ class OperatorController extends Controller
     {
         $operator = Auth::user()->operator;
 
-        if ((int) $rating->operator_id !== (int) $operator->id) {
+        if (!$operator || (int) $rating->operator_id !== (int) $operator->id) {
             return back()->with('error', 'Unauthorized.');
         }
 
