@@ -26,7 +26,9 @@ class RegisterController extends Controller
         $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users',
             'contact_number' => 'required|string|max:20',
             'plate_number' => 'required|string|max:20|unique:operators,plate_number',
@@ -39,8 +41,16 @@ class RegisterController extends Controller
             'body_number.unique' => 'This body number is already registered in the system.',
         ]);
 
+        $firstName = trim($data['first_name']);
+        $middleName = trim((string) ($data['middle_name'] ?? ''));
+        $lastName = trim($data['last_name']);
+        $fullName = trim(preg_replace('/\s+/', ' ', "{$firstName} {$middleName} {$lastName}"));
+
         $user = User::create([
-            'name' => $data['name'],
+            'name' => $fullName,
+            'first_name' => $firstName,
+            'middle_name' => $middleName !== '' ? $middleName : null,
+            'last_name' => $lastName,
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'phone' => $data['contact_number'],

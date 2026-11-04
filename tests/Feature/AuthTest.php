@@ -87,7 +87,8 @@ class AuthTest extends TestCase
     public function test_register_cannot_escalate_role()
     {
         $this->post('/register', [
-            'name' => 'New Operator',
+            'first_name' => 'New',
+            'last_name' => 'Operator',
             'email' => 'newop@example.com',
             'contact_number' => '09171234567',
             'plate_number' => 'PLATE-1001',
@@ -101,6 +102,9 @@ class AuthTest extends TestCase
 
         $user = User::where('email', 'newop@example.com')->first();
         $this->assertNotNull($user);
+        $this->assertEquals('New Operator', $user->name);
+        $this->assertEquals('New', $user->first_name);
+        $this->assertEquals('Operator', $user->last_name);
         $this->assertEquals('operator', $user->role);
         $this->assertTrue($user->is_active);
     }
@@ -117,7 +121,8 @@ class AuthTest extends TestCase
         ]);
 
         $this->post('/register', [
-            'name' => 'Second Operator',
+            'first_name' => 'Second',
+            'last_name' => 'Operator',
             'email' => 'second@example.com',
             'contact_number' => '09171234567',
             'plate_number' => 'PLATE-DUP',
