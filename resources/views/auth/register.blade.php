@@ -4,7 +4,7 @@
 
 @section('content')
 @include('auth.partials.auth-shell-open', ['authWidth' => 'max-w-2xl'])
-                <div class="mb-6 text-center">
+                <div class="mb-5 text-center">
                     <div class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-gold-dark">
                         <i class="bi bi-person-plus"></i> Operator Registration
                     </div>
@@ -13,7 +13,7 @@
                 </div>
 
                 @if ($errors->any())
-                    <div class="tw-alert tw-alert-danger mb-5">
+                    <div class="tw-alert tw-alert-danger mb-4">
                         <i class="bi bi-exclamation-triangle-fill mt-0.5"></i>
                         <div>
                             <strong>Please fix the following errors:</strong>
@@ -26,7 +26,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('register') }}" class="mt-6">
+                <form method="POST" action="{{ route('register') }}" class="mt-5">
                     @csrf
 
                     <section>
@@ -40,7 +40,7 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-6">
+                        <div class="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-6">
                             <div class="sm:col-span-2">
                                 <label for="last_name" class="tw-label">Last Name <span class="text-red-500">*</span></label>
                                 <div class="tw-input-group @error('last_name') border-red-300 @enderror">
@@ -98,7 +98,7 @@
                         </div>
                     </section>
 
-                    <section class="mt-6 border-t border-slate-200 pt-6">
+                    <section class="mt-5 border-t border-slate-200 pt-5">
                         <div class="mb-4 flex items-center gap-2.5">
                             <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy-50 text-sm text-navy-600">
                                 <i class="bi bi-bicycle"></i>
@@ -109,7 +109,7 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
                             <div>
                                 <label for="plate_number" class="tw-label">Plate Number <span class="text-red-500">*</span></label>
                                 <div class="tw-input-group @error('plate_number') border-red-300 @enderror">
@@ -164,7 +164,7 @@
                         </div>
                     </section>
 
-                    <section class="mt-6 border-t border-slate-200 pt-6">
+                    <section class="mt-5 border-t border-slate-200 pt-5">
                         <div class="mb-4 flex items-center gap-2.5">
                             <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy-50 text-sm text-navy-600">
                                 <i class="bi bi-shield-lock"></i>
@@ -175,7 +175,7 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
                             <div>
                                 <label for="password" class="tw-label">Password <span class="text-red-500">*</span></label>
                                 <div class="tw-input-group @error('password') border-red-300 @enderror">
@@ -203,14 +203,14 @@
                         </div>
                     </section>
 
-                    <p class="mt-5 text-xs text-slate-400"><span class="text-red-500">*</span> Required fields</p>
+                    <p class="mt-4 text-xs text-slate-400"><span class="text-red-500">*</span> Required fields</p>
 
                     <button type="submit" class="tw-btn tw-btn-gold mt-3 w-full tw-btn-lg">
                         <i class="bi bi-person-plus"></i> Create Account
                     </button>
                 </form>
 
-                <div class="mt-7 border-t border-slate-100 pt-5 text-center text-sm text-slate-500">
+                <div class="mt-6 border-t border-slate-100 pt-4 text-center text-sm text-slate-500">
                     Already have an account?
                     <a href="{{ route('login') }}" class="font-semibold text-navy-600 transition hover:text-navy-700 hover:underline">Log In</a>
                 </div>
