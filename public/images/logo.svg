@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 860" role="img" aria-label="TriFair tricycle logo">
+  <defs>
+    <linearGradient id="yellowGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe066"/>
+      <stop offset="0.55" stop-color="#f5c400"/>
+      <stop offset="1" stop-color="#d69a00"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3fa0ff"/>
+      <stop offset="0.55" stop-color="#0b5cad"/>
+      <stop offset="1" stop-color="#07437e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ===== WORDMARK ON TOP (TriFair) ===== -->
+  <text x="500" y="72" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="84" font-weight="900" letter-spacing="2"><tspan fill="#0b5cad">Tri</tspan><tspan fill="#f5c400">Fair</tspan></text>
+  <line x1="310" y1="96" x2="690" y2="96" stroke="#f5c400" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+
+  <g transform="translate(0,120)">
+    <!-- Canopy roof (blue) -->
+    <polygon points="270,0 760,0 815,60 215,60" fill="url(#blueGrad)"/>
+    <polygon points="270,0 760,0 815,60 215,60" fill="#fff" opacity="0.08"/>
+    <!-- Canopy pillars (blue) -->
+    <rect x="235" y="60" width="48" height="125" fill="#0b5cad"/>
+    <rect x="480" y="60" width="48" height="125" fill="#0b5cad"/>
+
+    <!-- Sidecar frame (yellow) -->
+    <polyline points="175,175 535,175 645,385 535,565 305,565" fill="none" stroke="url(#yellowGrad)" stroke-width="68" stroke-linejoin="miter"/>
+    <!-- Left solid bar of sidecar (yellow) -->
+    <polygon points="108,175 198,175 222,385 108,385" fill="url(#yellowGrad)"/>
+    <!-- Rear lower body (yellow) -->
+    <polygon points="18,535 335,535 335,688 262,688 262,585 82,585" fill="url(#yellowGrad)"/>
+    <!-- Rear body highlight -->
+    <polygon points="30,545 330,545 330,562 30,562" fill="#fff" opacity="0.22"/>
+
+    <!-- Driver seat inside sidecar opening (blue) -->
+    <polygon points="322,385 388,385 388,432 322,432" fill="#0b5cad"/>
+    <path d="M 388 432 Q 388 318 510 328 L 510 432 Z" fill="url(#blueGrad)"/>
+
+    <!-- Motorcycle body (blue) -->
+    <polygon points="405,432 545,332 592,332 452,472" fill="url(#blueGrad)"/>
+    <!-- front fork (blue) -->
+    <polygon points="548,238 592,238 678,545 632,568" fill="url(#blueGrad)"/>
+    <!-- handle / headlight triangle (blue) -->
+    <polygon points="622,302 722,250 722,382 622,362" fill="url(#blueGrad)"/>
+    <!-- front fender (blue arc) -->
+    <path d="M 618 492 A 92 92 0 0 1 756 492" fill="none" stroke="#0b5cad" stroke-width="20" stroke-linecap="round"/>
+
+    <!-- Rear wheel (dark ring, white center, hub) -->
+    <g>
+      <circle cx="175" cy="568" r="102" fill="#fff" stroke="#26292e" stroke-width="44"/>
+      <circle cx="175" cy="568" r="78" fill="none" stroke="#e5e7eb" stroke-width="2" opacity="0.7"/>
+      <g stroke="#9bb8e8" stroke-width="5" stroke-linecap="round">
+        <line x1="175" y1="568" x2="175" y2="504"/>
+        <line x1="175" y1="568" x2="220" y2="523"/>
+        <line x1="175" y1="568" x2="239" y2="568"/>
+        <line x1="175" y1="568" x2="220" y2="613"/>
+        <line x1="175" y1="568" x2="175" y2="632"/>
+        <line x1="175" y1="568" x2="130" y2="613"/>
+        <line x1="175" y1="568" x2="111" y2="568"/>
+        <line x1="175" y1="568" x2="130" y2="523"/>
+      </g>
+      <circle cx="175" cy="568" r="24" fill="#26292e"/>
+      <circle cx="175" cy="568" r="9" fill="#f5c400"/>
+    </g>
+    <!-- Front wheel -->
+    <g>
+      <circle cx="695" cy="568" r="84" fill="#fff" stroke="#26292e" stroke-width="38"/>
+      <circle cx="695" cy="568" r="64" fill="none" stroke="#e5e7eb" stroke-width="2" opacity="0.7"/>
+      <g stroke="#9bb8e8" stroke-width="5" stroke-linecap="round">
+        <line x1="695" y1="568" x2="695" y2="512"/>
+        <line x1="695" y1="568" x2="734" y2="529"/>
+        <line x1="695" y1="568" x2="751" y2="568"/>
+        <line x1="695" y1="568" x2="734" y2="607"/>
+        <line x1="695" y1="568" x2="695" y2="624"/>
+        <line x1="695" y1="568" x2="656" y2="607"/>
+        <line x1="695" y1="568" x2="639" y2="568"/>
+        <line x1="695" y1="568" x2="656" y2="529"/>
+      </g>
+      <circle cx="695" cy="568" r="20" fill="#26292e"/>
+      <circle cx="695" cy="568" r="8" fill="#f5c400"/>
+    </g>
+  </g>
+</svg>
