@@ -64,7 +64,7 @@
                             </div>
 
                             <div class="sm:col-span-2">
-                                <label for="middle_name" class="tw-label">Middle Name <span class="font-normal text-slate-400">(Optional)</span></label>
+                                <label for="middle_name" class="tw-label">Middle Name</label>
                                 <div class="tw-input-group @error('middle_name') border-red-300 @enderror">
                                     <span class="tw-input-group-icon"><i class="bi bi-person"></i></span>
                                     <input id="middle_name" type="text" class="tw-input @error('middle_name') is-invalid @enderror" name="middle_name" value="{{ old('middle_name') }}" autocomplete="additional-name" placeholder="Santos" aria-invalid="{{ $errors->has('middle_name') ? 'true' : 'false' }}">
