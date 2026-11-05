@@ -96,7 +96,7 @@
             @if ($violation->location)
                 <div><i class="bi bi-geo-alt mr-1 text-slate-400"></i> {{ $violation->location }}</div>
             @endif
-            <div><i class="bi bi-person-badge mr-1 text-slate-400"></i> Reported by {{ $violation->reporter->name ?? '—' }}</div>
+            <div><i class="bi bi-person-badge mr-1 text-slate-400"></i> Reported by {{ $violation->reporter->name ?? $violation->reporter_name ?? '—' }}@if (!$violation->reporter && $violation->reporter_contact) <span class="text-slate-400">({{ $violation->reporter_contact }})</span>@endif</div>
             <div><i class="bi bi-clock mr-1 text-slate-400"></i> Filed {{ $violation->created_at->format('M d, Y g:i A') }}</div>
         </div>
 

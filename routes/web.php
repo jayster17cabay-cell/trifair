@@ -386,6 +386,11 @@ Route::get('/rate/{qrCode}', [RatingController::class, 'showRateForm'])->name('r
 Route::get('/rate/{qrCode}/toda/{todaId}', [RatingController::class, 'showRateForm'])->name('rate.toda');
 Route::post('/rate/{qrCode}', [RatingController::class, 'submitRating'])->name('rate.submit')->middleware('throttle:rate-submit');
 Route::get('/rate/{qrCode}/submitted', [RatingController::class, 'showSubmitted'])->name('rate.submitted');
+// Blocked (suspended / inactive) operators: the QR page shows a violation
+// report form instead of the star rating. The report is attached to the
+// operator automatically and queued for TFRB / superadmin review.
+Route::post('/rate/{qrCode}/report', [RatingController::class, 'submitReport'])->name('rate.report.submit')->middleware('throttle:rate-submit');
+Route::get('/rate/{qrCode}/report/submitted', [RatingController::class, 'reportSubmitted'])->name('rate.report.submitted');
 
 Route::group(['prefix' => 'passenger', 'middleware' => ['auth', 'role:passenger']], function () {
     Route::get('/dashboard', [PassengerController::class, 'dashboard'])->name('passenger.dashboard');

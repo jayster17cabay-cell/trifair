@@ -7,7 +7,7 @@ use App\Models\Rating;
 use App\Models\RatingProof;
 use App\Models\Notification;
 use App\Models\User;
-use App\Models\Toda;
+
 use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -17,6 +17,19 @@ use Carbon\Carbon;
 
 class RatingController extends Controller
 {
+    /**
+     * Violation types offered to passengers on the QR report screen. The
+     * president-filed flow keeps its own suspension-specific list; this one
+     * covers both suspension and lapsed-franchise operators.
+     */
+    private const VIOLATION_TYPES = [
+        'Operating while suspended',
+        'Operating with expired franchise',
+        'Operating while inactive',
+        'Disregarding suspension order',
+        'Other',
+    ];
+
     /**
      * Resolve a stable, signed client identifier so a passenger can be
      * recognized even when their IP changes (e.g. mobile networks).
@@ -88,8 +101,13 @@ class RatingController extends Controller
         } elseif ($availableTodas->count() > 1) {
             return $this->selectToda($operator, $availableTodas);
         } elseif ($todas->isNotEmpty()) {
-            // Every TODA this operator belongs to is under a live suspension.
-            return $this->operatorSuspended($operator);
+            // Every TODA this operator belongs to is under a live suspension —
+            // skip the picker and go straight to the report screen.
+            $onlyToda = $todas->count() === 1 ? $todas->first() : null;
+            return $this->reportView($operator, $onlyToda, [
+                'reason' => 'suspended',
+                'suspension' => $operator->currentSuspensionForToda($onlyToda?->id),
+            ]);
         }
 
         if ($block = $this->rateabilityBlock($operator, $selectedToda)) {
@@ -351,38 +369,49 @@ class RatingController extends Controller
     }
 
     /**
-     * Run the per-TODA availability checks shared by the form and the submit
-     * action. Returns a passenger-facing response when rating is not allowed,
-     * or null when the operator may be rated under the chosen TODA.
+     * Decide whether the operator may be rated under the chosen TODA, and if
+     * not, why. Returns ['reason' => ..., ...] or null when rating is allowed.
+     * Suspensions tied to another TODA do not block this one; a TODA-less
+     * suspension blocks every TODA.
      */
-    private function rateabilityBlock(Operator $operator, $selectedToda)
+    private function rateabilityIssue(Operator $operator, $selectedToda): ?array
     {
         $todaId = $selectedToda?->id;
 
-        // A member suspended by their TODA president cannot collect ratings
-        // until the suspension is lifted. Suspensions tied to another TODA do
-        // not block this one; a TODA-less suspension blocks every TODA.
         $suspension = $operator->currentSuspensionForToda($todaId);
         if ($suspension && !$suspension->isExpired()) {
-            return $this->operatorSuspended($operator, $suspension);
+            return ['reason' => 'suspended', 'suspension' => $suspension];
         }
 
         // A lapsed franchise cannot collect new ratings until it is renewed.
         // When a TODA is chosen its own term is inspected; otherwise fall back
         // to the operator's current term (legacy single-TODA behaviour).
         if (($term = $operator->termForToda($todaId)) && $term->isExpired()) {
-            return $this->franchiseExpired($operator, $term);
+            return ['reason' => 'franchise', 'term' => $term];
         }
 
         // Inactive for a non-franchise reason (deactivated account): no ratings.
-        // A TODA-scoped suspension that is live but belongs to another TODA is
-        // handled above, so an operator left in 'suspended' status by a
-        // different TODA still rates here if the active checks pass.
         if ($operator->status !== 'active' && $operator->status !== 'suspended') {
-            return $this->operatorUnavailable($operator);
+            return ['reason' => 'inactive'];
         }
 
         return null;
+    }
+
+    /**
+     * Run the per-TODA availability checks shared by the form and the submit
+     * action. Returns a passenger-facing response when rating is not allowed,
+     * or null when the operator may be rated under the chosen TODA.
+     *
+     * Blocked operators get the report-operator screen instead of the star
+     * rating: the map and trip context still render, but the 1-5 star input
+     * is replaced by a violation report filed to the TFRB queue.
+     */
+    private function rateabilityBlock(Operator $operator, $selectedToda)
+    {
+        $issue = $this->rateabilityIssue($operator, $selectedToda);
+
+        return $issue ? $this->reportView($operator, $selectedToda, $issue) : null;
     }
 
     /**
@@ -421,48 +450,140 @@ class RatingController extends Controller
     }
 
     /**
-     * Passenger-facing notice shown when the operator's franchise has lapsed.
+     * Passenger-facing screen shown when a suspended / inactive operator's QR
+     * is scanned: the trip map still renders, but the 1-5 star rating input is
+     * replaced by a violation report that goes to the TFRB review queue. The
+     * operator is attached to the report automatically.
      */
-    private function franchiseExpired(Operator $operator, $term)
+    private function reportView(Operator $operator, $selectedToda = null, ?array $issue = null)
     {
+        $issue = $issue ?? $this->rateabilityIssue($operator, $selectedToda);
+        $reason = $issue['reason'] ?? 'inactive';
+
+        $user = request()->user();
+        $linkedPassenger = $user && $user->isPassenger();
+
         return response()
-            ->view('rate.franchise-expired', compact('operator', 'term'))
+            ->view('rate.report', [
+                'operator' => $operator,
+                'selectedToda' => $selectedToda,
+                'reason' => $reason,
+                'suspension' => $issue['suspension'] ?? null,
+                'term' => $issue['term'] ?? null,
+                'linkedPassenger' => $linkedPassenger,
+                'violationTypes' => self::VIOLATION_TYPES,
+            ])
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }
 
     /**
-     * Passenger-facing notice shown when an inactive (deactivated, non-expired)
-     * operator's QR code is scanned, so the page never 404s unexpectedly.
+     * File a passenger violation report against a suspended / inactive
+     * operator. The report lands in the same TFRB / superadmin review queue as
+     * president-filed reports; the operator (and live suspension, when there
+     * is one) is attached automatically.
      */
-    private function operatorUnavailable(Operator $operator)
+    public function submitReport(Request $request, $qrCode)
     {
-        return response()
-            ->view('rate.unavailable', compact('operator'))
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-            ->header('Pragma', 'no-cache');
-    }
+        $operator = $this->findRateableOperator($qrCode);
+        $todas = $operator->getRateableTodas();
 
-    /**
-     * Passenger-facing notice shown when a TODA member is suspended: ratings
-     * are paused for the duration of the president's suspension.
-     */
-    private function operatorSuspended(Operator $operator, $suspension = null)
-    {
-        $suspension = $suspension ?? $operator->currentSuspension;
-
-        // Name the TODA the suspension actually applies to. A TODA-less
-        // suspension covers the whole driver, so no single TODA tag is shown
-        // (and the driver's unrelated home TODA is never implied).
-        $suspendedToda = null;
-        if ($suspension && $suspension->toda_id) {
-            $suspendedToda = (int) $operator->toda_id === (int) $suspension->toda_id
-                ? $operator->toda
-                : Toda::find($suspension->toda_id);
+        $selectedToda = null;
+        $requestedTodaId = $request->input('toda_id');
+        if ($requestedTodaId) {
+            $selectedToda = $todas->firstWhere('id', (int) $requestedTodaId);
+            if (!$selectedToda) {
+                abort(404);
+            }
+        } elseif ($todas->count() === 1) {
+            $selectedToda = $todas->first();
         }
 
-        return response()
-            ->view('rate.suspended', compact('operator', 'suspension', 'suspendedToda'))
+        // The operator may have been reinstated since the page was rendered —
+        // send the passenger to the normal rating flow instead of filing.
+        if (!($issue = $this->rateabilityIssue($operator, $selectedToda))) {
+            return redirect()->route('rate.operator', $operator->qr_code)
+                ->with('status', 'This operator is active again — you can rate them now.');
+        }
+
+        // Operator and staff accounts can never file passenger violation
+        // reports, mirroring the rating flow.
+        $authUser = $request->user();
+        if ($authUser && !$authUser->isPassenger()) {
+            return back()->withErrors(['violation_type' => 'Operator and staff accounts cannot file passenger reports. Please sign out first.']);
+        }
+
+        $passengerUser = $authUser && $authUser->isPassenger() ? $authUser : null;
+
+        $rules = [
+            'violation_type' => 'required|string|max:100',
+            'details' => 'required|string|max:2000',
+            'incident_at' => 'required|date|before_or_equal:now',
+            'location' => 'nullable|string|max:255',
+            'toda_id' => 'nullable|integer',
+            'proofs' => 'nullable|array|max:5',
+            'proofs.*' => 'file|mimes:jpg,jpeg,png,pdf,mp4|max:10240',
+        ];
+
+        // Guests must leave a name and a way to reach them so the TFRB can
+        // follow up; signed-in passengers are linked by account instead.
+        if (!$passengerUser) {
+            $rules['reporter_name'] = 'required|string|max:100';
+            $rules['reporter_contact'] = 'required|string|max:100';
+        }
+
+        $data = $request->validate($rules);
+
+        $toda = $selectedToda;
+        $todaId = $toda?->id;
+        $suspension = $operator->currentSuspensionForToda($todaId);
+
+        $violation = app(\App\Services\SuspensionViolationService::class)->report(
+            $operator,
+            $toda,
+            $passengerUser?->id,
+            [
+                'suspension_id' => $suspension?->id,
+                'violation_type' => $data['violation_type'],
+                'details' => $data['details'],
+                'incident_at' => $data['incident_at'],
+                'location' => $data['location'] ?? null,
+                'reporter_name' => $passengerUser ? $passengerUser->name : $data['reporter_name'],
+                'reporter_contact' => $passengerUser ? ($passengerUser->email ?? null) : $data['reporter_contact'],
+            ],
+            $request->file('proofs', [])
+        );
+
+        // Let the TFRB queue know without leaking passenger details.
+        try {
+            $officers = User::whereIn('role', ['tfrb_officer', 'superadmin'])->get();
+            foreach ($officers as $officer) {
+                Notification::create([
+                    'user_id' => $officer->id,
+                    'type' => 'violation',
+                    'title' => 'New Violation Report',
+                    'message' => "A passenger reported operator {$operator->user->name} — {$violation->violation_type}.",
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Violation report notification failed: ' . $e->getMessage());
+        }
+
+        app(\App\Services\AdminDashboardService::class)->flush();
+
+        return redirect()->route('rate.report.submitted', $operator->qr_code);
+    }
+
+    /**
+     * Confirmation page shown after a passenger files a violation report.
+     */
+    public function reportSubmitted($qrCode)
+    {
+        $operator = Operator::with('user', 'toda')
+            ->where('qr_code', $qrCode)
+            ->firstOrFail();
+
+        return response()->view('rate.report-submitted', compact('operator'))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     }

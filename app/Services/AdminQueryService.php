@@ -90,7 +90,8 @@ class AdminQueryService
     }
 
     /**
-     * Suspension-violation reports filed by TODA presidents. Shared by the
+     * Suspension-violation reports filed by TODA presidents or by passengers
+     * scanning a suspended / inactive operator's QR code. Shared by the
      * superadmin and TFRB officer queues so both roles review identical data.
      *
      * @return array{violations: LengthAwarePaginator, filter: string, search: string, pendingCount: int, reviewedCount: int, solvedCount: int, totalCount: int, proofsTotal: int}
@@ -133,6 +134,8 @@ class AdminQueryService
                 $query->where('violation_type', 'like', $like)
                     ->orWhere('details', 'like', $like)
                     ->orWhere('location', 'like', $like)
+                    ->orWhere('reporter_name', 'like', $like)
+                    ->orWhere('reporter_contact', 'like', $like)
                     ->orWhereHas('operator.user', function ($user) use ($like) {
                         $user->where('name', 'like', $like)->orWhere('email', 'like', $like);
                     });

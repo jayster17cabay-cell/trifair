@@ -192,13 +192,13 @@ class MultiTodaRatingTest extends TestCase
         // TODA A is blocked...
         $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaA->id]))
             ->assertOk()
-            ->assertSee('Suspended', false);
+            ->assertSee('Report a Violation');
 
         // ...but TODA B still rates normally.
         $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaB->id]))
             ->assertOk()
             ->assertSee('Beta TODA')
-            ->assertDontSee('Suspended', false);
+            ->assertDontSee('Report a Violation');
     }
 
     public function test_suspended_toda_is_hidden_from_the_picker()
@@ -282,7 +282,7 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertSee('Suspended', false)
+            ->assertSee('Report a Violation')
             ->assertDontSee('Select the TODA');
     }
 
@@ -298,11 +298,11 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaA->id]))
             ->assertOk()
-            ->assertSee('Franchise Expired', false);
+            ->assertSee('Report a Violation');
 
         $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaB->id]))
             ->assertOk()
-            ->assertSee('Franchise Expired', false);
+            ->assertSee('Report a Violation');
     }
 
     public function test_legacy_operator_without_membership_falls_back_to_home_toda()
@@ -357,7 +357,7 @@ class MultiTodaRatingTest extends TestCase
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
             ->assertSee($operator->user->name)
-            ->assertSee('Suspended', false)
+            ->assertSee('Report a Violation')
             ->assertDontSee("How's my ride?", false);
 
         // A direct backend POST cannot start a trip under the suspended TODA.
@@ -366,7 +366,7 @@ class MultiTodaRatingTest extends TestCase
             'toda_id' => $toda->id,
             'start_location' => 'A',
             'end_location' => 'B',
-        ])->assertSee('Suspended', false);
+        ])->assertSee('Report a Violation');
 
         $this->assertSame(0, Rating::count());
     }
@@ -413,7 +413,7 @@ class MultiTodaRatingTest extends TestCase
             'toda_id' => $todaA->id,
             'start_location' => 'A',
             'end_location' => 'B',
-        ])->assertSee('Suspended', false);
+        ])->assertSee('Report a Violation');
         $this->assertSame(0, Rating::count());
 
         // The active TODA still starts a trip normally.
@@ -470,7 +470,7 @@ class MultiTodaRatingTest extends TestCase
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
             ->assertSee($operator->user->name)
-            ->assertSee('Suspended', false)
+            ->assertSee('Report a Violation')
             ->assertDontSee('Select the TODA')
             ->assertDontSee("How's my ride?", false);
 
@@ -480,7 +480,7 @@ class MultiTodaRatingTest extends TestCase
                 'toda_id' => $toda->id,
                 'start_location' => 'A',
                 'end_location' => 'B',
-            ])->assertSee('Suspended', false);
+            ])->assertSee('Report a Violation');
         }
 
         $this->assertSame(0, Rating::count());
@@ -528,7 +528,7 @@ class MultiTodaRatingTest extends TestCase
 
         $this->get(route('rate.toda', ['qrCode' => $operator->qr_code, 'todaId' => $todaB->id]))
             ->assertOk()
-            ->assertSee('Suspended', false)
+            ->assertSee('Report a Violation')
             ->assertSee('Beta TODA')
             ->assertDontSee('Alpha TODA');
     }

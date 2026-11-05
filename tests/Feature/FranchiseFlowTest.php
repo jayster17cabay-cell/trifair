@@ -196,13 +196,13 @@ class FranchiseFlowTest extends TestCase
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertSee('Franchise Expired', false);
+            ->assertSee('Report a Violation');
 
         $this->post(route('rate.submit', $operator->qr_code), [
             'rating' => 5,
             'start_location' => 'A',
             'end_location' => 'B',
-        ])->assertOk()->assertSee('Franchise Expired', false);
+        ])->assertOk()->assertSee('Report a Violation');
 
         $this->assertSame(0, Rating::where('operator_id', $operator->id)->count());
     }
@@ -437,7 +437,7 @@ class FranchiseFlowTest extends TestCase
 
         $this->get(route('rate.operator', $operator->qr_code))
             ->assertOk()
-            ->assertSee('Franchise Expired', false);
+            ->assertSee('Report a Violation');
     }
 
     public function test_operators_page_renders_for_inactive_expired_operator()

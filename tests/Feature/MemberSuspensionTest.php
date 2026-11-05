@@ -180,8 +180,8 @@ class MemberSuspensionTest extends TestCase
 
         $resp = $this->get('/rate/' . $member->qr_code);
         $resp->assertOk();
-        $resp->assertSee('Suspended');
-        $resp->assertSee('suspended by the TODA');
+        $resp->assertSee('Report Operator');
+        $resp->assertSee('This operator is ');
     }
 
     public function test_lapsed_suspension_is_auto_reactivated()

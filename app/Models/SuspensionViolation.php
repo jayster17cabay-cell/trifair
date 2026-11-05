@@ -13,6 +13,8 @@ class SuspensionViolation extends Model
         'operator_id',
         'toda_id',
         'reported_by',
+        'reporter_name',
+        'reporter_contact',
         'reviewed_by',
         'suspension_id',
         'violation_type',

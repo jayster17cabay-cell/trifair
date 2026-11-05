@@ -12,19 +12,25 @@ use Illuminate\Support\Facades\Log;
 class SuspensionViolationService
 {
     /**
-     * Store a suspension-violation report filed by a TODA president. The report
-     * flags a member who was suspended but is still observed operating, and is
-     * queued for review by a TFRB officer or superadmin.
+     * Store a suspension-violation report. TODA presidents flag a member who
+     * was suspended but is still observed operating; passengers scanning the QR
+     * of a suspended / inactive operator file the same report from the public
+     * rate page. Both are queued for review by a TFRB officer or superadmin.
      *
-     * @param array $data  violation_type, details, incident_at, location, suspension_id
-     * @param UploadedFile[] $files proof attachments
+     * @param \App\Models\Operator $member
+     * @param \App\Models\Toda|null $toda  the TODA the report concerns; null for TODA-less reports
+     * @param int|null $reportedBy  user id of the filer; null for anonymous/guest passengers
+     * @param array $data  violation_type, details, incident_at, location, suspension_id, reporter_name, reporter_contact
+     * @param \Illuminate\Http\UploadedFile[] $files proof attachments
      */
-    public function report(\App\Models\Operator $member, \App\Models\Toda $toda, int $reportedBy, array $data, array $files = []): SuspensionViolation
+    public function report(\App\Models\Operator $member, ?\App\Models\Toda $toda, ?int $reportedBy, array $data, array $files = []): SuspensionViolation
     {
         $violation = SuspensionViolation::create([
             'operator_id' => $member->id,
-            'toda_id' => $toda->id,
+            'toda_id' => $toda?->id,
             'reported_by' => $reportedBy,
+            'reporter_name' => $data['reporter_name'] ?? null,
+            'reporter_contact' => $data['reporter_contact'] ?? null,
             'suspension_id' => $data['suspension_id'] ?? null,
             'violation_type' => $data['violation_type'],
             'details' => $data['details'],
@@ -35,9 +41,10 @@ class SuspensionViolationService
 
         $this->storeProofs($violation, $files);
 
+        $filer = $reportedBy && $violation->reporter ? $violation->reporter->name : ($data['reporter_name'] ?? 'A passenger');
         ActivityLogger::log(
             'report_violation',
-            "Reported a suspension violation against {$member->user->name} ({$member->user->email}) in {$toda->name}",
+            "Reported a suspension violation against {$member->user->name} ({$member->user->email})" . ($toda ? " in {$toda->name}" : '') . " — filed by {$filer}",
             $violation,
             ActivityLogger::CATEGORY_OPERATOR
         );
