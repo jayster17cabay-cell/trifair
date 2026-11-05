@@ -21,7 +21,7 @@
 <div id="mobileMenu" class="lp-mobile-menu">
     <div class="mb-5 flex items-center justify-between">
         <a href="/" class="flex items-center gap-2">
-            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gold text-lg text-navy-800"><i class="bi bi-bicycle"></i></span>
+            <img src="{{ asset('images/logo.svg') }}" alt="TriFair" class="h-9 w-9 rounded-xl" style="background:#fff;padding:2px;">
             <span class="text-xl font-black text-white">Tri<span class="text-gold">Fair</span></span>
         </a>
         <button id="mobileMenuClose" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-xl text-white/70 transition hover:bg-white/10 hover:text-white" aria-label="Close menu">
@@ -41,7 +41,7 @@
 <nav id="nav" class="lp-nav">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 lg:px-8">
         <a href="/" class="flex items-center gap-2.5 text-white">
-            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-xl text-navy-800 shadow-goldlift"><i class="bi bi-bicycle"></i></span>
+            <img src="{{ asset('images/logo.svg') }}" alt="TriFair" class="h-10 w-10 rounded-xl shadow-goldlift" style="background:#fff;padding:2px;">
             <span class="text-xl font-black tracking-tight">Tri<span class="text-gold">Fair</span></span>
         </a>
         <div class="hidden items-center gap-1 md:flex">
@@ -448,7 +448,7 @@
         <div class="grid gap-10 md:grid-cols-4">
             <div class="md:col-span-1">
                 <a href="/" class="mb-4 flex items-center gap-2.5">
-                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gold text-lg text-navy-800"><i class="bi bi-bicycle"></i></span>
+                    <img src="{{ asset('images/logo.svg') }}" alt="TriFair" class="h-9 w-9 rounded-xl" style="background:#fff;padding:2px;">
                     <span class="text-xl font-black tracking-tight text-white">Tri<span class="text-gold">Fair</span></span>
                 </a>
                 <p class="mb-5 max-w-xs text-sm leading-relaxed text-white/40">A transparent rating system for motorcycle operators, built for the commuters of Solano, Nueva Vizcaya.</p>

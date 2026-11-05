@@ -6,7 +6,7 @@
 <header class="op-header">
     <div class="op-header-top">
         <a href="{{ route('operator.dashboard') }}" class="op-brand">
-            <span class="op-brand-logo"><i class="bi bi-bicycle"></i></span>
+            <img src="{{ asset('images/logo.svg') }}" alt="TriFair" class="h-10 w-10 rounded-xl" style="background:#fff;padding:2px;">
             <span class="font-extrabold">TriFair <span class="text-gold">Operator</span></span>
         </a>
 

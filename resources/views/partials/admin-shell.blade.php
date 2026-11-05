@@ -44,7 +44,7 @@
                 <i class="bi bi-list text-2xl"></i>
             </button>
             <a class="tw-topbar-brand" href="{{ route($shell['home']) }}">
-                <i class="bi {{ $shell['roleIcon'] }} text-xl text-gold"></i>
+                <img src="{{ asset('images/logo.svg') }}" alt="TriFair" class="h-7 w-7 rounded-md" style="background:#fff;padding:2px;">
                 <span>TriFair <span class="text-gold">{{ $shell['roleLabel'] }}</span></span>
             </a>
         </div>
@@ -72,7 +72,7 @@
         <div id="sidebarOverlay" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm"></div>
         <aside data-tw-sidebar class="tw-sidebar fixed left-0 top-0 z-50 h-screen -translate-x-full transition-transform duration-200">
             <div class="tw-sidebar-brand">
-                <div class="tw-sidebar-brand-logo"><i class="bi {{ $shell['roleIcon'] }}"></i></div>
+                <img src="{{ asset('images/logo.svg') }}" alt="TriFair" class="h-10 w-10 rounded-xl" style="background:#fff;padding:2px;">
                 <div class="min-w-0">
                     <div class="text-base font-extrabold leading-tight text-white">TriFair</div>
                     <div class="text-[11px] font-bold uppercase tracking-widest text-gold">{{ $shell['roleLabel'] }}</div>

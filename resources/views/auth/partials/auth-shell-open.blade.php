@@ -16,9 +16,7 @@
             <div class="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-gold/15 blur-2xl"></div>
             <div class="pointer-events-none absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-navy-500/15 blur-2xl"></div>
             <div class="mb-5 mt-0.5 flex flex-col items-center text-center">
-                <span class="mb-2.5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gold text-xl text-navy-800 shadow-goldlift">
-                    <i class="bi bi-bicycle"></i>
-                </span>
+                <img src="{{ asset('images/logo.svg') }}" alt="TriFair" class="mb-2.5 h-20 w-20 rounded-2xl shadow-goldlift" style="background:#fff;padding:2px;">
                 <span class="text-xl font-black tracking-tight text-navy-700">Tri<span class="text-gold">Fair</span></span>
                 <p class="mt-0.5 text-[0.68rem] font-medium uppercase tracking-widest text-slate-400">Municipality of Solano</p>
             </div>
