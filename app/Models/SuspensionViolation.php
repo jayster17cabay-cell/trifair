@@ -18,9 +18,12 @@ class SuspensionViolation extends Model
         'reviewed_by',
         'suspension_id',
         'violation_type',
+        'other_reason',
         'details',
         'incident_at',
         'location',
+        'start_location',
+        'end_location',
         'status',
         'is_reviewed',
         'is_solved',
@@ -42,6 +45,14 @@ class SuspensionViolation extends Model
         'is_solved' => 'boolean',
         'solved_at' => 'datetime',
     ];
+
+    /**
+     * Display-only ticket number for the monitoring page, e.g. VR-2026-0007.
+     */
+    public function getReferenceNumberAttribute(): string
+    {
+        return 'VR-' . ($this->created_at?->year ?? now()->year) . '-' . str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
 
     public function operator()
     {

@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ asset('vendor/leaflet/leaflet.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/leaflet-routing-machine/leaflet-routing-machine.css') }}">
     <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}">
     <style>
         [hidden] { display: none !important; }
@@ -76,6 +77,19 @@
         }
 
         .file-hint { margin-top: 0.35rem; font-size: 0.72rem; color: #94a3b8; }
+
+        /* Google sign-in gate */
+        .google-gate {
+            margin-top: 0.75rem;
+            text-align: center;
+            padding: 1.25rem 1rem;
+            border: 1px dashed #cbd5e1;
+            border-radius: 16px;
+            background: #f8fafc;
+        }
+        .google-gate h4 { font-size: 1rem; font-weight: 800; color: #1e293b; margin-bottom: 0.35rem; }
+        .google-gate p { font-size: 0.82rem; color: #64748b; line-height: 1.55; margin-bottom: 0.9rem; }
+        .google-gate .rate-connect-btn { max-width: 320px; margin: 0 auto; }
     </style>
 </head>
 <body>
@@ -144,86 +158,104 @@
             </div>
         </section>
 
-        {{-- Map — same map the rating page uses, minus the route tracking --}}
-        <section class="rate-card">
-            <div class="map-shell">
-                <div id="reportMap" class="route-map" role="application" aria-label="Map of your current location"></div>
-            </div>
-            <div class="map-info">
-                <span class="map-attribution">© OpenStreetMap contributors</span>
-                <span class="map-summary" id="reportMapStatus">Locating you…</span>
-            </div>
-        </section>
-
-        {{-- Violation report — replaces the 1-5 star rating --}}
+        {{-- The trip map with live From → To — the same one passengers use to rate --}}
         <form action="{{ route('rate.report.submit', $operator->qr_code) }}" method="POST" enctype="multipart/form-data" class="rate-stack" id="reportForm">
             @csrf
             @if ($selectedToda)
                 <input type="hidden" name="toda_id" value="{{ $selectedToda->id }}">
             @endif
 
+            @include('partials.rate.trip-route-map', [
+                'mapId' => 'reportMap',
+                'mode' => 'track',
+                'startAddress' => 'Detecting location...',
+                'endAddress' => 'Search destination...',
+                'summaryText' => 'Select destination',
+            ])
+
+            {{-- Violation report — replaces the 1-5 star rating --}}
             <section class="rate-card">
                 <h3 class="rate-heading" style="text-align:left;"><i class="bi bi-flag-fill" style="color:#dc2626;"></i> Report a Violation</h3>
                 <p class="rate-subtitle" style="text-align:left; margin-top:0.25rem;">Still running trips despite the suspension, or with a lapsed franchise? Report it — the TFRB will review and can penalize or bar them.</p>
 
-                <div style="margin-top: 0.9rem;">
-                    <label for="violation_type" class="rate-label"><i class="bi bi-list-check" style="color:#dc2626;"></i> Violation type</label>
-                    <select name="violation_type" id="violation_type" required class="rate-field">
-                        <option value="">Select violation type...</option>
-                        @foreach ($violationTypes as $type)
-                            <option value="{{ $type }}" {{ old('violation_type') === $type ? 'selected' : '' }}>{{ $type }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div style="margin-top: 0.75rem;">
-                    <label for="incident_at" class="rate-label"><i class="bi bi-calendar-event" style="color:#dc2626;"></i> Incident date &amp; time</label>
-                    <input type="datetime-local" name="incident_at" id="incident_at" required class="rate-field"
-                           value="{{ old('incident_at', now('Asia/Manila')->format('Y-m-d\TH:i')) }}">
-                </div>
-
-                <div style="margin-top: 0.75rem;">
-                    <label for="location" class="rate-label"><i class="bi bi-geo-alt" style="color:#dc2626;"></i> Location (optional)</label>
-                    <input type="text" name="location" id="location" maxlength="255" class="rate-field"
-                           placeholder="e.g. Market Road, near the terminal" value="{{ old('location') }}">
-                </div>
-
-                <div style="margin-top: 0.75rem;">
-                    <label for="details" class="rate-label"><i class="bi bi-pencil-square" style="color:#dc2626;"></i> What did you observe?</label>
-                    <textarea name="details" id="details" rows="3" required maxlength="2000" class="rate-field"
-                              placeholder="Describe what you saw — e.g. picked up passengers at the terminal despite the suspension...">{{ old('details') }}</textarea>
-                </div>
-
-                <div style="margin-top: 0.75rem;">
-                    <label for="proofs" class="rate-label"><i class="bi bi-paperclip" style="color:#dc2626;"></i> Proof attachments (optional)</label>
-                    <input type="file" name="proofs[]" id="proofs" multiple accept=".jpg,.jpeg,.png,.pdf,.mp4" class="rate-field">
-                    <p class="file-hint">Photos, video or documents — up to 5 files, 10 MB each.</p>
-                </div>
-
                 @if ($linkedPassenger)
-                    <div style="margin-top: 0.75rem;">
-                        <label class="rate-label"><i class="bi bi-person-check" style="color:#4f46e5;"></i> Filed as</label>
-                        <input type="email" class="rate-field" value="{{ auth()->user()->email }}" readonly>
-                        <p class="file-hint"><i class="bi bi-google" style="color:#ea4335;"></i> Linked to your Google account — the TFRB can reach you through this address.</p>
+                    @php $linkedEmail = auth()->user()->email; @endphp
+                    {{-- Signed-in passenger — the report is tied to their account --}}
+                    <div class="rate-connect" style="margin-top: 0.75rem;">
+                        <div class="rate-connect-done">
+                            <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
+                            <span>You are connected as <strong>{{ $linkedEmail }}</strong>. You can track this report in your <a href="{{ route('passenger.dashboard') }}" style="color:#0A2A5E;text-decoration:underline;font-weight:700;">Passenger Dashboard</a>.</span>
+                        </div>
+                        <a href="{{ route('login.google', ['intended' => request()->path()]) }}"
+                           class="rate-connect-btn"
+                           id="googleSwitchBtn"
+                           title="Choose a different Google account">
+                            @include('partials.google-g', ['class' => 'h-4 w-4 shrink-0'])
+                            Switch Google account
+                            <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+                        </a>
                     </div>
+
+                    <div style="margin-top: 0.9rem;">
+                        <label for="violation_type" class="rate-label"><i class="bi bi-list-check" style="color:#dc2626;"></i> Violation type</label>
+                        <select name="violation_type" id="violation_type" required class="rate-field">
+                            <option value="">Select violation type...</option>
+                            @foreach ($violationTypes as $type)
+                                <option value="{{ $type }}" {{ old('violation_type') === $type ? 'selected' : '' }}>{{ $type }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Only shown when "Others" is chosen — say what kind of violation it is --}}
+                    <div id="othersBox" style="margin-top: 0.75rem; display: {{ old('other_reason') ? 'block' : 'none' }};">
+                        <label for="other_reason" class="rate-label"><i class="bi bi-pencil-square" style="color:#dc2626;"></i> What kind of violation?</label>
+                        <input type="text" name="other_reason" id="other_reason" maxlength="100" class="rate-field"
+                               placeholder="e.g. Smoking while driving, No plate number, Rude behavior"
+                               value="{{ old('other_reason') }}">
+                    </div>
+
+                    <div style="margin-top: 0.75rem;">
+                        <label for="incident_at" class="rate-label"><i class="bi bi-calendar-event" style="color:#dc2626;"></i> Incident date &amp; time</label>
+                        <input type="datetime-local" name="incident_at" id="incident_at" required class="rate-field"
+                               value="{{ old('incident_at', now('Asia/Manila')->format('Y-m-d\TH:i')) }}">
+                    </div>
+
+                    <div style="margin-top: 0.75rem;">
+                        <label for="details" class="rate-label"><i class="bi bi-pencil-square" style="color:#dc2626;"></i> What did you observe?</label>
+                        <textarea name="details" id="details" rows="3" required maxlength="2000" class="rate-field"
+                                  placeholder="Describe what you saw — e.g. picked up passengers at the terminal despite the suspension...">{{ old('details') }}</textarea>
+                    </div>
+
+                    <div style="margin-top: 0.75rem;">
+                        <label for="proofs" class="rate-label"><i class="bi bi-paperclip" style="color:#dc2626;"></i> Proof attachments (optional)</label>
+                        <input type="file" name="proofs[]" id="proofs" multiple accept=".jpg,.jpeg,.png,.pdf,.mp4" class="rate-field">
+                        <p class="file-hint">Photos, video or documents — up to 5 files, 10 MB each.</p>
+                    </div>
+
+                    <button type="submit" class="rate-submit" id="reportSubmitBtn" style="margin-top: 1rem;">
+                        <i class="bi bi-send-fill" aria-hidden="true"></i> Submit Report
+                    </button>
+                    <p class="report-note"><i class="bi bi-shield-lock-fill"></i> No one can see your identity. The driver CANNOT see your name, email, or contact — your account is used only by TriFair/TFRB to track the report.</p>
                 @else
-                    <div style="margin-top: 0.75rem;">
-                        <label for="reporter_name" class="rate-label"><i class="bi bi-person" style="color:#4f46e5;"></i> Your name</label>
-                        <input type="text" name="reporter_name" id="reporter_name" required maxlength="100" class="rate-field"
-                               placeholder="e.g. Juan Dela Cruz" value="{{ old('reporter_name') }}" autocomplete="name">
-                    </div>
-                    <div style="margin-top: 0.75rem;">
-                        <label for="reporter_contact" class="rate-label"><i class="bi bi-telephone" style="color:#4f46e5;"></i> Contact number or email</label>
-                        <input type="text" name="reporter_contact" id="reporter_contact" required maxlength="100" class="rate-field"
-                               placeholder="e.g. 0917 123 4567 or juan@gmail.com" value="{{ old('reporter_contact') }}" autocomplete="tel">
-                        <p class="file-hint">Only the TFRB office sees this — used if they need to follow up on your report.</p>
+                    {{-- Guests must continue with Google — the report is tied to their account --}}
+                    <div class="google-gate">
+                        <h4>Sign in to file your report</h4>
+                        <p>Your report goes straight to the TFRB review queue, and you will be able to monitor its status in your <strong>Passenger Dashboard</strong> — exactly like your complaints.</p>
+                        @if (config('services.google.client_id') && config('services.google.client_secret'))
+                            <a href="{{ route('login.google', ['intended' => request()->path()]) }}" class="rate-connect-btn" id="googleConnectBtn">
+                                @include('partials.google-g', ['class' => 'h-4 w-4 shrink-0'])
+                                Continue with Google
+                                <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
+                            </a>
+                        @else
+                            <p style="margin-bottom: 0; color: #b91c1c; font-weight: 600;"><i class="bi bi-exclamation-triangle-fill"></i> Sign-in is temporarily unavailable. Please try again later.</p>
+                        @endif
+                        <p class="rate-connect-note" style="margin-top:0.75rem; justify-content:center;">
+                            <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+                            <span><strong>No one can see your identity.</strong> The driver CANNOT see your name, email, or contact number — your details are used only by TriFair/TFRB for status updates and investigation.</span>
+                        </p>
                     </div>
                 @endif
-
-                <button type="submit" class="rate-submit" id="reportSubmitBtn" style="margin-top: 1rem;">
-                    <i class="bi bi-send-fill" aria-hidden="true"></i> Submit Report
-                </button>
-                <p class="report-note"><i class="bi bi-shield-check"></i> Your report goes directly to the TFRB review queue. The operator is attached automatically. False reports may be penalized.</p>
             </section>
         </form>
 
@@ -238,42 +270,355 @@
 (function () {
     'use strict';
 
-    var statusEl = document.getElementById('reportMapStatus');
-    var api = window.TripRouteMap && window.TripRouteMap.create('reportMap', { center: [16.52, 121.19], zoom: 14 });
-    if (!api) {
-        if (statusEl) { statusEl.textContent = 'Map unavailable'; }
-        return;
+    /* ---- Map init (same From → To trip map passengers use when rating) ---- */
+
+    var SOLANO_CENTER = (window.TripRouteMap && window.TripRouteMap.SOLANO_CENTER) || [16.5241, 121.2192];
+    var serviceBounds = (window.TripRouteMap && window.TripRouteMap.serviceBounds) || null;
+
+    var map = null;
+    var mapApi = null;
+    var startMarker = null;
+    var endMarker = null;
+    var endLatLng = null;
+    var lastFromGeocodeLatLng = null;
+    var lastFromGeocodeTime = 0;
+
+    function mapNotAvailable() {
+        var el = document.getElementById('reportMap');
+        if (el) { el.style.display = 'none'; }
+        var note = document.getElementById('reportMapNote');
+        if (note) { note.hidden = false; note.textContent = 'Map unavailable — you can still file your report.'; }
     }
 
-    var marker = null;
-    function showAt(latlng, zoom) {
-        if (marker) {
-            marker.setLatLng(latlng);
-        } else {
-            marker = L.marker(latlng, { icon: window.TripRouteMap.pickupIcon(), zIndexOffset: 1000 }).addTo(api.getMap());
+    function updateLocStatus(message) {
+        var banner = document.getElementById('reportMapTracking');
+        var el = document.getElementById('reportMapLocStatus');
+        if (banner) { banner.hidden = false; }
+        if (el) { el.textContent = message; }
+    }
+
+    function updateSummary(text) {
+        var el = document.getElementById('reportMapSummary');
+        if (el) { el.textContent = text; }
+    }
+
+    function hideNote() {
+        var note = document.getElementById('reportMapNote');
+        if (note) { note.hidden = true; }
+    }
+
+    function showNote(message) {
+        var note = document.getElementById('reportMapNote');
+        if (note) { note.hidden = false; note.textContent = message; }
+    }
+
+    function fitBothMarkers() {
+        if (!map || !startMarker) return;
+        var pts = [startMarker.getLatLng()];
+        if (endMarker) { pts.push(endMarker.getLatLng()); }
+        try {
+            var b = L.latLngBounds(pts);
+            if (!b.isValid()) return;
+            if (b.getNorth() === b.getSouth() && b.getEast() === b.getWest()) {
+                map.setView(b.getNorthWest(), 16, { animate: true, duration: 0.5 });
+                return;
+            }
+            if (serviceBounds) {
+                var clamped = b.intersect(serviceBounds);
+                if (clamped && clamped.isValid()) { b = clamped; }
+            }
+            map.fitBounds(b.pad(0.4), { maxZoom: 16, animate: true, duration: 0.5 });
+        } catch (e) { /* ignore mid-transition */ }
+    }
+
+    function setStartMarker(latlng) {
+        var icon = window.TripRouteMap ? window.TripRouteMap.pickupIcon() : undefined;
+        if (startMarker) {
+            startMarker.setLatLng(latlng);
+            return;
         }
-        api.setView(latlng, zoom || 15);
+        startMarker = L.marker(latlng, { icon: icon, zIndexOffset: 1000 })
+            .addTo(map)
+            .bindTooltip('From', { permanent: false, direction: 'top', offset: [0, -16], className: 'marker-label-from' });
     }
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function (pos) {
-                showAt(L.latLng(pos.coords.latitude, pos.coords.longitude), 15);
-                if (statusEl) { statusEl.textContent = 'Your current location'; }
-            },
-            function () {
-                if (statusEl) { statusEl.textContent = 'Location off — showing Solano area'; }
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-        );
-    } else if (statusEl) {
-        statusEl.textContent = 'Location not supported — showing Solano area';
+    function setEndMarker(latlng) {
+        if (!startMarker || !map) return;
+        var icon = window.TripRouteMap ? window.TripRouteMap.dropoffIcon() : undefined;
+        endLatLng = latlng;
+        if (endMarker) {
+            endMarker.setLatLng(latlng);
+            drawRoute();
+            return;
+        }
+        endMarker = L.marker(latlng, { icon: icon })
+            .addTo(map)
+            .bindTooltip('To', { permanent: false, direction: 'top', offset: [0, -38], className: 'marker-label-to' });
+        drawRoute();
     }
 
-    document.getElementById('reportForm').addEventListener('submit', function () {
-        var btn = document.getElementById('reportSubmitBtn');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split" aria-hidden="true"></i> Sending report…'; }
-    });
+    function applyDestination(latlng) {
+        setEndMarker(latlng);
+        setTimeout(fitBothMarkers, 150);
+    }
+
+    function drawRoute() {
+        if (!mapApi || !startMarker || !endMarker) return;
+        mapApi.route(startMarker.getLatLng(), endMarker.getLatLng(), true);
+    }
+
+    function drawApproximateRoute(start, end) {
+        if (mapApi && typeof mapApi.clearOverlays === 'function') { mapApi.clearOverlays(); }
+        L.polyline([start, end], {
+            color: '#0f2a4a', weight: 4, opacity: 0.5, dashArray: '4 6', interactive: false
+        }).addTo(map);
+        try {
+            map.fitBounds(L.latLngBounds([start, end]).pad(0.4), { maxZoom: 16 });
+        } catch (e) { /* ignore */ }
+        showNote('Showing approximate route');
+    }
+
+    function fmtDistance(m) {
+        m = Number(m) || 0;
+        return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : Math.round(m) + ' m';
+    }
+
+    function fmtDuration(s) {
+        s = Math.max(1, Math.round(Number(s) || 0));
+        return s >= 3600
+            ? Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm'
+            : (s >= 60 ? Math.round(s / 60) + ' min' : s + ' sec');
+    }
+
+    function onRouteSelected(route) {
+        if (!route || !route.coordinates || route.coordinates.length < 2) return;
+        var distMeters = route.summary ? route.summary.totalDistance : 0;
+        var durSeconds = route.summary ? route.summary.totalTime : 0;
+        updateSummary(fmtDistance(distMeters) + ' · ' + fmtDuration(durSeconds));
+        hideNote();
+    }
+
+    function onRouteError() {
+        if (!startMarker || !endMarker) return;
+        drawApproximateRoute(startMarker.getLatLng(), endMarker.getLatLng());
+    }
+
+    function initMap() {
+        try {
+            mapApi = window.TripRouteMap.create('reportMap', {
+                onRouteSelected: onRouteSelected,
+                onRouteError: onRouteError
+            });
+            if (!mapApi) throw new Error('map init failed');
+            map = mapApi.getMap();
+
+            map.invalidateSize();
+            setTimeout(function () { map.invalidateSize(); }, 300);
+
+            map.on('click', function (e) {
+                if (serviceBounds && !serviceBounds.contains(e.latlng)) return;
+                applyDestination(e.latlng);
+                reverseGeocode(e.latlng, 'reportMapEnd');
+            });
+
+            var fallback = L.latLng(SOLANO_CENTER);
+            setStartMarker(fallback);
+            mapApi.setView(fallback, 15);
+            reverseGeocode(fallback, 'reportMapStart');
+            detectLocation();
+        } catch (e) {
+            mapNotAvailable();
+        }
+    }
+
+    function getPositionWithRetry(attempts, options) {
+        return new Promise(function (resolve, reject) {
+            var tried = 0;
+            function attempt() {
+                navigator.geolocation.getCurrentPosition(function (p) {
+                    resolve(p);
+                }, function (err) {
+                    tried++;
+                    if (tried < attempts) {
+                        setTimeout(attempt, 1500);
+                    } else {
+                        reject(err);
+                    }
+                }, options);
+            }
+            attempt();
+        });
+    }
+
+    function detectLocation() {
+        if (!navigator.geolocation) {
+            updateLocStatus('Location is not supported — tap the map to set destination.');
+            return;
+        }
+        updateLocStatus('Detecting your location...');
+        getPositionWithRetry(2, { timeout: 6000, enableHighAccuracy: false, maximumAge: 15000 })
+            .then(function (p) {
+                var latlng = L.latLng(p.coords.latitude, p.coords.longitude);
+                if (serviceBounds && !serviceBounds.contains(latlng)) {
+                    updateLocStatus('Location detected outside Solano — tap the map to set destination.');
+                    return;
+                }
+                var acc = Math.round(p.coords.accuracy);
+                setStartMarker(latlng);
+                mapApi.setView(latlng, 15);
+                updateLocStatus('Location detected! Accuracy: ~' + acc + 'm. Search your destination above.');
+                reverseGeocode(latlng, 'reportMapStart');
+            })
+            .catch(function (err) {
+                if (err && err.code === 1) {
+                    updateLocStatus('Location access denied — enable location or tap the map to continue.');
+                } else {
+                    updateLocStatus('Couldn\'t detect location — search destination above.');
+                }
+            });
+    }
+
+    /* ---- Destination search (Nominatim via the app proxy) ---- */
+
+    var endInput = document.getElementById('reportMapEnd');
+    var searchResults = document.getElementById('reportMapSearchResults');
+    var searchTimeout = null;
+
+    if (endInput && searchResults) {
+        endInput.addEventListener('input', function () {
+            var q = this.value.trim();
+            if (q.length < 1) { searchResults.innerHTML = ''; return; }
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function () { forwardGeocode(q); }, 200);
+        });
+
+        endInput.addEventListener('focus', function () {
+            if (searchResults.children.length > 0) { searchResults.style.display = 'block'; }
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.route-body')) { searchResults.innerHTML = ''; }
+        });
+    }
+
+    function forwardGeocode(query) {
+        // Pad the service box by ~0.003° (~300 m) for search results only —
+        // Nominatim often returns coordinates a little past the edge.
+        var searchArea = serviceBounds ? serviceBounds.pad(0.003) : null;
+
+        function fetchResults(q) {
+            return fetch('/geocode/search?q=' + encodeURIComponent(q)).then(function (r) { return r.json(); });
+        }
+
+        function render(list) {
+            searchResults.innerHTML = '';
+            var inside = [];
+            (list || []).forEach(function (item) {
+                var latlng = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
+                if (isNaN(latlng.lat) || isNaN(latlng.lng)) return;
+                if (!searchArea || searchArea.contains(latlng)) inside.push({ item: item, latlng: latlng });
+            });
+            if (inside.length === 0) {
+                searchResults.innerHTML = '<div class="search-item search-empty">No matching place found near Solano.</div>';
+                return;
+            }
+            inside.slice(0, 5).forEach(function (e) {
+                var item = e.item, latlng = e.latlng;
+                var div = document.createElement('div');
+                div.className = 'search-item';
+                div.textContent = trimAddress(item.display_name);
+                div.setAttribute('data-lat', item.lat);
+                div.setAttribute('data-lon', item.lon);
+                div.addEventListener('click', function () {
+                    endInput.value = this.textContent;
+                    searchResults.innerHTML = '';
+                    applyDestination(latlng);
+                });
+                searchResults.appendChild(div);
+            });
+        }
+
+        function hasInside(list) {
+            if (!list || list.length === 0) return false;
+            return list.some(function (item) {
+                var ll = L.latLng(parseFloat(item.lat), parseFloat(item.lon));
+                return !isNaN(ll.lat) && !isNaN(ll.lng) && (!searchArea || searchArea.contains(ll));
+            });
+        }
+
+        fetchResults(query).then(function (results) {
+            if (hasInside(results)) {
+                render(results);
+                return;
+            }
+            return fetchResults(query + ', Nueva Vizcaya').then(render);
+        }).catch(function () { searchResults.innerHTML = ''; });
+    }
+
+    function reverseGeocode(latlng, inputId) {
+        var timer = setTimeout(function () { fallbackName(inputId); }, 6000);
+        fetch('/geocode/reverse?lat=' + latlng.lat + '&lng=' + latlng.lng)
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                clearTimeout(timer);
+                if (d.display_name) {
+                    document.getElementById(inputId).value = trimAddress(d.display_name);
+                } else {
+                    fallbackName(inputId);
+                }
+            }).catch(function () {
+                clearTimeout(timer);
+                fallbackName(inputId);
+            });
+    }
+
+    function fallbackName(inputId) {
+        var el = document.getElementById(inputId);
+        if (!el) return;
+        if (el.value && el.value !== 'Detecting location...') return;
+        el.value = inputId === 'reportMapStart' ? 'Current location, Solano' : 'Selected point, Solano';
+    }
+
+    function trimAddress(addr) {
+        var skip = ['philippines', 'cagayan valley', 'region ii', 'luzon', 'valle de cagayan', 'isabela', 'northern luzon'];
+        var parts = addr.split(',').map(function (s) { return s.trim(); }).filter(function (s) {
+            if (!s) return false;
+            if (/^\d{4}$/.test(s)) return false;
+            return skip.indexOf(s.toLowerCase()) === -1;
+        });
+        return parts.slice(0, 5).join(', ');
+    }
+
+    /* ---- "Others" violation type → require the reason ---- */
+
+    var typeSelect = document.getElementById('violation_type');
+    var othersBox = document.getElementById('othersBox');
+    var otherReason = document.getElementById('other_reason');
+    if (typeSelect && othersBox && otherReason) {
+        var syncOthers = function () {
+            var isOthers = typeSelect.value === 'Others';
+            othersBox.style.display = isOthers ? 'block' : 'none';
+            otherReason.required = isOthers;
+            if (!isOthers) { otherReason.value = ''; }
+        };
+        typeSelect.addEventListener('change', syncOthers);
+        syncOthers();
+    }
+
+    /* ---- Submit feedback ---- */
+
+    var form = document.getElementById('reportForm');
+    if (form) {
+        form.addEventListener('submit', function () {
+            var btn = document.getElementById('reportSubmitBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split" aria-hidden="true"></i> Sending report…';
+            }
+        });
+    }
+
+    initMap();
 })();
 </script>
 </body>

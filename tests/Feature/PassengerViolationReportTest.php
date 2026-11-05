@@ -2,13 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ViolationStatus;
 use App\Models\MemberSuspension;
+use App\Models\Notification;
 use App\Models\Operator;
 use App\Models\SuspensionViolation;
 use App\Models\Toda;
 use App\Models\User;
+use App\Services\SuspensionViolationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -81,6 +85,7 @@ class PassengerViolationReportTest extends TestCase
             ->assertOk()
             ->assertSee('Report Operator')
             ->assertSee('Report a Violation')
+            ->assertSee('Continue with Google')
             ->assertSee('reportMap', false)
             ->assertDontSee('starGrid', false);
     }
@@ -96,33 +101,7 @@ class PassengerViolationReportTest extends TestCase
             ->assertDontSee('starGrid', false);
     }
 
-    public function test_guest_can_file_a_violation_report_and_operator_is_attached()
-    {
-        $toda = $this->makeToda();
-        $president = $this->makeUser('operator_president');
-        $member = $this->makeOperator($toda);
-        $suspension = $this->suspend($member, $toda, $president);
-
-        $this->post('/rate/' . $member->qr_code . '/report', [
-            'violation_type' => 'Operating while suspended',
-            'details' => 'Still picking up passengers at the terminal this morning.',
-            'incident_at' => now()->format('Y-m-d H:i:s'),
-            'location' => 'Market Road',
-            'reporter_name' => 'Juan Dela Cruz',
-            'reporter_contact' => '09171234567',
-        ])->assertRedirect(route('rate.report.submitted', $member->qr_code));
-
-        $this->assertDatabaseHas('suspension_violations', [
-            'operator_id' => $member->id,
-            'toda_id' => $toda->id,
-            'reported_by' => null,
-            'reporter_name' => 'Juan Dela Cruz',
-            'suspension_id' => $suspension->id,
-            'status' => 'pending',
-        ]);
-    }
-
-    public function test_guest_must_leave_a_name_and_contact()
+    public function test_guests_cannot_file_and_are_asked_to_continue_with_google()
     {
         $toda = $this->makeToda();
         $president = $this->makeUser('operator_president');
@@ -131,14 +110,73 @@ class PassengerViolationReportTest extends TestCase
 
         $this->post('/rate/' . $member->qr_code . '/report', [
             'violation_type' => 'Operating while suspended',
-            'details' => 'Observed operating despite suspension.',
+            'details' => 'Still picking up passengers at the terminal this morning.',
             'incident_at' => now()->format('Y-m-d H:i:s'),
-        ])->assertSessionHasErrors(['reporter_name', 'reporter_contact']);
+        ])->assertSessionHasErrors('violation_type');
 
         $this->assertDatabaseCount('suspension_violations', 0);
     }
 
-    public function test_signed_in_passenger_is_linked_and_needs_no_guest_fields()
+    public function test_signed_in_passenger_is_linked_and_report_carries_the_route()
+    {
+        $toda = $this->makeToda();
+        $president = $this->makeUser('operator_president');
+        $member = $this->makeOperator($toda);
+        $suspension = $this->suspend($member, $toda, $president);
+        $passenger = $this->makeUser('passenger', 'Maria Santos');
+
+        $this->actingAs($passenger)->post('/rate/' . $member->qr_code . '/report', [
+            'violation_type' => 'Operating while suspended',
+            'details' => 'Saw them waiting for passengers at the stop.',
+            'incident_at' => now()->format('Y-m-d H:i:s'),
+            'start_location' => 'Municipal Hall, Solano',
+            'end_location' => 'Market Road, Solano',
+        ])->assertRedirect(route('rate.report.submitted', $member->qr_code));
+
+        $this->assertDatabaseHas('suspension_violations', [
+            'operator_id' => $member->id,
+            'toda_id' => $toda->id,
+            'reported_by' => $passenger->id,
+            'suspension_id' => $suspension->id,
+            'start_location' => 'Municipal Hall, Solano',
+            'end_location' => 'Market Road, Solano',
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_others_violation_type_requires_a_reason()
+    {
+        $toda = $this->makeToda();
+        $president = $this->makeUser('operator_president');
+        $member = $this->makeOperator($toda);
+        $this->suspend($member, $toda, $president);
+        $passenger = $this->makeUser('passenger');
+
+        // "Others" without a reason is rejected...
+        $this->actingAs($passenger)->post('/rate/' . $member->qr_code . '/report', [
+            'violation_type' => 'Others',
+            'details' => 'They were not following the rules.',
+            'incident_at' => now()->format('Y-m-d H:i:s'),
+        ])->assertSessionHasErrors('other_reason');
+
+        $this->assertDatabaseCount('suspension_violations', 0);
+
+        // ...and accepted with one, which is stored on the report.
+        $this->actingAs($passenger)->post('/rate/' . $member->qr_code . '/report', [
+            'violation_type' => 'Others',
+            'other_reason' => 'No plate number visible',
+            'details' => 'Motorcycle had no visible plate, passenger refused the ride.',
+            'incident_at' => now()->format('Y-m-d H:i:s'),
+        ])->assertRedirect(route('rate.report.submitted', $member->qr_code));
+
+        $this->assertDatabaseHas('suspension_violations', [
+            'operator_id' => $member->id,
+            'violation_type' => 'Others',
+            'other_reason' => 'No plate number visible',
+        ]);
+    }
+
+    public function test_filing_report_shows_it_in_the_passenger_dashboard()
     {
         $toda = $this->makeToda();
         $president = $this->makeUser('operator_president');
@@ -148,14 +186,85 @@ class PassengerViolationReportTest extends TestCase
 
         $this->actingAs($passenger)->post('/rate/' . $member->qr_code . '/report', [
             'violation_type' => 'Operating while suspended',
-            'details' => 'Saw them waiting for passengers at the stop.',
+            'details' => 'Observed at the terminal during our ride.',
             'incident_at' => now()->format('Y-m-d H:i:s'),
-        ])->assertRedirect(route('rate.report.submitted', $member->qr_code));
-
-        $this->assertDatabaseHas('suspension_violations', [
-            'operator_id' => $member->id,
-            'reported_by' => $passenger->id,
         ]);
+
+        $this->actingAs($passenger)
+            ->get('/passenger/dashboard')
+            ->assertOk()
+            ->assertSee('My Violation Reports')
+            ->assertSee('VR-')
+            ->assertSee($member->user->name);
+    }
+
+    public function test_passenger_is_notified_when_report_is_reviewed_and_solved()
+    {
+        Mail::fake();
+
+        $toda = $this->makeToda();
+        $president = $this->makeUser('operator_president');
+        $member = $this->makeOperator($toda);
+        $suspension = $this->suspend($member, $toda, $president);
+        $passenger = $this->makeUser('passenger');
+        $officer = $this->makeUser('tfrb_officer');
+
+        $violation = SuspensionViolation::create([
+            'operator_id' => $member->id,
+            'toda_id' => $toda->id,
+            'reported_by' => $passenger->id,
+            'suspension_id' => $suspension->id,
+            'violation_type' => 'Operating while suspended',
+            'details' => 'Still operating at the terminal.',
+            'incident_at' => now()->subHours(2),
+            'status' => 'pending',
+        ]);
+
+        app(SuspensionViolationService::class)->markReviewed($violation, $officer->id, 'Looks valid');
+        app(SuspensionViolationService::class)->markSolved($violation, $officer->id, [
+            'resolution_note' => 'Fined and warned.',
+            'penalty_imposed' => '₱2,000 fine',
+        ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $passenger->id,
+            'type' => 'violation',
+            'title' => 'Violation report reviewed',
+        ]);
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $passenger->id,
+            'type' => 'violation',
+            'title' => 'Violation report solved',
+        ]);
+
+        Mail::assertSent(ViolationStatus::class, 2);
+    }
+
+    public function test_president_filed_reports_do_not_email_passengers()
+    {
+        Mail::fake();
+
+        $toda = $this->makeToda();
+        $pres = $this->makeUser('operator_president');
+        $member = $this->makeOperator($toda);
+        $this->suspend($member, $toda, $pres);
+        $officer = $this->makeUser('tfrb_officer');
+
+        $violation = SuspensionViolation::create([
+            'operator_id' => $member->id,
+            'toda_id' => $toda->id,
+            'reported_by' => $pres->id,
+            'violation_type' => 'Operating while suspended',
+            'details' => 'Still operating at the terminal.',
+            'incident_at' => now()->subHours(2),
+            'status' => 'pending',
+        ]);
+
+        app(SuspensionViolationService::class)->markSolved($violation, $officer->id, [
+            'resolution_note' => 'Penalized.',
+        ]);
+
+        Mail::assertNothingSent();
     }
 
     public function test_operator_role_accounts_cannot_file_reports()
@@ -178,13 +287,12 @@ class PassengerViolationReportTest extends TestCase
     {
         $toda = $this->makeToda();
         $member = $this->makeOperator($toda, 'active');
+        $passenger = $this->makeUser('passenger');
 
-        $this->post('/rate/' . $member->qr_code . '/report', [
+        $this->actingAs($passenger)->post('/rate/' . $member->qr_code . '/report', [
             'violation_type' => 'Operating while suspended',
             'details' => 'Stale page submission.',
             'incident_at' => now()->format('Y-m-d H:i:s'),
-            'reporter_name' => 'Juan Dela Cruz',
-            'reporter_contact' => '09171234567',
         ])->assertRedirect(route('rate.operator', $member->qr_code));
 
         $this->assertDatabaseCount('suspension_violations', 0);

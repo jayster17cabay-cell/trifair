@@ -79,9 +79,12 @@
 
     <div class="note">
         <i class="bi bi-shield-check"></i>
-        The operator is attached to the report automatically. A TFRB officer will review the evidence and may impose a penalty.
+        The operator is attached to the report automatically. Track the outcome in your Passenger Dashboard — you will see status updates and any penalty there.
     </div>
 
+    <a href="{{ route('passenger.dashboard') }}" class="close-btn" style="background: linear-gradient(135deg, #059669, #047857); margin-top: 1.25rem;">
+        <i class="bi bi-grid-1x2"></i> Track in My Dashboard
+    </a>
     <button type="button" class="close-btn" id="closeBtn" onclick="tryClose()">
         <i class="bi bi-x-lg"></i> Close
     </button>

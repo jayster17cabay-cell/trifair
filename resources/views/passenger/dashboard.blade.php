@@ -248,6 +248,35 @@
             @endif
         @endif
 
+        {{-- Violation reports filed by this passenger against suspended / lapsed
+             operators — monitored here alongside complaints. --}}
+        <section class="mt-10 border-t border-slate-200 pt-8">
+            <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-900">
+                        My Violation Reports
+                        <span class="ml-1 rounded-full bg-slate-100 px-2 py-0.5 align-middle text-sm font-bold text-slate-500">{{ $violations->count() }}</span>
+                    </h2>
+                    <p class="mt-1 text-sm text-slate-500">Reports you filed from an operator's QR code — the TFRB reviews these and posts the outcome here.</p>
+                </div>
+                <a href="/" class="tw-btn tw-btn-sm tw-btn-navy shrink-0">
+                    <i class="bi bi-qr-code-scan"></i> Scan a QR code
+                </a>
+            </div>
+
+            @if ($violations->isEmpty())
+                <div class="tw-empty">
+                    <div class="tw-empty-icon"><i class="bi bi-flag text-slate-300"></i></div>
+                    <h3 class="tw-card-title mb-1">No violation reports yet</h3>
+                    <p class="text-sm text-slate-500">When you scan the QR code of a suspended or franchise-lapsed operator and tap <strong>Report Operator</strong>, your report and its status will appear here.</p>
+                </div>
+            @else
+                @foreach ($violations as $violation)
+                    @include('passenger.partials.violation-card', ['violation' => $violation])
+                @endforeach
+            @endif
+        </section>
+
         <p class="mt-10 border-t border-slate-200 pt-6 text-center text-xs text-slate-400">
             TriFair — Passenger Feedback System. Your identity stays private from drivers.
         </p>

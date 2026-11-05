@@ -27,7 +27,7 @@ class RatingController extends Controller
         'Operating with expired franchise',
         'Operating while inactive',
         'Disregarding suspension order',
-        'Other',
+        'Others',
     ];
 
     /**
@@ -506,31 +506,31 @@ class RatingController extends Controller
                 ->with('status', 'This operator is active again — you can rate them now.');
         }
 
-        // Operator and staff accounts can never file passenger violation
-        // reports, mirroring the rating flow.
+        // Google sign-in is required: the report is tied to the passenger's
+        // account so they can monitor its progress in their dashboard — the
+        // same way complaints work. Staff accounts can never file.
         $authUser = $request->user();
         if ($authUser && !$authUser->isPassenger()) {
             return back()->withErrors(['violation_type' => 'Operator and staff accounts cannot file passenger reports. Please sign out first.']);
         }
-
         $passengerUser = $authUser && $authUser->isPassenger() ? $authUser : null;
+
+        if (!$passengerUser) {
+            return back()->withErrors(['violation_type' => 'Please continue with Google to file your violation report.']);
+        }
 
         $rules = [
             'violation_type' => 'required|string|max:100',
+            // "Others" must say what the reason is — mirrors complaint_details.
+            'other_reason' => 'nullable|required_if:violation_type,Others|string|max:100',
             'details' => 'required|string|max:2000',
             'incident_at' => 'required|date|before_or_equal:now',
-            'location' => 'nullable|string|max:255',
+            'start_location' => 'nullable|string|max:500',
+            'end_location' => 'nullable|string|max:500',
             'toda_id' => 'nullable|integer',
             'proofs' => 'nullable|array|max:5',
             'proofs.*' => 'file|mimes:jpg,jpeg,png,pdf,mp4|max:10240',
         ];
-
-        // Guests must leave a name and a way to reach them so the TFRB can
-        // follow up; signed-in passengers are linked by account instead.
-        if (!$passengerUser) {
-            $rules['reporter_name'] = 'required|string|max:100';
-            $rules['reporter_contact'] = 'required|string|max:100';
-        }
 
         $data = $request->validate($rules);
 
@@ -541,15 +541,15 @@ class RatingController extends Controller
         $violation = app(\App\Services\SuspensionViolationService::class)->report(
             $operator,
             $toda,
-            $passengerUser?->id,
+            $passengerUser->id,
             [
                 'suspension_id' => $suspension?->id,
                 'violation_type' => $data['violation_type'],
+                'other_reason' => $data['other_reason'] ?? null,
                 'details' => $data['details'],
                 'incident_at' => $data['incident_at'],
-                'location' => $data['location'] ?? null,
-                'reporter_name' => $passengerUser ? $passengerUser->name : $data['reporter_name'],
-                'reporter_contact' => $passengerUser ? ($passengerUser->email ?? null) : $data['reporter_contact'],
+                'start_location' => Rating::normalizeAddress($data['start_location'] ?? null),
+                'end_location' => Rating::normalizeAddress($data['end_location'] ?? null),
             ],
             $request->file('proofs', [])
         );

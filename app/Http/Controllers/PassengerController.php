@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Notification;
 use App\Models\Rating;
+use App\Models\SuspensionViolation;
 use Illuminate\Http\Request;
 
 class PassengerController extends Controller
@@ -68,6 +69,14 @@ class PassengerController extends Controller
             ->limit(10)
             ->get();
 
+        // Violation reports this passenger filed against suspended / lapsed
+        // operators — monitored on this page alongside complaints.
+        $violations = SuspensionViolation::with(['operator.user', 'toda', 'proofs', 'reviewer'])
+            ->where('reported_by', $user->id)
+            ->latest()
+            ->limit(50)
+            ->get();
+
         return view('passenger.dashboard', compact(
             'complaints',
             'totalCount',
@@ -76,7 +85,8 @@ class PassengerController extends Controller
             'rejectedCount',
             'solvedCount',
             'notifications',
-            'activeStatus'
+            'activeStatus',
+            'violations'
         ));
     }
 

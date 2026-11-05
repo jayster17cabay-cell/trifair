@@ -4,10 +4,14 @@ namespace App\Services;
 
 use App\Helpers\ActivityLogger;
 use App\Helpers\SupabaseStorage;
+use App\Mail\ViolationStatus;
+use App\Models\Notification;
 use App\Models\SuspensionViolation;
 use App\Models\SuspensionViolationProof;
+use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SuspensionViolationService
 {
@@ -33,9 +37,12 @@ class SuspensionViolationService
             'reporter_contact' => $data['reporter_contact'] ?? null,
             'suspension_id' => $data['suspension_id'] ?? null,
             'violation_type' => $data['violation_type'],
+            'other_reason' => $data['other_reason'] ?? null,
             'details' => $data['details'],
             'incident_at' => $data['incident_at'],
             'location' => $data['location'] ?? null,
+            'start_location' => $data['start_location'] ?? null,
+            'end_location' => $data['end_location'] ?? null,
             'status' => 'pending',
         ]);
 
@@ -65,6 +72,8 @@ class SuspensionViolationService
             'status' => 'reviewed',
             'review_note' => $this->cleanNote($note),
         ]);
+
+        $this->notifyReporter($violation, 'reviewed');
 
         ActivityLogger::log(
             'review_violation',
@@ -96,6 +105,8 @@ class SuspensionViolationService
         if (!empty($files)) {
             $this->storeProofs($violation, $files);
         }
+
+        $this->notifyReporter($violation, 'solved');
 
         ActivityLogger::log(
             'solve_violation',
@@ -134,6 +145,41 @@ class SuspensionViolationService
         );
 
         return $violation;
+    }
+
+    /**
+     * Tell the passenger who filed the report that the TFRB has looked at it
+     * (or closed it). In-app notification + email — the same idea as complaint
+     * status updates. President-filed reports stay inside staff tooling, and
+     * any failure here must never block the review action itself.
+     */
+    private function notifyReporter(SuspensionViolation $violation, string $status): void
+    {
+        try {
+            $reporter = $violation->reporter;
+            if (!$reporter || $reporter->role !== 'passenger') {
+                return;
+            }
+
+            $ref = $violation->reference_number;
+            $isSolved = $status === 'solved';
+            $operatorName = $violation->operator->user->name ?? 'Unknown';
+
+            Notification::create([
+                'user_id' => $reporter->id,
+                'type' => 'violation',
+                'title' => $isSolved ? 'Violation report solved' : 'Violation report reviewed',
+                'message' => $isSolved
+                    ? "Your violation report {$ref} against {$operatorName} has been solved by the TFRB."
+                    : "Your violation report {$ref} against {$operatorName} has been reviewed by the TFRB.",
+            ]);
+
+            if (filled($reporter->email)) {
+                Mail::to($reporter->email)->send(new ViolationStatus($violation, $status));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Violation reporter notification failed: ' . $e->getMessage());
+        }
     }
 
     /**
