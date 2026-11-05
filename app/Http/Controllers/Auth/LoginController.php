@@ -80,14 +80,15 @@ class LoginController extends Controller
                         ])->onlyInput('email');
                     }
 
-                    if ($operator->status === 'inactive') {
+                    // A lapsed franchise is no longer a silent log-out: the account
+                    // stays signed in and its dashboard reports "Your franchise has
+                    // expired" so the operator (or president) can see the status.
+                    if ($operator->status === 'inactive' && !$operator->hasExpiredFranchise()) {
                         Auth::logout();
                         $request->session()->invalidate();
                         $request->session()->regenerateToken();
                         return back()->withErrors([
-                            'email' => $operator->hasExpiredFranchise()
-                                ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
-                                : 'Your account has been deactivated. Please contact support.',
+                            'email' => 'Your account has been deactivated. Please contact support.',
                         ])->onlyInput('email');
                     }
                 }
@@ -132,14 +133,15 @@ class LoginController extends Controller
                         'email' => 'Your account has been rejected. Contact support for more information.',
                     ])->onlyInput('email');
                 }
-                if ($operator->status === 'inactive') {
+                // A lapsed franchise is no longer a silent log-out: the account
+                // stays signed in and its dashboard reports "Your franchise has
+                // expired" so the operator can see the status.
+                if ($operator->status === 'inactive' && !$operator->hasExpiredFranchise()) {
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
                     return back()->withErrors([
-                        'email' => $operator->hasExpiredFranchise()
-                            ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
-                            : 'Your account has been deactivated. Please contact support.',
+                        'email' => 'Your account has been deactivated. Please contact support.',
                     ])->onlyInput('email');
                 }
             }

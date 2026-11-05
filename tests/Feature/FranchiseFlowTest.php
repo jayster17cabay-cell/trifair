@@ -380,7 +380,7 @@ class FranchiseFlowTest extends TestCase
         $this->assertSame('active', $operator->fresh()->status);
     }
 
-    public function test_expired_franchise_operator_cannot_log_in()
+    public function test_expired_franchise_operator_sees_expired_status_on_login()
     {
         $operator = $this->makeOperator('active');
         $user = $operator->user;
@@ -396,10 +396,15 @@ class FranchiseFlowTest extends TestCase
         $this->post('/login', [
             'email' => $user->email,
             'password' => 'password123',
-        ])->assertSessionHasErrors('email');
+        ])->assertRedirect(route('operator.dashboard'));
 
-        $this->assertGuest();
+        $this->assertAuthenticatedAs($user);
         $this->assertSame('inactive', $operator->fresh()->status);
+
+        $this->actingAs($user)
+            ->get('/operator/dashboard')
+            ->assertOk()
+            ->assertSee('Your franchise has expired', false);
     }
 
     public function test_renewing_reactivates_an_expired_operator()
@@ -689,9 +694,14 @@ class FranchiseFlowTest extends TestCase
         $this->lapseFranchiseOf($president);
         $this->assertSame('inactive', $president->fresh()->status);
 
-        $this->post('/login', $credentials)->assertSessionHasErrors([
-            'email' => 'Your franchise has expired. Please contact the TFRB Office to renew it.',
-        ]);
+        $this->post('/login', $credentials)->assertRedirect(route('dashboard'));
+
+        $this->assertAuthenticatedAs($president->user);
+
+        $this->actingAs($president->user)
+            ->get('/president/dashboard')
+            ->assertOk()
+            ->assertSee('Your franchise has expired', false);
 
         $this->actingAs($admin)->post(route('superadmin.operators.franchise.renew', $president), [
             'franchise_no' => 'FR-PRES-FRESH',
@@ -708,10 +718,8 @@ class FranchiseFlowTest extends TestCase
 
         $this->actingAs($president->user)
             ->get('/president/dashboard')
-            ->assertRedirect(route('login'))
-            ->assertSessionHasErrors([
-                'email' => 'Your franchise has expired. Please contact the TFRB Office to renew it.',
-            ]);
+            ->assertOk()
+            ->assertSee('Your franchise has expired', false);
 
         $admin = $this->makeUser('superadmin');
         $this->actingAs($admin)->post(route('superadmin.operators.franchise.renew', $president), [
@@ -721,7 +729,8 @@ class FranchiseFlowTest extends TestCase
 
         $this->actingAs($president->user->fresh())
             ->get('/president/dashboard')
-            ->assertOk();
+            ->assertOk()
+            ->assertDontSee('Your franchise has expired', false);
     }
 
     public function test_lapsed_president_is_locked_out_of_the_operator_screens_too()
@@ -731,9 +740,7 @@ class FranchiseFlowTest extends TestCase
 
         $this->actingAs($president->user)
             ->get('/operator/dashboard')
-            ->assertRedirect(route('login'))
-            ->assertSessionHasErrors([
-                'email' => 'Your franchise has expired. Please contact the TFRB Office to renew it.',
-            ]);
+            ->assertOk()
+            ->assertSee('Your franchise has expired', false);
     }
 }

@@ -43,6 +43,13 @@ class PresidentController extends Controller
         $user = Auth::user();
 
         $ownOperator = $this->query->presidentOperator($user);
+
+        // A lapsed franchise is surfaced as a status screen instead of the
+        // normal dashboard, so the president can see why the account is locked.
+        if ($ownOperator && $ownOperator->hasExpiredFranchise()) {
+            return view('president.expired', ['toda' => $toda, 'operator' => $ownOperator]);
+        }
+
         $summary = $this->query->summary($toda, $ownOperator);
 
         $summary['todaName'] = $toda->name;

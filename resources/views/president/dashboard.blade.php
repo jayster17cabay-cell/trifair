@@ -40,6 +40,12 @@
     'actionIcon' => $heroActionIcon,
 ])
 
+@if (($ownOperator ?? null) && $ownOperator->isFranchiseExpiringSoon())
+<div class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+    <i class="bi bi-exclamation-triangle-fill mr-1"></i>
+    <strong>Expiring Soon:</strong> Your franchise expires in {{ $ownOperator->currentTerm?->daysUntilExpiry() }} days. Please contact the TFRB Office to renew it before it lapses.
+</div>
+@endif
 {{-- KPI cards --}}
 <div class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating']])

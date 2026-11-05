@@ -30,6 +30,12 @@
 @endsection
 
 @section('content')
+@if ($operator->isFranchiseExpiringSoon())
+<div class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+    <i class="bi bi-exclamation-triangle-fill mr-1"></i>
+    <strong>Expiring Soon:</strong> Your franchise expires in {{ $operator->currentTerm?->daysUntilExpiry() }} days. Please contact the TFRB Office to renew it before it lapses.
+</div>
+@endif
 @include('partials.operator.franchise-scope-bar', ['franchise' => $operator->currentTerm, 'period' => $period, 'scopeRoute' => 'operator.dashboard', 'todas' => $todas ?? collect(), 'selectedToda' => $selectedToda ?? null])
 @if (($todas ?? collect())->count() > 1)
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-navy-100 bg-navy-50/60 px-4 py-3">

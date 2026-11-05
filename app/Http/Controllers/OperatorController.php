@@ -18,6 +18,13 @@ class OperatorController extends Controller
     public function dashboard(Request $request)
     {
         $operator = Auth::user()->operator;
+
+        // A lapsed franchise is surfaced as a status screen instead of the
+        // normal dashboard, so the operator can see why the account is locked.
+        if ($operator && $operator->hasExpiredFranchise()) {
+            return view('operator.expired', ['operator' => $operator]);
+        }
+
         $period = $this->resolvePeriod($request);
         $todas = $operator->getRateableTodas();
         $selectedToda = $this->resolveToda($request, $todas);

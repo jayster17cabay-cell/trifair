@@ -52,13 +52,20 @@ class OperatorActive
                 ]);
             }
             if ($operator->status === 'inactive') {
+                // A lapsed franchise is not a session-killer: the account stays
+                // signed in and its dashboard reports "Your franchise has expired".
+                if ($operator->hasExpiredFranchise()) {
+                    if (!$request->routeIs('operator.dashboard')) {
+                        return redirect()->route('operator.dashboard');
+                    }
+                    return $next($request);
+                }
+
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return redirect()->route('login')->withErrors([
-                    'email' => $operator->hasExpiredFranchise()
-                        ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
-                        : 'Your account has been deactivated. Please contact support.',
+                    'email' => 'Your account has been deactivated. Please contact support.',
                 ]);
             }
         }

@@ -43,9 +43,16 @@ class PresidentActive
         }
 
         if ($operator->status === 'inactive') {
-            return $this->logout($request, $operator->hasExpiredFranchise()
-                ? 'Your franchise has expired. Please contact the TFRB Office to renew it.'
-                : 'Your account has been deactivated. Please contact support.');
+            // A lapsed franchise is not a session-killer: the account stays
+            // signed in and its dashboard reports "Your franchise has expired".
+            if ($operator->hasExpiredFranchise()) {
+                if (!$request->routeIs('president.dashboard')) {
+                    return redirect()->route('president.dashboard');
+                }
+                return $next($request);
+            }
+
+            return $this->logout($request, 'Your account has been deactivated. Please contact support.');
         }
 
         return $next($request);
