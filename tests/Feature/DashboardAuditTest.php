@@ -673,7 +673,7 @@ class DashboardAuditTest extends TestCase
             ->assertSee('Rude Driver', false);
     }
 
-    public function test_marking_complaint_accepted_emails_the_passenger()
+    public function test_marking_complaint_reviewed_emails_the_passenger()
     {
         Mail::fake();
         $officer = $this->makeUser('tfrb_officer');
@@ -682,20 +682,20 @@ class DashboardAuditTest extends TestCase
         $rating->update(['passenger_email' => 'passenger@example.com']);
 
         $this->actingAs($officer)
-            ->patch('/tfrb-officer/complaints/' . $rating->id . '/accept')
+            ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
             ->assertRedirect();
 
         Mail::assertSent(ComplaintStatus::class, function ($mail) use ($rating) {
             $mail->build();
 
             return $mail->hasTo('passenger@example.com')
-                && $mail->status === 'accepted'
+                && $mail->status === 'reviewed'
                 && str_contains($mail->subject, $rating->reference_number);
         });
 
-        // Re-accepting must not spam the passenger a second time.
+        // Re-reviewing must not spam the passenger a second time.
         $this->actingAs($officer)
-            ->patch('/tfrb-officer/complaints/' . $rating->id . '/accept')
+            ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
             ->assertRedirect();
 
         Mail::assertSent(ComplaintStatus::class, 1);
@@ -713,13 +713,13 @@ class DashboardAuditTest extends TestCase
         Mail::shouldReceive('to')->andThrow(new \RuntimeException('SMTP transport unavailable'));
 
         $this->actingAs($officer)
-            ->patch('/tfrb-officer/complaints/' . $rating->id . '/accept')
+            ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
             ->assertRedirect()
             ->assertSessionHas('success')
             ->assertSessionHas('warning');
 
         // The email failure must never block the officer's decision.
-        $this->assertTrue((bool) $rating->fresh()->is_accepted);
+        $this->assertTrue((bool) $rating->fresh()->is_reviewed);
     }
 
     public function test_sendinblue_key_and_from_address_are_trimmed_of_whitespace()
@@ -820,9 +820,9 @@ class DashboardAuditTest extends TestCase
 
         $pending = $this->makeRating($op, 1, true, true);
         $reviewed = $this->makeRating($op, 2, true, true);
-        $reviewed->update(['is_reviewed' => true, 'is_accepted' => true]);
+        $reviewed->update(['is_reviewed' => true]);
         $solved = $this->makeRating($op, 1, true, true);
-        $solved->update(['is_reviewed' => true, 'is_accepted' => true, 'is_solved' => true, 'solved_at' => now()]);
+        $solved->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
 
         $this->actingAs($admin)->get('/superadmin/complaints?filter=solved')
             ->assertOk()
@@ -830,8 +830,8 @@ class DashboardAuditTest extends TestCase
             ->assertDontSee($pending->reference_number, false)
             ->assertDontSee($reviewed->reference_number, false);
 
-        // Accepted filter excludes solved complaints; pending excludes accepted+solved.
-        $this->actingAs($admin)->get('/superadmin/complaints?filter=accepted')
+        // Reviewed filter excludes solved complaints; pending excludes reviewed+solved.
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=reviewed')
             ->assertOk()
             ->assertSee($reviewed->reference_number, false)
             ->assertDontSee($solved->reference_number, false);

@@ -4,19 +4,19 @@
     $bodyNumber = $operator ? $operator->body_number : null;
 
     // Same precedence as the model's status_label: solved wins, then
-    // accepted, rejected, and finally pending.
+    // rejected, reviewed, and finally pending.
     if ($rating->is_solved) {
         $statusKey = 'solved';
-    } elseif ($rating->is_accepted === true) {
-        $statusKey = 'accepted';
-    } elseif ($rating->is_accepted === false) {
+    } elseif ($rating->rejected_at) {
         $statusKey = 'rejected';
+    } elseif ($rating->is_reviewed) {
+        $statusKey = 'reviewed';
     } else {
         $statusKey = 'pending';
     }
     $statusMap = [
         'pending' => ['label' => 'Pending', 'icon' => 'bi-clock-fill', 'badge' => 'tw-badge tw-badge-amber', 'border' => 'border-l-amber-400', 'avatar' => 'bg-amber-500/10 text-amber-600'],
-        'accepted' => ['label' => 'Accepted', 'icon' => 'bi-check-circle-fill', 'badge' => 'tw-badge tw-badge-green', 'border' => 'border-l-emerald-500', 'avatar' => 'bg-emerald-500/10 text-emerald-600'],
+        'reviewed' => ['label' => 'Reviewed', 'icon' => 'bi-check-circle-fill', 'badge' => 'tw-badge tw-badge-green', 'border' => 'border-l-emerald-500', 'avatar' => 'bg-emerald-500/10 text-emerald-600'],
         'rejected' => ['label' => 'Rejected', 'icon' => 'bi-x-circle-fill', 'badge' => 'tw-badge tw-badge-red', 'border' => 'border-l-red-500', 'avatar' => 'bg-red-500/10 text-red-600'],
         'solved' => ['label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'badge' => 'tw-badge tw-badge-navy', 'border' => 'border-l-navy-600', 'avatar' => 'bg-navy-600/10 text-navy-700'],
     ];
@@ -100,11 +100,11 @@
                 </div>
                 <p class="mb-0 text-sm text-slate-700">{{ $rating->response->message }}</p>
             </div>
-        @elseif ($rating->is_accepted === true)
+        @elseif ($rating->is_reviewed && !$rating->is_solved)
             <p class="mt-3 text-xs text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response from the operator yet.</p>
         @endif
 
-        @if ($rating->is_accepted === false)
+        @if ($rating->rejected_at)
             <div class="mt-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
                 <div class="mb-1 flex items-center gap-1.5">
                     <i class="bi bi-x-circle-fill text-red-500"></i>

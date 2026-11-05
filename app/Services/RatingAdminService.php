@@ -18,12 +18,65 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Review-side rating operations shared by the Superadmin and TFRB Officer
- * roles. The only differences between the two roles were the wording of the
- * activity log/flash message, so those are parameterized with a $noun
- * ("rating" vs "complaint") instead of being duplicated.
+ * roles and by TODA presidents (when a complaint is routed to them). Each
+ * action enforces the assignment rule from ComplaintRoutingService before
+ * touching the row — callers (the controllers) resolve the actor's queue
+ * first; TFRB/superadmin and the owning president share these code paths.
+ * The only role-specific differences are the wording of the activity
+ * log/flash message ("rating" vs "complaint"), parameterized with a $noun
+ * instead of being duplicated.
  */
 class RatingAdminService
 {
+    /**
+     * Enforce the complaint routing rule before any action runs:
+     *
+     * - TFRB/superadmin may act only on cases assigned to their queue
+     *   (never routed to a president, or already forwarded to TFRB).
+     * - The TODA president may act only on complaints routed to them and
+     *   only until they are forwarded.
+     *
+     * Throws a 403 otherwise — this is a hard security boundary, not a UX
+     * affordance.
+     */
+    private function assertCanActOnComplaint(Rating $rating, bool $presidentOnly = false): void
+    {
+        $role = Auth::user()?->role;
+        $routedTo = (int) ($rating->routed_to ?? 0);
+
+        if ($presidentOnly) {
+            if ($role !== 'operator_president') {
+                abort(403, 'Only the TODA president can forward complaints to the TFRB.');
+            }
+            if ($routedTo !== (int) Auth::id()) {
+                abort(403, 'This complaint is not yours to forward.');
+            }
+            if ($rating->forwarded_at) {
+                abort(403, 'This complaint has already been forwarded to the TFRB.');
+            }
+            return;
+        }
+
+        if (in_array($role, ['tfrb_officer', 'superadmin'], true)) {
+            if ($routedTo !== 0 && $rating->forwarded_at === null) {
+                abort(403, 'This complaint is with the TODA president and can only be acted on by them, or after being forwarded to the TFRB.');
+            }
+            return;
+        }
+
+        if ($role === 'operator_president') {
+            if ($routedTo !== (int) Auth::id()) {
+                abort(403, 'This complaint is not assigned to you.');
+            }
+            if ($rating->forwarded_at !== null) {
+                abort(403, 'This complaint has been forwarded to the TFRB — it is no longer yours to act on.');
+            }
+            return;
+        }
+
+        abort(403);
+    }
+
     public function markReviewed(Rating $rating): RedirectResponse
     {
         $rating->update(['is_reviewed' => true]);
@@ -35,32 +88,34 @@ class RatingAdminService
     }
 
     /**
-     * Accept a complaint: the officer has reviewed it and considers it a real,
-     * legitimate report. Only accepted 1-2 star complaints count towards the
-     * operator's star average, so accepting is what makes the rating "land".
+     * Mark a complaint as reviewed by the responsible party. A complaint
+     * counts towards the operator's star average once it has been reviewed
+     * (unless it has been rejected), so reviewing is what makes the rating
+     * "land" — analogous to the retired accept step.
      */
-    public function complaintsAccept(Rating $rating): RedirectResponse
+    public function complaintsMarkReviewed(Rating $rating): RedirectResponse
     {
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be reviewed here.']);
         }
+        $this->assertCanActOnComplaint($rating);
 
-        $wasAccepted = $rating->is_accepted === true;
-        $rating->update(['is_reviewed' => true, 'is_accepted' => true]);
+        $wasReviewed = (bool) $rating->is_reviewed;
+        $rating->update(['is_reviewed' => true, 'reviewed_by' => Auth::id()]);
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
+        ActivityLogger::log('review_complaint', "Reviewed complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
 
-        if (!$wasAccepted) {
-            $emailError = $this->notifyComplaintStatus($rating, 'accepted');
-            $this->notifyPassengerInApp($rating, 'Complaint Accepted', 'Your complaint has been verified and accepted by the TFRB. Thank you for helping keep our transport services safe.');
-            $this->notifyAdmins($rating, 'Complaint Accepted', "Complaint {$rating->reference_number} for {$rating->operator_name} was accepted and now counts towards the operator's rating.");
+        if (!$wasReviewed) {
+            $emailError = $this->notifyComplaintStatus($rating, 'reviewed');
+            $this->notifyPassengerInApp($rating, 'Complaint Reviewed', 'Your complaint has been reviewed by the responsible office. Thank you for helping keep our transport services safe.');
+            $this->notifyAdmins($rating, 'Complaint Reviewed', "Complaint {$rating->reference_number} for {$rating->operator_name} has been reviewed and now counts towards the operator's rating.");
         } else {
             $emailError = null;
         }
 
         return $this->withEmailWarning(
-            back()->with('success', 'Complaint accepted. It now counts towards the operator\'s rating.'),
+            back()->with('success', 'Complaint marked as reviewed. It now counts towards the operator\'s rating.'),
             $emailError
         );
     }
@@ -75,13 +130,13 @@ class RatingAdminService
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be reviewed here.']);
         }
+        $this->assertCanActOnComplaint($rating);
 
         $note = $this->cleanResolutionNote($note);
-        $wasRejected = $rating->is_accepted === false;
+        $wasRejected = (bool) $rating->rejected_at;
 
         $rating->update([
             'is_reviewed' => true,
-            'is_accepted' => false,
             'is_solved' => false,
             'solved_at' => null,
             'rejected_at' => now(),
@@ -122,10 +177,10 @@ class RatingAdminService
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be reset here.']);
         }
+        $this->assertCanActOnComplaint($rating);
 
         $rating->update([
             'is_reviewed' => false,
-            'is_accepted' => null,
             'is_solved' => false,
             'solved_at' => null,
             'rejected_at' => null,
@@ -152,14 +207,14 @@ class RatingAdminService
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be marked solved here.']);
         }
+        $this->assertCanActOnComplaint($rating);
 
         $note = $this->cleanResolutionNote($note);
         $wasSolved = (bool) $rating->is_solved;
-        // Solving implies the complaint was legitimate, so it is accepted too:
-        // a resolved complaint must always count towards the operator's record.
+        // Solving implies the complaint was legitimate: it is reviewed (and
+        // counts), and any previous rejection marker is superseded.
         $rating->update([
             'is_reviewed' => true,
-            'is_accepted' => true,
             'is_solved' => true,
             'solved_at' => now(),
             'rejected_at' => null,
@@ -200,16 +255,16 @@ class RatingAdminService
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be reopened.']);
         }
+        $this->assertCanActOnComplaint($rating);
 
-        // Reopening sends it back into the pending queue, so the reviewed and
-        // accepted flags must be cleared too — otherwise it stays "accepted",
-        // is invisible under the Pending filter, and the "Mark Reviewed" action
-        // never comes back on the card.
+        // Reopening sends it back into the pending queue, so the reviewed
+        // flag and any rejection marker must be cleared too — otherwise it
+        // stays "reviewed", shows under the Reviewed filter, and the actions
+        // never come back on the card.
         $rating->update([
             'is_solved' => false,
             'solved_at' => null,
             'is_reviewed' => false,
-            'is_accepted' => null,
             'rejected_at' => null,
             'reviewed_by' => null,
             'resolution_note' => null,
@@ -223,6 +278,62 @@ class RatingAdminService
     }
 
     /**
+     * President forwards a complaint they cannot resolve to TFRB/superadmin.
+     * From here on the president keeps no action rights on the complaint —
+     * only the TFRB/superadmin review team can act on it. They are all
+     * notified; the passenger gets an email and an in-app notice as well.
+     */
+    public function complaintsForward(Rating $rating): RedirectResponse
+    {
+        if (!$rating->complaint_type) {
+            return back()->withErrors(['error' => 'Only complaints with a complaint type can be forwarded.']);
+        }
+        $this->assertCanActOnComplaint($rating, true);
+
+        if ($rating->forwarded_at) {
+            return back()->with('success', 'This complaint has already been forwarded to the TFRB.');
+        }
+
+        $rating->update([
+            'forwarded_at' => now(),
+            'forwarded_by' => Auth::id(),
+        ]);
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log('forward_complaint', "Forwarded complaint #{$rating->id} to TFRB/superadmin (operator: {$rating->operator_name})", $rating, 'review');
+
+        $president = Auth::user();
+        $presidentName = $president->name ?? 'TODA president';
+        $this->notifyAdminsOnForward($rating, "{$presidentName} forwarded complaint {$rating->reference_number} for {$rating->operator_name} to TFRB/superadmin.");
+        $emailError = $this->notifyComplaintStatus($rating, 'forwarded');
+        $this->notifyPassengerInApp($rating, 'Complaint Forwarded to TFRB', 'Your complaint has been forwarded to the TFRB/superadmin for further review. They will resolve it from here.');
+
+        return $this->withEmailWarning(
+            back()->with('success', 'Complaint forwarded to the TFRB/superadmin. They will handle it from here.'),
+            $emailError
+        );
+    }
+
+    /**
+     * Notify the entire review team (officers + superadmins) that a
+     * president has escalated a complaint to them.
+     */
+    private function notifyAdminsOnForward(Rating $rating, string $message): void
+    {
+        User::whereIn('role', ['tfrb_officer', 'superadmin'])
+            ->get()
+            ->each(function (User $user) use ($rating, $message) {
+                Notification::create([
+                    'user_id' => $user->id,
+                    'rating_id' => $rating->id,
+                    'type' => 'complaint',
+                    'title' => 'Complaint Forwarded by President',
+                    'message' => $message,
+                ]);
+            });
+    }
+
+    /**
      * Send an update into the complaint's chat thread from the TFRB/superadmin
      * side. The passenger sees it on their dashboard and gets an in-app
      * notification. Once a complaint is solved the chat is closed for both
@@ -233,6 +344,7 @@ class RatingAdminService
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be replied to here.']);
         }
+        $this->assertCanActOnComplaint($rating);
 
         if ($rating->is_solved) {
             return back()->withErrors(['chat' => 'This complaint is already resolved — the chat is closed.']);
@@ -277,16 +389,22 @@ class RatingAdminService
         Rating::whereIn('id', $ids)
             ->isValid()
             ->whereNotNull('complaint_type')
-            ->whereNull('is_accepted')
+            ->whereNull('rejected_at')
+            ->where('is_reviewed', false)
+            // Only complaints owned by this queue — president-routed cases
+            // belong to the TODA president until they are forwarded.
+            ->where(function ($query) {
+                $query->whereNull('routed_to')->orWhereNotNull('forwarded_at');
+            })
             ->with('operator.user')
             ->get()
             ->each(function ($rating) use (&$count, &$emailFailures) {
-                $rating->update(['is_reviewed' => true, 'is_accepted' => true]);
-                ActivityLogger::log('accept_complaint', "Accepted complaint #{$rating->id} (bulk, operator: {$rating->operator_name})", $rating, 'review');
-                if ($this->notifyComplaintStatus($rating, 'accepted')) {
+                $rating->update(['is_reviewed' => true, 'reviewed_by' => Auth::id()]);
+                ActivityLogger::log('review_complaint', "Reviewed complaint #{$rating->id} (bulk, operator: {$rating->operator_name})", $rating, 'review');
+                if ($this->notifyComplaintStatus($rating, 'reviewed')) {
                     $emailFailures++;
                 }
-                $this->notifyPassengerInApp($rating, 'Complaint Accepted', 'Your complaint has been verified and accepted by the TFRB. Thank you for helping keep our transport services safe.');
+                $this->notifyPassengerInApp($rating, 'Complaint Reviewed', 'Your complaint has been reviewed by the responsible office. Thank you for helping keep our transport services safe.');
                 $count++;
             });
 
@@ -294,15 +412,15 @@ class RatingAdminService
 
         if ($count > 0) {
             $this->notifyAdminsSummary(
-                'Bulk Complaints Accepted',
-                "{$count} complaint" . ($count === 1 ? '' : 's') . ' accepted in a bulk review.'
+                'Bulk Complaints Reviewed',
+                "{$count} complaint" . ($count === 1 ? '' : 's') . ' reviewed in a bulk review.'
             );
         }
 
         return $this->withEmailWarning(
             back()->with('success', $count > 0
-                ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' accepted.'
-                : 'No pending complaints were accepted.'),
+                ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' reviewed.'
+                : 'No pending complaints were reviewed.'),
             $emailFailures > 0 ? "{$emailFailures} passenger" . ($emailFailures === 1 ? '' : 's') . ' could not be emailed about this update. Check the server log.' : null
         );
     }
@@ -365,12 +483,19 @@ class RatingAdminService
      * Keep the whole review team in the loop: every TFRB officer and superadmin
      * gets an in-app notification when a complaint moves through the pipeline,
      * except the officer who performed the action (they already saw the
-     * confirmation banner). Reuses the 'complaint' type so it lands in the
-     * Complaints tab and links straight to the report.
+     * confirmation banner). Presidents acting on their own pipeline don't
+     * notify TFRB/superadmin — they only notify on forward.
      */
     private function notifyAdmins(Rating $rating, string $title, string $message): void
     {
         $actorId = Auth::id();
+        $actorRole = Auth::user()?->role;
+
+        if ($actorRole !== 'tfrb_officer' && $actorRole !== 'superadmin') {
+            // Actions taken by a TODA president stay inside their pipeline
+            // unless the case is forwarded to TFRB.
+            return;
+        }
 
         User::whereIn('role', ['tfrb_officer', 'superadmin'])
             ->when($actorId, function ($query) use ($actorId) {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\PasswordResetOtpController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PresidentComplaintsController;
 use App\Http\Controllers\TfrbOfficerController;
 use App\Http\Controllers\SuperadminController;
 use App\Http\Controllers\OperatorController;
@@ -88,7 +89,7 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::patch('/ratings/{rating}/review', [TfrbOfficerController::class, 'markReviewed'])->name('ratings.review');
     Route::post('/ratings/bulk-review', [TfrbOfficerController::class, 'ratingsBulkReview'])->name('ratings.bulkReview');
     Route::get('/complaints', [TfrbOfficerController::class, 'complaints'])->name('complaints');
-    Route::patch('/complaints/{rating}/accept', [TfrbOfficerController::class, 'complaintsAccept'])->name('complaints.accept');
+    Route::patch('/complaints/{rating}/review', [TfrbOfficerController::class, 'complaintsMarkReviewed'])->name('complaints.review');
     Route::patch('/complaints/{rating}/reject', [TfrbOfficerController::class, 'complaintsReject'])->name('complaints.reject');
     Route::patch('/complaints/{rating}/reset', [TfrbOfficerController::class, 'complaintsResetReview'])->name('complaints.reset');
     Route::patch('/complaints/{rating}/solve', [TfrbOfficerController::class, 'complaintsMarkSolved'])->name('complaints.solve');
@@ -143,7 +144,7 @@ Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')-
     Route::get('/presidents', [SuperadminController::class, 'presidents'])->name('presidents');
     Route::delete('/presidents/{user}', [SuperadminController::class, 'destroyPresident'])->name('presidents.destroy');
     Route::get('/complaints', [SuperadminController::class, 'complaints'])->name('complaints');
-        Route::patch('/complaints/{rating}/accept', [SuperadminController::class, 'complaintsAccept'])->name('complaints.accept');
+        Route::patch('/complaints/{rating}/review', [SuperadminController::class, 'complaintsMarkReviewed'])->name('complaints.review');
         Route::patch('/complaints/{rating}/reject', [SuperadminController::class, 'complaintsReject'])->name('complaints.reject');
         Route::patch('/complaints/{rating}/reset', [SuperadminController::class, 'complaintsResetReview'])->name('complaints.reset');
     Route::patch('/complaints/{rating}/solve', [SuperadminController::class, 'complaintsMarkSolved'])->name('complaints.solve');
@@ -241,6 +242,16 @@ Route::middleware(['auth', 'role:operator_president', 'president.active', 'toda.
     // Take the TODA president's first-level decision on join requests.
     Route::patch('/memberships/{membership}/approve', [PresidentController::class, 'approveMembership'])->name('memberships.approve');
     Route::patch('/memberships/{membership}/reject', [PresidentController::class, 'rejectMembership'])->name('memberships.reject');
+    // Passenger complaints routed to this TODA's president — they can
+    // review, solve, reject or forward them (forward is one-way).
+    Route::get('/complaints', [PresidentComplaintsController::class, 'index'])->name('complaints');
+    Route::patch('/complaints/{rating}/review', [PresidentComplaintsController::class, 'markReviewed'])->name('complaints.review');
+    Route::patch('/complaints/{rating}/solve', [PresidentComplaintsController::class, 'markSolved'])->name('complaints.solve');
+    Route::patch('/complaints/{rating}/reject', [PresidentComplaintsController::class, 'reject'])->name('complaints.reject');
+    Route::patch('/complaints/{rating}/reset', [PresidentComplaintsController::class, 'reset'])->name('complaints.reset');
+    Route::patch('/complaints/{rating}/reopen', [PresidentComplaintsController::class, 'reopen'])->name('complaints.reopen');
+    Route::patch('/complaints/{rating}/forward', [PresidentComplaintsController::class, 'forward'])->name('complaints.forward');
+    Route::post('/complaints/{rating}/reply', [PresidentComplaintsController::class, 'reply'])->name('complaints.reply');
 });
 
 // Notification routes (TFRB Officer, Superadmin & TODA President — operators'

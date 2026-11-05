@@ -37,13 +37,13 @@
     // whether a low rating still needs the president's own response.
     $statusTone = [
         'Solved' => 'tw-badge tw-badge-navy',
-        'Accepted' => 'tw-badge tw-badge-green',
+        'Reviewed' => 'tw-badge tw-badge-green',
         'Rejected' => 'tw-badge tw-badge-red',
         'Pending' => 'tw-badge tw-badge-amber',
     ];
     $statusText = [
         'Solved' => 'Solved',
-        'Accepted' => 'Accepted',
+        'Reviewed' => 'Reviewed',
         'Rejected' => 'Rejected',
         'Pending' => 'Under review',
     ];

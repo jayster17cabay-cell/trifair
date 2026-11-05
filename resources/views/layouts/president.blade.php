@@ -12,6 +12,7 @@
                 'links' => [
                     ['label' => 'Overview', 'icon' => 'bi-grid-1x2', 'route' => 'president.dashboard', 'match' => 'president.dashboard', 'active' => request()->routeIs('president.dashboard') && !request()->filled('section')],
                     ['label' => 'Ratings & Complaints', 'icon' => 'bi-star-fill', 'route' => 'president.ratings', 'match' => 'president.ratings'],
+                    ['label' => 'Complaints Queue', 'icon' => 'bi-flag-fill', 'route' => 'president.complaints', 'match' => 'president.complaints', 'gold' => true],
                     ['label' => 'Join Requests', 'icon' => 'bi-box-arrow-in-down', 'href' => route('president.dashboard', ['section' => 'join-requests']), 'match' => 'president.dashboard', 'active' => request()->query('section') === 'join-requests'],
                     ['label' => 'Members', 'icon' => 'bi-people', 'href' => route('president.dashboard', ['section' => 'members']), 'match' => 'president.dashboard', 'active' => request()->query('section') === 'members' || request()->routeIs('president.members')],
                 ],

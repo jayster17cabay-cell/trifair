@@ -85,11 +85,11 @@ class PresidentQueryService
             : 0;
 
         $pendingComplaints = Rating::query()
-            ->whereIn('operator_id', $memberIdsForList)
+            ->where('routed_to', $user?->id)
             ->where('toda_id', $toda->id)
             ->isValid()
             ->isComplaint()
-            ->whereNull('is_accepted')
+            ->where('is_reviewed', false)
             ->where('is_solved', false)
             ->count();
 

@@ -1,10 +1,11 @@
 {{--
     Reusable complaints list. Requires:
-    - $routePrefix     string             'superadmin' | 'tfrb-officer'
+    - $routePrefix     string             'superadmin' | 'tfrb-officer' | 'president'
+    - $presidentMode   bool               (optional) true = president's queue: no export, simpler copy
     - $complaints      LengthAwarePaginator of App\Models\Rating
-    - $filter          string             'pending' | 'accepted' | 'rejected' | 'solved' | 'all'
+    - $filter          string             'pending' | 'reviewed' | 'rejected' | 'solved' | 'all'
     - $ratingFilter    int|null           star rating filter: 1 | 2 | null
-    - $pendingCount, $acceptedCount, $rejectedCount, $solvedCount, $totalCount int
+    - $pendingCount, $reviewedCount, $rejectedCount, $solvedCount, $totalCount int
     - $star1Count, $star2Count           int  (badges on the star chips)
     - $activeOperators Collection          active operators for export filter
     - $proofsTotal    int|null         (optional) global proof count across all complaints
@@ -12,11 +13,12 @@
 
 @php
     $search = trim((string) ($search ?? request('search', '')));
+    $presidentMode = $presidentMode ?? false;
 
     $statItems = [
         ['num' => $totalCount, 'label' => 'Total', 'icon' => 'bi-exclamation-circle', 'chip' => 'bg-blue-50 text-navy-600'],
         ['num' => $pendingCount, 'label' => 'Pending', 'icon' => 'bi-clock-history', 'chip' => 'bg-amber-50 text-amber-600'],
-        ['num' => $acceptedCount, 'label' => 'Accepted', 'icon' => 'bi-check-circle', 'chip' => 'bg-emerald-50 text-emerald-600'],
+        ['num' => $reviewedCount, 'label' => 'Reviewed', 'icon' => 'bi-check-circle', 'chip' => 'bg-emerald-50 text-emerald-600'],
         ['num' => $rejectedCount, 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600'],
         ['num' => $solvedCount, 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600'],
         ['num' => $proofsTotal ?? $complaints->sum(fn($r) => $r->proofs->count()), 'label' => 'Proofs', 'icon' => 'bi-paperclip', 'chip' => 'bg-slate-100 text-slate-500'],
@@ -25,26 +27,54 @@
 
 <div class="tw-page-head">
     <div>
-        <h1 class="tw-page-title"><i class="bi bi-exclamation-triangle mr-2 text-amber-500"></i>Complaints</h1>
-        <p class="tw-page-sub">Passenger complaints filed against operators</p>
+        @if ($presidentMode)
+            <h1 class="tw-page-title"><i class="bi bi-flag mr-2 text-amber-500"></i>Complaints Queue</h1>
+            <p class="tw-page-sub">Passenger complaints against members of your TODA — you handle them first</p>
+        @else
+            <h1 class="tw-page-title"><i class="bi bi-exclamation-triangle mr-2 text-amber-500"></i>Complaints</h1>
+            <p class="tw-page-sub">Passenger complaints against operators</p>
+        @endif
     </div>
-    @include('partials.admin.export-dropdown', [
-        'exportRoute' => route($routePrefix . '.complaints.export'),
-        'exportLabel' => 'Complaints',
-        'exportIcon' => 'bi-exclamation-triangle',
-        'activeOperators' => $activeOperators,
-        'exportFilters' => [
-            ['type' => 'select', 'name' => 'filter', 'label' => 'Status', 'options' => [
-                '' => 'All', 'pending' => 'Pending', 'accepted' => 'Accepted', 'rejected' => 'Rejected', 'solved' => 'Solved',
-            ], 'value' => $filter],
-            ['type' => 'select', 'name' => 'rating', 'label' => 'Stars', 'options' => [
-                '' => 'All stars', '1' => '1 Star', '2' => '2 Stars',
-            ], 'value' => $ratingFilter ?? ''],
-            ['type' => 'daterange', 'prefix' => 'date', 'from' => request('date_from'), 'to' => request('date_to')],
-        ],
-        'preservedParams' => array_filter(['search' => $search], fn ($v) => $v !== null && $v !== ''),
-    ])
+    @unless ($presidentMode)
+        @include('partials.admin.export-dropdown', [
+            'exportRoute' => route($routePrefix . '.complaints.export'),
+            'exportLabel' => 'Complaints',
+            'exportIcon' => 'bi-exclamation-triangle',
+            'activeOperators' => $activeOperators,
+            'exportFilters' => [
+                ['type' => 'select', 'name' => 'filter', 'label' => 'Status', 'options' => [
+                    '' => 'All', 'pending' => 'Pending', 'reviewed' => 'Reviewed', 'rejected' => 'Rejected', 'solved' => 'Solved',
+                ], 'value' => $filter],
+                ['type' => 'select', 'name' => 'rating', 'label' => 'Stars', 'options' => [
+                    '' => 'All stars', '1' => '1 Star', '2' => '2 Stars',
+                ], 'value' => $ratingFilter ?? ''],
+                ['type' => 'daterange', 'prefix' => 'date', 'from' => request('date_from'), 'to' => request('date_to')],
+            ],
+            'preservedParams' => array_filter(['search' => $search], fn ($v) => $v !== null && $v !== ''),
+        ])
+    @endunless
 </div>
+
+@if ($presidentMode)
+    {{-- How the complaint pipeline works for presidents — shown on every visit --}}
+    <div class="mb-5 rounded-2xl border border-navy-100 bg-navy-50 px-4 py-4">
+        <div class="text-[11px] font-bold uppercase tracking-widest text-navy-600"><i class="bi bi-signpost-2 mr-1"></i>How complaints flow</div>
+        <ol class="mt-3 grid gap-2.5 text-xs text-navy-800 sm:grid-cols-3">
+            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">1</span>
+                <span class="leading-relaxed"><strong>Passenger files</strong> — the complaint lands here, assigned to you.</span>
+            </li>
+            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">2</span>
+                <span class="leading-relaxed"><strong>You review &amp; solve</strong> — mark it reviewed (counts toward the operator's rating) and decide.</span>
+            </li>
+            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">3</span>
+                <span class="leading-relaxed"><strong>Can't resolve? Forward to TFRB</strong> — one-way hand-off; only TFRB/superadmin can act afterwards.</span>
+            </li>
+        </ol>
+    </div>
+@endif
 
 {{-- Sticky summary + filter panel: stays pinned below the topbar while the list scrolls. --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 border-b border-slate-100 bg-white/95 px-4 pb-4 pt-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
@@ -68,7 +98,7 @@
             <select name="filter" id="complaint_filter" class="tw-select py-2 text-xs" onchange="this.form.submit()" aria-label="Filter complaints by status">
                 <option value="all" {{ $filter === 'all' ? 'selected' : '' }}>All status ({{ $totalCount }})</option>
                 <option value="pending" {{ $filter === 'pending' ? 'selected' : '' }}>Pending ({{ $pendingCount }})</option>
-                <option value="accepted" {{ $filter === 'accepted' ? 'selected' : '' }}>Accepted ({{ $acceptedCount }})</option>
+                <option value="reviewed" {{ $filter === 'reviewed' ? 'selected' : '' }}>Reviewed ({{ $reviewedCount }})</option>
                 <option value="rejected" {{ $filter === 'rejected' ? 'selected' : '' }}>Rejected ({{ $rejectedCount }})</option>
                 <option value="solved" {{ $filter === 'solved' ? 'selected' : '' }}>Solved ({{ $solvedCount }})</option>
             </select>
@@ -109,14 +139,14 @@
         $emptyTitle = 'No Complaints';
         $emptyMsg = 'All operators are doing great! No complaints filed.';
         if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for review. Keep it up!'; }
-        elseif ($filter === 'accepted') { $emptyTitle = 'No Accepted Complaints'; $emptyMsg = 'Complaints accepted by an officer will appear here.'; }
+        elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints marked as reviewed will appear here.'; }
         elseif ($filter === 'rejected') { $emptyTitle = 'No Rejected Complaints'; $emptyMsg = 'Complaints rejected after review will appear here.'; }
         elseif ($filter === 'solved') { $emptyTitle = 'No Solved Complaints'; $emptyMsg = 'Complaints you mark as solved will appear here.'; }
     }
 @endphp
 
 @forelse ($complaints as $rating)
-    @include('partials.admin.complaint-card', ['rating' => $rating, 'routePrefix' => $routePrefix])
+    @include('partials.admin.complaint-card', ['rating' => $rating, 'routePrefix' => $routePrefix, 'actor' => $actor])
 @empty
     <div class="tw-empty py-16">
         <div class="tw-empty-icon"><i class="bi bi-check-circle text-emerald-500"></i></div>

@@ -18,9 +18,9 @@
                     <tr>
                         <td style="padding:30px 32px;">
                             @php
-                                $statusLabel = $status === 'solved' ? 'Solved' : ($status === 'accepted' ? 'Accepted' : ($status === 'rejected' ? 'Rejected' : ($status === 'submitted' ? 'Received' : 'Reviewed')));
-                                $heading = $status === 'solved' ? 'has been solved' : ($status === 'accepted' ? 'has been accepted' : ($status === 'rejected' ? 'was not accepted after review' : ($status === 'submitted' ? 'was received' : 'has been reviewed')));
-                                $statusColor = in_array($status, ['solved', 'accepted'], true) ? '#059669' : ($status === 'rejected' ? '#dc2626' : '#0f172a');
+                                $statusLabel = $status === 'solved' ? 'Solved' : ($status === 'accepted' ? 'Reviewed' : ($status === 'reviewed' ? 'Reviewed' : ($status === 'rejected' ? 'Rejected' : ($status === 'submitted' ? 'Received' : ($status === 'forwarded' ? 'Forwarded to TFRB' : 'Reviewed')))));
+                                $heading = $status === 'solved' ? 'has been solved' : ($status === 'rejected' ? 'was not upheld after review' : ($status === 'submitted' ? 'was received' : ($status === 'forwarded' ? 'has been forwarded to the TFRB' : 'has been reviewed')));
+                                $statusColor = in_array($status, ['solved'], true) ? '#059669' : ($status === 'rejected' ? '#dc2626' : ($status === 'forwarded' ? '#0a2a5e' : '#0f172a'));
                             @endphp
                             <h1 style="margin:0 0 10px;font-size:18px;color:#0f172a;">
                                 Your complaint {{ $rating->reference_number }} {{ $heading }}
@@ -66,19 +66,21 @@
                                 @if ($status === 'solved')
                                     The concerning parties have been notified and the matter has been resolved. Thank you for
                                     helping us keep our transport services safe and accountable.
-                                @elseif ($status === 'accepted')
-                                    After reviewing the evidence, a TFRB officer has verified and accepted your complaint.
-                                    It will now be counted against the reported operator's record. Thank you for helping us
+                                @elseif ($status === 'accepted' || $status === 'reviewed')
+                                    After reviewing the evidence, your complaint has been upheld by the responsible office
+                                    and is now counted against the reported operator's record. Thank you for helping us
                                     keep our transport services safe and accountable.
                                 @elseif ($status === 'rejected')
-                                    A TFRB officer has reviewed your complaint. Based on the available information it could
-                                    not be verified as a valid violation, so it will not be counted against the operator's
+                                    Your complaint was reviewed by the responsible office. Based on the available information
+                                    it could not be upheld as a violation, so it does not count against the operator's
                                     record. If you have additional evidence, you may file a new complaint.
+                                @elseif ($status === 'forwarded')
+                                    Your complaint has been forwarded to the TFRB/superadmin by the TODA president for further
+                                    action. They will review it from here and notify you once it is resolved.
                                 @elseif ($status === 'submitted')
-                                    We have received your complaint. A TFRB officer will review it shortly, and you will
+                                    We have received your complaint. The responsible office will review it shortly, and you will
                                     receive a notification here once it is reviewed or resolved. Keep this reference number
                                     for tracking your complaint.
-                                @else
                                     Your complaint has been reviewed by the TFRB. You will receive another notification once
                                     the complaint is resolved. Thank you for your patience.
                                 @endif

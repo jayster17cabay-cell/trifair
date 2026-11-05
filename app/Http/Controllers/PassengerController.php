@@ -21,19 +21,19 @@ class PassengerController extends Controller
         // from the same base query via conditional aggregation.
         $tally = (clone $base)->selectRaw(
             'COUNT(*) as total_count'
-            . ', SUM(CASE WHEN is_accepted IS NULL AND is_solved = false THEN 1 ELSE 0 END) as pending_count'
-            . ', SUM(CASE WHEN is_accepted = true AND is_solved = false THEN 1 ELSE 0 END) as accepted_count'
-            . ', SUM(CASE WHEN is_accepted = false THEN 1 ELSE 0 END) as rejected_count'
+            . ', SUM(CASE WHEN is_reviewed = false AND is_solved = false THEN 1 ELSE 0 END) as pending_count'
+            . ', SUM(CASE WHEN is_reviewed = true AND is_solved = false AND rejected_at IS NULL THEN 1 ELSE 0 END) as reviewed_count'
+            . ', SUM(CASE WHEN rejected_at IS NOT NULL THEN 1 ELSE 0 END) as rejected_count'
             . ', SUM(CASE WHEN is_solved = true THEN 1 ELSE 0 END) as solved_count'
         )->first();
 
         $totalCount = (int) $tally->total_count;
         $pendingCount = (int) $tally->pending_count;
-        $acceptedCount = (int) $tally->accepted_count;
+        $reviewedCount = (int) $tally->reviewed_count;
         $rejectedCount = (int) $tally->rejected_count;
         $solvedCount = (int) $tally->solved_count;
 
-        $statusFilters = ['pending', 'accepted', 'rejected', 'solved'];
+        $statusFilters = ['pending', 'reviewed', 'rejected', 'solved'];
         $activeStatus = $request->query('status');
         $activeStatus = in_array($activeStatus, $statusFilters, true) ? $activeStatus : null;
 
@@ -41,23 +41,23 @@ class PassengerController extends Controller
             ->with(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user']);
 
         if ($activeStatus === 'pending') {
-            $query->whereNull('is_accepted')->where('is_solved', false);
-        } elseif ($activeStatus === 'accepted') {
-            $query->where('is_accepted', true)->where('is_solved', false);
+            $query->where('is_reviewed', false)->where('is_solved', false);
+        } elseif ($activeStatus === 'reviewed') {
+            $query->where('is_reviewed', true)->where('is_solved', false)->whereNull('rejected_at');
         } elseif ($activeStatus === 'rejected') {
-            $query->where('is_accepted', false);
+            $query->whereNotNull('rejected_at');
         } elseif ($activeStatus === 'solved') {
             $query->where('is_solved', true);
         }
 
         // Group the list so tickets that still need attention (pending, then
-        // accepted) always sit above closed ones (rejected, then solved) —
+        // reviewed) always sit above closed ones (rejected, then solved) —
         // newest first inside each group.
         $query->orderByRaw(
             'CASE'
             . ' WHEN is_solved = true THEN 3'
-            . ' WHEN is_accepted IS NULL THEN 0'
-            . ' WHEN is_accepted = true THEN 1'
+            . ' WHEN is_reviewed = false THEN 0'
+            . ' WHEN is_reviewed = true AND rejected_at IS NULL THEN 1'
             . ' ELSE 2 END'
         )->orderByDesc('created_at');
 
@@ -81,7 +81,7 @@ class PassengerController extends Controller
             'complaints',
             'totalCount',
             'pendingCount',
-            'acceptedCount',
+            'reviewedCount',
             'rejectedCount',
             'solvedCount',
             'notifications',

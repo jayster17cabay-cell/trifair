@@ -318,9 +318,9 @@ class TfrbOfficerController extends Controller
         return view('tfrb-officer.complaints', $data);
     }
 
-    public function complaintsAccept(Rating $rating)
+    public function complaintsMarkReviewed(Rating $rating)
     {
-        return app(RatingAdminService::class)->complaintsAccept($rating);
+        return app(RatingAdminService::class)->complaintsMarkReviewed($rating);
     }
 
     public function complaintsReject(Request $request, Rating $rating)

@@ -380,17 +380,17 @@ class AdminTest extends TestCase
         $this->assertNull(User::find($userId));
     }
 
-    public function test_marking_complaint_accepted_counts_toward_rating()
+    public function test_marking_complaint_reviewed_counts_toward_rating()
     {
         $admin = $this->makeUser('superadmin');
         $rating = $this->makeValidComplaint($this->makeOperator());
 
-        $this->actingAs($admin)->patch('/superadmin/complaints/' . $rating->id . '/accept')
+        $this->actingAs($admin)->patch('/superadmin/complaints/' . $rating->id . '/review')
             ->assertRedirect();
 
         $fresh = $rating->fresh();
         $this->assertTrue((bool) $fresh->is_reviewed);
-        $this->assertTrue($fresh->is_accepted);
+        $this->assertNull($fresh->rejected_at);
     }
 
     public function test_marking_complaint_rejected_does_not_count()
@@ -403,21 +403,21 @@ class AdminTest extends TestCase
 
         $fresh = $rating->fresh();
         $this->assertTrue((bool) $fresh->is_reviewed);
-        $this->assertFalse($fresh->is_accepted);
+        $this->assertNotNull($fresh->rejected_at);
     }
 
     public function test_complaint_review_can_be_reset_to_pending()
     {
         $admin = $this->makeUser('superadmin');
         $rating = $this->makeValidComplaint($this->makeOperator());
-        $rating->update(['is_reviewed' => true, 'is_accepted' => false]);
+        $rating->update(['is_reviewed' => true, 'rejected_at' => now()]);
 
         $this->actingAs($admin)->patch('/superadmin/complaints/' . $rating->id . '/reset')
             ->assertRedirect();
 
         $fresh = $rating->fresh();
         $this->assertFalse((bool) $fresh->is_reviewed);
-        $this->assertNull($fresh->is_accepted);
+        $this->assertNull($fresh->rejected_at);
     }
 
     public function test_superadmin_can_bulk_review_complaints()
@@ -432,9 +432,7 @@ class AdminTest extends TestCase
         ])->assertRedirect()->assertSessionHas('success');
 
         $this->assertTrue((bool) $a->fresh()->is_reviewed);
-        $this->assertTrue($a->fresh()->is_accepted);
         $this->assertTrue((bool) $b->fresh()->is_reviewed);
-        $this->assertTrue($b->fresh()->is_accepted);
     }
 
     public function test_officer_can_bulk_review_complaints()
@@ -449,9 +447,7 @@ class AdminTest extends TestCase
         ])->assertRedirect()->assertSessionHas('success');
 
         $this->assertTrue((bool) $a->fresh()->is_reviewed);
-        $this->assertTrue($a->fresh()->is_accepted);
         $this->assertTrue((bool) $b->fresh()->is_reviewed);
-        $this->assertTrue($b->fresh()->is_accepted);
     }
 
     public function test_operators_page_renders_compact_table_and_modal()
@@ -799,13 +795,13 @@ class AdminTest extends TestCase
         // Plain rating: always counts.
         $this->makeValidRating($operator, 5);
 
-        // Pending complaint (not accepted yet): must NOT count (same rule as the row).
+        // Pending complaint (not reviewed yet): must NOT count (same rule as the row).
         $pending = $this->makeValidRating($operator, 2);
         $pending->update(['complaint_type' => 'Rude Driver']);
 
-        // Accepted complaint: counts.
-        $accepted = $this->makeValidRating($operator, 2);
-        $accepted->update(['complaint_type' => 'Rude Driver', 'is_accepted' => true]);
+        // Reviewed complaint: counts.
+        $reviewed = $this->makeValidRating($operator, 2);
+        $reviewed->update(['complaint_type' => 'Rude Driver', 'is_reviewed' => true]);
 
         // Older plain rating: counts overall, but must drop out of a "today" period.
         $old = $this->makeValidRating($operator, 4);

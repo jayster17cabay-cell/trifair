@@ -152,7 +152,7 @@ class AdminDashboardService
             ->whereNull('operators.archived_at')
             ->whereHas('user', fn ($q) => $q->whereIn('role', ['operator', 'operator_president']))
             ->leftJoin(
-                DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true and (complaint_type is null or is_accepted = true) group by operator_id) as vr'),
+                DB::raw('(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true and (complaint_type is null or (is_reviewed = true and rejected_at is null)) group by operator_id) as vr'),
                 'vr.operator_id',
                 '=',
                 'operators.id'

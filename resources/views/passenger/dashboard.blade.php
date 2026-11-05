@@ -102,7 +102,7 @@
             $statusTabs = [
                 ['key' => null, 'label' => 'Total', 'count' => $totalCount, 'icon' => 'bi-list-ul', 'color' => 'violet'],
                 ['key' => 'pending', 'label' => 'Pending', 'count' => $pendingCount, 'icon' => 'bi-clock-history', 'color' => 'amber'],
-                ['key' => 'accepted', 'label' => 'Accepted', 'count' => $acceptedCount, 'icon' => 'bi-check-circle', 'color' => 'emerald'],
+                ['key' => 'reviewed', 'label' => 'Reviewed', 'count' => $reviewedCount, 'icon' => 'bi-check-circle', 'color' => 'emerald'],
                 ['key' => 'rejected', 'label' => 'Rejected', 'count' => $rejectedCount, 'icon' => 'bi-x-circle', 'color' => 'red'],
                 ['key' => 'solved', 'label' => 'Solved', 'count' => $solvedCount, 'icon' => 'bi-patch-check', 'color' => 'navy'],
             ];
@@ -168,21 +168,21 @@
             $pageItems = collect($complaints->getCollection());
             $sections = [
                 'pending' => ['label' => 'Pending', 'desc' => 'Filed and waiting for TFRB review', 'count' => $pendingCount, 'dot' => 'bg-amber-400', 'border' => 'border-l-amber-400'],
-                'accepted' => ['label' => 'Accepted', 'desc' => 'Confirmed by TFRB — investigation in progress', 'count' => $acceptedCount, 'dot' => 'bg-emerald-500', 'border' => 'border-l-emerald-500'],
+                'reviewed' => ['label' => 'Reviewed', 'desc' => 'The complaint has been reviewed — it now counts against the operator', 'count' => $reviewedCount, 'dot' => 'bg-emerald-500', 'border' => 'border-l-emerald-500'],
                 'rejected' => ['label' => 'Rejected', 'desc' => 'Closed — the complaint was not upheld', 'count' => $rejectedCount, 'dot' => 'bg-red-400', 'border' => 'border-l-red-500'],
                 'solved' => ['label' => 'Solved', 'desc' => 'The case has been resolved by TFRB', 'count' => $solvedCount, 'dot' => 'bg-navy-600', 'border' => 'border-l-navy-600'],
             ];
-            $buckets = ['pending' => collect(), 'accepted' => collect(), 'rejected' => collect(), 'solved' => collect()];
+            $buckets = ['pending' => collect(), 'reviewed' => collect(), 'rejected' => collect(), 'solved' => collect()];
             if ($activeStatus !== null) {
                 $buckets[$activeStatus] = $pageItems;
             } else {
                 foreach ($pageItems as $rating) {
                     if ($rating->is_solved) {
                         $buckets['solved']->push($rating);
-                    } elseif ($rating->is_accepted === true) {
-                        $buckets['accepted']->push($rating);
-                    } elseif ($rating->is_accepted === false) {
+                    } elseif ($rating->rejected_at) {
                         $buckets['rejected']->push($rating);
+                    } elseif ($rating->is_reviewed) {
+                        $buckets['reviewed']->push($rating);
                     } else {
                         $buckets['pending']->push($rating);
                     }

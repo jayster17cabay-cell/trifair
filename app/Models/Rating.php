@@ -90,9 +90,11 @@ class Rating extends Model
         'resolution_note',
         'is_auto',
         'is_valid',
-        'is_accepted',
         'rejected_at',
         'reviewed_by',
+        'routed_to',
+        'forwarded_at',
+        'forwarded_by',
         'start_location',
         'end_location',
     ];
@@ -105,8 +107,10 @@ class Rating extends Model
         'rejected_at' => 'datetime',
         'is_auto' => 'boolean',
         'is_valid' => 'boolean',
-        'is_accepted' => 'boolean',
         'reviewed_by' => 'integer',
+        'routed_to' => 'integer',
+        'forwarded_at' => 'datetime',
+        'forwarded_by' => 'integer',
         'franchise_term_id' => 'integer',
         'toda_id' => 'integer',
     ];
@@ -184,13 +188,31 @@ class Rating extends Model
     }
 
     /**
-     * The officer/superadmin who reviewed the complaint (accepted, rejected or
-     * solved it). Null for pending complaints and legacy rows reviewed before
-     * reviewer tracking existed.
+     * The officer / TODA president who reviewed the complaint (reviewed,
+     * rejected or solved it). Null for pending complaints and legacy rows
+     * reviewed before reviewer tracking existed.
      */
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * The TODA president responsible for this complaint while it has not been
+     * forwarded to the TFRB — or null when the case belongs to TFRB /
+     * superadmin (direct cases and forwarded cases).
+     */
+    public function routedToPresident()
+    {
+        return $this->belongsTo(User::class, 'routed_to');
+    }
+
+    /**
+     * The staff user who forwarded the complaint to the TFRB / superadmin.
+     */
+    public function forwardedBy()
+    {
+        return $this->belongsTo(User::class, 'forwarded_by');
     }
 
     /**
@@ -273,32 +295,32 @@ class Rating extends Model
 
     /**
      * Rows allowed to influence an operator's star average. A plain rating
-     * (no complaint type) always counts; a complaint counts only once an
-     * officer has explicitly accepted it. Pending and rejected complaints
-     * are ignored so fake complaints can never drag an operator's rating
-     * down before they are reviewed.
+     * (no complaint type) always counts; a complaint counts once the
+     * responsible party (TODA president or TFRB/superadmin) has reviewed it.
+     * Rejected complaints never count — they were reviewed and not upheld.
      */
     public function scopeCountsTowardRating($query)
     {
         return $query->where(function ($q) {
-            $q->whereNull('complaint_type')->orWhere('is_accepted', true);
+            $q->whereNull('complaint_type')
+                ->orWhere(fn ($q) => $q->where('is_reviewed', true)->whereNull('rejected_at'));
         });
     }
 
     /**
      * Combined review status shown on complaint badges, filters and exports:
-     * Solved > Accepted > Rejected > Pending.
+     * Solved > Rejected > Reviewed > Pending.
      */
     public function getStatusLabelAttribute(): string
     {
         if ($this->is_solved) {
             return 'Solved';
         }
-        if ($this->is_accepted === true) {
-            return 'Accepted';
-        }
-        if ($this->is_accepted === false) {
+        if ($this->rejected_at) {
             return 'Rejected';
+        }
+        if ($this->is_reviewed) {
+            return 'Reviewed';
         }
 
         return 'Pending';

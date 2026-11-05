@@ -8,6 +8,7 @@ use App\Models\OperatorToda;
 use App\Models\Rating;
 use App\Models\SuspensionViolation;
 use App\Models\Toda;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\DB;
  */
 class AdminQueryService
 {
-    public function complaintsData(Request $request): array
+    public function complaintsData(Request $request, ?User $president = null): array
     {
         $filter = $request->query('filter', 'pending');
         $ratingKey = $request->query('rating');
@@ -28,22 +29,27 @@ class AdminQueryService
         $search = trim((string) $request->query('search'));
 
         $base = Rating::isValid()->isComplaint();
+        if ($president) {
+            // Presidents only see complaints routed to them (including
+            // ones they have forwarded — they keep visibility to monitor).
+            $base->where('routed_to', $president->id);
+        }
 
         // One round-trip instead of seven: the status/star tallies are all
         // derived from the same base query via conditional aggregation. On a
         // remote database each avoided count() saves a full network round-trip.
         $counts = (clone $base)->selectRaw(
             'COUNT(*) as total_count'
-            . ', SUM(CASE WHEN is_accepted IS NULL AND is_solved = false THEN 1 ELSE 0 END) as pending_count'
-            . ', SUM(CASE WHEN is_accepted = true AND is_solved = false THEN 1 ELSE 0 END) as accepted_count'
-            . ', SUM(CASE WHEN is_accepted = false THEN 1 ELSE 0 END) as rejected_count'
+            . ', SUM(CASE WHEN is_reviewed = false AND is_solved = false THEN 1 ELSE 0 END) as pending_count'
+            . ', SUM(CASE WHEN is_reviewed = true AND is_solved = false AND rejected_at IS NULL THEN 1 ELSE 0 END) as reviewed_count'
+            . ', SUM(CASE WHEN rejected_at IS NOT NULL THEN 1 ELSE 0 END) as rejected_count'
             . ', SUM(CASE WHEN is_solved = true THEN 1 ELSE 0 END) as solved_count'
             . ', SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as star1_count'
             . ', SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as star2_count'
         )->first();
 
         $pendingCount = (int) ($counts->pending_count ?? 0);
-        $acceptedCount = (int) ($counts->accepted_count ?? 0);
+        $reviewedCount = (int) ($counts->reviewed_count ?? 0);
         $rejectedCount = (int) ($counts->rejected_count ?? 0);
         $solvedCount = (int) ($counts->solved_count ?? 0);
         $totalCount = (int) ($counts->total_count ?? 0);
@@ -52,25 +58,26 @@ class AdminQueryService
 
         // Global count of proof files attached to valid complaints (not just the
         // current page) so the stats bar stays accurate across pagination.
-        $proofsTotal = (int) DB::table('ratings')
+        $proofsTotalQuery = DB::table('ratings')
             ->join('rating_proofs', 'rating_proofs.rating_id', '=', 'ratings.id')
             ->where('ratings.is_valid', true)
-            ->whereNotNull('ratings.complaint_type')
-            ->count();
+            ->whereNotNull('ratings.complaint_type');
+        if ($president) {
+            $proofsTotalQuery->where('ratings.routed_to', $president->id);
+        }
+        $proofsTotal = (int) $proofsTotalQuery->count();
 
         if ($filter === 'pending') {
-            $base->whereNull('is_accepted')->where('is_solved', false);
-        } elseif ($filter === 'accepted' || $filter === 'reviewed') {
-            // 'reviewed' is kept as a backwards-compatible alias for accepted.
-            $filter = 'accepted';
-            $base->where('is_accepted', true)->where('is_solved', false);
+            $base->where('is_reviewed', false)->where('is_solved', false);
+        } elseif ($filter === 'reviewed') {
+            $base->where('is_reviewed', true)->where('is_solved', false)->whereNull('rejected_at');
         } elseif ($filter === 'rejected') {
-            $base->where('is_accepted', false);
+            $base->whereNotNull('rejected_at');
         } elseif ($filter === 'solved') {
             $base->isSolved();
         } elseif (!in_array($filter, ['', 'all'], true)) {
             $filter = 'pending';
-            $base->whereNull('is_accepted')->where('is_solved', false);
+            $base->where('is_reviewed', false)->where('is_solved', false);
         }
 
         if ($ratingFilter) {
@@ -86,7 +93,7 @@ class AdminQueryService
             ->paginate(20)
             ->withQueryString();
 
-        return compact('complaints', 'filter', 'ratingFilter', 'search', 'pendingCount', 'acceptedCount', 'rejectedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal');
+        return compact('complaints', 'filter', 'ratingFilter', 'search', 'pendingCount', 'reviewedCount', 'rejectedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal') + ['presidentMode' => (bool) $president];
     }
 
     /**
@@ -303,7 +310,8 @@ class AdminQueryService
             ->whereIn('ratings.operator_id', $ids)
             ->where('ratings.is_valid', true)
             ->where(function ($w) {
-                $w->whereNull('ratings.complaint_type')->orWhere('ratings.is_accepted', true);
+                $w->whereNull('ratings.complaint_type')
+                    ->orWhere(fn ($q) => $q->where('ratings.is_reviewed', true)->whereNull('ratings.rejected_at'));
             });
 
         // Mirror the period used by the headline average so the chips and the
@@ -415,9 +423,9 @@ class AdminQueryService
         if ($to) {
             $periodWhere .= " and created_at <= " . DB::connection()->getPdo()->quote($to->copy()->endOfDay());
         }
-        // Only accepted complaints influence an operator's average; pending and
-        // rejected complaints never count.
-        $sub = '(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true and (complaint_type is null or is_accepted = true)' . $periodWhere . ' group by operator_id)';
+        // Reviewed complaints influence an operator's average; pending
+        // complaints do not. Rejected complaints never count either.
+        $sub = '(select operator_id, avg(rating) as valid_ratings_avg_rating, count(*) as valid_ratings_count from ratings where is_valid = true and (complaint_type is null or (is_reviewed = true and rejected_at is null))' . $periodWhere . ' group by operator_id)';
 
         $query->leftJoin(DB::raw($sub . ' as vr'), 'vr.operator_id', '=', 'operators.id')
             ->select('operators.*', 'vr.valid_ratings_avg_rating', 'vr.valid_ratings_count');
@@ -643,15 +651,14 @@ class AdminQueryService
         if (in_array($ratingKey, ['1', '2'], true)) {
             $base->where('rating', (int) $ratingKey);
         }
-        if ($filter === 'accepted' || $filter === 'reviewed') {
-            $filter = 'accepted';
-            $base->where('is_accepted', true)->where('is_solved', false);
+        if ($filter === 'reviewed') {
+            $base->where('is_reviewed', true)->where('is_solved', false)->whereNull('rejected_at');
         } elseif ($filter === 'rejected') {
-            $base->where('is_accepted', false);
+            $base->whereNotNull('rejected_at');
         } elseif ($filter === 'solved') {
             $base->isSolved();
         } elseif (!in_array($filter, ['', 'all'], true)) {
-            $base->whereNull('is_accepted')->where('is_solved', false);
+            $base->where('is_reviewed', false)->where('is_solved', false);
         }
         if ($operatorId) {
             $base->where('operator_id', $operatorId);

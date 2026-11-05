@@ -23,6 +23,15 @@
     ][$severity];
 
     $typeIconClass = $severity === 'danger' ? 'text-red-500' : ($severity === 'warning' ? 'text-amber-500' : 'text-slate-400');
+    $actor = $actor ?? 'staff';
+
+    // Who may act on this complaint right now — staff (tfrb-officer /
+    // superadmin) and the assigned TODA president; everyone else gets a
+    // read-only card with a badge explaining why.
+    $complaintRouting = app(\App\Services\ComplaintRoutingService::class);
+    $canAct = $complaintRouting->actingAs(Auth::user(), $rating) !== null;
+    $assigneeBadge = $complaintRouting->assigneeBadge($rating);
+    $assignmentNote = $complaintRouting->assignmentNote($rating);
 @endphp
 
 <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
@@ -59,8 +68,8 @@
             </div>
             @if ($rating->status_label === 'Solved')
                 <span class="tw-badge tw-badge-navy"><i class="bi bi-patch-check-fill"></i> Solved</span>
-            @elseif ($rating->status_label === 'Accepted')
-                <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Accepted</span>
+            @elseif ($rating->status_label === 'Reviewed')
+                <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Reviewed</span>
             @elseif ($rating->status_label === 'Rejected')
                 <span class="tw-badge tw-badge-red"><i class="bi bi-x-circle-fill"></i> Rejected</span>
             @else
@@ -162,13 +171,21 @@
         @endif
 
         {{-- Chat thread with the filing passenger: their follow-ups plus any
-             TFRB/superadmin updates, with a composer while the ticket is open. --}}
+             staff/president updates, with a composer only for whoever may act
+             on the complaint. --}}
         <div class="mx-4 mb-4 sm:mx-5">
-            @include('partials.complaint-chat', [
-                'rating' => $rating,
-                'viewSide' => 'staff',
-                'composerAction' => route($routePrefix . '.complaints.reply', $rating),
-            ])
+            @if ($canAct)
+                @include('partials.complaint-chat', [
+                    'rating' => $rating,
+                    'viewSide' => 'staff',
+                    'composerAction' => route($routePrefix . '.complaints.reply', $rating),
+                ])
+            @else
+                <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+                    <i class="bi bi-lock-fill mt-0.5 shrink-0 text-amber-600" aria-hidden="true"></i>
+                    <span class="text-xs font-semibold leading-relaxed text-amber-800">{{ $assignmentNote }}</span>
+                </div>
+            @endif
         </div>
 
         {{-- Resolution details captured when the officer rejected or solved the
@@ -211,64 +228,80 @@
             </div>
         @endif
 
-        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white/70 px-4 py-3 sm:px-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white/80 px-4 py-3.5 sm:px-5">
             @if ($rating->response)
-                <span class="text-xs text-slate-400"><i class="bi bi-check2-all mr-1 text-emerald-500"></i>Operator responded</span>
+                <span class="text-xs font-medium text-emerald-600"><i class="bi bi-check2-all mr-1"></i>Operator responded</span>
             @else
-                <span class="text-xs text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response yet</span>
+                <span class="text-xs font-medium text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response yet</span>
             @endif
-            <div class="flex shrink-0 flex-wrap gap-1.5">
-                @if ($rating->status_label === 'Pending')
-                    <form action="{{ route($routePrefix . '.complaints.accept', $rating) }}" method="POST" onsubmit="return confirm('Accept this complaint? It will count towards the operator\'s rating.')">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" title="Accept complaint">
-                            <i class="bi bi-check-lg"></i>Accept
+            @if ($canAct)
+                <div class="flex shrink-0 flex-wrap items-center gap-2">
+                    @if (in_array($rating->status_label, ['Pending', 'Reviewed'], true))
+                        @if ($rating->status_label === 'Pending')
+                            <form action="{{ route($routePrefix . '.complaints.review', $rating) }}" method="POST" onsubmit="return confirm('Mark this complaint as reviewed? It will count towards the operator\'s rating.')">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" title="Mark as reviewed — counts towards the operator's rating">
+                                    <i class="bi bi-check-lg"></i>Review
+                                </button>
+                            </form>
+                        @endif
+                        <button type="button" class="tw-btn tw-btn-sm tw-btn-navy" title="Mark complaint as solved"
+                                data-complaint-resolution data-mode="solve"
+                                data-action="{{ route($routePrefix . '.complaints.solve', $rating) }}"
+                                data-ref="{{ $rating->reference_number }}">
+                            <i class="bi bi-patch-check"></i>Solved
                         </button>
-                    </form>
-                    <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" title="Reject complaint"
-                            data-complaint-resolution data-mode="reject"
-                            data-action="{{ route($routePrefix . '.complaints.reject', $rating) }}"
-                            data-ref="{{ $rating->reference_number }}">
-                        <i class="bi bi-x-lg"></i>Reject
-                    </button>
-                @elseif ($rating->status_label === 'Rejected')
-                    <form action="{{ route($routePrefix . '.complaints.reset', $rating) }}" method="POST" onsubmit="return confirm('Undo rejection and return this complaint to pending review?')">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Undo rejection">
-                            <i class="bi bi-arrow-counterclockwise"></i>Undo Reject
+                        <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" title="Reject complaint"
+                                data-complaint-resolution data-mode="reject"
+                                data-action="{{ route($routePrefix . '.complaints.reject', $rating) }}"
+                                data-ref="{{ $rating->reference_number }}">
+                            <i class="bi bi-x-lg"></i>Reject
                         </button>
-                    </form>
-                @elseif ($rating->status_label === 'Solved')
-                    <form action="{{ route($routePrefix . '.complaints.reopen', $rating) }}" method="POST" onsubmit="return confirm('Reopen this complaint?')">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reopen complaint">
-                            <i class="bi bi-arrow-counterclockwise"></i>Reopen
-                        </button>
-                    </form>
-                @endif
+                    @elseif ($rating->status_label === 'Rejected')
+                        <form action="{{ route($routePrefix . '.complaints.reset', $rating) }}" method="POST" onsubmit="return confirm('Undo rejection and return this complaint to pending review?')">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Undo rejection">
+                                <i class="bi bi-arrow-counterclockwise"></i>Undo Reject
+                            </button>
+                        </form>
+                    @elseif ($rating->status_label === 'Solved')
+                        <form action="{{ route($routePrefix . '.complaints.reopen', $rating) }}" method="POST" onsubmit="return confirm('Reopen this complaint?')">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Reopen complaint">
+                                <i class="bi bi-arrow-counterclockwise"></i>Reopen
+                            </button>
+                        </form>
+                    @endif
 
-                @if ($rating->status_label === 'Accepted')
-                    <button type="button" class="tw-btn tw-btn-sm tw-btn-navy" title="Mark complaint as solved"
-                            data-complaint-resolution data-mode="solve"
-                            data-action="{{ route($routePrefix . '.complaints.solve', $rating) }}"
-                            data-ref="{{ $rating->reference_number }}">
-                        <i class="bi bi-patch-check"></i>Solved
-                    </button>
-                @endif
+                    @if ($actor === 'president' && in_array($rating->status_label, ['Pending', 'Reviewed'], true))
+                        <span class="mx-0.5 hidden h-5 w-px bg-slate-200 sm:block" aria-hidden="true"></span>
+                        <form action="{{ route($routePrefix . '.complaints.forward', $rating) }}" method="POST" onsubmit="return confirm('Forward this complaint to the TFRB/superadmin? They will take over completely — you can no longer act on it. This cannot be undone.')">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="tw-btn tw-btn-sm border border-violet-300 bg-violet-50 font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-100" title="Forward to TFRB/superadmin (one-way)">
+                                <i class="bi bi-send-fill"></i>Forward to TFRB
+                            </button>
+                        </form>
+                    @endif
 
-                @if ($rating->status_label !== 'Accepted' && $rating->status_label !== 'Solved')
-                    <form action="{{ route($routePrefix . '.complaints.destroy', $rating) }}" method="POST" onsubmit="return confirm('Delete this complaint?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Delete complaint">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </form>
-                @endif
-            </div>
+                    @if (in_array($rating->status_label, ['Pending', 'Rejected'], true) && $routePrefix !== 'president')
+                        <form action="{{ route($routePrefix . '.complaints.destroy', $rating) }}" method="POST" onsubmit="return confirm('Delete this complaint?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Delete complaint">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    @endif
+                </div>
+            @else
+                <div class="flex shrink-0 items-center">
+                    <span class="tw-badge {{ $assigneeBadge['class'] }}"><i class="bi {{ $assigneeBadge['icon'] }}"></i> {{ $assigneeBadge['label'] }}</span>
+                </div>
+            @endif
         </div>
     </div>
 </div>

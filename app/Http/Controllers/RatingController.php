@@ -314,18 +314,38 @@ class RatingController extends Controller
             // required, plus proof for low ratings.
             $rating->update(['is_valid' => $rating->evaluateValidity()]);
 
+            // Route a fresh complaint to its owner. The routing rule
+            // (president-vs-president / unassigned → TFRB, member complaints
+            // → the owning TODA's president) is encoded once in
+            // ComplaintRoutingService.
+            if ($rating->complaint_type) {
+                $routedTo = app(\App\Services\ComplaintRoutingService::class)->assigneeId($operator, $selectedToda?->id);
+                if ($routedTo !== null) {
+                    $rating->update(['routed_to' => $routedTo]);
+                }
+            }
+
             if ($rating->is_valid) {
-                $officers = User::whereIn('role', ['tfrb_officer', 'superadmin'])->get();
-                foreach ($officers as $officer) {
-                    if ($rating->rating <= 2) {
+                if ($rating->rating <= 2) {
+                    $routedTo = (int) ($rating->routed_to ?? 0);
+                    $targets = $routedTo
+                        ? User::where('id', $routedTo)->get()
+                        : User::whereIn('role', ['tfrb_officer', 'superadmin'])->get();
+
+                    $assigneeLabel = $routedTo ? 'Assigned to the TODA president.' : 'Assigned to TFRB / superadmin.';
+
+                    foreach ($targets as $target) {
                         Notification::create([
-                            'user_id' => $officer->id,
+                            'user_id' => $target->id,
                             'rating_id' => $rating->id,
                             'type' => 'complaint',
                             'title' => 'New Complaint Report',
-                            'message' => "Operator {$operator->user->name} received a {$rating->rating}-star rating (" . ($rating->complaint_type ?? 'no type') . "). Contact: {$rating->passenger_contact}",
+                            'message' => "Operator {$operator->user->name} received a {$rating->rating}-star rating (" . ($rating->complaint_type ?? 'no type') . "). {$assigneeLabel} Contact: {$rating->passenger_contact}",
                         ]);
-                    } else {
+                    }
+                } else {
+                    $officers = User::whereIn('role', ['tfrb_officer', 'superadmin'])->get();
+                    foreach ($officers as $officer) {
                         Notification::create([
                             'user_id' => $officer->id,
                             'rating_id' => $rating->id,

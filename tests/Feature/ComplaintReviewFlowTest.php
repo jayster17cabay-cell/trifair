@@ -18,9 +18,10 @@ use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
- * Covers the complaint accept/reject review flow and, most importantly, the
- * rule that only accepted 1-2 star complaints count towards an operator's
- * star average. Pending and rejected complaints must never drag it down.
+ * Covers the complaint review flow and, most importantly, the rule that only
+ * REVIEWED (and not rejected) 1-2 star complaints count towards an
+ * operator's star average. Pending and rejected complaints must never drag
+ * it down. Solved complaints imply they were reviewed, so they count too.
  */
 class ComplaintReviewFlowTest extends TestCase
 {
@@ -105,7 +106,7 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertSame(1, $operator->totalRatings());
     }
 
-    public function test_accepted_complaint_counts_toward_operator_average()
+    public function test_reviewed_complaint_counts_toward_operator_average()
     {
         $admin = $this->makeUser('superadmin');
         $operator = $this->makeOperator();
@@ -113,7 +114,7 @@ class ComplaintReviewFlowTest extends TestCase
         $complaint = $this->makeValidComplaint($operator, 1);
 
         $this->actingAs($admin)
-            ->patch('/superadmin/complaints/' . $complaint->id . '/accept')
+            ->patch('/superadmin/complaints/' . $complaint->id . '/review')
             ->assertRedirect();
 
         $this->assertEqualsWithDelta(3.0, (float) $operator->averageRating(), 0.001);
@@ -132,14 +133,15 @@ class ComplaintReviewFlowTest extends TestCase
             ->assertRedirect();
 
         $fresh = $complaint->fresh();
-        $this->assertFalse($fresh->is_accepted);
+        $this->assertTrue((bool) $fresh->is_reviewed);
+        $this->assertNotNull($fresh->rejected_at);
         $this->assertFalse((bool) $fresh->is_solved);
 
         $this->assertEqualsWithDelta(5.0, (float) $operator->averageRating(), 0.001);
         $this->assertSame(1, $operator->totalRatings());
     }
 
-    public function test_solving_complaint_implies_acceptance_and_counts()
+    public function test_solving_complaint_implies_review_and_counts()
     {
         $admin = $this->makeUser('superadmin');
         $operator = $this->makeOperator();
@@ -151,8 +153,8 @@ class ComplaintReviewFlowTest extends TestCase
             ->assertRedirect();
 
         $fresh = $complaint->fresh();
-        $this->assertTrue($fresh->is_accepted);
-        $this->assertTrue($fresh->is_solved);
+        $this->assertTrue((bool) $fresh->is_reviewed);
+        $this->assertTrue((bool) $fresh->is_solved);
 
         $this->assertEqualsWithDelta(3.0, (float) $operator->averageRating(), 0.001);
         $this->assertSame(2, $operator->totalRatings());
@@ -164,20 +166,20 @@ class ComplaintReviewFlowTest extends TestCase
         $officer = $this->makeUser('tfrb_officer');
         $operator = $this->makeOperator();
 
-        $accepted = $this->makeValidComplaint($operator, 1);
+        $reviewed = $this->makeValidComplaint($operator, 1);
         $this->actingAs($admin)
-            ->patch('/superadmin/complaints/' . $accepted->id . '/accept')
+            ->patch('/superadmin/complaints/' . $reviewed->id . '/review')
             ->assertRedirect();
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $officer->id,
-            'rating_id' => $accepted->id,
+            'rating_id' => $reviewed->id,
             'type' => 'complaint',
-            'title' => 'Complaint Accepted',
+            'title' => 'Complaint Reviewed',
         ]);
         $this->assertDatabaseMissing('notifications', [
             'user_id' => $admin->id,
-            'title' => 'Complaint Accepted',
+            'title' => 'Complaint Reviewed',
         ]);
 
         $rejected = $this->makeValidComplaint($operator, 1);
@@ -212,11 +214,11 @@ class ComplaintReviewFlowTest extends TestCase
         $operator = $this->makeOperator();
         $complaint = $this->makeValidComplaint($operator, 1);
 
-        $this->actingAs($admin)->patch('/superadmin/complaints/' . $complaint->id . '/accept')->assertRedirect();
-        $this->actingAs($admin)->patch('/superadmin/complaints/' . $complaint->id . '/accept')->assertRedirect();
+        $this->actingAs($admin)->patch('/superadmin/complaints/' . $complaint->id . '/review')->assertRedirect();
+        $this->actingAs($admin)->patch('/superadmin/complaints/' . $complaint->id . '/review')->assertRedirect();
 
         $this->assertSame(1, \App\Models\Notification::where('user_id', $officer->id)
-            ->where('title', 'Complaint Accepted')
+            ->where('title', 'Complaint Reviewed')
             ->count());
     }
 
@@ -225,7 +227,7 @@ class ComplaintReviewFlowTest extends TestCase
         $admin = $this->makeUser('superadmin');
         $operator = $this->makeOperator();
         $complaint = $this->makeValidComplaint($operator, 1);
-        $complaint->update(['is_reviewed' => true, 'is_accepted' => false]);
+        $complaint->update(['is_reviewed' => true, 'rejected_at' => now()]);
 
         $this->actingAs($admin)
             ->patch('/superadmin/complaints/' . $complaint->id . '/reset')
@@ -233,10 +235,10 @@ class ComplaintReviewFlowTest extends TestCase
 
         $fresh = $complaint->fresh();
         $this->assertFalse((bool) $fresh->is_reviewed);
-        $this->assertNull($fresh->is_accepted);
+        $this->assertNull($fresh->rejected_at);
     }
 
-    public function test_admin_dashboard_average_excludes_unaccepted_complaints()
+    public function test_reviewed_complaint_counts_toward_admin_dashboard_average()
     {
         $operator = $this->makeOperator();
         $this->makeValidRating($operator, 5);
@@ -247,8 +249,8 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertEqualsWithDelta(5.0, (float) $stats['averageRating'], 0.001);
         $this->assertSame(1, $stats['totalRatings']);
 
-        // Accepting the complaint pulls the shared average down to 3.0.
-        $complaint->update(['is_reviewed' => true, 'is_accepted' => true]);
+        // Marking the complaint reviewed pulls the shared average down to 3.0.
+        $complaint->update(['is_reviewed' => true]);
         Cache::flush();
         $stats = app(AdminDashboardService::class)->stats(['includeOfficers' => true]);
         $this->assertEqualsWithDelta(3.0, (float) $stats['averageRating'], 0.001);
@@ -261,23 +263,23 @@ class ComplaintReviewFlowTest extends TestCase
         $operator = $this->makeOperator();
 
         $pending = $this->makeValidComplaint($operator, 1);
-        $accepted = $this->makeValidComplaint($operator, 1);
-        $accepted->update(['is_reviewed' => true, 'is_accepted' => true]);
+        $reviewed = $this->makeValidComplaint($operator, 1);
+        $reviewed->update(['is_reviewed' => true]);
         $rejected = $this->makeValidComplaint($operator, 1);
-        $rejected->update(['is_reviewed' => true, 'is_accepted' => false]);
+        $rejected->update(['is_reviewed' => true, 'rejected_at' => now()]);
         $solved = $this->makeValidComplaint($operator, 1);
-        $solved->update(['is_reviewed' => true, 'is_accepted' => true, 'is_solved' => true, 'solved_at' => now()]);
+        $solved->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
 
         $this->actingAs($admin)->get('/superadmin/complaints?filter=pending')
             ->assertOk()
             ->assertSee($pending->reference_number, false)
-            ->assertDontSee($accepted->reference_number, false)
+            ->assertDontSee($reviewed->reference_number, false)
             ->assertDontSee($rejected->reference_number, false)
             ->assertDontSee($solved->reference_number, false);
 
-        $this->actingAs($admin)->get('/superadmin/complaints?filter=accepted')
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=reviewed')
             ->assertOk()
-            ->assertSee($accepted->reference_number, false)
+            ->assertSee($reviewed->reference_number, false)
             ->assertDontSee($pending->reference_number, false)
             ->assertDontSee($rejected->reference_number, false)
             ->assertDontSee($solved->reference_number, false);
@@ -286,44 +288,44 @@ class ComplaintReviewFlowTest extends TestCase
             ->assertOk()
             ->assertSee($rejected->reference_number, false)
             ->assertDontSee($pending->reference_number, false)
-            ->assertDontSee($accepted->reference_number, false);
+            ->assertDontSee($reviewed->reference_number, false);
 
         $this->actingAs($admin)->get('/superadmin/complaints?filter=solved')
             ->assertOk()
             ->assertSee($solved->reference_number, false)
-            ->assertDontSee($accepted->reference_number, false);
+            ->assertDontSee($reviewed->reference_number, false);
     }
 
-    public function test_status_label_priority_is_solved_then_accepted_then_rejected()
+    public function test_status_label_priority_is_solved_then_rejected_then_reviewed()
     {
         $operator = $this->makeOperator();
         $complaint = $this->makeValidComplaint($operator, 1);
 
         $this->assertSame('Pending', $complaint->status_label);
 
-        $complaint->update(['is_accepted' => true]);
-        $this->assertSame('Accepted', $complaint->fresh()->status_label);
+        $complaint->update(['is_reviewed' => true]);
+        $this->assertSame('Reviewed', $complaint->fresh()->status_label);
 
-        $complaint->update(['is_accepted' => false]);
+        $complaint->update(['rejected_at' => now()]);
         $this->assertSame('Rejected', $complaint->fresh()->status_label);
 
-        $complaint->update(['is_accepted' => true, 'is_solved' => true]);
+        $complaint->update(['is_solved' => true]);
         $this->assertSame('Solved', $complaint->fresh()->status_label);
     }
 
-    public function test_passenger_dashboard_shows_accepted_and_rejected_badges()
+    public function test_passenger_dashboard_shows_reviewed_and_rejected_badges()
     {
         $operator = $this->makeOperator();
         $passenger = $this->makeUser('passenger');
 
-        $accepted = $this->makeValidComplaint($operator, 1);
-        $accepted->update(['passenger_user_id' => $passenger->id, 'is_reviewed' => true, 'is_accepted' => true]);
+        $reviewed = $this->makeValidComplaint($operator, 1);
+        $reviewed->update(['passenger_user_id' => $passenger->id, 'is_reviewed' => true]);
         $rejected = $this->makeValidComplaint($operator, 1);
-        $rejected->update(['passenger_user_id' => $passenger->id, 'is_reviewed' => true, 'is_accepted' => false]);
+        $rejected->update(['passenger_user_id' => $passenger->id, 'is_reviewed' => true, 'rejected_at' => now()]);
 
         $this->actingAs($passenger)->get('/passenger/dashboard')
             ->assertOk()
-            ->assertSee('Accepted')
+            ->assertSee('Reviewed')
             ->assertSee('Rejected');
     }
 
@@ -389,7 +391,6 @@ class ComplaintReviewFlowTest extends TestCase
         $complaint = $this->makeValidComplaint($operator, 1);
         $complaint->update([
             'is_reviewed' => true,
-            'is_accepted' => true,
             'is_solved' => true,
             'solved_at' => now(),
         ]);
@@ -421,7 +422,6 @@ class ComplaintReviewFlowTest extends TestCase
         $solved = $this->makeValidComplaint($operator, 1);
         $solved->update([
             'is_reviewed' => true,
-            'is_accepted' => true,
             'is_solved' => true,
             'solved_at' => now(),
             'resolution_note' => 'Resolved already.',
@@ -442,7 +442,7 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertSame(0, ResolutionProof::where('rating_id', $solved->id)->count());
 
         $rejected = $this->makeValidComplaint($operator, 1);
-        $rejected->update(['is_reviewed' => true, 'is_accepted' => false, 'resolution_note' => 'Not a valid complaint.']);
+        $rejected->update(['is_reviewed' => true, 'rejected_at' => now(), 'resolution_note' => 'Not a valid complaint.']);
 
         $this->actingAs($admin)
             ->patch('/superadmin/complaints/' . $rejected->id . '/reset')
@@ -502,7 +502,6 @@ class ComplaintReviewFlowTest extends TestCase
         $rejected = $this->makeValidComplaint($operator, 1);
         $rejected->update([
             'is_reviewed' => true,
-            'is_accepted' => false,
             'rejected_at' => now(),
             'reviewed_by' => $admin->id,
             'resolution_note' => 'Not valid.',
@@ -519,7 +518,6 @@ class ComplaintReviewFlowTest extends TestCase
         $solved = $this->makeValidComplaint($operator, 1);
         $solved->update([
             'is_reviewed' => true,
-            'is_accepted' => true,
             'is_solved' => true,
             'solved_at' => now(),
             'reviewed_by' => $admin->id,
@@ -540,7 +538,7 @@ class ComplaintReviewFlowTest extends TestCase
         $this->makeValidRating($operator, 4);
         $this->makeValidRating($operator, 5);
         $rejected = $this->makeValidComplaint($operator, 1);
-        $rejected->update(['is_reviewed' => true, 'is_accepted' => false]);
+        $rejected->update(['is_reviewed' => true, 'rejected_at' => now()]);
 
         Cache::flush();
 

@@ -13,7 +13,7 @@ class ComplaintStatus extends Mailable
 
     public Rating $rating;
 
-    /** @var string 'accepted' | 'rejected' | 'reviewed' | 'solved' | 'submitted' */
+    /** @var string 'accepted' | 'rejected' | 'reviewed' | 'solved' | 'submitted' | 'forwarded' */
     public string $status;
 
     public function __construct(Rating $rating, string $status)
@@ -25,11 +25,13 @@ class ComplaintStatus extends Mailable
     public function build()
     {
         $subject = match ($this->status) {
-            'accepted' => "Your complaint {$this->rating->reference_number} has been accepted",
+            'accepted' => "Your complaint {$this->rating->reference_number} has been reviewed",
+            'reviewed' => "Your complaint {$this->rating->reference_number} has been reviewed",
             'rejected' => "Update on your complaint {$this->rating->reference_number}",
             'solved' => "Your complaint {$this->rating->reference_number} has been solved",
             'submitted' => "Your complaint {$this->rating->reference_number} was received",
-            default => "Your complaint {$this->rating->reference_number} has been reviewed",
+            'forwarded' => "Your complaint {$this->rating->reference_number} is now with the TFRB",
+            default => "Your complaint {$this->rating->reference_number} has been updated",
         };
 
         return $this
