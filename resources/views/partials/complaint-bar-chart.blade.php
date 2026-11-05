@@ -6,7 +6,7 @@
         </h3>
         @if ($totalComplaints > 0)
             <button type="button" class="tw-btn tw-btn-sm tw-btn-ghost" onclick="showComplaintModal()">
-                Show all categories <i class="bi bi-chevron-right"></i>
+                Show all categories <i class="bi bi-arrow-right"></i>
             </button>
         @endif
     </div>

@@ -90,7 +90,12 @@
 
     /* ---------- Buttons ---------- */
     .tw-btn {
-        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150 select-none active:scale-[0.97] active:opacity-90;
+        /* Preflight is disabled in this project, so reset the native button
+           chrome here. Without this a <button class="tw-btn tw-btn-ghost">
+           keeps the browser's grey background + outset border while an <a>
+           with the same classes stays transparent, making identical actions
+           look different. */
+        @apply inline-flex appearance-none items-center justify-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2 text-sm font-semibold transition-all duration-150 select-none active:scale-[0.97] active:opacity-90;
     }
     .tw-btn:disabled {
         @apply cursor-not-allowed opacity-50;
