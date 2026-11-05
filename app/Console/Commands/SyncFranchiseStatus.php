@@ -19,13 +19,15 @@ class SyncFranchiseStatus extends Command
      *
      * @var string
      */
-    protected $description = 'Mark operators inactive when their current franchise has expired';
+    protected $description = 'Sync operator status with the current franchise expiry';
 
     public function handle(): int
     {
-        $changed = Operator::deactivateExpiredFranchises();
+        $deactivated = Operator::deactivateExpiredFranchises();
+        $reactivated = Operator::reactivateValidFranchises();
 
-        $this->info("Deactivated {$changed} operator(s) with an expired franchise.");
+        $this->info("Deactivated {$deactivated} operator(s) with an expired franchise.");
+        $this->info("Reactivated {$reactivated} operator(s) with a valid franchise.");
 
         return self::SUCCESS;
     }

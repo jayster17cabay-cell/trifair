@@ -15,8 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Operators whose franchise has lapsed are switched to inactive so the
-        // admin lists and login checks agree with the franchise expiry date.
+        // Reconcile operator status with the franchise expiry date: lapsed
+        // terms become inactive, valid terms stay/return active.
         $schedule->command('franchise:sync-status')->dailyAt('00:05');
 
         // Members whose TODA suspension has run its course are switched back to

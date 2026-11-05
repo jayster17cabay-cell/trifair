@@ -338,6 +338,48 @@ class FranchiseFlowTest extends TestCase
         $this->assertSame('active', $valid->fresh()->status);
     }
 
+    public function test_sync_command_reactivates_inactive_operator_with_valid_franchise()
+    {
+        $inactive = $this->makeOperator('inactive');
+        $noTerm = $this->makeOperator('inactive');
+
+        FranchiseTerm::create([
+            'operator_id' => $inactive->id,
+            'franchise_no' => 'FR-STILL-VALID',
+            'issued_at' => now()->toDateString(),
+            'valid_until' => now()->addYear()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        $this->artisan('franchise:sync-status')->assertExitCode(0);
+
+        $this->assertSame('active', $inactive->fresh()->status);
+        // No franchise term means there is nothing to reactivate.
+        $this->assertSame('inactive', $noTerm->fresh()->status);
+    }
+
+    public function test_inactive_operator_with_valid_franchise_is_reactivated_on_login()
+    {
+        $operator = $this->makeOperator('inactive');
+        $user = $operator->user;
+
+        FranchiseTerm::create([
+            'operator_id' => $operator->id,
+            'franchise_no' => 'FR-STILL-VALID',
+            'issued_at' => now()->toDateString(),
+            'valid_until' => now()->addYear()->toDateString(),
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password123',
+        ])->assertRedirect(route('operator.dashboard'));
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame('active', $operator->fresh()->status);
+    }
+
     public function test_expired_franchise_operator_cannot_log_in()
     {
         $operator = $this->makeOperator('active');

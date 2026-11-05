@@ -69,10 +69,11 @@ class AdminDashboardService
     private function computeStats(array $options = []): array
     {
         // An operator whose franchise has lapsed must never linger as "active"
-        // in the dashboard aggregates, so reconcile the statuses before the
-        // numbers are measured (and cached). Lapsed TODA suspensions are also
-        // closed so their members return to active/inactive accordingly.
-        Operator::deactivateExpiredFranchises();
+        // in the dashboard aggregates, and an operator whose franchise is still
+        // valid must not be stuck inactive, so reconcile both directions before
+        // the numbers are measured (and cached). Lapsed TODA suspensions are
+        // also closed so their members return to active/inactive accordingly.
+        Operator::syncFranchiseStatuses();
         Operator::endExpiredSuspensions();
 
         $recentLimit = $options['recentLimit'] ?? 5;

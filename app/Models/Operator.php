@@ -410,16 +410,37 @@ class Operator extends Model
 
     /**
      * Keep the approval status in step with the franchise: an active operator
-     * whose current franchise has lapsed is switched to inactive. This never
-     * auto-reactivates, so a deliberate admin deactivation is preserved —
-     * issuing or renewing a term is what brings the operator back to active.
+     * whose current franchise has lapsed is switched to inactive, while an
+     * inactive operator whose current franchise is still valid is brought back
+     * to active. Archived, suspended, pending and rejected accounts are left
+     * alone — their status is owned by another workflow.
      *
      * @return bool true when the operator's status row was changed
      */
     public function syncFranchiseStatus(): bool
     {
-        if ($this->status === 'active' && $this->hasExpiredFranchise()) {
+        if ($this->isArchived() || $this->status === 'suspended') {
+            return false;
+        }
+
+        if ($this->hasExpiredFranchise()) {
+            if ($this->status !== 'active') {
+                return false;
+            }
+
             $this->update(['status' => 'inactive']);
+            app(AdminDashboardService::class)->flush();
+
+            return true;
+        }
+
+        // A valid franchise always keeps the account active. This also repairs
+        // rows that were deactivated before their term was renewed. A user
+        // account that an admin disabled stays inactive.
+        if ($this->status === 'inactive'
+            && $this->franchiseStatus() === 'valid'
+            && ($this->user->is_active ?? true)) {
+            $this->update(['status' => 'active']);
             app(AdminDashboardService::class)->flush();
 
             return true;
@@ -456,6 +477,52 @@ class Operator extends Model
         }
 
         return $deactivated;
+    }
+
+    /**
+     * Bulk counterpart to syncFranchiseStatus() for reactivation: any inactive,
+     * non-archived operator whose current franchise is still valid is marked
+     * active again. Operators with no franchise term are left untouched.
+     *
+     * @return int number of operators reactivated
+     */
+    public static function reactivateValidFranchises(): int
+    {
+        $today = now()->toDateString();
+
+        $reactivated = static::query()
+            ->where('status', 'inactive')
+            ->whereNull('archived_at')
+            ->whereIn('user_id', function ($query) {
+                $query->from('users')->where('is_active', true)->select('id');
+            })
+            ->whereIn('id', function ($query) use ($today) {
+                $query->from('franchise_terms')
+                    ->where('status', FranchiseTerm::STATUS_ACTIVE)
+                    ->where(function ($query) use ($today) {
+                        $query->whereNull('valid_until')
+                            ->orWhereDate('valid_until', '>=', $today);
+                    })
+                    ->select('operator_id');
+            })
+            ->update(['status' => 'active']);
+
+        if ($reactivated > 0) {
+            app(AdminDashboardService::class)->flush();
+        }
+
+        return $reactivated;
+    }
+
+    /**
+     * Reconcile both directions of the franchise lifecycle: deactivate lapsed
+     * terms and reactivate operators whose term is still valid.
+     *
+     * @return int number of operators whose status changed
+     */
+    public static function syncFranchiseStatuses(): int
+    {
+        return static::deactivateExpiredFranchises() + static::reactivateValidFranchises();
     }
 
     /**

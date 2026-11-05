@@ -540,11 +540,12 @@ class AdminQueryService
 
     public function operatorsData(Request $request, string $membershipStage = 'superadmin'): array
     {
-        // Keep the visible status honest: any operator whose franchise has
-        // lapsed is flipped to inactive, and any lapsed TODA suspension is
+        // Keep the visible status honest: an operator whose franchise has
+        // lapsed is flipped to inactive, an operator whose franchise is still
+        // valid is restored to active, and any lapsed TODA suspension is
         // closed, before the list and its tallies are read, so the admin never
         // sees a stale status.
-        Operator::deactivateExpiredFranchises();
+        Operator::syncFranchiseStatuses();
         Operator::endExpiredSuspensions();
 
         $operators = $this->orderByTodaThenName($this->operatorsBaseQuery($request))
