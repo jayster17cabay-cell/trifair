@@ -55,6 +55,42 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Compose the stored display name. Operator names are shown last-name
+     * first, e.g. "Dela Cruz Juan Santos".
+     */
+    public static function composeName(?string $first, ?string $middle, ?string $last): string
+    {
+        $parts = array_filter([
+            trim((string) $last),
+            trim((string) $first),
+            trim((string) $middle),
+        ], fn ($part) => $part !== '');
+
+        return implode(' ', $parts);
+    }
+
+    /**
+     * Split a legacy combined name that follows the old First Middle Last
+     * convention. Accounts created after the split columns were added use
+     * nameParts() directly instead.
+     *
+     * @return array{first: string, middle: string, last: string}
+     */
+    public static function splitLegacyName(?string $name): array
+    {
+        $parts = preg_split('/\s+/', trim((string) $name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if (count($parts) <= 1) {
+            return ['first' => $parts[0] ?? '', 'middle' => '', 'last' => ''];
+        }
+
+        $first = array_shift($parts);
+        $last = array_pop($parts);
+
+        return ['first' => $first, 'middle' => implode(' ', $parts), 'last' => $last];
+    }
+
+    /**
      * The three name parts used by the account forms. Older accounts only have
      * the combined `name` (First Middle Last), so fall back to splitting that
      * value when the dedicated columns are empty.
@@ -71,16 +107,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return ['first' => $first, 'middle' => $middle, 'last' => $last];
         }
 
-        $parts = preg_split('/\s+/', trim((string) $this->name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
-
-        if (count($parts) <= 1) {
-            return ['first' => $parts[0] ?? '', 'middle' => '', 'last' => ''];
-        }
-
-        $first = array_shift($parts);
-        $last = array_pop($parts);
-
-        return ['first' => $first, 'middle' => implode(' ', $parts), 'last' => $last];
+        return self::splitLegacyName($this->attributes['name'] ?? '');
     }
 
     public function operator()

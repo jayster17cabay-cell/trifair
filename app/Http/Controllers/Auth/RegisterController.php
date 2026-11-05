@@ -44,7 +44,7 @@ class RegisterController extends Controller
         $firstName = trim($data['first_name']);
         $middleName = trim((string) ($data['middle_name'] ?? ''));
         $lastName = trim($data['last_name']);
-        $fullName = trim(preg_replace('/\s+/', ' ', "{$firstName} {$middleName} {$lastName}"));
+        $fullName = User::composeName($firstName, $middleName, $lastName);
 
         $user = User::create([
             'name' => $fullName,

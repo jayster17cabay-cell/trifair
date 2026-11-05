@@ -16,7 +16,8 @@
         <div class="tw-card">
             <div class="flex flex-col items-center px-6 py-8 text-center">
                 <div class="tw-avatar tw-avatar-lg bg-gradient-to-br from-navy-600 to-navy-500 text-white">
-                    {{ strtoupper(substr($operator->user->name ?? '?', 0, 1)) }}
+                    @php $profileFirstName = $operator->user->nameParts()['first'] ?: ($operator->user->name ?? '?'); @endphp
+                    {{ strtoupper(substr($profileFirstName, 0, 1)) }}
                 </div>
                 <h3 class="mt-4 text-lg font-extrabold text-slate-800">{{ $operator->user->name ?? 'Unknown' }}</h3>
                 <p class="text-sm text-slate-500">{{ $operator->user->email }}</p>

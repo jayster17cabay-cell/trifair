@@ -182,7 +182,7 @@ class OperatorAdminService
         $last = trim((string) $request->input('last_name', ''));
 
         if ($first !== '' || $middle !== '' || $last !== '') {
-            $fullName = trim(preg_replace('/\s+/', ' ', "{$first} {$middle} {$last}"));
+            $fullName = User::composeName($first, $middle, $last);
 
             return [$fullName, [
                 'first_name' => $first !== '' ? $first : null,

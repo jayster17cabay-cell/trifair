@@ -235,7 +235,31 @@ class AdminTest extends TestCase
 
         $user = User::where('email', 'juan.split@example.com')->first();
         $this->assertNotNull($user);
-        $this->assertEquals('Juan Santos Dela Cruz', $user->name);
+        $this->assertEquals('Dela Cruz Juan Santos', $user->name);
+        $this->assertEquals('Juan', $user->first_name);
+        $this->assertEquals('Santos', $user->middle_name);
+        $this->assertEquals('Dela Cruz', $user->last_name);
+    }
+
+    public function test_update_operator_composes_split_name_last_first()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $toda = $this->makeToda();
+
+        $this->actingAs($admin)->put('/superadmin/operators/' . $operator->id, [
+            'last_name' => 'Dela Cruz',
+            'first_name' => 'Juan',
+            'middle_name' => 'Santos',
+            'email' => $operator->user->email,
+            'plate_number' => $operator->plate_number,
+            'body_number' => $operator->body_number,
+            'status' => 'active',
+            'toda_id' => $toda->id,
+        ])->assertRedirect(route('superadmin.operators'));
+
+        $user = $operator->fresh()->user;
+        $this->assertEquals('Dela Cruz Juan Santos', $user->name);
         $this->assertEquals('Juan', $user->first_name);
         $this->assertEquals('Santos', $user->middle_name);
         $this->assertEquals('Dela Cruz', $user->last_name);

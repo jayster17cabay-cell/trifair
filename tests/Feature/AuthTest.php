@@ -102,7 +102,7 @@ class AuthTest extends TestCase
 
         $user = User::where('email', 'newop@example.com')->first();
         $this->assertNotNull($user);
-        $this->assertEquals('New Operator', $user->name);
+        $this->assertEquals('Operator New', $user->name);
         $this->assertEquals('New', $user->first_name);
         $this->assertEquals('Operator', $user->last_name);
         $this->assertEquals('operator', $user->role);

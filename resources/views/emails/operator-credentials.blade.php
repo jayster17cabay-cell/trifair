@@ -17,7 +17,7 @@
                     </tr>
                     <tr>
                         <td style="padding:30px 32px;">
-                            <h1 style="margin:0 0 10px;font-size:18px;color:#0f172a;">Hi {{ $user->name }},</h1>
+                            <h1 style="margin:0 0 10px;font-size:18px;color:#0f172a;">Hi {{ $user->nameParts()['first'] ?: $user->name }},</h1>
                             <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#334155;">
                                 A TriFair administrator has reset the password for your operator account
                                 ({{ $user->email }}). You can sign in with the temporary password below

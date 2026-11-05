@@ -4,7 +4,8 @@
 
 @section('header-body')
 <div class="op-header-greet">
-    <h1 class="op-header-title">{{ explode(' ', Auth::user()->name)[0] }}</h1>
+    @php $operatorFirstName = Auth::user()->nameParts()['first'] ?: Auth::user()->name; @endphp
+    <h1 class="op-header-title">{{ $operatorFirstName }}</h1>
     <p class="op-header-sub">{{ $toda ? $toda->name : 'Suspended' }}</p>
 </div>
 @endsection
