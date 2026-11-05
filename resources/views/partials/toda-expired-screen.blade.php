@@ -13,7 +13,7 @@
 
             <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">Your franchise has expired</h1>
             <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">
-                Your franchise has expired. Please contact the TFRB Office to renew it.
+                Your franchise has lapsed, so this dashboard is unavailable until it is renewed.
             </p>
         </div>
 
