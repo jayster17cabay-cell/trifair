@@ -61,11 +61,24 @@
     </div>
 
     <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Account Details</div>
+    @php $nameParts = $operator->user->nameParts(); @endphp
     <div class="grid gap-4 sm:grid-cols-2">
-        <div>
-            <label for="name" class="tw-label">Full Name <span class="text-red-600">*</span></label>
-            <input type="text" class="tw-input @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $operator->user->name) }}" required>
-            @error('name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
+        <div class="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+            <div>
+                <label for="last_name" class="tw-label">Last Name <span class="text-red-600">*</span></label>
+                <input type="text" class="tw-input @error('last_name') is-invalid @enderror" id="last_name" name="last_name" value="{{ old('last_name', $nameParts['last']) }}" required autocomplete="family-name">
+                @error('last_name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
+            </div>
+            <div>
+                <label for="first_name" class="tw-label">First Name <span class="text-red-600">*</span></label>
+                <input type="text" class="tw-input @error('first_name') is-invalid @enderror" id="first_name" name="first_name" value="{{ old('first_name', $nameParts['first']) }}" required autocomplete="given-name">
+                @error('first_name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
+            </div>
+            <div>
+                <label for="middle_name" class="tw-label">Middle Name</label>
+                <input type="text" class="tw-input @error('middle_name') is-invalid @enderror" id="middle_name" name="middle_name" value="{{ old('middle_name', $nameParts['middle']) }}" autocomplete="additional-name">
+                @error('middle_name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
+            </div>
         </div>
         <div>
             <label for="email" class="tw-label">Email Address <span class="text-red-600">*</span></label>

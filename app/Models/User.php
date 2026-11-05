@@ -54,6 +54,35 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->attributes['name'] = $value === null ? null : trim($value);
     }
 
+    /**
+     * The three name parts used by the account forms. Older accounts only have
+     * the combined `name` (First Middle Last), so fall back to splitting that
+     * value when the dedicated columns are empty.
+     *
+     * @return array{first: string, middle: string, last: string}
+     */
+    public function nameParts(): array
+    {
+        $first = trim((string) $this->first_name);
+        $middle = trim((string) $this->middle_name);
+        $last = trim((string) $this->last_name);
+
+        if ($first !== '' || $last !== '') {
+            return ['first' => $first, 'middle' => $middle, 'last' => $last];
+        }
+
+        $parts = preg_split('/\s+/', trim((string) $this->name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if (count($parts) <= 1) {
+            return ['first' => $parts[0] ?? '', 'middle' => '', 'last' => ''];
+        }
+
+        $first = array_shift($parts);
+        $last = array_pop($parts);
+
+        return ['first' => $first, 'middle' => implode(' ', $parts), 'last' => $last];
+    }
+
     public function operator()
     {
         return $this->hasOne(Operator::class);

@@ -35,7 +35,10 @@ class OperatorAdminService
         $request->merge(['email' => strtolower(trim($request->input('email')))]);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'nullable|string|max:100|required_without:name',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100|required_without:name',
+            'name' => 'nullable|string|max:255|required_without_all:first_name,last_name',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
@@ -50,12 +53,14 @@ class OperatorAdminService
             'body_number.unique' => 'This body number is already registered in the system.',
         ]);
 
-        $user = User::create([
-            'name' => $data['name'],
+        [$fullName, $nameParts] = $this->resolveName($request, $data);
+
+        $user = User::create(array_merge([
+            'name' => $fullName,
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'phone' => $data['phone'] ?? null,
-        ]);
+        ], $nameParts));
 
         // role/is_active are intentionally NOT mass-assignable (see User model)
         $user->forceFill(['role' => 'operator', 'is_active' => true])->save();
@@ -95,7 +100,10 @@ class OperatorAdminService
         $request->merge(['email' => strtolower(trim($request->input('email')))]);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'nullable|string|max:100|required_without:name',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100|required_without:name',
+            'name' => 'nullable|string|max:255|required_without_all:first_name,last_name',
             'email' => 'required|email|unique:users,email,' . $operator->user_id,
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|max:20',
@@ -112,6 +120,8 @@ class OperatorAdminService
             'body_number.unique' => 'This body number is already registered in the system.',
         ]);
 
+        [$fullName, $nameParts] = $this->resolveName($request, $data);
+
         // A driver may belong to at most three TODAs, home TODA included. The
         // home checkbox is disabled in the form, so it is merged back in here
         // before the cap is applied.
@@ -126,11 +136,11 @@ class OperatorAdminService
             ]);
         }
 
-        $operator->user->update([
-            'name' => $data['name'],
+        $operator->user->update(array_merge([
+            'name' => $fullName,
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
-        ]);
+        ], $nameParts));
 
         if (!empty($data['password'])) {
             $operator->user->update(['password' => Hash::make($data['password'])]);
@@ -155,6 +165,33 @@ class OperatorAdminService
 
         return redirect()->route($redirectRoute)
             ->with('success', 'Operator updated successfully.');
+    }
+
+    /**
+     * Build the combined display name and the split name columns from either
+     * the three name fields (preferred) or the legacy single `name` input.
+     * Returning an empty parts array on the legacy path keeps existing split
+     * columns intact when an older client updates an operator.
+     *
+     * @return array{0: string, 1: array<string, string|null>}
+     */
+    private function resolveName(Request $request, array $data): array
+    {
+        $first = trim((string) $request->input('first_name', ''));
+        $middle = trim((string) $request->input('middle_name', ''));
+        $last = trim((string) $request->input('last_name', ''));
+
+        if ($first !== '' || $middle !== '' || $last !== '') {
+            $fullName = trim(preg_replace('/\s+/', ' ', "{$first} {$middle} {$last}"));
+
+            return [$fullName, [
+                'first_name' => $first !== '' ? $first : null,
+                'middle_name' => $middle !== '' ? $middle : null,
+                'last_name' => $last !== '' ? $last : null,
+            ]];
+        }
+
+        return [trim((string) ($data['name'] ?? '')), []];
     }
 
     public function destroy(Operator $operator, string $redirectRoute): RedirectResponse

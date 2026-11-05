@@ -213,6 +213,59 @@ class AdminTest extends TestCase
         $this->assertFalse(empty($user->operator->qr_code));
     }
 
+    public function test_superadmin_can_store_operator_with_split_name_fields()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = $this->makeToda();
+
+        $this->actingAs($admin)->post('/superadmin/operators', [
+            'last_name' => 'Dela Cruz',
+            'first_name' => 'Juan',
+            'middle_name' => 'Santos',
+            'email' => 'juan.split@example.com',
+            'password' => 'password123',
+            'phone' => '09171234567',
+            'address' => 'QC',
+            'contact_number' => '09171234567',
+            'plate_number' => 'PLATE-SPLIT',
+            'body_number' => 'BODY-SPLIT',
+            'motorcycle_model' => 'Honda Wave 125',
+            'toda_id' => $toda->id,
+        ])->assertRedirect(route('superadmin.operators'));
+
+        $user = User::where('email', 'juan.split@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertEquals('Juan Santos Dela Cruz', $user->name);
+        $this->assertEquals('Juan', $user->first_name);
+        $this->assertEquals('Santos', $user->middle_name);
+        $this->assertEquals('Dela Cruz', $user->last_name);
+    }
+
+    public function test_operator_create_form_uses_split_name_fields()
+    {
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($admin)->get('/superadmin/operators/create')
+            ->assertOk()
+            ->assertSee('name="last_name"', false)
+            ->assertSee('name="first_name"', false)
+            ->assertSee('name="middle_name"', false)
+            ->assertDontSee('name="name"', false);
+    }
+
+    public function test_operator_edit_form_prefills_split_name_fields()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $operator->user->forceFill(['name' => 'Maria Clara Santos'])->save();
+
+        $this->actingAs($admin)->get('/superadmin/operators/' . $operator->id . '/edit')
+            ->assertOk()
+            ->assertSee('name="first_name" value="Maria"', false)
+            ->assertSee('name="middle_name" value="Clara"', false)
+            ->assertSee('name="last_name" value="Santos"', false);
+    }
+
     public function test_officer_can_store_operator()
     {
         $officer = $this->makeUser('tfrb_officer');
