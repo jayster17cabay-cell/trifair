@@ -74,7 +74,7 @@ Route::post('/email/resend', function (\Illuminate\Http\Request $request) {
     return back()->with('message', 'Verification link sent!');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.resend');
 
-Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-officer')->name('tfrb-officer.')->group(function () {
+Route::middleware(['auth', 'role:tfrb_officer'])->prefix('tfrb-officer')->name('tfrb-officer.')->group(function () {
     Route::get('/dashboard', [TfrbOfficerController::class, 'dashboard'])->name('dashboard');
     Route::get('/operators', [TfrbOfficerController::class, 'operators'])->name('operators');
     Route::get('/operators/create', [TfrbOfficerController::class, 'createOperator'])->name('operators.create');
@@ -128,7 +128,7 @@ Route::middleware(['auth', 'role:tfrb_officer', 'desktop'])->prefix('tfrb-office
     Route::delete('/presidents/{user}', [TfrbOfficerController::class, 'destroyPresident'])->name('presidents.destroy');
 });
 
-Route::middleware(['auth', 'role:superadmin', 'desktop'])->prefix('superadmin')->name('superadmin.')->group(function () {
+Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/dashboard', [SuperadminController::class, 'dashboard'])->name('dashboard');
     Route::get('/operators', [SuperadminController::class, 'operators'])->name('operators');
     Route::get('/operators/create', [SuperadminController::class, 'createOperator'])->name('operators.create');
