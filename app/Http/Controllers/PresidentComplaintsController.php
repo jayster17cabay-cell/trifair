@@ -30,18 +30,47 @@ class PresidentComplaintsController extends Controller
         return $toda;
     }
 
+    /**
+     * Complaints assigned to this president (routed_to = president, still
+     * open, not yet forwarded) that the president may act on right now.
+     *
+     * The president dashboard, the Complaints Queue and the member-detail
+     * modal all share this scope: only these cases show the Review/Solved/
+     * Reject/Forward actions. Forwarded cases stay visible but locked.
+     */
+    public function assignableComplaintsFor(Toda $toda, int $presidentId)
+    {
+        return Rating::query()
+            ->where('toda_id', $toda->id)
+            ->where('routed_to', $presidentId)
+            ->whereNotNull('complaint_type')
+            ->where('is_valid', true)
+            ->where('is_solved', false)
+            ->whereNull('rejected_at')
+            ->whereNull('forwarded_at')
+            ->with(['operator.user', 'proofs'])
+            ->latest()
+            ->limit(25)
+            ->get();
+    }
+
     public function index(Request $request)
     {
         $user = Auth::user();
         $toda = $this->toda();
 
         $data = app(AdminQueryService::class)->complaintsData($request, $user);
-        $todaIds = $user->presidentTodas()->pluck('id');
+        $todaIds = $user->presidentTodas()->pluck('id')->map(fn ($id) => (int) $id);
+        $actionableComplaints = $this->assignableComplaintsFor($toda, (int) $user->id);
+        $actionableIds = $actionableComplaints->pluck('id')->map(fn ($id) => (int) $id)->all();
 
         return view('president.complaints', $data + [
             'toda' => $toda,
             'presidentMode' => true,
             'todaIds' => $todaIds,
+            'actionableComplaintIds' => $actionableIds,
+            'actionableCount' => $actionableComplaints->count(),
+            'canForward' => $actionableComplaints->isNotEmpty(),
         ]);
     }
 

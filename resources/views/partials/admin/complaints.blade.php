@@ -2,6 +2,9 @@
 
 @php
     $presidentMode = $presidentMode ?? false;
-    $actor = $actor ?? 'staff';
+    // When the user is a TODA president, act as 'president' (shows the
+    // Forward to TFRB button). $routePrefix alone is not reliable because
+    // the staff queue also uses the same outer key.
+    $actor = $actor ?? (auth()->check() && auth()->user()->role === 'operator_president' ? 'president' : 'staff');
 @endphp
 @include('partials.admin.complaint-list')

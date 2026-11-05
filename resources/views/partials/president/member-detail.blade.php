@@ -22,6 +22,12 @@
         $mComplaints = $stats ? (int) $stats->complaints : 0;
         $activeSuspension = ($currentSuspension ?? null) && !$currentSuspension->isExpired() ? $currentSuspension : null;
         $suspendPayload = ['name' => $member->user->name, 'suspendUrl' => route('president.members.suspend', $member->id)];
+
+        // Legend for the complaint actions
+        $complaintActionLegend = [
+            'resolve' => ['label' => 'Resolve', 'class' => 'tw-btn-gold'],
+            'forward' => ['label' => 'Forward to TFRB', 'class' => 'tw-btn-outline border-violet-300 text-violet-700'],
+        ];
     @endphp
 
     {{-- Rating summary --}}

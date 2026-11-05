@@ -1,8 +1,12 @@
 {{--
     Reusable complaint card. Requires:
     - $rating      App\Models\Rating  (must be eager-loaded with operator.user, proofs, response)
-    - $routePrefix string             'superadmin' | 'tfrb-officer'
+    - $routePrefix string             'superadmin' | 'tfrb-officer' | 'president'
+    - $actor       string             (optional) 'president' on the president queue, 'staff' elsewhere
     Collapsed by default; clicking the header reveals the full detail grid.
+    The Forward to TFRB action is only shown to the assigned TODA president
+    (actor=president) while the case is still Pending/Reviewed and not yet
+    forwarded — it is intentionally absent from staff cards.
 --}}
 @php
     $operator = $rating->operator;
@@ -23,15 +27,32 @@
     ][$severity];
 
     $typeIconClass = $severity === 'danger' ? 'text-red-500' : ($severity === 'warning' ? 'text-amber-500' : 'text-slate-400');
-    $actor = $actor ?? 'staff';
+    $actor = $actor ?? (Auth::check() && Auth::user()->role === 'operator_president' ? 'president' : 'staff');
+    $isPresidentView = $actor === 'president' || $routePrefix === 'president';
 
     // Who may act on this complaint right now — staff (tfrb-officer /
     // superadmin) and the assigned TODA president; everyone else gets a
-    // read-only card with a badge explaining why.
+    // read-only card with a badge explaining why. The president queue
+    // passes $actionableComplaintIds (every case routed to them and still
+    // open) and wins whenever present; otherwise fall back to the
+    // routing service so staff cards get the same decision.
     $complaintRouting = app(\App\Services\ComplaintRoutingService::class);
-    $canAct = $complaintRouting->actingAs(Auth::user(), $rating) !== null;
+    $actionableComplaintIds = $actionableComplaintIds ?? null;
+    $canAct = $actionableComplaintIds !== null
+        ? in_array((int) $rating->id, $actionableComplaintIds, true)
+        : ($complaintRouting->actingAs(Auth::user(), $rating) !== null);
     $assigneeBadge = $complaintRouting->assigneeBadge($rating);
     $assignmentNote = $complaintRouting->assignmentNote($rating);
+
+    // Forward affordance: ONLY the assigned TODA president, and only while
+    // the case is still Pending/Reviewed and not yet forwarded. Hidden on
+    // staff queues, on solved/rejected cases, and once forwarded.
+    $showForwardButton = $isPresidentView
+        && $canAct
+        && in_array($rating->status_label, ['Pending', 'Reviewed'], true)
+        && empty($rating->forwarded_at);
+    $isForwarded = !empty($rating->forwarded_at);
+    $isForwardedByPresident = !empty($rating->forwarded_by);
 @endphp
 
 <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
@@ -276,7 +297,7 @@
                         </form>
                     @endif
 
-                    @if ($actor === 'president' && in_array($rating->status_label, ['Pending', 'Reviewed'], true))
+                    @if ($showForwardButton)
                         <span class="mx-0.5 hidden h-5 w-px bg-slate-200 sm:block" aria-hidden="true"></span>
                         <form action="{{ route($routePrefix . '.complaints.forward', $rating) }}" method="POST" onsubmit="return confirm('Forward this complaint to the TFRB/superadmin? They will take over completely — you can no longer act on it. This cannot be undone.')">
                             @csrf
@@ -285,6 +306,8 @@
                                 <i class="bi bi-send-fill"></i>Forward to TFRB
                             </button>
                         </form>
+                    @elseif ($isForwarded && $isPresidentView)
+                        <span class="tw-badge tw-badge-blue"><i class="bi bi-send-fill"></i> Forwarded to TFRB</span>
                     @endif
 
                     @if (in_array($rating->status_label, ['Pending', 'Rejected'], true) && $routePrefix !== 'president')
