@@ -572,7 +572,11 @@ class SuperadminController extends Controller
                 'showManage' => true,
             ])->render();
 
-            return response()->json(['html' => $html, 'pagination' => $todas->links('pagination::tailwind')->render()]);
+            return response()->json([
+                'html' => $html,
+                'pagination' => $todas->links('pagination::tailwind')->render(),
+                'total' => $todas->total(),
+            ]);
         }
 
         return view('superadmin.todas.index', $data);

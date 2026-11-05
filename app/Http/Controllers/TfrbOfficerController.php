@@ -484,7 +484,11 @@ class TfrbOfficerController extends Controller
                 'showManage' => false,
             ])->render();
 
-            return response()->json(['html' => $html, 'pagination' => $todas->links('pagination::tailwind')->render()]);
+            return response()->json([
+                'html' => $html,
+                'pagination' => $todas->links('pagination::tailwind')->render(),
+                'total' => $todas->total(),
+            ]);
         }
 
         return view('tfrb-officer.todas.index', $data);

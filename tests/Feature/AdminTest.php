@@ -989,7 +989,7 @@ class AdminTest extends TestCase
         $this->assertStringContainsString('data-notification-card', $filtered->json('html'));
     }
 
-    public function test_todas_index_renders_new_table_with_badges_and_clickable_rows()
+    public function test_todas_index_renders_cards_with_badges_and_member_action()
     {
         $admin = $this->makeUser('superadmin');
         $withMembers = $this->makeToda();
