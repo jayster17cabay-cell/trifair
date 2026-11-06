@@ -313,7 +313,7 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertSame('Solved', $complaint->fresh()->status_label);
     }
 
-    public function test_passenger_dashboard_shows_reviewed_and_rejected_badges()
+    public function test_passenger_dashboard_shows_in_progress_and_rejected_badges()
     {
         $operator = $this->makeOperator();
         $passenger = $this->makeUser('passenger');
@@ -325,7 +325,7 @@ class ComplaintReviewFlowTest extends TestCase
 
         $this->actingAs($passenger)->get('/passenger/dashboard')
             ->assertOk()
-            ->assertSee('Reviewed')
+            ->assertSee('In Progress')
             ->assertSee('Rejected');
     }
 

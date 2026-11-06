@@ -93,6 +93,25 @@ class AdminDashboardService
             // complaints can never drag an operator's score down.
             'averageRating' => Rating::isValid()->countsTowardRating()->avg('rating'),
             'totalComplaints' => Rating::isValid()->isComplaint()->count(),
+            // Open cases the TFRB / superadmin can act on right now: never
+            // routed to a president, or escalated by the owning president.
+            // Pending and Reviewed cases both stay actionable until solved
+            // or rejected, so "incoming" is everything still open here.
+            'actionableComplaints' => Rating::isValid()->isComplaint()
+                ->where('is_solved', false)
+                ->whereNull('rejected_at')
+                ->where(function ($query) {
+                    $query->whereNull('routed_to')->orWhereNotNull('forwarded_at');
+                })
+                ->count(),
+            // Still sitting with a TODA president (not forwarded yet) — shown
+            // so the TFRB can see what is not yet in their own queue.
+            'awaitingPresidentComplaints' => Rating::isValid()->isComplaint()
+                ->where('is_solved', false)
+                ->whereNull('rejected_at')
+                ->whereNotNull('routed_to')
+                ->whereNull('forwarded_at')
+                ->count(),
             'totalTodas' => Toda::count(),
             // TODA membership applications waiting on THIS approver: the TFRB
             // officer verifies president-approved requests, while the superadmin
@@ -197,6 +216,8 @@ class AdminDashboardService
             'totalRatings' => $stats['totalRatings'],
             'averageRating' => round((float) $stats['averageRating'], 1),
             'totalComplaints' => $stats['totalComplaints'],
+            'actionableComplaints' => $stats['actionableComplaints'] ?? 0,
+            'awaitingPresidentComplaints' => $stats['awaitingPresidentComplaints'] ?? 0,
             'totalOfficers' => $stats['totalOfficers'] ?? null,
             'totalTodas' => $stats['totalTodas'],
             'pendingTodaMemberships' => $stats['pendingTodaMemberships'] ?? 0,

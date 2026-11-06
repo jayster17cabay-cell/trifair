@@ -66,7 +66,7 @@
             </li>
             <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
                 <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">2</span>
-                <span class="leading-relaxed"><strong>You review &amp; solve</strong> — mark it reviewed (counts toward the operator's rating) and decide.</span>
+                <span class="leading-relaxed"><strong>You decide</strong> — mark it solved (it then counts toward the operator's rating) or reject it.</span>
             </li>
             <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
                 <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">3</span>
@@ -138,8 +138,8 @@
     } else {
         $emptyTitle = 'No Complaints';
         $emptyMsg = 'All operators are doing great! No complaints filed.';
-        if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for review. Keep it up!'; }
-        elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints marked as reviewed will appear here.'; }
+        if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for action. Keep it up!'; }
+        elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints accepted but not yet closed will appear here.'; }
         elseif ($filter === 'rejected') { $emptyTitle = 'No Rejected Complaints'; $emptyMsg = 'Complaints rejected after review will appear here.'; }
         elseif ($filter === 'solved') { $emptyTitle = 'No Solved Complaints'; $emptyMsg = 'Complaints you mark as solved will appear here.'; }
     }
@@ -186,7 +186,7 @@
 <div id="complaintResolutionModal" class="tw-modal-backdrop hidden" data-complaint-resolution-modal>
     <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="complaintResolutionTitle">
         <div class="tw-modal-head">
-            <h3 id="complaintResolutionTitle" class="text-base font-bold text-slate-800" data-resolution-title>Review Complaint</h3>
+            <h3 id="complaintResolutionTitle" class="text-base font-bold text-slate-800" data-resolution-title>Resolve Complaint</h3>
             <button type="button" class="tw-modal-close" data-resolution-close aria-label="Close">
                 <i class="bi bi-x-lg"></i>
             </button>

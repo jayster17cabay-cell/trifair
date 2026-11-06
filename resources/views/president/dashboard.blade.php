@@ -18,11 +18,17 @@
         || $section === 'members';
 @endphp
 
-{{-- Primary hero action: pending join requests are the president's most urgent
-     job, so surface them first; otherwise fall back to the members list. --}}
+{{-- Primary hero action: an open passenger complaint is the most urgent thing
+     a president owns, so it wins the hero; pending join requests come next,
+     then the members list. --}}
 @php
     $heroJoinCount = ($joinRequests ?? collect())->count();
-    if ($heroJoinCount > 0) {
+    $heroComplaintCount = (int) ($summary['pendingComplaints'] ?? 0);
+    if ($heroComplaintCount > 0) {
+        $heroActionLabel = $heroComplaintCount . ' Pending ' . ($heroComplaintCount === 1 ? 'Complaint' : 'Complaints');
+        $heroActionHref = route('president.complaints', ['filter' => 'pending']);
+        $heroActionIcon = 'bi-flag-fill';
+    } elseif ($heroJoinCount > 0) {
         $heroActionLabel = $heroJoinCount . ' Pending Join ' . ($heroJoinCount === 1 ? 'Request' : 'Requests');
         $heroActionHref = route('president.dashboard', ['section' => 'join-requests']);
         $heroActionIcon = 'bi-box-arrow-in-down';
@@ -47,7 +53,8 @@
 </div>
 @endif
 {{-- KPI cards --}}
-<div class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+<div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.complaints', ['filter' => 'pending']), 'icon' => 'bi-flag-fill', 'value' => $summary['pendingComplaints'], 'label' => 'Pending Complaints']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
     {{-- Member-level averages and complaints are reviewed per member, so both

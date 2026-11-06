@@ -67,6 +67,20 @@ class OperatorController extends Controller
         $overallTotal = (int) ($overallAgg->total ?? 0);
         $overallAvg = $overallTotal > 0 ? round((float) $overallAgg->avg, 1) : null;
 
+        // Actionable work surfaced on the dashboard: low ratings still waiting
+        // on a reply and complaints that are still open (neither solved nor
+        // rejected). Both follow the selected TODA and reporting period.
+        $needsResponseCount = (clone $base)
+            ->where('rating', '<=', 2)
+            ->whereDoesntHave('response')
+            ->count();
+
+        $openComplaintsCount = (clone $base)
+            ->isComplaint()
+            ->where('is_solved', false)
+            ->whereNull('rejected_at')
+            ->count();
+
         $recentRatings = (clone $base)
             ->with('proofs', 'response')
             ->latest()
@@ -84,7 +98,8 @@ class OperatorController extends Controller
         return view('operator.dashboard', compact(
             'operator', 'averageRating', 'totalRatings',
             'recentRatings', 'ratingCounts', 'period',
-            'todas', 'selectedToda', 'overallAvg', 'overallTotal'
+            'todas', 'selectedToda', 'overallAvg', 'overallTotal',
+            'needsResponseCount', 'openComplaintsCount'
         ));
     }
 

@@ -102,7 +102,7 @@
             $statusTabs = [
                 ['key' => null, 'label' => 'Total', 'count' => $totalCount, 'icon' => 'bi-list-ul', 'color' => 'violet'],
                 ['key' => 'pending', 'label' => 'Pending', 'count' => $pendingCount, 'icon' => 'bi-clock-history', 'color' => 'amber'],
-                ['key' => 'reviewed', 'label' => 'Reviewed', 'count' => $reviewedCount, 'icon' => 'bi-check-circle', 'color' => 'emerald'],
+                ['key' => 'reviewed', 'label' => 'In Progress', 'count' => $reviewedCount, 'icon' => 'bi-arrow-repeat', 'color' => 'emerald'],
                 ['key' => 'rejected', 'label' => 'Rejected', 'count' => $rejectedCount, 'icon' => 'bi-x-circle', 'color' => 'red'],
                 ['key' => 'solved', 'label' => 'Solved', 'count' => $solvedCount, 'icon' => 'bi-patch-check', 'color' => 'navy'],
             ];
@@ -126,7 +126,10 @@
         </div>
 
         @if ($activeStatus !== null)
-            @php $activeStatusLabel = ucfirst($activeStatus); @endphp
+            @php
+                $statusLabels = ['pending' => 'Pending', 'reviewed' => 'In Progress', 'rejected' => 'Rejected', 'solved' => 'Solved'];
+                $activeStatusLabel = $statusLabels[$activeStatus] ?? ucfirst($activeStatus);
+            @endphp
             <div class="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-navy-100 bg-navy-50 px-4 py-2.5 text-sm text-navy-700">
                 <i class="bi bi-funnel-fill" aria-hidden="true"></i>
                 <span>
@@ -167,8 +170,8 @@
         @php
             $pageItems = collect($complaints->getCollection());
             $sections = [
-                'pending' => ['label' => 'Pending', 'desc' => 'Filed and waiting for TFRB review', 'count' => $pendingCount, 'dot' => 'bg-amber-400', 'border' => 'border-l-amber-400'],
-                'reviewed' => ['label' => 'Reviewed', 'desc' => 'The complaint has been reviewed — it now counts against the operator', 'count' => $reviewedCount, 'dot' => 'bg-emerald-500', 'border' => 'border-l-emerald-500'],
+                'pending' => ['label' => 'Pending', 'desc' => 'Filed and waiting for the office to act', 'count' => $pendingCount, 'dot' => 'bg-amber-400', 'border' => 'border-l-amber-400'],
+                'reviewed' => ['label' => 'In Progress', 'desc' => 'Accepted and being resolved by the office', 'count' => $reviewedCount, 'dot' => 'bg-emerald-500', 'border' => 'border-l-emerald-500'],
                 'rejected' => ['label' => 'Rejected', 'desc' => 'Closed — the complaint was not upheld', 'count' => $rejectedCount, 'dot' => 'bg-red-400', 'border' => 'border-l-red-500'],
                 'solved' => ['label' => 'Solved', 'desc' => 'The case has been resolved by TFRB', 'count' => $solvedCount, 'dot' => 'bg-navy-600', 'border' => 'border-l-navy-600'],
             ];

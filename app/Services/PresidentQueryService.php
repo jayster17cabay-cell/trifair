@@ -84,6 +84,8 @@ class PresidentQueryService
             ? round((float) $memberRatingAgg->avg, 1)
             : 0;
 
+        // Only cases the president can still act on: open, not rejected and
+        // not already forwarded (a forwarded case is TFRB's from then on).
         $pendingComplaints = Rating::query()
             ->where('routed_to', $user?->id)
             ->where('toda_id', $toda->id)
@@ -91,6 +93,8 @@ class PresidentQueryService
             ->isComplaint()
             ->where('is_reviewed', false)
             ->where('is_solved', false)
+            ->whereNull('rejected_at')
+            ->whereNull('forwarded_at')
             ->count();
 
         $totalComplaints = Rating::query()

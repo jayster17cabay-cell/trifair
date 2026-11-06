@@ -13,14 +13,18 @@
     $liveAttr = !empty($kpi['live']) ? ' data-live="' . e($kpi['live']) . '"' : '';
 
     // Category tone derived from the card label (Nueva Vizcaya palette):
-    // Active -> green, Complaints -> red, everything else -> brand gold.
+    // Active -> green, Complaints / Action Needed -> red, pending work ->
+    // amber, everything else -> brand gold.
     $labelKey = strtolower($kpi['label'] ?? '');
     $tone = [
-        'active'     => ['border-l-nv-green', 'bg-nv-green-light text-nv-green'],
-        'inactive'   => ['border-l-slate-300', 'bg-slate-100 text-slate-500'],
-        'suspended'  => ['border-l-amber-400', 'bg-amber-100 text-amber-700'],
-        'complaints' => ['border-l-nv-red',   'bg-nv-red-light text-nv-red'],
-        'default'    => ['border-l-gold',     'bg-gold-50 text-gold-800'],
+        'active'              => ['border-l-nv-green', 'bg-nv-green-light text-nv-green'],
+        'inactive'            => ['border-l-slate-300', 'bg-slate-100 text-slate-500'],
+        'suspended'           => ['border-l-amber-400', 'bg-amber-100 text-amber-700'],
+        'complaints'          => ['border-l-nv-red',   'bg-nv-red-light text-nv-red'],
+        'action needed'       => ['border-l-nv-red',   'bg-nv-red-light text-nv-red'],
+        'pending complaints'  => ['border-l-amber-400', 'bg-amber-100 text-amber-700'],
+        'awaiting president'  => ['border-l-amber-400', 'bg-amber-100 text-amber-700'],
+        'default'             => ['border-l-gold',     'bg-gold-50 text-gold-800'],
     ];
     $t = $tone[$labelKey] ?? $tone['default'];
 @endphp

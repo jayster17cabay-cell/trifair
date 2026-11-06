@@ -23,6 +23,8 @@
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.ratings'), 'icon' => 'bi-star', 'value' => $totalRatings, 'label' => 'Ratings', 'live' => 'totalRatings']])
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.ratings'), 'icon' => 'bi-award', 'value' => number_format($averageRating ?? 0, 1), 'label' => 'Avg Rating', 'live' => 'averageRating']])
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.complaints'), 'icon' => 'bi-flag', 'value' => $totalComplaints, 'label' => 'Complaints', 'live' => 'totalComplaints']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.complaints', ['filter' => 'all']), 'icon' => 'bi-lightning-charge-fill', 'value' => $actionableComplaints ?? 0, 'label' => 'Action Needed', 'live' => 'actionableComplaints']])
+                @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.complaints', ['filter' => 'all']), 'icon' => 'bi-person-badge', 'value' => $awaitingPresidentComplaints ?? 0, 'label' => 'Awaiting President', 'live' => 'awaitingPresidentComplaints']])
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.todas'), 'icon' => 'bi-diagram-3', 'value' => $totalTodas, 'label' => 'TODA', 'live' => 'totalTodas']])
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('tfrb-officer.operators'), 'icon' => 'bi-hourglass-split', 'value' => $pendingTodaMemberships ?? 0, 'label' => 'Pending TODA', 'live' => 'pendingTodaMemberships']])
             </div>

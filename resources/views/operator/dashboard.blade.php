@@ -48,6 +48,31 @@
         </div>
     </div>
 @endif
+
+@if (($needsResponseCount ?? 0) > 0)
+    <div class="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+        <span>
+            <strong>{{ $needsResponseCount }}</strong>
+            {{ $needsResponseCount === 1 ? 'low rating needs' : 'low ratings need' }} your response.
+        </span>
+        <a href="{{ route('operator.ratings') }}" class="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-700">
+            Respond <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
+    </div>
+@endif
+
+<div class="op-stat-strip">
+    <a href="{{ route('operator.ratings') }}" class="op-stat-strip-item block no-underline transition hover:-translate-y-0.5 hover:shadow-md" title="Low ratings still waiting for your response">
+        <small>Needs Response</small>
+        <strong>{{ $needsResponseCount ?? 0 }}</strong>
+    </a>
+    <a href="{{ route('operator.ratings') }}" class="op-stat-strip-item block no-underline transition hover:-translate-y-0.5 hover:shadow-md" title="Complaints still open against you">
+        <small>Open Complaints</small>
+        <strong>{{ $openComplaintsCount ?? 0 }}</strong>
+    </a>
+</div>
+
 <div class="op-dashboard">
     @include('partials.operator.dashboard-quick-actions', ['operator' => $operator])
 

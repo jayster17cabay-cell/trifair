@@ -258,15 +258,11 @@
             @if ($canAct)
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
                     @if (in_array($rating->status_label, ['Pending', 'Reviewed'], true))
-                        @if ($rating->status_label === 'Pending')
-                            <form action="{{ route($routePrefix . '.complaints.review', $rating) }}" method="POST" onsubmit="return confirm('Mark this complaint as reviewed? It will count towards the operator\'s rating.')">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" title="Mark as reviewed — counts towards the operator's rating">
-                                    <i class="bi bi-check-lg"></i>Review
-                                </button>
-                            </form>
-                        @endif
+                        {{-- An incoming complaint only offers the two final
+                             decisions. Solving also marks it reviewed (so it
+                             counts towards the rating); rejecting closes it
+                             without affecting the score. The separate Review
+                             endpoint is kept for legacy data only. --}}
                         <button type="button" class="tw-btn tw-btn-sm tw-btn-navy" title="Mark complaint as solved"
                                 data-complaint-resolution data-mode="solve"
                                 data-action="{{ route($routePrefix . '.complaints.solve', $rating) }}"
@@ -280,7 +276,7 @@
                             <i class="bi bi-x-lg"></i>Reject
                         </button>
                     @elseif ($rating->status_label === 'Rejected')
-                        <form action="{{ route($routePrefix . '.complaints.reset', $rating) }}" method="POST" onsubmit="return confirm('Undo rejection and return this complaint to pending review?')">
+                        <form action="{{ route($routePrefix . '.complaints.reset', $rating) }}" method="POST" onsubmit="return confirm('Undo rejection and return this complaint to the pending queue?')">
                             @csrf
                             @method('PATCH')
                             <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline" title="Undo rejection">
