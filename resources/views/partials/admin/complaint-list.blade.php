@@ -14,6 +14,40 @@
 @php
     $search = trim((string) ($search ?? request('search', '')));
     $presidentMode = $presidentMode ?? false;
+    $source = $source ?? 'all';
+    $sourceCounts = $sourceCounts ?? [
+        'actionable' => 0,
+        'forwarded' => 0,
+        'direct' => 0,
+        'awaiting' => 0,
+        'all' => $totalCount ?? 0,
+    ];
+    $openCount = $openCount ?? (($pendingCount ?? 0) + ($reviewedCount ?? 0));
+
+    $sourceUrl = function (string $key) use ($routePrefix, $filter, $ratingFilter, $search) {
+        return route($routePrefix . '.complaints', array_filter([
+            'source' => $key,
+            'filter' => $filter,
+            'rating' => $ratingFilter,
+            'search' => $search,
+        ], fn ($value) => $value !== null && $value !== ''));
+    };
+
+    $sourceTabs = [
+        ['key' => 'actionable', 'label' => 'Actionable', 'short' => 'Actionable', 'icon' => 'bi-lightning-charge-fill', 'tone' => 'text-navy-600'],
+        ['key' => 'forwarded', 'label' => 'Forwarded by President', 'short' => 'Forwarded', 'icon' => 'bi-send-fill', 'tone' => 'text-violet-600'],
+        ['key' => 'direct', 'label' => 'Direct to TFRB', 'short' => 'Direct', 'icon' => 'bi-shield-check', 'tone' => 'text-navy-600'],
+        ['key' => 'awaiting', 'label' => 'Awaiting President', 'short' => 'Awaiting', 'icon' => 'bi-hourglass-split', 'tone' => 'text-amber-600'],
+        ['key' => 'all', 'label' => 'All complaints', 'short' => 'All', 'icon' => 'bi-collection', 'tone' => 'text-slate-500'],
+    ];
+
+    $sourceHelp = [
+        'actionable' => 'Forwarded escalations and complaints filed directly to the TFRB — these are the ones you can act on now.',
+        'forwarded' => 'Cases escalated by a TODA president. The president can no longer act; the TFRB/superadmin now owns them.',
+        'direct' => 'Complaints that never went to a TODA president — filed against presidents, unassigned operators, or TODAs without one.',
+        'awaiting' => 'Still with the TODA president. Read-only until they solve it or forward it to you.',
+        'all' => 'Every complaint from every source, newest first.',
+    ][$source] ?? '';
 
     $statItems = [
         ['num' => $totalCount, 'label' => 'Total', 'icon' => 'bi-exclamation-circle', 'chip' => 'bg-blue-50 text-navy-600'],
@@ -21,7 +55,7 @@
         ['num' => $reviewedCount, 'label' => 'Reviewed', 'icon' => 'bi-check-circle', 'chip' => 'bg-emerald-50 text-emerald-600'],
         ['num' => $rejectedCount, 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600'],
         ['num' => $solvedCount, 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600'],
-        ['num' => $proofsTotal ?? $complaints->sum(fn($r) => $r->proofs->count()), 'label' => 'Proofs', 'icon' => 'bi-paperclip', 'chip' => 'bg-slate-100 text-slate-500'],
+        ['num' => $sourceCounts['forwarded'] ?? 0, 'label' => 'Forwarded', 'icon' => 'bi-send-fill', 'chip' => 'bg-violet-50 text-violet-600', 'href' => $presidentMode ? null : $sourceUrl('forwarded')],
     ];
 @endphp
 
@@ -30,9 +64,19 @@
         @if ($presidentMode)
             <h1 class="tw-page-title"><i class="bi bi-flag mr-2 text-amber-500"></i>Complaints Queue</h1>
             <p class="tw-page-sub">Passenger complaints against members of your TODA — you handle them first</p>
+            @if (($actionableCount ?? 0) > 0)
+                <span class="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                    <i class="bi bi-hourglass-split"></i>{{ $actionableCount }} waiting for your action
+                </span>
+            @endif
+            @if (($forwardedForTfrbCount ?? 0) > 0)
+                <span class="mt-2 inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
+                    <i class="bi bi-send-fill"></i>You forwarded {{ $forwardedForTfrbCount }} complaint{{ $forwardedForTfrbCount > 1 ? 's' : '' }} — handed over to the TFRB for handling
+                </span>
+            @endif
         @else
             <h1 class="tw-page-title"><i class="bi bi-exclamation-triangle mr-2 text-amber-500"></i>Complaints</h1>
-            <p class="tw-page-sub">Passenger complaints against operators</p>
+            <p class="tw-page-sub">Organized by source — forwarded escalations from TODA presidents stay visible at a glance.</p>
         @endif
     </div>
     @unless ($presidentMode)
@@ -43,14 +87,14 @@
             'activeOperators' => $activeOperators,
             'exportFilters' => [
                 ['type' => 'select', 'name' => 'filter', 'label' => 'Status', 'options' => [
-                    '' => 'All', 'pending' => 'Pending', 'reviewed' => 'Reviewed', 'rejected' => 'Rejected', 'solved' => 'Solved',
+                    '' => 'All', 'open' => 'Open', 'pending' => 'Pending', 'reviewed' => 'Reviewed', 'rejected' => 'Rejected', 'solved' => 'Solved',
                 ], 'value' => $filter],
                 ['type' => 'select', 'name' => 'rating', 'label' => 'Stars', 'options' => [
                     '' => 'All stars', '1' => '1 Star', '2' => '2 Stars',
                 ], 'value' => $ratingFilter ?? ''],
                 ['type' => 'daterange', 'prefix' => 'date', 'from' => request('date_from'), 'to' => request('date_to')],
             ],
-            'preservedParams' => array_filter(['search' => $search], fn ($v) => $v !== null && $v !== ''),
+            'preservedParams' => array_filter(['source' => $presidentMode ? null : $source, 'search' => $search], fn ($v) => $v !== null && $v !== ''),
         ])
     @endunless
 </div>
@@ -81,21 +125,54 @@
     {{-- Summary stats --}}
     <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
         @foreach ($statItems as $stat)
-            <div class="flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5">
+            @php $statTag = !empty($stat['href']) ? 'a' : 'div'; @endphp
+            <{{ $statTag }}
+                @if (!empty($stat['href'])) href="{{ $stat['href'] }}" title="Show forwarded complaints" @endif
+                class="flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5 {{ !empty($stat['href']) ? 'transition hover:bg-violet-50 hover:ring-1 hover:ring-violet-200' : '' }}">
                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $stat['chip'] }}"><i class="bi {{ $stat['icon'] }}"></i></span>
                 <div class="min-w-0">
                     <div class="text-base font-extrabold leading-none text-slate-800">{{ $stat['num'] }}</div>
                     <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ $stat['label'] }}</div>
                 </div>
-            </div>
+                @if (!empty($stat['href']))
+                    <i class="bi bi-arrow-right ml-auto text-violet-400"></i>
+                @endif
+            </{{ $statTag }}>
         @endforeach
     </div>
 
+    @unless ($presidentMode)
+        {{-- Where each complaint came from. Forwarded escalations stay one
+             click away and are listed first in the actionable inbox. --}}
+        <div class="mt-3 flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Complaint source" data-source-tablist data-source-poll-url="{{ route($routePrefix . '.complaints.sourceCounts') }}">
+            @foreach ($sourceTabs as $tab)
+                @php $isActiveSource = $source === $tab['key']; @endphp
+                <a href="{{ $sourceUrl($tab['key']) }}" role="tab" aria-selected="{{ $isActiveSource ? 'true' : 'false' }}" data-source="{{ $tab['key'] }}"
+                   class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-bold transition {{ $isActiveSource ? 'border-navy-600 bg-navy-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-200 hover:bg-slate-50' }}">
+                    <i class="bi {{ $tab['icon'] }} {{ $isActiveSource ? '' : $tab['tone'] }}"></i>
+                    <span class="hidden sm:inline">{{ $tab['label'] }}</span>
+                    <span class="sm:hidden">{{ $tab['short'] }}</span>
+                    <span class="rounded-full px-1.5 py-0.5 text-[10px] font-extrabold {{ $isActiveSource ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }}" data-source-count="{{ $sourceCounts[$tab['key']] ?? 0 }}">{{ $sourceCounts[$tab['key']] ?? 0 }}</span>
+                </a>
+            @endforeach
+        </div>
+        @if ($sourceHelp !== '')
+            <p class="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-slate-500">
+                <i class="bi bi-info-circle mt-0.5 shrink-0 text-slate-400"></i>
+                <span>{{ $sourceHelp }}</span>
+            </p>
+        @endif
+    @endunless
+
     {{-- Status, severity and search filters. --}}
     <form method="GET" action="{{ route($routePrefix . '.complaints') }}" class="mt-3.5 flex flex-wrap items-center gap-3">
+        @unless ($presidentMode)
+            <input type="hidden" name="source" value="{{ $source }}">
+        @endunless
         <div>
             <label for="complaint_filter" class="sr-only">Status</label>
             <select name="filter" id="complaint_filter" class="tw-select py-2 text-xs" onchange="this.form.submit()" aria-label="Filter complaints by status">
+                <option value="open" {{ $filter === 'open' ? 'selected' : '' }}>Open ({{ $openCount }})</option>
                 <option value="all" {{ $filter === 'all' ? 'selected' : '' }}>All status ({{ $totalCount }})</option>
                 <option value="pending" {{ $filter === 'pending' ? 'selected' : '' }}>Pending ({{ $pendingCount }})</option>
                 <option value="reviewed" {{ $filter === 'reviewed' ? 'selected' : '' }}>Reviewed ({{ $reviewedCount }})</option>
@@ -119,7 +196,7 @@
                        data-complaint-live-search>
             </div>
             @if ($search !== '')
-                <a href="{{ route($routePrefix . '.complaints', array_filter(['filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null && $v !== '')) }}"
+                <a href="{{ route($routePrefix . '.complaints', array_filter(['source' => $presidentMode ? null : $source, 'filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null && $v !== '')) }}"
                    class="tw-btn tw-btn-sm tw-btn-ghost" title="Clear search">
                     <i class="bi bi-x-lg"></i><span class="hidden sm:inline">Clear</span>
                 </a>
@@ -138,10 +215,19 @@
     } else {
         $emptyTitle = 'No Complaints';
         $emptyMsg = 'All operators are doing great! No complaints filed.';
-        if ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for action. Keep it up!'; }
+        if ($filter === 'open') { $emptyTitle = 'No Open Complaints'; $emptyMsg = 'Nothing is pending or under review right now. Everything is closed out.'; }
+        elseif ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for action. Keep it up!'; }
         elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints accepted but not yet closed will appear here.'; }
         elseif ($filter === 'rejected') { $emptyTitle = 'No Rejected Complaints'; $emptyMsg = 'Complaints rejected after review will appear here.'; }
         elseif ($filter === 'solved') { $emptyTitle = 'No Solved Complaints'; $emptyMsg = 'Complaints you mark as solved will appear here.'; }
+
+        // Source-aware copy keeps the empty tab from looking broken.
+        if (!$presidentMode && in_array($filter, ['', 'all', 'open'], true)) {
+            if ($source === 'forwarded') { $emptyTitle = 'No Forwarded Complaints'; $emptyMsg = 'No TODA president has escalated a complaint to the TFRB yet.'; }
+            elseif ($source === 'direct') { $emptyTitle = 'No Direct Complaints'; $emptyMsg = 'No complaint has been filed straight to the TFRB.'; }
+            elseif ($source === 'awaiting') { $emptyTitle = 'Nothing Awaiting a President'; $emptyMsg = 'Every routed complaint has already been handled or forwarded.'; }
+            elseif ($source === 'actionable') { $emptyTitle = 'Nothing to Act On'; $emptyMsg = 'No forwarded or direct complaints are waiting for the TFRB right now.'; }
+        }
     }
 @endphp
 
@@ -164,19 +250,52 @@
 <script>
     (function () {
         var input = document.querySelector('input[data-complaint-live-search]');
-        if (!input || !input.form) return;
-        var timer = null;
-        input.addEventListener('input', function () {
-            clearTimeout(timer);
-            timer = setTimeout(function () { input.form.submit(); }, 400);
-        });
-        input.addEventListener('keydown', function (e) {
-            if (e.keyCode === 13) {
-                e.preventDefault();
+        if (input && input.form) {
+            var timer = null;
+            input.addEventListener('input', function () {
                 clearTimeout(timer);
-                input.form.submit();
-            }
-        });
+                timer = setTimeout(function () { input.form.submit(); }, 400);
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.keyCode === 13) {
+                    e.preventDefault();
+                    clearTimeout(timer);
+                    input.form.submit();
+                }
+            });
+        }
+    })();
+</script>
+
+<script>
+    (function () {
+        // Live refresh of the source tab badges while the complaints inbox is
+        // open. Hits the source-counts AJAX endpoint and updates the per-source
+        // counters without a full page reload.
+        var board = document.querySelector('[data-source-tablist]');
+        if (!board) return;
+        var pollUrl = board.getAttribute('data-source-poll-url');
+        if (!pollUrl) return;
+
+        function refreshSourceCounts() {
+            fetch(pollUrl, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            })
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(function (data) {
+                    if (!data || !data.sourceCounts) return;
+                    document.querySelectorAll('[data-source-tablist] [data-source]').forEach(function (el) {
+                        var badge = el.querySelector('[data-source-count]');
+                        if (badge) {
+                            badge.textContent = String(data.sourceCounts[el.getAttribute('data-source')] ?? 0);
+                        }
+                    });
+                })
+                .catch(function () { /* polling is best-effort */ });
+        }
+
+        refreshSourceCounts();
+        setInterval(refreshSourceCounts, 20000);
     })();
 </script>
 

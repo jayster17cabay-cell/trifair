@@ -434,4 +434,144 @@ class ComplaintRoutingTest extends TestCase
 
         $this->assertEqualsWithDelta(3.0, (float) $operator->averageRating(), 0.001);
     }
+
+    // ---- staff complaints queue: source tabs ----------------------------------
+
+    /**
+     * Builds one complaint of each source and returns [forwarded, direct,
+     * awaiting, president].
+     *
+     * @return array{0: Rating, 1: Rating, 2: Rating, 3: User}
+     */
+    private function makeComplaintsOfEverySource(): array
+    {
+        $toda = $this->makeToda();
+        $president = $this->makePresident($toda);
+        $operator = $this->makeMemberOperator($toda);
+
+        $forwarded = $this->makeComplaint($operator, $toda);
+        $forwarded->update([
+            'routed_to' => $president->id,
+            'forwarded_at' => now(),
+            'forwarded_by' => $president->id,
+        ]);
+
+        $direct = $this->makeComplaint($operator, $toda);
+        $direct->update(['routed_to' => null, 'forwarded_at' => null]);
+
+        $awaiting = $this->makeComplaint($operator, $toda);
+        $awaiting->update(['routed_to' => $president->id, 'forwarded_at' => null]);
+
+        return [$forwarded->fresh(), $direct->fresh(), $awaiting->fresh(), $president];
+    }
+
+    public function test_staff_default_queue_shows_only_actionable_complaints()
+    {
+        [$forwarded, $direct, $awaiting] = $this->makeComplaintsOfEverySource();
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($admin)
+            ->get('/superadmin/complaints')
+            ->assertOk()
+            // Forwarded escalations and direct-to-TFRB cases are actionable.
+            ->assertSee($forwarded->reference_number, false)
+            ->assertSee($direct->reference_number, false)
+            // Still with the president — read-only, so it is hidden by default.
+            ->assertDontSee($awaiting->reference_number, false)
+            ->assertSee('Forwarded by President')
+            ->assertSee('Direct to TFRB');
+    }
+
+    public function test_staff_forwarded_tab_lists_escalations_with_sender()
+    {
+        [$forwarded, $direct, $awaiting, $president] = $this->makeComplaintsOfEverySource();
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($admin)
+            ->get('/superadmin/complaints?source=forwarded')
+            ->assertOk()
+            ->assertSee($forwarded->reference_number, false)
+            ->assertDontSee($direct->reference_number, false)
+            ->assertDontSee($awaiting->reference_number, false)
+            ->assertSee('Forwarded by President')
+            ->assertSee('Escalated by')
+            ->assertSee($president->name);
+    }
+
+    public function test_staff_awaiting_tab_lists_cases_still_with_president()
+    {
+        [$forwarded, $direct, $awaiting, $president] = $this->makeComplaintsOfEverySource();
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($admin)
+            ->get('/superadmin/complaints?source=awaiting')
+            ->assertOk()
+            ->assertSee($awaiting->reference_number, false)
+            ->assertDontSee($forwarded->reference_number, false)
+            ->assertDontSee($direct->reference_number, false)
+            ->assertSee('With ' . $president->name);
+    }
+
+    public function test_staff_direct_tab_lists_only_direct_complaints()
+    {
+        [$forwarded, $direct, $awaiting] = $this->makeComplaintsOfEverySource();
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($admin)
+            ->get('/superadmin/complaints?source=direct')
+            ->assertOk()
+            ->assertSee($direct->reference_number, false)
+            ->assertDontSee($forwarded->reference_number, false)
+            ->assertDontSee($awaiting->reference_number, false)
+            ->assertSee('Direct to TFRB');
+    }
+
+    public function test_staff_all_tab_shows_every_source()
+    {
+        [$forwarded, $direct, $awaiting] = $this->makeComplaintsOfEverySource();
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($admin)
+            ->get('/superadmin/complaints?source=all')
+            ->assertOk()
+            ->assertSee($forwarded->reference_number, false)
+            ->assertSee($direct->reference_number, false)
+            ->assertSee($awaiting->reference_number, false);
+    }
+
+    public function test_source_counts_endpoint_returns_live_tallies()
+    {
+        [$forwarded, $direct, $awaiting] = $this->makeComplaintsOfEverySource();
+        $admin = $this->makeUser('superadmin');
+
+        // Three complaints exist: 1 forwarded, 1 direct, 1 awaiting. Under
+        // the default "open" filter all three are open, so actionable = 2
+        // (forwarded + direct), forwarded = 1, direct = 1, awaiting = 1.
+        $this->actingAs($admin)
+            ->getJson('/superadmin/complaints/source-counts')
+            ->assertOk()
+            ->assertJsonStructure(['source', 'sourceCounts', 'filter', 'rating']);
+        $payload = $this->getJson('/superadmin/complaints/source-counts')->assertOk()->json();
+        $this->assertSame('actionable', $payload['source']);
+        $this->assertSame('open', $payload['filter']);
+        $this->assertSame(['actionable' => 2, 'forwarded' => 1, 'direct' => 1, 'awaiting' => 1, 'all' => 3], $payload['sourceCounts']);
+    }
+
+    public function test_source_counts_endpoint_is_staff_only()
+    {
+        $toda = $this->makeToda();
+        $president = $this->makePresident($toda);
+
+        $this->actingAs($president)->getJson('/superadmin/complaints/source-counts')->assertStatus(403);
+    }
+
+    public function test_president_queue_shows_forwarded_handoff_summary()
+    {
+        [$forwarded, $direct, $awaiting, $president] = $this->makeComplaintsOfEverySource();
+
+        $this->actingAs($president)
+            ->get('/president/complaints')
+            ->assertOk()
+            ->assertSee('You forwarded 1 complaint — handed over to the TFRB for handling');
+    }
 }

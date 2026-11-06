@@ -22,17 +22,71 @@ class AdminQueryService
 {
     public function complaintsData(Request $request, ?User $president = null): array
     {
-        $filter = $request->query('filter', 'pending');
+        $filter = (string) $request->query('filter', $president ? 'pending' : 'open');
         $ratingKey = $request->query('rating');
         $allowStar = ['1', '2'];
         $ratingFilter = in_array($ratingKey, $allowStar, true) ? (int) $ratingKey : null;
         $search = trim((string) $request->query('search'));
+
+        $allowedFilters = ['', 'all', 'open', 'pending', 'reviewed', 'rejected', 'solved'];
+        if (!in_array($filter, $allowedFilters, true)) {
+            $filter = $president ? 'pending' : 'open';
+        }
+
+        // Where a complaint came from. The superadmin/TFRB inbox is grouped
+        // into actionable (forwarded + direct), forwarded by a TODA president,
+        // direct to TFRB, awaiting a TODA president, or everything.
+        $allowedSources = ['actionable', 'forwarded', 'direct', 'awaiting', 'all'];
+        $source = $president ? 'all' : (string) $request->query('source', 'actionable');
+        if (!in_array($source, $allowedSources, true)) {
+            $source = 'actionable';
+        }
 
         $base = Rating::isValid()->isComplaint();
         if ($president) {
             // Presidents only see complaints routed to them (including
             // ones they have forwarded — they keep visibility to monitor).
             $base->where('routed_to', $president->id);
+        }
+
+        $applyStatusFilter = function ($query, string $filter) {
+            if ($filter === 'open') {
+                $query->where('is_solved', false)->whereNull('rejected_at');
+            } elseif ($filter === 'pending') {
+                $query->where('is_reviewed', false)->where('is_solved', false);
+            } elseif ($filter === 'reviewed') {
+                $query->where('is_reviewed', true)->where('is_solved', false)->whereNull('rejected_at');
+            } elseif ($filter === 'rejected') {
+                $query->whereNotNull('rejected_at');
+            } elseif ($filter === 'solved') {
+                $query->isSolved();
+            }
+
+            return $query;
+        };
+
+        $sourceTallies = $this->sourceTallies($base, $ratingFilter, $filter);
+
+        $sourceCounts = [
+            'actionable' => (int) ($sourceTallies->actionable_count ?? 0),
+            'forwarded' => (int) ($sourceTallies->forwarded_count ?? 0),
+            'direct' => (int) ($sourceTallies->direct_count ?? 0),
+            'awaiting' => (int) ($sourceTallies->awaiting_count ?? 0),
+            'all' => (int) ($sourceTallies->all_count ?? 0),
+        ];
+
+        if (!$president) {
+            if ($source === 'forwarded') {
+                $base->whereNotNull('forwarded_at');
+            } elseif ($source === 'direct') {
+                $base->whereNull('routed_to')->whereNull('forwarded_at');
+            } elseif ($source === 'awaiting') {
+                $base->whereNotNull('routed_to')->whereNull('forwarded_at');
+            } elseif ($source === 'actionable') {
+                $base->where(function ($q) {
+                    $q->whereNotNull('forwarded_at')->orWhereNull('routed_to');
+                });
+            }
         }
 
         // One round-trip instead of seven: the status/star tallies are all
@@ -55,6 +109,7 @@ class AdminQueryService
         $totalCount = (int) ($counts->total_count ?? 0);
         $star1Count = (int) ($counts->star1_count ?? 0);
         $star2Count = (int) ($counts->star2_count ?? 0);
+        $openCount = $pendingCount + $reviewedCount;
 
         // Global count of proof files attached to valid complaints (not just the
         // current page) so the stats bar stays accurate across pagination.
@@ -67,18 +122,7 @@ class AdminQueryService
         }
         $proofsTotal = (int) $proofsTotalQuery->count();
 
-        if ($filter === 'pending') {
-            $base->where('is_reviewed', false)->where('is_solved', false);
-        } elseif ($filter === 'reviewed') {
-            $base->where('is_reviewed', true)->where('is_solved', false)->whereNull('rejected_at');
-        } elseif ($filter === 'rejected') {
-            $base->whereNotNull('rejected_at');
-        } elseif ($filter === 'solved') {
-            $base->isSolved();
-        } elseif (!in_array($filter, ['', 'all'], true)) {
-            $filter = 'pending';
-            $base->where('is_reviewed', false)->where('is_solved', false);
-        }
+        $this->applyStatusFilter($base, $filter);
 
         if ($ratingFilter) {
             $base->where('rating', $ratingFilter);
@@ -88,12 +132,107 @@ class AdminQueryService
             $this->applyReferenceSearch($base, $search);
         }
 
-        $complaints = $base->with(['operator.user', 'proofs', 'response', 'operatorProofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user'])
+        // Escalations from TODA presidents come first in the actionable inbox.
+        if (!$president && $source === 'forwarded') {
+            $base->orderByDesc('forwarded_at');
+        } elseif (!$president && $source === 'actionable') {
+            $base->orderByRaw('CASE WHEN forwarded_at IS NOT NULL THEN 0 ELSE 1 END')
+                ->orderByDesc('forwarded_at');
+        }
+
+        $complaints = $base->with(['operator.user', 'proofs', 'response', 'operatorProofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user', 'forwardedBy', 'routedToPresident'])
             ->latest()
             ->paginate(20)
             ->withQueryString();
 
-        return compact('complaints', 'filter', 'ratingFilter', 'search', 'pendingCount', 'reviewedCount', 'rejectedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal') + ['presidentMode' => (bool) $president];
+        return compact('complaints', 'filter', 'ratingFilter', 'search', 'pendingCount', 'reviewedCount', 'rejectedCount', 'solvedCount', 'totalCount', 'openCount', 'star1Count', 'star2Count', 'proofsTotal', 'source', 'sourceCounts') + ['presidentMode' => (bool) $president];
+    }
+
+    /**
+     * Maps a review status filter onto the complaint base. "Open" means
+     * pending OR reviewed and not yet closed (solved/rejected are terminal).
+     */
+    private function applyStatusFilter($query, string $filter): void
+    {
+        if ($filter === 'open') {
+            $query->where('is_solved', false)->whereNull('rejected_at');
+        } elseif ($filter === 'pending') {
+            $query->where('is_reviewed', false)->where('is_solved', false);
+        } elseif ($filter === 'reviewed') {
+            $query->where('is_reviewed', true)->where('is_solved', false)->whereNull('rejected_at');
+        } elseif ($filter === 'rejected') {
+            $query->whereNotNull('rejected_at');
+        } elseif ($filter === 'solved') {
+            $query->isSolved();
+        }
+    }
+
+    /**
+     * Conditional source tallies (forwarded / direct / awaiting / actionable /
+     * all) over a status- and star-filtered complaint base. Shared by the
+     * queue page (source tabs + status chips) and the live source-counts AJAX
+     * endpoint so both always agree.
+     */
+    private function sourceTallies($base, ?int $ratingFilter, string $filter)
+    {
+        $sourceBase = clone $base;
+        if ($ratingFilter) {
+            $sourceBase->where('rating', $ratingFilter);
+        }
+        $this->applyStatusFilter($sourceBase, $filter);
+
+        return $sourceBase->selectRaw(
+            'COUNT(*) as all_count'
+            . ', SUM(CASE WHEN forwarded_at IS NOT NULL THEN 1 ELSE 0 END) as forwarded_count'
+            . ', SUM(CASE WHEN routed_to IS NULL AND forwarded_at IS NULL THEN 1 ELSE 0 END) as direct_count'
+            . ', SUM(CASE WHEN routed_to IS NOT NULL AND forwarded_at IS NULL THEN 1 ELSE 0 END) as awaiting_count'
+            . ', SUM(CASE WHEN forwarded_at IS NOT NULL OR routed_to IS NULL THEN 1 ELSE 0 END) as actionable_count'
+        )->first();
+    }
+
+    /**
+     * Live source-tab tallies for the complaints queue (powers the AJAX
+     * refresh of the source tabs). Staff default to the actionable source and
+     * an "open" status filter; presidents always see their own routed cases.
+     */
+    public function complaintSourceCounts(Request $request, ?User $president = null): array
+    {
+        $filter = (string) $request->query('filter', $president ? 'pending' : 'open');
+        $ratingKey = $request->query('rating');
+        $ratingFilter = in_array($ratingKey, ['1', '2'], true) ? (int) $ratingKey : null;
+
+        $allowedFilters = ['', 'all', 'open', 'pending', 'reviewed', 'rejected', 'solved'];
+        if (!in_array($filter, $allowedFilters, true)) {
+            $filter = $president ? 'pending' : 'open';
+        }
+
+        $allowedSources = ['actionable', 'forwarded', 'direct', 'awaiting', 'all'];
+        $source = $president ? 'all' : (string) $request->query('source', 'actionable');
+        if (!in_array($source, $allowedSources, true)) {
+            $source = 'actionable';
+        }
+
+        $base = Rating::isValid()->isComplaint();
+        if ($president) {
+            $base->where('routed_to', $president->id);
+        }
+
+        // Tallies are computed across every source so the client can render
+        // (and keep fresh) all tab badges at once, not just the active one.
+        $sourceTallies = $this->sourceTallies($base, $ratingFilter, $filter);
+
+        return [
+            'source' => $source,
+            'sourceCounts' => [
+                'actionable' => (int) ($sourceTallies->actionable_count ?? 0),
+                'forwarded' => (int) ($sourceTallies->forwarded_count ?? 0),
+                'direct' => (int) ($sourceTallies->direct_count ?? 0),
+                'awaiting' => (int) ($sourceTallies->awaiting_count ?? 0),
+                'all' => (int) ($sourceTallies->all_count ?? 0),
+            ],
+            'filter' => $filter,
+            'rating' => $ratingFilter,
+        ];
     }
 
     /**
@@ -640,11 +779,25 @@ class AdminQueryService
         $operatorId = $request->query('operator_id');
         $ratingKey = $request->query('rating');
         $search = trim((string) $request->query('search'));
+        $source = trim((string) $request->query('source'));
         $base = Rating::isValid()->isComplaint();
         if (in_array($ratingKey, ['1', '2'], true)) {
             $base->where('rating', (int) $ratingKey);
         }
-        if ($filter === 'reviewed') {
+        if ($source === 'forwarded') {
+            $base->whereNotNull('forwarded_at');
+        } elseif ($source === 'direct') {
+            $base->whereNull('routed_to')->whereNull('forwarded_at');
+        } elseif ($source === 'awaiting') {
+            $base->whereNotNull('routed_to')->whereNull('forwarded_at');
+        } elseif ($source === 'actionable') {
+            $base->where(function ($q) {
+                $q->whereNotNull('forwarded_at')->orWhereNull('routed_to');
+            });
+        }
+        if ($filter === 'open') {
+            $base->where('is_solved', false)->whereNull('rejected_at');
+        } elseif ($filter === 'reviewed') {
             $base->where('is_reviewed', true)->where('is_solved', false)->whereNull('rejected_at');
         } elseif ($filter === 'rejected') {
             $base->whereNotNull('rejected_at');

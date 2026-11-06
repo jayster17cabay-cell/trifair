@@ -63,6 +63,17 @@ class PresidentComplaintsController extends Controller
         $todaIds = $user->presidentTodas()->pluck('id')->map(fn ($id) => (int) $id);
         $actionableComplaints = $this->assignableComplaintsFor($toda, (int) $user->id);
         $actionableIds = $actionableComplaints->pluck('id')->map(fn ($id) => (int) $id)->all();
+        // How many of this president's complaints they already escalated to
+        // the TFRB — shown as a hand-off summary so the queue always answers
+        // "where did my cases go".
+        $forwardedForTfrb = Rating::query()
+            ->where('routed_to', $user->id)
+            ->whereNotNull('forwarded_at')
+            ->whereNull('rejected_at')
+            ->where('is_solved', false)
+            ->whereNotNull('complaint_type')
+            ->where('is_valid', true)
+            ->count();
 
         return view('president.complaints', $data + [
             'toda' => $toda,
@@ -70,6 +81,7 @@ class PresidentComplaintsController extends Controller
             'todaIds' => $todaIds,
             'actionableComplaintIds' => $actionableIds,
             'actionableCount' => $actionableComplaints->count(),
+            'forwardedForTfrbCount' => (int) $forwardedForTfrb,
             'canForward' => $actionableComplaints->isNotEmpty(),
         ]);
     }

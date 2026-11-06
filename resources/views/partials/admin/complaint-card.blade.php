@@ -53,6 +53,39 @@
         && empty($rating->forwarded_at);
     $isForwarded = !empty($rating->forwarded_at);
     $isForwardedByPresident = !empty($rating->forwarded_by);
+
+    // At-a-glance origin badge. Staff queues distinguish forwarded
+    // escalations, direct-to-TFRB complaints and cases still with a
+    // president; the president queue only ever shows its own cases (plus
+    // the ones it already forwarded).
+    $sourceBadge = null;
+    if ($isForwarded) {
+        $sourceBadge = [
+            'label' => $isPresidentView ? 'Forwarded to TFRB' : 'Forwarded by President',
+            'short' => $isPresidentView ? 'Forwarded' : 'Forwarded',
+            'icon' => 'bi-send-fill',
+            'class' => 'border-violet-200 bg-violet-50 text-violet-700',
+            'title' => $rating->forwardedBy?->name
+                ? 'Forwarded by ' . $rating->forwardedBy->name
+                : 'Forwarded to the TFRB',
+        ];
+    } elseif (!$isPresidentView && $rating->routed_to === null) {
+        $sourceBadge = [
+            'label' => 'Direct to TFRB',
+            'short' => 'Direct',
+            'icon' => 'bi-shield-check',
+            'class' => 'border-navy-200 bg-navy-50 text-navy-700',
+            'title' => 'Filed directly to the TFRB / superadmin',
+        ];
+    } elseif (!$isPresidentView) {
+        $sourceBadge = [
+            'label' => 'With ' . ($rating->routedToPresident?->name ?? 'TODA president'),
+            'short' => 'With President',
+            'icon' => 'bi-hourglass-split',
+            'class' => 'border-amber-200 bg-amber-50 text-amber-700',
+            'title' => 'Still assigned to the TODA president',
+        ];
+    }
 @endphp
 
 <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
@@ -70,6 +103,13 @@
                 <span class="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold {{ $typeChipClass }}">
                     <i class="bi bi-exclamation-triangle"></i>{{ $rating->complaint_type ?: 'Complaint' }}
                 </span>
+                @if ($sourceBadge)
+                    <span class="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-bold {{ $sourceBadge['class'] }}" title="{{ $sourceBadge['title'] }}">
+                        <i class="bi {{ $sourceBadge['icon'] }}"></i>
+                        <span class="hidden sm:inline">{{ $sourceBadge['label'] }}</span>
+                        <span class="sm:hidden">{{ $sourceBadge['short'] }}</span>
+                    </span>
+                @endif
                 @if ($rating->passengerFollowUps->count() > 0)
                     <span class="inline-flex items-center gap-1 rounded-md border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700" title="Passenger follow-up">
                         <i class="bi bi-chat-left-text"></i>{{ $rating->passengerFollowUps->count() }} follow-up{{ $rating->passengerFollowUps->count() > 1 ? 's' : '' }}
@@ -101,6 +141,21 @@
     </div>
 
     <div class="hidden border-t border-slate-100 bg-slate-50/40" data-complaint-details>
+        @if ($isForwarded)
+            {{-- Escalation trail: makes it obvious the case came from a TODA
+                 president and that ownership now sits with the TFRB. --}}
+            <div class="mx-4 mt-4 rounded-xl border border-violet-100 bg-violet-50/70 px-4 py-3 sm:mx-5">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <i class="bi bi-send-fill text-violet-600"></i>
+                    <span class="text-[0.7rem] font-bold uppercase tracking-widest text-violet-700">Forwarded to TFRB</span>
+                    <span class="ml-auto text-xs text-slate-500">{{ $rating->forwarded_at->format('M j, Y g:i A') }}</span>
+                </div>
+                <p class="mb-0 mt-1 text-xs leading-relaxed text-slate-600">
+                    Escalated by <strong>{{ $rating->forwardedBy?->name ?? 'a TODA president' }}</strong>.
+                    The TODA president can no longer act on this complaint — the TFRB / superadmin now owns it.
+                </p>
+            </div>
+        @endif
         <div class="grid gap-x-10 gap-y-5 p-4 sm:p-5 md:grid-cols-2">
             <div class="space-y-4">
                 <div>

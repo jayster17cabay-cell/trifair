@@ -97,6 +97,7 @@ Route::middleware(['auth', 'role:tfrb_officer'])->prefix('tfrb-officer')->name('
     Route::patch('/ratings/{rating}/review', [TfrbOfficerController::class, 'markReviewed'])->name('ratings.review');
     Route::post('/ratings/bulk-review', [TfrbOfficerController::class, 'ratingsBulkReview'])->name('ratings.bulkReview');
     Route::get('/complaints', [TfrbOfficerController::class, 'complaints'])->name('complaints');
+    Route::get('/complaints/source-counts', [TfrbOfficerController::class, 'complaintsSourceCounts'])->name('complaints.sourceCounts');
     Route::patch('/complaints/{rating}/review', [TfrbOfficerController::class, 'complaintsMarkReviewed'])->name('complaints.review');
     Route::patch('/complaints/{rating}/reject', [TfrbOfficerController::class, 'complaintsReject'])->name('complaints.reject');
     Route::patch('/complaints/{rating}/reset', [TfrbOfficerController::class, 'complaintsResetReview'])->name('complaints.reset');
@@ -150,6 +151,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::get('/presidents', [SuperadminController::class, 'presidents'])->name('presidents');
     Route::delete('/presidents/{user}', [SuperadminController::class, 'destroyPresident'])->name('presidents.destroy');
     Route::get('/complaints', [SuperadminController::class, 'complaints'])->name('complaints');
+    Route::get('/complaints/source-counts', [SuperadminController::class, 'complaintsSourceCounts'])->name('complaints.sourceCounts');
         Route::patch('/complaints/{rating}/review', [SuperadminController::class, 'complaintsMarkReviewed'])->name('complaints.review');
         Route::patch('/complaints/{rating}/reject', [SuperadminController::class, 'complaintsReject'])->name('complaints.reject');
         Route::patch('/complaints/{rating}/reset', [SuperadminController::class, 'complaintsResetReview'])->name('complaints.reset');

@@ -296,6 +296,30 @@ class ComplaintReviewFlowTest extends TestCase
             ->assertDontSee($reviewed->reference_number, false);
     }
 
+    public function test_default_complaints_view_is_open_and_includes_reviewed()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+
+        $pending = $this->makeValidComplaint($operator, 1);
+        $reviewed = $this->makeValidComplaint($operator, 1);
+        $reviewed->update(['is_reviewed' => true]);
+        $rejected = $this->makeValidComplaint($operator, 1);
+        $rejected->update(['is_reviewed' => true, 'rejected_at' => now()]);
+        $solved = $this->makeValidComplaint($operator, 1);
+        $solved->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
+
+        // Defaults: source=actionable, filter=open. Open is pending + reviewed;
+        // rejected and solved cases are closed out.
+        $this->actingAs($admin)->get('/superadmin/complaints')
+            ->assertOk()
+            ->assertSee('Open (', false)
+            ->assertSee($pending->reference_number, false)
+            ->assertSee($reviewed->reference_number, false)
+            ->assertDontSee($rejected->reference_number, false)
+            ->assertDontSee($solved->reference_number, false);
+    }
+
     public function test_status_label_priority_is_solved_then_rejected_then_reviewed()
     {
         $operator = $this->makeOperator();

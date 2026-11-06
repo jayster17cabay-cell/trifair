@@ -205,6 +205,17 @@ class SuperadminController extends Controller
         return view('superadmin.complaints', $data);
     }
 
+    /**
+     * AJAX endpoint for the complaints source tabs: returns live per-source
+     * tallies (forwarded / direct / awaiting / actionable / all) honoring the
+     * active status + star filters. Keeps the source tab badges fresh without
+     * a full page reload.
+     */
+    public function complaintsSourceCounts(Request $request)
+    {
+        return response()->json(app(AdminQueryService::class)->complaintSourceCounts($request));
+    }
+
     public function ratings(Request $request)
     {
         extract(app(AdminQueryService::class)->ratingsData($request));
