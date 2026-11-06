@@ -119,6 +119,28 @@
         </ol>
     </div>
 @endif
+@unless ($presidentMode)
+    {{-- How complaints reach the staff queue and what to do with the
+         actionable ones. Closed cases (solved / rejected) stay viewable here
+         for reference. --}}
+    <div class="mb-5 rounded-2xl border border-navy-100 bg-navy-50 px-4 py-4">
+        <div class="text-[11px] font-bold uppercase tracking-widest text-navy-600"><i class="bi bi-signpost-2 mr-1"></i>How complaints reach you</div>
+        <ol class="mt-3 grid gap-2.5 text-xs text-navy-800 sm:grid-cols-3">
+            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">1</span>
+                <span class="leading-relaxed"><strong>Forwarded or direct</strong> — TODA presidents forward unresolved complaints here, and complaints filed straight to the TFRB land here. These are the actionable cases.</span>
+            </li>
+            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">2</span>
+                <span class="leading-relaxed"><strong>Solve or reject</strong> — solving marks the complaint reviewed and counts toward the operator's rating; rejecting closes it with a reason.</span>
+            </li>
+            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">3</span>
+                <span class="leading-relaxed"><strong>Closed cases stay viewable</strong> — solved and rejected complaints remain here for reference; forwarded cases are sealed off from the president for good.</span>
+            </li>
+        </ol>
+    </div>
+@endif
 
 {{-- Sticky summary + filter panel: stays pinned below the topbar while the list scrolls. --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 border-b border-slate-100 bg-white/95 px-4 pb-4 pt-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">

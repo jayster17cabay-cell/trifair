@@ -154,6 +154,11 @@
                     Escalated by <strong>{{ $rating->forwardedBy?->name ?? 'a TODA president' }}</strong>.
                     The TODA president can no longer act on this complaint — the TFRB / superadmin now owns it.
                 </p>
+                @if (!$isPresidentView)
+                    <p class="mt-1 text-xs font-semibold leading-relaxed text-violet-800">
+                        <i class="bi bi-arrow-right-circle mr-1"></i>Your next step: solve or reject this complaint.
+                    </p>
+                @endif
             </div>
         @endif
         <div class="grid gap-x-10 gap-y-5 p-4 sm:p-5 md:grid-cols-2">
@@ -311,6 +316,18 @@
                 <span class="text-xs font-medium text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response yet</span>
             @endif
             @if ($canAct)
+                {{-- Contextual next step so staff always know what to do with
+                     an actionable complaint: solve it or reject it. Solving
+                     marks the complaint reviewed; rejecting closes it. --}}
+                @if ($actor !== 'president')
+                    <div class="w-full rounded-lg border border-navy-100 bg-navy-50 px-3 py-2 text-[11px] font-semibold leading-snug text-navy-700">
+                        <i class="bi bi-arrow-right-circle mr-1"></i>@if ($rating->status_label === 'Pending')
+                            Next step: solve or reject this complaint — solving marks it reviewed and counts toward the operator's rating; rejecting closes it with a reason.
+                        @else
+                            Next step: final decision — solve or reject this complaint.
+                        @endif
+                    </div>
+                @endif
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
                     @if (in_array($rating->status_label, ['Pending', 'Reviewed'], true))
                         {{-- An incoming complaint only offers the two final
