@@ -270,9 +270,30 @@ class PresidentController extends Controller
             'body_number.unique' => 'This body number is already registered in the system.',
         ]);
 
-        $user = DB::transaction(function () use ($data, $toda) {
+        // Split the submitted whole name ("Juan Dela Cruz" -> first "Juan",
+        // middle "Dela", last "Cruz") so the president's add-member flow
+        // stores the same split-name shape the superadmin/TFRB operator create
+        // and edit flows already use.
+        $firstName = '';
+        $middleName = '';
+        $lastName = '';
+        foreach (User::splitLegacyName((string) ($data['name'] ?? '')) as $partKey => $partValue) {
+            if ($partKey === 'first') {
+                $firstName = trim((string) $partValue);
+            } elseif ($partKey === 'middle') {
+                $middleName = trim((string) $partValue);
+            } elseif ($partKey === 'last') {
+                $lastName = trim((string) $partValue);
+            }
+        }
+        $fullName = User::composeName($firstName, $middleName, $lastName);
+
+        $user = DB::transaction(function () use ($data, $toda, $firstName, $middleName, $lastName, $fullName) {
             $user = User::create([
-                'name' => $data['name'],
+                'name' => $fullName,
+                'first_name' => $firstName !== '' ? $firstName : null,
+                'middle_name' => $middleName !== '' ? $middleName : null,
+                'last_name' => $lastName !== '' ? $lastName : null,
                 'email' => $data['email'],
                 'password' => Hash::make(User::DEFAULT_OPERATOR_PASSWORD),
                 'phone' => $data['contact_number'],

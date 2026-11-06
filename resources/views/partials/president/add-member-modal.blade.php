@@ -22,6 +22,7 @@
                     <div>
                         <label for="addMemberName" class="tw-stat-label mb-1 block">Full name</label>
                         <input type="text" id="addMemberName" name="name" value="{{ old('name') }}" required maxlength="255" class="tw-input" placeholder="Juan Dela Cruz">
+                        <p class="mt-1 text-[0.7rem] leading-snug text-slate-400">The whole name is split into lastname, firstname and middlename (e.g. Juan Dela Cruz).</p>
                     </div>
                     <div>
                         <label for="addMemberEmail" class="tw-stat-label mb-1 block">Email</label>

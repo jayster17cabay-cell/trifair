@@ -114,6 +114,32 @@ class PresidentMemberManagementTest extends TestCase
         ]);
     }
 
+    public function test_president_add_member_splits_whole_name_into_first_middle_last()
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+
+        $this->actingAs($pres['user'])->post('/president/members', [
+            'name' => 'Juan Dela Cruz',
+            'email' => 'jandelacruz@example.com',
+            'contact_number' => '09171234567',
+            'plate_number' => 'JDC-001',
+            'body_number' => 'JDC-01',
+            'motorcycle_model' => 'Honda Click 125i',
+        ])->assertRedirect(route('president.members', ['status' => 'pending']));
+
+        $user = User::where('email', 'jandelacruz@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertSame('Juan', $user->first_name);
+        $this->assertSame('Dela', $user->middle_name);
+        $this->assertSame('Cruz', $user->last_name);
+
+        // The composed display name still resolves back through the parts
+        // (operator display convention: lastname first, then firstname, then
+        // middlename — e.g. "Cruz Juan Dela" for Juan/Dela/Cruz).
+        $this->assertSame('Cruz Juan Dela', User::composeName($user->first_name, $user->middle_name, $user->last_name));
+    }
+
     public function test_added_member_appears_in_admin_pending_list()
     {
         $toda = $this->makeToda();
@@ -132,7 +158,7 @@ class PresidentMemberManagementTest extends TestCase
         $this->actingAs($admin)
             ->get('/superadmin/operators?status=pending')
             ->assertOk()
-            ->assertSee('Pending Juan', false);
+            ->assertSee('Juan Pending', false);
     }
 
     public function test_add_member_rejects_duplicate_plate_number()
