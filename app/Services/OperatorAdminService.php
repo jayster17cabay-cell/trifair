@@ -40,7 +40,6 @@ class OperatorAdminService
             'last_name' => 'nullable|string|max:100|required_without:name',
             'name' => 'nullable|string|max:255|required_without_all:first_name,last_name',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
             'contact_number' => 'nullable|string|max:20',
@@ -58,12 +57,16 @@ class OperatorAdminService
         $user = User::create(array_merge([
             'name' => $fullName,
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => Hash::make(User::DEFAULT_OPERATOR_PASSWORD),
             'phone' => $data['phone'] ?? null,
         ], $nameParts));
 
         // role/is_active are intentionally NOT mass-assignable (see User model)
-        $user->forceFill(['role' => 'operator', 'is_active' => true])->save();
+        $user->forceFill([
+            'role' => 'operator',
+            'is_active' => true,
+            'must_change_password' => true,
+        ])->save();
 
         $qrCode = Str::random(32);
 
@@ -85,7 +88,7 @@ class OperatorAdminService
         app(AdminDashboardService::class)->flush();
 
         return redirect()->route($redirectRoute)
-            ->with('success', 'Operator created successfully.')
+            ->with('success', 'Operator created successfully. Default password: ' . User::DEFAULT_OPERATOR_PASSWORD . ' — they must change it on first sign-in.')
             ->with('qr_code', $qrCode)
             ->with('operator_name', $user->name);
     }
@@ -427,7 +430,10 @@ class OperatorAdminService
         }
 
         $tempPassword = Str::random(10);
-        $operator->user->forceFill(['password' => Hash::make($tempPassword)])->save();
+        $operator->user->forceFill([
+            'password' => Hash::make($tempPassword),
+            'must_change_password' => true,
+        ])->save();
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log(

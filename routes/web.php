@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetOtpController;
+use App\Http\Controllers\Auth\ForcePasswordController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\DashboardController;
@@ -41,6 +42,13 @@ Route::get('/forgot-password', [PasswordResetOtpController::class, 'showRequestF
 Route::post('/forgot-password', [PasswordResetOtpController::class, 'sendOtp'])->middleware(['guest', 'throttle:6,1'])->name('password.email');
 Route::get('/forgot-password/verify', [PasswordResetOtpController::class, 'showVerifyForm'])->middleware('guest')->name('password.otp');
 Route::post('/forgot-password/verify', [PasswordResetOtpController::class, 'verifyAndReset'])->middleware(['guest', 'throttle:6,1'])->name('password.otp.verify');
+
+// Accounts created with the shared default password must replace it before
+// they can reach any other page (see EnsurePasswordChanged middleware).
+Route::middleware('auth')->group(function () {
+    Route::get('/password/change', [ForcePasswordController::class, 'show'])->name('password.force');
+    Route::put('/password/change', [ForcePasswordController::class, 'update'])->name('password.force.update');
+});
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');

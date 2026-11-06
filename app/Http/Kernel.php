@@ -36,6 +36,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\EnsurePasswordChanged::class,
         ],
 
         'api' => [
@@ -68,6 +69,7 @@ class Kernel extends HttpKernel
         'operator.active' => \App\Http\Middleware\OperatorActive::class,
         'president.active' => \App\Http\Middleware\PresidentActive::class,
         'toda.selection' => \App\Http\Middleware\TodaSelectionRequired::class,
+        'password.changed' => \App\Http\Middleware\EnsurePasswordChanged::class,
     ];
 }
 

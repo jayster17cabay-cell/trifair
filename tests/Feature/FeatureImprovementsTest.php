@@ -597,6 +597,7 @@ class FeatureImprovementsTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertFalse(Hash::check('oldpass123', $operator->user->fresh()->password));
+        $this->assertTrue($operator->user->fresh()->must_change_password);
         $this->assertNotNull(ActivityLog::where('action', 'reset_operator_password')->latest()->first());
         Mail::assertSent(OperatorCredentials::class);
     }
@@ -612,6 +613,7 @@ class FeatureImprovementsTest extends TestCase
             ->assertRedirect(route('superadmin.operators'));
 
         $this->assertNotSame($oldHash, $operator->user->fresh()->password);
+        $this->assertTrue($operator->user->fresh()->must_change_password);
     }
 
     public function test_ratings_page_filters_by_operator_and_date()

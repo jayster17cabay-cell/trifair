@@ -15,6 +15,13 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, MustVerifyEmailTrait, Notifiable, CanResetPassword;
 
+    /**
+     * Password given to operator accounts created by a TODA president, TFRB
+     * officer or superadmin. The account is forced to choose a new password
+     * right after its first sign-in.
+     */
+    public const DEFAULT_OPERATOR_PASSWORD = 'operator123';
+
     protected $fillable = [
         'name',
         'first_name',
@@ -36,6 +43,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
+        'must_change_password' => 'boolean',
     ];
 
     /**
@@ -229,5 +237,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isGoogleLinked()
     {
         return $this->provider === 'google' && $this->provider_id !== null;
+    }
+
+    /**
+     * True while the account still has to replace the password it was given
+     * when an administrator or TODA president created it.
+     */
+    public function requiresPasswordChange(): bool
+    {
+        return (bool) $this->must_change_password;
     }
 }

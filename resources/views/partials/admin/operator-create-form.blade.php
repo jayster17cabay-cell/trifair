@@ -40,15 +40,15 @@
             @error('email') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
         <div>
-            <label for="password" class="tw-label">Password <span class="text-red-600">*</span></label>
-            <input type="password" class="tw-input @error('password') is-invalid @enderror" id="password" name="password" required placeholder="Min. 8 characters">
-            @error('password') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
-        </div>
-        <div>
             <label for="phone" class="tw-label">Phone Number</label>
             <input type="text" class="tw-input @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone') }}" placeholder="Enter phone number">
             @error('phone') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
         </div>
+    </div>
+
+    <div class="mt-3 flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs leading-relaxed text-blue-700">
+        <i class="bi bi-key mt-0.5 shrink-0"></i>
+        <span>New operators start with the default password <strong>{{ \App\Models\User::DEFAULT_OPERATOR_PASSWORD }}</strong>. They will be required to change it the first time they sign in.</span>
     </div>
 
     <div class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-navy-600">Motorcycle Details</div>

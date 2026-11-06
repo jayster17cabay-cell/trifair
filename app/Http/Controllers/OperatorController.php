@@ -374,8 +374,10 @@ class OperatorController extends Controller
         ]);
 
         $user = Auth::user();
-        $user->password = Hash::make($data['new_password']);
-        $user->save();
+        $user->forceFill([
+            'password' => Hash::make($data['new_password']),
+            'must_change_password' => false,
+        ])->save();
 
         ActivityLogger::log(
             'operator_update_password',

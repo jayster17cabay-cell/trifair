@@ -132,6 +132,7 @@ class PasswordResetOtpController extends Controller
         RateLimiter::clear($attemptKey);
 
         $user->password = Hash::make($data['password']);
+        $user->must_change_password = false;
         $user->setRememberToken(Str::random(60));
         $user->save();
 

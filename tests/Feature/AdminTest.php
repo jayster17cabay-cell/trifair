@@ -195,7 +195,6 @@ class AdminTest extends TestCase
         $this->actingAs($admin)->post('/superadmin/operators', [
             'name' => 'Stored Operator',
             'email' => 'STORED@Example.com',
-            'password' => 'password123',
             'phone' => '09171234567',
             'address' => 'QC',
             'contact_number' => '09171234567',
@@ -211,6 +210,8 @@ class AdminTest extends TestCase
         $this->assertNotNull($user->operator);
         $this->assertEquals('active', $user->operator->status);
         $this->assertFalse(empty($user->operator->qr_code));
+        $this->assertTrue(Hash::check(User::DEFAULT_OPERATOR_PASSWORD, $user->password));
+        $this->assertTrue($user->must_change_password);
     }
 
     public function test_superadmin_can_store_operator_with_split_name_fields()
@@ -223,7 +224,6 @@ class AdminTest extends TestCase
             'first_name' => 'Juan',
             'middle_name' => 'Santos',
             'email' => 'juan.split@example.com',
-            'password' => 'password123',
             'phone' => '09171234567',
             'address' => 'QC',
             'contact_number' => '09171234567',
@@ -298,7 +298,6 @@ class AdminTest extends TestCase
         $this->actingAs($officer)->post('/tfrb-officer/operators', [
             'name' => 'Officer Stored',
             'email' => 'officerstored@example.com',
-            'password' => 'password123',
             'phone' => '09171234567',
             'plate_number' => 'PLATE-OSTORE',
             'body_number' => 'BODY-OSTORE',
@@ -308,6 +307,8 @@ class AdminTest extends TestCase
         $user = User::where('email', 'officerstored@example.com')->first();
         $this->assertNotNull($user);
         $this->assertEquals('operator', $user->role);
+        $this->assertTrue(Hash::check(User::DEFAULT_OPERATOR_PASSWORD, $user->password));
+        $this->assertTrue($user->must_change_password);
     }
 
     public function test_update_operator_changes_data()

@@ -45,15 +45,9 @@
                         <label for="addMemberModel" class="tw-stat-label mb-1 block">Motorcycle model</label>
                         <input type="text" id="addMemberModel" name="motorcycle_model" value="{{ old('motorcycle_model') }}" required maxlength="100" class="tw-input" placeholder="Honda Click 125i">
                     </div>
-                    <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-                        <div>
-                            <label for="addMemberPassword" class="tw-stat-label mb-1 block">Password</label>
-                            <input type="password" id="addMemberPassword" name="password" required minlength="8" class="tw-input" placeholder="••••••••">
-                        </div>
-                        <div>
-                            <label for="addMemberPasswordConfirm" class="tw-stat-label mb-1 block">Confirm password</label>
-                            <input type="password" id="addMemberPasswordConfirm" name="password_confirmation" required minlength="8" class="tw-input" placeholder="••••••••">
-                        </div>
+                    <div class="flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs leading-relaxed text-blue-700">
+                        <i class="bi bi-key mt-0.5 shrink-0"></i>
+                        <span>The account starts with the default password <strong>{{ \App\Models\User::DEFAULT_OPERATOR_PASSWORD }}</strong>. The member will be required to change it the first time they sign in.</span>
                     </div>
                 </div>
             </div>

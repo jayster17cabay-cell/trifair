@@ -265,7 +265,6 @@ class PresidentController extends Controller
             'plate_number' => 'required|string|max:20|unique:operators,plate_number',
             'body_number' => 'required|string|max:20|unique:operators,body_number',
             'motorcycle_model' => 'required|string|max:100',
-            'password' => 'required|string|min:8|confirmed',
         ], [
             'plate_number.unique' => 'This plate number is already registered in the system.',
             'body_number.unique' => 'This body number is already registered in the system.',
@@ -275,12 +274,16 @@ class PresidentController extends Controller
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'password' => Hash::make($data['password']),
+                'password' => Hash::make(User::DEFAULT_OPERATOR_PASSWORD),
                 'phone' => $data['contact_number'],
             ]);
 
             // role/is_active are intentionally NOT mass-assignable (see User model)
-            $user->forceFill(['role' => 'operator', 'is_active' => true])->save();
+            $user->forceFill([
+                'role' => 'operator',
+                'is_active' => true,
+                'must_change_password' => true,
+            ])->save();
 
             $operator = Operator::create([
                 'user_id' => $user->id,
@@ -309,7 +312,7 @@ class PresidentController extends Controller
 
         return redirect()
             ->route('president.members', ['status' => 'pending'])
-            ->with('success', "{$user->name} added. The account is pending — superadmin/TFRB must approve it before it becomes active.");
+            ->with('success', "{$user->name} added. The account is pending — superadmin/TFRB must approve it before it becomes active. Default password: " . User::DEFAULT_OPERATOR_PASSWORD . ' — they must change it on first sign-in.');
     }
 
     /**

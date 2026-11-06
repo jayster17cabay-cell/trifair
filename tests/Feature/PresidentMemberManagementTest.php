@@ -89,13 +89,13 @@ class PresidentMemberManagementTest extends TestCase
             'plate_number' => 'ABC 1234',
             'body_number' => 'TODA-99',
             'motorcycle_model' => 'Honda Click 125i',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
         ])->assertRedirect(route('president.members', ['status' => 'pending']));
 
         $user = User::where('email', 'newmember@example.com')->first();
         $this->assertNotNull($user);
         $this->assertSame('operator', $user->role);
+        $this->assertTrue(Hash::check(User::DEFAULT_OPERATOR_PASSWORD, $user->password));
+        $this->assertTrue($user->must_change_password);
 
         $this->assertDatabaseHas('operators', [
             'user_id' => $user->id,
@@ -127,8 +127,6 @@ class PresidentMemberManagementTest extends TestCase
             'plate_number' => 'PEND 001',
             'body_number' => 'PEND-01',
             'motorcycle_model' => 'Yamaha Mio',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
         ]);
 
         $this->actingAs($admin)
@@ -150,8 +148,6 @@ class PresidentMemberManagementTest extends TestCase
             'plate_number' => $existing->plate_number,
             'body_number' => 'UNIQUE-01',
             'motorcycle_model' => 'Honda',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
         ])->assertSessionHasErrors('plate_number');
     }
 
@@ -166,8 +162,6 @@ class PresidentMemberManagementTest extends TestCase
             'plate_number' => 'NOPE 01',
             'body_number' => 'NOPE-01',
             'motorcycle_model' => 'Honda',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
         ])->assertForbidden();
     }
 
@@ -323,8 +317,6 @@ class PresidentMemberManagementTest extends TestCase
             'plate_number' => 'RATE 001',
             'body_number' => 'RATE-01',
             'motorcycle_model' => 'Honda Beat',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
         ]);
 
         $user = User::where('email', 'rateable@example.com')->first();
