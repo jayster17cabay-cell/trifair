@@ -1,7 +1,7 @@
 {{--
     Join Requests — self-service requests from operators wanting to join THIS
-    president's TODA. Approving forwards the membership to the TFRB officer or
-    superadmin for final approval; rejecting closes it. Requires: $joinRequests
+    president's TODA. The president is the final approver: approving activates
+    the membership immediately; rejecting closes it. Requires: $joinRequests
     (OperatorToda collection, all status=pending).
 --}}
 <div class="tw-card mb-4 overflow-hidden">
@@ -42,7 +42,7 @@
                         <td class="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{{ $request->created_at?->format('M d, Y H:i') }}</td>
                         <td class="whitespace-nowrap px-4 py-3">
                             <div class="flex items-center justify-end gap-2">
-                                <form method="POST" action="{{ route('president.memberships.approve', $request) }}" onsubmit="return confirm('Approve this join request? It will then go to the TFRB officer or superadmin for final approval.');">
+                                <form method="POST" action="{{ route('president.memberships.approve', $request) }}" onsubmit="return confirm('Approve this join request? The operator becomes an active member immediately.');">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold">
@@ -66,6 +66,6 @@
         </table>
     </div>
     <div class="border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-xs text-slate-500">
-        <i class="bi bi-info-circle mr-1"></i> Approving forwards the request to the TFRB officer or superadmin for final approval before the operator becomes an active member.
+        <i class="bi bi-info-circle mr-1"></i> Approving makes the operator an active member of your TODA right away. They can then be rated under it.
     </div>
 </div>

@@ -588,14 +588,7 @@ class AdminQueryService
         $activeStatusCount = (int) $tally->active_status_count;
         $inactiveStatusCount = (int) $tally->inactive_status_count;
 
-        // TODA membership requests awaiting this admin level: after the
-        // president approves, either the TFRB officer or the superadmin may
-        // give the single final approval.
-        $membershipService = app(\App\Services\TodaMembershipService::class);
-        $membershipRequests = $membershipService->finalApprovalQueue();
-        $membershipStage = 'final';
-
-        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount', 'membershipRequests', 'membershipStage');
+        return compact('operators', 'search', 'status', 'account', 'archivedCount', 'pendingCount', 'suspendedCount', 'activeStatusCount', 'inactiveStatusCount');
     }
 
     public function operatorsForExport(Request $request)

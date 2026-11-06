@@ -75,7 +75,7 @@ class DashboardMembershipTallyTest extends TestCase
         ]);
     }
 
-    public function test_dashboards_tally_pending_toda_memberships_for_the_right_stage()
+    public function test_admin_dashboards_no_longer_prompt_for_membership_approval()
     {
         $admin = $this->makeUser('superadmin');
         $officer = $this->makeUser('tfrb_officer');
@@ -84,25 +84,25 @@ class DashboardMembershipTallyTest extends TestCase
         $todaB = $this->makeToda('Beta TODA');
         $todaC = $this->makeToda('Gamma TODA');
 
+        // Legacy rows from the old TFRB/superadmin stage. They no longer form
+        // an approval queue on either admin dashboard.
         $this->makeOperator($todaA)->joinToda($todaA->id, OperatorToda::STATUS_PENDING_TFRB);
         $this->makeOperator($todaA)->joinToda($todaB->id, OperatorToda::STATUS_PENDING_SUPERADMIN);
         $this->makeOperator($todaA)->joinToda($todaC->id, OperatorToda::STATUS_PENDING_ADMIN);
 
         app(AdminDashboardService::class)->flush();
 
-        // Now either TFRB officer or superadmin may give the single final
-        // approval, so both dashboards see the same pending count.
         $this->actingAs($admin)->getJson('/superadmin/dashboard')
             ->assertOk()
-            ->assertJsonPath('pendingTodaMemberships', 3);
+            ->assertJsonMissing(['pendingTodaMemberships' => 3]);
 
         $this->actingAs($officer)->getJson('/tfrb-officer/dashboard')
             ->assertOk()
-            ->assertJsonPath('pendingTodaMemberships', 3);
+            ->assertJsonMissing(['pendingTodaMemberships' => 3]);
 
-        // The KPI card renders on both dashboards.
-        $this->actingAs($admin)->get('/superadmin/dashboard')->assertOk()->assertSee('Pending TODA', false);
-        $this->actingAs($officer)->get('/tfrb-officer/dashboard')->assertOk()->assertSee('Pending TODA', false);
+        // The KPI card is gone from both dashboards.
+        $this->actingAs($admin)->get('/superadmin/dashboard')->assertOk()->assertDontSee('Pending TODA', false);
+        $this->actingAs($officer)->get('/tfrb-officer/dashboard')->assertOk()->assertDontSee('Pending TODA', false);
     }
 
     public function test_reports_list_operator_under_joined_toda_with_per_toda_breakdown()
@@ -233,7 +233,7 @@ class DashboardMembershipTallyTest extends TestCase
         $todaB = $this->makeToda('Beta TODA');
 
         $operator = $this->makeOperator($todaA);
-        $operator->joinToda($todaB->id, OperatorToda::STATUS_PENDING_TFRB);
+        $operator->joinToda($todaB->id, OperatorToda::STATUS_PENDING);
 
         app(AdminDashboardService::class)->flush();
 
@@ -242,7 +242,8 @@ class DashboardMembershipTallyTest extends TestCase
 
         $beta = $stats->firstWhere('id', $todaB->id);
 
-        // Still awaiting TFRB approval, so Beta must not claim the member yet.
+        // Still awaiting the president's approval, so Beta must not claim the
+        // member yet.
         $this->assertSame(0, (int) $beta->operators_count);
         $this->assertSame(0, (int) $beta->active_operators_count);
     }

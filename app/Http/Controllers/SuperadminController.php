@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\SuspendsOperator;
 use App\Models\Operator;
-use App\Models\OperatorToda;
 use App\Models\Rating;
 use App\Models\SuspensionViolation;
 use App\Models\User;
@@ -16,7 +15,6 @@ use App\Services\ExportService;
 use App\Services\OperatorAdminService;
 use App\Services\RatingAdminService;
 use App\Services\SuspensionViolationService;
-use App\Services\TodaMembershipService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -423,44 +421,6 @@ class SuperadminController extends Controller
     public function rejectOperator(Operator $operator)
     {
         return app(OperatorAdminService::class)->reject($operator, 'superadmin.operators');
-    }
-
-    /**
-     * Single final approval of a TODA membership (the president already
-     * approved); either TFRB officer or superadmin may give it.
-     */
-    public function approveMembership(OperatorToda $membership)
-    {
-        if ($membership->isPendingPresident()) {
-            return back()->with('error', 'This membership is still awaiting the TODA president\'s approval.');
-        }
-
-        if (!$membership->isAwaitingFinalApproval() && !$membership->isPendingTfrb() && !$membership->isPendingSuperadmin()) {
-            return back()->with('error', 'This membership is not awaiting final approval.');
-        }
-
-        app(TodaMembershipService::class)->finalApprove($membership, Auth::user());
-
-        return back()->with('success', "Final approval given for {$membership->operator->user->name}.");
-    }
-
-    public function rejectMembership(Request $request, OperatorToda $membership)
-    {
-        if ($membership->isPendingPresident()) {
-            return back()->with('error', 'This membership is still awaiting the TODA president\'s approval.');
-        }
-
-        if (!$membership->isAwaitingFinalApproval() && !$membership->isPendingTfrb() && !$membership->isPendingSuperadmin()) {
-            return back()->with('error', 'This membership is not awaiting final approval.');
-        }
-
-        $request->validate([
-            'note' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        app(TodaMembershipService::class)->reject($membership, Auth::user(), $request->input('note'));
-
-        return back()->with('success', 'Membership request rejected.');
     }
 
     public function archiveOperator(Operator $operator)

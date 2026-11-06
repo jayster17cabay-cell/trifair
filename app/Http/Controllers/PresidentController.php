@@ -429,8 +429,8 @@ class PresidentController extends Controller
     }
 
     /**
-     * President's first-level decision on a self-service join request: approve
-     * (forwards it to the TFRB officer) or reject.
+     * The TODA president's decision on a self-service join request: approve
+     * (the membership becomes active immediately) or reject.
      */
     public function approveMembership(OperatorToda $membership)
     {
@@ -448,7 +448,7 @@ class PresidentController extends Controller
 
         return redirect()
             ->route('president.members')
-            ->with('success', 'Approved. The request is now with the TFRB officer for verification.');
+            ->with('success', 'Approved. The operator is now an active member of your TODA.');
     }
 
     public function rejectMembership(Request $request, OperatorToda $membership)

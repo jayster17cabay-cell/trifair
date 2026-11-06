@@ -10,18 +10,15 @@ use Illuminate\Database\Eloquent\Model;
  * franchise but may be a member of several TODAs (up to MAX_TODAS), so
  * rateability is derived from these rows rather than from the franchise.
  *
- * Status lifecycle (two approvals required before a membership is Active):
- *   pending            -> the operator asked to join; the TODA president reviews it first
- *   pending_tfrb       -> the TODA president approved; the TFRB officer OR the
- *                         superadmin gives the final approval (whichever gets
- *                         to it first — it does not take both)
- *   active             -> both approvals done; the operator is rateable under this TODA
- *   rejected           -> declined at any stage (reason recorded)
- *   inactive           -> withdrawn but kept for history (not rateable)
+ * Status lifecycle (the TODA president is the sole approver):
+ *   pending    -> the operator asked to join; the TODA president reviews it
+ *   active     -> the president approved; the operator is rateable under this TODA
+ *   rejected   -> declined by the president (reason recorded)
+ *   inactive   -> withdrawn but kept for history (not rateable)
  *
- * `pending_superadmin` (in-flight rows from the old three-step chain) and the
- * legacy `pending_admin` value are both treated as awaiting the same single
- * final approval, so nothing already moving keeps progressing.
+ * `pending_tfrb`, `pending_superadmin` and the legacy `pending_admin` value are
+ * kept only for data written before the president became the final approver.
+ * A migration activates those rows; no new ones are created.
  */
 class OperatorToda extends Model
 {
@@ -98,9 +95,8 @@ class OperatorToda extends Model
     }
 
     /**
-     * Awaiting the single final approval — the TFRB officer or the superadmin,
-     * whichever signs off first. Includes the legacy pending_admin value and
-     * in-flight pending_superadmin rows from the old three-step chain.
+     * Legacy: awaiting the old TFRB/superadmin final approval stage. Those
+     * rows are activated by a migration; new memberships never use this state.
      */
     public function isAwaitingFinalApproval(): bool
     {
@@ -149,8 +145,8 @@ class OperatorToda extends Model
     }
 
     /**
-     * Everything past the president stage that still needs the one final
-     * approval (TFRB officer or superadmin).
+     * Legacy: everything that sat past the president stage in the old
+     * TFRB/superadmin approval chain.
      */
     public function scopeAwaitingFinalApproval($query)
     {
@@ -168,9 +164,9 @@ class OperatorToda extends Model
     {
         return [
             self::STATUS_PENDING => 'Pending President',
-            self::STATUS_PENDING_TFRB => 'Pending Final Approval',
-            self::STATUS_PENDING_ADMIN => 'Pending Final Approval',
-            self::STATUS_PENDING_SUPERADMIN => 'Pending Final Approval',
+            self::STATUS_PENDING_TFRB => 'Legacy Pending Approval',
+            self::STATUS_PENDING_ADMIN => 'Legacy Pending Approval',
+            self::STATUS_PENDING_SUPERADMIN => 'Legacy Pending Approval',
             self::STATUS_ACTIVE => 'Active',
             self::STATUS_REJECTED => 'Rejected',
             self::STATUS_INACTIVE => 'Inactive',

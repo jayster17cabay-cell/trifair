@@ -12,24 +12,20 @@ use Illuminate\Support\Collection;
 
 /**
  * TODA membership lifecycle. An operator's membership in a TODA is a row on
- * the `operator_toda` table and moves through TWO approvals before it is
- * Active:
+ * the `operator_toda` table:
  *
- *   pending            operator asks to join            -> TODA president reviews
- *   pending_tfrb       president approved               -> TFRB officer OR superadmin finalizes
- *   active             both approvals done              -> rateable under the TODA
- *   rejected           declined at any stage (reason recorded)
+ *   pending    operator asks to join -> TODA president reviews
+ *   active     president approved    -> rateable under the TODA
+ *   rejected   declined by the president (reason recorded)
  *
- * The final approval is deliberately single-approver: after the president
- * signs off, whoever of the TFRB officer / superadmin gets to the request
- * first gives the final approval — the membership does not pass through both.
+ * The TODA president is the sole approver for join requests: once they approve,
+ * the membership is active immediately. TFRB officers and superadmins no longer
+ * take part in this decision (they may still add an operator to a TODA
+ * directly, which is also active straight away).
  *
- * A President may add an *existing* operator straight to the TODA (no new
- * account) — the president step counts as done, so it lands as pending_tfrb.
- * Only a superadmin/TFRB (or the operator edit form, which an admin drives)
- * activates a membership directly. Every decision is written to the activity
- * log with the approving user, decision, timestamp and reason, and the driver
- * is notified on rejection and on final activation.
+ * Every decision is written to the activity log with the approving user,
+ * decision, timestamp and reason, and the driver is notified on rejection and
+ * on activation.
  */
 class TodaMembershipService
 {
@@ -104,42 +100,22 @@ class TodaMembershipService
     }
 
     /**
-     * Stage 1 — TODA president's approval: pending -> pending_tfrb. The
-     * president must own the TODA and cannot approve their own application.
+     * TODA president's decision on a join request: pending -> active. The
+     * president is the final approver, so the operator becomes rateable under
+     * the TODA immediately and is notified. The president must own the TODA and
+     * cannot approve their own application.
      */
     public function presidentApprove(OperatorToda $membership, User $president): OperatorToda
-    {
-        $membership->update(['status' => OperatorToda::STATUS_PENDING_TFRB]);
-
-        app(AdminDashboardService::class)->flush();
-
-        ActivityLogger::log(
-            'approve_toda_membership_president',
-            "{$president->name} approved {$this->name($membership->operator)}'s request to join {$this->todaName($membership)} — awaiting final approval (TFRB officer or superadmin)",
-            $membership,
-            ActivityLogger::CATEGORY_OPERATOR
-        );
-
-        return $membership;
-    }
-
-    /**
-     * Stage 2 — the single final approval, given by EITHER the TFRB officer
-     * or the superadmin (whichever signs off first): pending_tfrb -> active.
-     * In-flight rows still sitting at the old pending_superadmin stage are
-     * finalized the same way.
-     */
-    public function finalApprove(OperatorToda $membership, User $admin): OperatorToda
     {
         $membership->update(['status' => OperatorToda::STATUS_ACTIVE, 'joined_at' => now()]);
 
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log(
-            'approve_toda_membership_final',
-            "{$admin->name} gave final approval for {$this->name($membership->operator)} in {$this->todaName($membership)}",
+            'approve_toda_membership_president',
+            "{$president->name} approved {$this->name($membership->operator)}'s request to join {$this->todaName($membership)} — membership is now active",
             $membership,
-            ActivityLogger::CATEGORY_OFFICER
+            ActivityLogger::CATEGORY_OPERATOR
         );
 
         $this->notifyDriver(
@@ -183,8 +159,8 @@ class TodaMembershipService
     }
 
     /**
-     * A superadmin/TFRB adds an operator to a TODA directly (they are the final
-     * approver, so the membership becomes active immediately).
+     * A superadmin/TFRB adds an operator to a TODA directly. The membership is
+     * active immediately because admins manage memberships, not join requests.
      */
     public function addByAdmin(Operator $operator, Toda $toda, User $admin): OperatorToda
     {
@@ -265,28 +241,14 @@ class TodaMembershipService
     }
 
     /**
-     * Stage 1 queue: pending memberships for a TODA awaiting its president,
-     * newest first, eager-loading the operator + user.
+     * The president's review queue: pending memberships for a TODA, newest
+     * first, eager-loading the operator + user.
      */
     public function presidentQueue(Toda $toda): Collection
     {
         return OperatorToda::with(['operator.user', 'toda'])
             ->where('toda_id', $toda->id)
             ->where('status', OperatorToda::STATUS_PENDING)
-            ->latest('id')
-            ->get();
-    }
-
-    /**
-     * Queue for final approval: memberships the TFRB officer or superadmin
-     * may finalize (president approved). This includes legacy pending_admin
-     * and in-flight pending_superadmin rows so they close out cleanly. Returns
-     * newest first.
-     */
-    public function finalApprovalQueue(): Collection
-    {
-        return OperatorToda::with(['operator.user', 'toda'])
-            ->awaitingFinalApproval()
             ->latest('id')
             ->get();
     }

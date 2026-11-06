@@ -73,8 +73,8 @@
 </div>
 @endif
 
-{{-- Join requests: operators asking to join this TODA (president reviews first,
-     then either the TFRB officer or the superadmin gives the final approval). --}}
+{{-- Join requests: operators asking to join this TODA. The president is the
+     final approver — approving activates the membership immediately. --}}
 @if ($showJoin && ($joinRequests ?? collect())->isNotEmpty())
     <div id="joinRequestsSection" class="scroll-mt-24">
         @include('partials.president.join-requests', ['joinRequests' => $joinRequests])

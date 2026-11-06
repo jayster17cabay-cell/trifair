@@ -172,9 +172,9 @@
                     $membershipLabel = [
                         'active' => 'Active',
                         'pending' => 'Pending President',
-                        'pending_tfrb' => 'Pending TFRB',
-                        'pending_admin' => 'Pending TFRB',
-                        'pending_superadmin' => 'Pending Superadmin',
+                        'pending_tfrb' => 'Legacy Pending Approval',
+                        'pending_admin' => 'Legacy Pending Approval',
+                        'pending_superadmin' => 'Legacy Pending Approval',
                         'rejected' => 'Rejected',
                         'inactive' => 'Inactive',
                     ];
@@ -216,7 +216,7 @@
                             <i class="bi bi-send"></i> Request to Join
                         </button>
                     </form>
-                    <p class="mt-2 text-xs text-slate-500">Your request goes to the TODA president first, then either the TFRB officer or the superadmin gives the final approval. You can belong to up to {{ \App\Models\OperatorToda::MAX_TODAS }} TODAs.</p>
+                    <p class="mt-2 text-xs text-slate-500">Your request goes to the TODA president. Once approved, you become an active member right away and can be rated under that TODA. You can belong to up to {{ \App\Models\OperatorToda::MAX_TODAS }} TODAs.</p>
                 @else
                     <p class="text-sm text-slate-400">
                         @if (!($canJoinAnother ?? true))

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\Operator;
-use App\Models\OperatorToda;
 use App\Models\Rating;
 use App\Models\Toda;
 use App\Models\User;
@@ -113,13 +112,6 @@ class AdminDashboardService
                 ->whereNull('forwarded_at')
                 ->count(),
             'totalTodas' => Toda::count(),
-            // TODA membership applications waiting on THIS approver: the TFRB
-            // officer verifies president-approved requests, while the superadmin
-            // gives the final approval. Surfaced as a KPI so pending memberships
-            // are visible on the dashboard, not only on the Operators page.
-            'pendingTodaMemberships' => ($options['includeOfficers'] ?? false)
-                ? OperatorToda::awaitingFinalApproval()->count()
-                : OperatorToda::awaitingFinalApproval()->count(),
         ];
 
         if ($options['includeOfficers'] ?? false) {
@@ -220,7 +212,6 @@ class AdminDashboardService
             'awaitingPresidentComplaints' => $stats['awaitingPresidentComplaints'] ?? 0,
             'totalOfficers' => $stats['totalOfficers'] ?? null,
             'totalTodas' => $stats['totalTodas'],
-            'pendingTodaMemberships' => $stats['pendingTodaMemberships'] ?? 0,
             'unreadCount' => Notification::forUser(Auth::id())->unread()->count(),
             'complaintStats' => $stats['complaintStats']->map(function ($c) {
                 return ['complaint_type' => $c->complaint_type, 'total' => (int) $c->total];

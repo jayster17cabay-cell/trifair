@@ -324,8 +324,8 @@ class OperatorController extends Controller
 
     /**
      * Self-service request to join another TODA. The membership lands in the
-     * target TODA president's queue (pending), then goes to superadmin/TFRB for
-     * final approval before the operator is rateable under it.
+     * target TODA president's queue (pending); the president is the sole
+     * approver, so approval activates the membership immediately.
      */
     public function joinToda(Request $request)
     {
@@ -356,7 +356,7 @@ class OperatorController extends Controller
 
         return back()->with(
             'success',
-            "Your request to join {$toda->name} was submitted. It will be reviewed by the TODA president, then either the TFRB officer or the superadmin will give the final approval."
+            "Your request to join {$toda->name} was submitted. The TODA president will review it — once approved, you become an active member right away."
         );
     }
 
