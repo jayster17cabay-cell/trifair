@@ -233,7 +233,6 @@ Route::middleware(['auth', 'role:operator_president', 'president.active', 'toda.
     Route::get('/members/{member}', [PresidentController::class, 'memberDetail'])->name('members.detail');
     Route::post('/members/{member}/suspend', [PresidentController::class, 'suspendMember'])->name('members.suspend');
     Route::patch('/members/{member}/suspend/end', [PresidentController::class, 'endSuspension'])->name('members.suspend.end');
-    Route::post('/members/{member}/violation', [PresidentController::class, 'reportViolation'])->name('members.violation');
     Route::delete('/members/{member}/remove', [PresidentController::class, 'removeMember'])->name('members.remove');
     // Take the TODA president's decision on join requests (final approval).
     Route::patch('/memberships/{membership}/approve', [PresidentController::class, 'approveMembership'])->name('memberships.approve');

@@ -8,9 +8,7 @@ use App\Models\SuspensionViolationProof;
 use App\Models\Toda;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -79,17 +77,6 @@ class SuspensionViolationTest extends TestCase
         return $operator;
     }
 
-    private function suspend(Operator $member, Toda $toda, User $president): \App\Models\MemberSuspension
-    {
-        return $member->suspend([
-            'toda_id' => $toda->id,
-            'suspended_by' => $president->id,
-            'reason' => 'Repeated overcharging',
-            'suspended_at' => now()->subDays(2),
-            'suspended_until' => now()->addDays(5),
-        ]);
-    }
-
     private function makeViolation(Operator $member, Toda $toda, User $president, array $overrides = []): SuspensionViolation
     {
         return SuspensionViolation::create(array_merge([
@@ -102,104 +89,6 @@ class SuspensionViolationTest extends TestCase
             'location' => 'Market Road',
             'status' => 'pending',
         ], $overrides));
-    }
-
-    public function test_president_can_report_a_violation_for_a_suspended_member()
-    {
-        $toda = $this->makeToda();
-        $pres = $this->makePresident($toda);
-        $member = $this->makeOperator($toda);
-        $suspension = $this->suspend($member, $toda, $pres['user']);
-
-        $this->actingAs($pres['user'])
-            ->post('/president/members/' . $member->id . '/violation', [
-                'violation_type' => 'Operating while suspended',
-                'details' => 'Observed picking up passengers near the market.',
-                'incident_at' => now()->format('Y-m-d H:i:s'),
-                'location' => 'Market Road',
-            ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
-
-        $this->assertDatabaseHas('suspension_violations', [
-            'operator_id' => $member->id,
-            'toda_id' => $toda->id,
-            'reported_by' => $pres['user']->id,
-            'suspension_id' => $suspension->id,
-            'violation_type' => 'Operating while suspended',
-            'status' => 'pending',
-        ]);
-    }
-
-    public function test_president_can_attach_proofs_to_a_violation_report()
-    {
-        config(['services.supabase.url' => null, 'services.supabase.key' => null]);
-        Storage::fake('public');
-
-        $toda = $this->makeToda();
-        $pres = $this->makePresident($toda);
-        $member = $this->makeOperator($toda);
-        $this->suspend($member, $toda, $pres['user']);
-
-        $this->actingAs($pres['user'])
-            ->post('/president/members/' . $member->id . '/violation', [
-                'violation_type' => 'Operating while suspended',
-                'details' => 'With photo evidence.',
-                'incident_at' => now()->format('Y-m-d H:i:s'),
-                'proofs' => [UploadedFile::fake()->create('evidence.jpg', 100, 'image/jpeg')],
-            ])
-            ->assertRedirect();
-
-        $violation = SuspensionViolation::where('operator_id', $member->id)->first();
-        $this->assertNotNull($violation);
-        $this->assertSame(1, $violation->proofs()->count());
-    }
-
-    public function test_report_is_rejected_when_member_is_not_suspended()
-    {
-        $toda = $this->makeToda();
-        $pres = $this->makePresident($toda);
-        $member = $this->makeOperator($toda);
-
-        $this->actingAs($pres['user'])
-            ->post('/president/members/' . $member->id . '/violation', [
-                'violation_type' => 'Operating while suspended',
-                'details' => 'Not suspended though.',
-                'incident_at' => now()->format('Y-m-d H:i:s'),
-            ])
-            ->assertRedirect()
-            ->assertSessionHas('error');
-
-        $this->assertDatabaseCount('suspension_violations', 0);
-    }
-
-    public function test_report_validates_required_fields()
-    {
-        $toda = $this->makeToda();
-        $pres = $this->makePresident($toda);
-        $member = $this->makeOperator($toda);
-        $this->suspend($member, $toda, $pres['user']);
-
-        $this->actingAs($pres['user'])
-            ->post('/president/members/' . $member->id . '/violation', [])
-            ->assertSessionHasErrors(['violation_type', 'details', 'incident_at']);
-    }
-
-    public function test_president_cannot_report_violation_for_another_todas_member()
-    {
-        $todaA = $this->makeToda();
-        $todaB = $this->makeToda();
-        $presA = $this->makePresident($todaA);
-        $memberB = $this->makeOperator($todaB);
-        $this->suspend($memberB, $todaB, $presA['user']);
-
-        $this->actingAs($presA['user'])
-            ->post('/president/members/' . $memberB->id . '/violation', [
-                'violation_type' => 'Operating while suspended',
-                'details' => 'Foreign TODA.',
-                'incident_at' => now()->format('Y-m-d H:i:s'),
-            ])
-            ->assertForbidden();
     }
 
     public function test_tfrb_officer_can_view_the_violations_queue()
@@ -334,22 +223,6 @@ class SuspensionViolationTest extends TestCase
     public function test_guest_is_redirected_from_the_violations_queue()
     {
         $this->get('/tfrb-officer/violations')->assertRedirect('/login');
-    }
-
-    public function test_president_sees_their_reported_violations_in_the_member_modal()
-    {
-        $toda = $this->makeToda();
-        $pres = $this->makePresident($toda);
-        $member = $this->makeOperator($toda);
-        $this->makeViolation($member, $toda, $pres['user'], ['details' => 'President-visible report marker ZZZ']);
-
-        $html = $this->actingAs($pres['user'])
-            ->getJson('/president/members/' . $member->id)
-            ->assertOk()
-            ->json('html');
-
-        $this->assertStringContainsString('Reported violations', $html);
-        $this->assertStringContainsString('President-visible report marker ZZZ', $html);
     }
 
     public function test_violation_proofs_survive_a_reopen()

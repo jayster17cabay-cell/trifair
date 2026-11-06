@@ -21,7 +21,7 @@
 <div class="tw-page-head">
     <div>
         <h1 class="tw-page-title"><i class="bi bi-flag mr-2 text-red-500"></i>Violation Reports</h1>
-        <p class="tw-page-sub">Suspension violations reported by TODA presidents</p>
+        <p class="tw-page-sub">Violation reports filed by passengers</p>
     </div>
 </div>
 
@@ -181,7 +181,7 @@
     <div class="tw-empty py-16">
         <div class="tw-empty-icon"><i class="bi bi-flag text-red-400"></i></div>
         <h3 class="tw-card-title mb-1">No violation reports</h3>
-        <p class="text-sm text-slate-500">Reports filed by TODA presidents will appear here for review.</p>
+        <p class="text-sm text-slate-500">Reports filed by passengers will appear here for review.</p>
     </div>
 @endforelse
 
