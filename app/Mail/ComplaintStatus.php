@@ -29,7 +29,6 @@ class ComplaintStatus extends Mailable
             'reviewed' => "Your complaint {$this->rating->reference_number} has been reviewed",
             'rejected' => "Update on your complaint {$this->rating->reference_number}",
             'solved' => "Your complaint {$this->rating->reference_number} has been solved",
-            'submitted' => "Your complaint {$this->rating->reference_number} was received",
             'forwarded' => "Your complaint {$this->rating->reference_number} is now with the TFRB",
             'escalated' => "Your complaint {$this->rating->reference_number} was escalated for a heavier re-review",
             default => "Your complaint {$this->rating->reference_number} has been updated",

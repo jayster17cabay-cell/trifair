@@ -350,7 +350,7 @@ class ComplaintReviewFlowTest extends TestCase
 
         $this->actingAs($passenger)->get('/passenger/dashboard')
             ->assertOk()
-            ->assertSee('In Progress')
+            ->assertSee('Open')
             ->assertSee('Rejected');
     }
 

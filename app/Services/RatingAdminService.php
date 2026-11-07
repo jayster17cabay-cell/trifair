@@ -107,9 +107,10 @@ class RatingAdminService
         ActivityLogger::log('review_complaint', "Reviewed complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
 
         if (!$wasReviewed) {
-            $emailError = $this->notifyComplaintStatus($rating, 'reviewed');
-            $this->notifyPassengerInApp($rating, 'Complaint Reviewed', 'Your complaint has been reviewed by the responsible office. Thank you for helping keep our transport services safe.');
+            // Passengers are only notified on rejection or resolution; a review
+            // decision stays internal to the review team (no passenger email).
             $this->notifyAdmins($rating, 'Complaint Reviewed', "Complaint {$rating->reference_number} for {$rating->operator_name} has been reviewed and now counts towards the operator's rating.");
+            $emailError = null;
         } else {
             $emailError = null;
         }
@@ -492,7 +493,6 @@ class RatingAdminService
         }
 
         $count = 0;
-        $emailFailures = 0;
         Rating::whereIn('id', $ids)
             ->isValid()
             ->whereNotNull('complaint_type')
@@ -505,13 +505,9 @@ class RatingAdminService
             })
             ->with('operator.user')
             ->get()
-            ->each(function ($rating) use (&$count, &$emailFailures) {
+            ->each(function ($rating) use (&$count) {
                 $rating->update(['is_reviewed' => true, 'reviewed_by' => Auth::id()]);
                 ActivityLogger::log('review_complaint', "Reviewed complaint #{$rating->id} (bulk, operator: {$rating->operator_name})", $rating, 'review');
-                if ($this->notifyComplaintStatus($rating, 'reviewed')) {
-                    $emailFailures++;
-                }
-                $this->notifyPassengerInApp($rating, 'Complaint Reviewed', 'Your complaint has been reviewed by the responsible office. Thank you for helping keep our transport services safe.');
                 $count++;
             });
 
@@ -524,12 +520,9 @@ class RatingAdminService
             );
         }
 
-        return $this->withEmailWarning(
-            back()->with('success', $count > 0
-                ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' reviewed.'
-                : 'No pending complaints were reviewed.'),
-            $emailFailures > 0 ? "{$emailFailures} passenger" . ($emailFailures === 1 ? '' : 's') . ' could not be emailed about this update. Check the server log.' : null
-        );
+        return back()->with('success', $count > 0
+            ? "{$count} complaint" . ($count === 1 ? '' : 's') . ' reviewed.'
+            : 'No pending complaints were reviewed.');
     }
 
     /**

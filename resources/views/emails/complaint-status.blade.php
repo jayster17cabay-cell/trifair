@@ -29,9 +29,6 @@
                                     $statusLabel = 'Rejected';
                                     $heading = 'was not upheld after review';
                                     $statusColor = '#dc2626';
-                                } elseif ($status === 'submitted') {
-                                    $statusLabel = 'Received';
-                                    $heading = 'was received';
                                 } elseif ($status === 'forwarded') {
                                     $statusLabel = 'Forwarded to TFRB';
                                     $heading = 'has been forwarded to the TFRB';
@@ -100,12 +97,6 @@
                                     Your complaint was escalated for a heavier re-review after the previous resolution did not
                                     satisfy you. The TFRB/superadmin team will investigate further and follow up with you —
                                     you will receive another notification once this escalated case is resolved.
-                                @elseif ($status === 'submitted')
-                                    We have received your complaint. The responsible office will review it shortly, and you will
-                                    receive a notification here once it is reviewed or resolved. Keep this reference number
-                                    for tracking your complaint.
-                                    Your complaint has been reviewed by the TFRB. You will receive another notification once
-                                    the complaint is resolved. Thank you for your patience.
                                 @endif
                             </p>
                             @if (in_array($status, ['solved', 'rejected'], true))

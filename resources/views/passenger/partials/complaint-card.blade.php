@@ -9,14 +9,11 @@
         $statusKey = 'solved';
     } elseif ($rating->rejected_at) {
         $statusKey = 'rejected';
-    } elseif ($rating->is_reviewed) {
-        $statusKey = 'reviewed';
     } else {
-        $statusKey = 'pending';
+        $statusKey = 'open';
     }
     $statusMap = [
-        'pending' => ['label' => 'Pending', 'icon' => 'bi-clock-fill', 'badge' => 'tw-badge tw-badge-amber', 'border' => 'border-l-amber-400', 'avatar' => 'bg-amber-500/10 text-amber-600'],
-        'reviewed' => ['label' => 'In Progress', 'icon' => 'bi-arrow-repeat', 'badge' => 'tw-badge tw-badge-green', 'border' => 'border-l-emerald-500', 'avatar' => 'bg-emerald-500/10 text-emerald-600'],
+        'open' => ['label' => 'Open', 'icon' => 'bi-clock-fill', 'badge' => 'tw-badge tw-badge-amber', 'border' => 'border-l-amber-400', 'avatar' => 'bg-amber-500/10 text-amber-600'],
         'rejected' => ['label' => 'Rejected', 'icon' => 'bi-x-circle-fill', 'badge' => 'tw-badge tw-badge-red', 'border' => 'border-l-red-500', 'avatar' => 'bg-red-500/10 text-red-600'],
         'solved' => ['label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'badge' => 'tw-badge tw-badge-navy', 'border' => 'border-l-navy-600', 'avatar' => 'bg-navy-600/10 text-navy-700'],
     ];
@@ -100,7 +97,7 @@
                 </div>
                 <p class="mb-0 text-sm text-slate-700">{{ $rating->response->message }}</p>
             </div>
-        @elseif ($rating->is_reviewed && !$rating->is_solved)
+        @elseif (!$rating->is_solved && !$rating->rejected_at)
             <p class="mt-3 text-xs text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response from the operator yet.</p>
         @endif
 

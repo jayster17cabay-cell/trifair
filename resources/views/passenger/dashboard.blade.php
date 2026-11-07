@@ -101,8 +101,7 @@
         @php
             $statusTabs = [
                 ['key' => null, 'label' => 'Total', 'count' => $totalCount, 'icon' => 'bi-list-ul', 'color' => 'violet'],
-                ['key' => 'pending', 'label' => 'Pending', 'count' => $pendingCount, 'icon' => 'bi-clock-history', 'color' => 'amber'],
-                ['key' => 'reviewed', 'label' => 'In Progress', 'count' => $reviewedCount, 'icon' => 'bi-arrow-repeat', 'color' => 'emerald'],
+                ['key' => 'open', 'label' => 'Open', 'count' => $openCount, 'icon' => 'bi-clock-history', 'color' => 'amber'],
                 ['key' => 'rejected', 'label' => 'Rejected', 'count' => $rejectedCount, 'icon' => 'bi-x-circle', 'color' => 'red'],
                 ['key' => 'solved', 'label' => 'Solved', 'count' => $solvedCount, 'icon' => 'bi-patch-check', 'color' => 'navy'],
             ];
@@ -127,7 +126,7 @@
 
         @if ($activeStatus !== null)
             @php
-                $statusLabels = ['pending' => 'Pending', 'reviewed' => 'In Progress', 'rejected' => 'Rejected', 'solved' => 'Solved'];
+                $statusLabels = ['open' => 'Open', 'rejected' => 'Rejected', 'solved' => 'Solved'];
                 $activeStatusLabel = $statusLabels[$activeStatus] ?? ucfirst($activeStatus);
             @endphp
             <div class="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-navy-100 bg-navy-50 px-4 py-2.5 text-sm text-navy-700">
@@ -170,12 +169,11 @@
         @php
             $pageItems = collect($complaints->getCollection());
             $sections = [
-                'pending' => ['label' => 'Pending', 'desc' => 'Filed and waiting for the office to act', 'count' => $pendingCount, 'dot' => 'bg-amber-400', 'border' => 'border-l-amber-400'],
-                'reviewed' => ['label' => 'In Progress', 'desc' => 'Accepted and being resolved by the office', 'count' => $reviewedCount, 'dot' => 'bg-emerald-500', 'border' => 'border-l-emerald-500'],
+                'open' => ['label' => 'Open', 'desc' => 'Filed and waiting for the office to act', 'count' => $openCount, 'dot' => 'bg-amber-400', 'border' => 'border-l-amber-400'],
                 'rejected' => ['label' => 'Rejected', 'desc' => 'Closed — the complaint was not upheld', 'count' => $rejectedCount, 'dot' => 'bg-red-400', 'border' => 'border-l-red-500'],
                 'solved' => ['label' => 'Solved', 'desc' => 'The case has been resolved by TFRB', 'count' => $solvedCount, 'dot' => 'bg-navy-600', 'border' => 'border-l-navy-600'],
             ];
-            $buckets = ['pending' => collect(), 'reviewed' => collect(), 'rejected' => collect(), 'solved' => collect()];
+            $buckets = ['open' => collect(), 'rejected' => collect(), 'solved' => collect()];
             if ($activeStatus !== null) {
                 $buckets[$activeStatus] = $pageItems;
             } else {
@@ -184,10 +182,8 @@
                         $buckets['solved']->push($rating);
                     } elseif ($rating->rejected_at) {
                         $buckets['rejected']->push($rating);
-                    } elseif ($rating->is_reviewed) {
-                        $buckets['reviewed']->push($rating);
                     } else {
-                        $buckets['pending']->push($rating);
+                        $buckets['open']->push($rating);
                     }
                 }
             }

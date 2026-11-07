@@ -367,20 +367,8 @@ class RatingController extends Controller
                 ->with('alreadyRated', true);
         }
 
-        // Instant confirmation email: the moment a valid complaint lands, the
-        // passenger gets notified on the same address they will later receive
-        // the "reviewed" and "solved" updates on. An invalid complaint (missing
-        // route data) never reaches the operators, so we do not confirm it as
-        // submitted. A delivery failure must never break the submission.
-        if ((int) $data['rating'] <= 2 && $passengerEmail && $rating->is_valid) {
-            try {
-                \Illuminate\Support\Facades\Mail::to($passengerEmail)
-                    ->send(new \App\Mail\ComplaintStatus($rating, 'submitted'));
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error('Complaint submitted email failed: ' . get_class($e) . ': ' . $e->getMessage());
-            }
-        }
-
+        // Complaints are no longer confirmed by email on submission — the
+        // passenger only hears back once the case is solved or rejected.
         app(\App\Services\AdminDashboardService::class)->flush();
 
         return redirect()->route('rate.submitted', $operator->qr_code)

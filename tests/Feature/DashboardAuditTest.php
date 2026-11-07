@@ -689,7 +689,7 @@ class DashboardAuditTest extends TestCase
             ->assertSee('Rude Driver', false);
     }
 
-    public function test_marking_complaint_reviewed_emails_the_passenger()
+    public function test_marking_complaint_reviewed_does_not_email_the_passenger()
     {
         Mail::fake();
         $officer = $this->makeUser('tfrb_officer');
@@ -701,20 +701,16 @@ class DashboardAuditTest extends TestCase
             ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
             ->assertRedirect();
 
-        Mail::assertSent(ComplaintStatus::class, function ($mail) use ($rating) {
-            $mail->build();
+        // Review decisions are internal — the passenger is only notified on
+        // rejection or resolution.
+        Mail::assertNothingSent();
 
-            return $mail->hasTo('passenger@example.com')
-                && $mail->status === 'reviewed'
-                && str_contains($mail->subject, $rating->reference_number);
-        });
-
-        // Re-reviewing must not spam the passenger a second time.
+        // Re-reviewing still must not spam the passenger.
         $this->actingAs($officer)
             ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
             ->assertRedirect();
 
-        Mail::assertSent(ComplaintStatus::class, 1);
+        Mail::assertNothingSent();
     }
 
     public function test_complaint_email_failure_is_surfaced_and_does_not_break_the_action()
@@ -729,13 +725,15 @@ class DashboardAuditTest extends TestCase
         Mail::shouldReceive('to')->andThrow(new \RuntimeException('SMTP transport unavailable'));
 
         $this->actingAs($officer)
-            ->patch('/tfrb-officer/complaints/' . $rating->id . '/review')
+            ->patch('/tfrb-officer/complaints/' . $rating->id . '/solve', [
+                'resolution_note' => 'Resolved.',
+            ])
             ->assertRedirect()
             ->assertSessionHas('success')
             ->assertSessionHas('warning');
 
         // The email failure must never block the officer's decision.
-        $this->assertTrue((bool) $rating->fresh()->is_reviewed);
+        $this->assertTrue((bool) $rating->fresh()->is_solved);
     }
 
     public function test_sendinblue_key_and_from_address_are_trimmed_of_whitespace()
@@ -1010,16 +1008,6 @@ class DashboardAuditTest extends TestCase
         $this->assertNotNull($rating);
         $this->assertSame($passenger->id, (int) $rating->passenger_user_id);
         $this->assertSame($passenger->email, $rating->passenger_email);
-
-        // The passenger gets an instant confirmation email to their Google
-        // account; the Thank You view no longer offers a link to the dashboard.
-        Mail::assertSent(ComplaintStatus::class, function ($mail) use ($rating, $passenger) {
-            $mail->build();
-
-            return $mail->hasTo($passenger->email)
-                && $mail->status === 'submitted'
-                && str_contains($mail->subject, $rating->reference_number);
-        });
     }
 
     public function test_invalid_complaint_does_not_send_a_submitted_email()
