@@ -106,7 +106,7 @@
 <div class="mb-4 max-w-md">
     <div class="tw-input-group">
         <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
-        <input type="text" id="searchInput" class="tw-input" placeholder="Search operators..." value="{{ $search ?? '' }}" oninput="liveSearch(this.value)" aria-label="Search operators">
+        <input type="text" id="searchInput" class="tw-input" placeholder="Search operators..." value="{{ $search ?? '' }}" aria-label="Search operators">
         @if ($search)
             <a href="{{ route($routePrefix . '.operators') }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700" aria-label="Clear search">
                 <i class="bi bi-x-lg"></i>
@@ -145,22 +145,22 @@
 @include('partials.admin.operator-suspend-modal')
 
 <script>
-    let searchTimeout;
     function liveSearch(val) {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            const url = new URL(window.location.href);
-            url.searchParams.set('search', val);
-            url.searchParams.delete('page');
-            fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
-                .then(r => r.json())
-                .then(d => {
-                    document.querySelector('#operatorsTable tbody').outerHTML = d.html;
-                    document.querySelector('#paginationLinks').innerHTML = d.pagination;
-                });
-        }, 350);
+        const url = new URL(window.location.href);
+        if (val) { url.searchParams.set('search', val); } else { url.searchParams.delete('search'); }
+        url.searchParams.delete('page');
+        fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(d => {
+                document.querySelector('#operatorsTable tbody').outerHTML = d.html;
+                document.querySelector('#paginationLinks').innerHTML = d.pagination;
+            });
     }
+    // Search on Enter only: typing must never fire a request on its own.
     document.getElementById('searchInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter') e.preventDefault();
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            liveSearch(e.target.value.trim());
+        }
     });
 </script>

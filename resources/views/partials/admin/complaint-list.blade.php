@@ -273,15 +273,10 @@
     (function () {
         var input = document.querySelector('input[data-complaint-live-search]');
         if (input && input.form) {
-            var timer = null;
-            input.addEventListener('input', function () {
-                clearTimeout(timer);
-                timer = setTimeout(function () { input.form.submit(); }, 400);
-            });
+            // Search on Enter only: typing must never submit the filter form.
             input.addEventListener('keydown', function (e) {
-                if (e.keyCode === 13) {
+                if (e.key === 'Enter') {
                     e.preventDefault();
-                    clearTimeout(timer);
                     input.form.submit();
                 }
             });

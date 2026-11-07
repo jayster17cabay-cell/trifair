@@ -147,21 +147,15 @@
         var searchInput = document.getElementById('presidentMemberSearch');
         var statusSelect = document.getElementById('presidentMemberStatus');
         if (!form || !searchInput || !statusSelect) return;
-        var timer = null;
-        var fireSearch = function () {
-            clearTimeout(timer);
-            timer = setTimeout(function () { form.submit(); }, 400);
-        };
-        searchInput.addEventListener('input', fireSearch);
+        // Search on Enter only: typing must never reload the list on its own.
         searchInput.addEventListener('keydown', function (e) {
-            if (e.keyCode === 13) {
+            if (e.key === 'Enter') {
                 e.preventDefault();
-                clearTimeout(timer);
                 form.submit();
             }
         });
+        // The status dropdown is a filter, so it can still apply immediately.
         statusSelect.addEventListener('change', function () {
-            clearTimeout(timer);
             form.submit();
         });
     })();

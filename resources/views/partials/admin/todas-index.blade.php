@@ -22,7 +22,7 @@
     <div class="w-full max-w-md">
         <div class="tw-input-group">
             <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
-            <input type="text" id="todaSearchInput" class="tw-input" placeholder="Search TODA by name or area..." value="{{ $search ?? '' }}" oninput="liveTodaSearch(this.value)" aria-label="Search TODA by name or area">
+            <input type="text" id="todaSearchInput" class="tw-input" placeholder="Search TODA by name or area..." value="{{ $search ?? '' }}" aria-label="Search TODA by name or area">
             <button type="button" class="tw-btn tw-btn-gold shrink-0 px-4" onclick="liveTodaSearch(document.getElementById('todaSearchInput').value)" aria-label="Search">
                 <i class="bi bi-search"></i>
             </button>
@@ -58,28 +58,28 @@
 ])
 
 <script>
-    let todaSearchTimeout;
     function liveTodaSearch(val) {
-        clearTimeout(todaSearchTimeout);
-        todaSearchTimeout = setTimeout(() => {
-            const url = new URL(window.location.href);
-            url.searchParams.set('search', val);
-            url.searchParams.delete('page');
-            fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
-                .then(r => r.json())
-                .then(d => {
-                    document.getElementById('todasGrid').innerHTML = d.html;
-                    document.getElementById('paginationLinks').innerHTML = d.pagination;
+        const url = new URL(window.location.href);
+        if (val) { url.searchParams.set('search', val); } else { url.searchParams.delete('search'); }
+        url.searchParams.delete('page');
+        fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('todasGrid').innerHTML = d.html;
+                document.getElementById('paginationLinks').innerHTML = d.pagination;
 
-                    if (d.total !== undefined) {
-                        document.getElementById('todaCount').textContent = d.total;
-                        document.getElementById('todaCountLabel').textContent = 'TODA' + (Number(d.total) === 1 ? '' : 's');
-                        document.getElementById('todaSearchLabel').textContent = val ? 'matching “' + val + '”' : '';
-                    }
-                });
-        }, 350);
+                if (d.total !== undefined) {
+                    document.getElementById('todaCount').textContent = d.total;
+                    document.getElementById('todaCountLabel').textContent = 'TODA' + (Number(d.total) === 1 ? '' : 's');
+                    document.getElementById('todaSearchLabel').textContent = val ? 'matching “' + val + '”' : '';
+                }
+            });
     }
+    // Search on Enter (or the Search button) only: typing must never fire a request on its own.
     document.getElementById('todaSearchInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter') e.preventDefault();
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            liveTodaSearch(e.target.value.trim());
+        }
     });
 </script>
