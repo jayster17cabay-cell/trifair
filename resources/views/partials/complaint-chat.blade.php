@@ -49,24 +49,38 @@
                             : ($sender && $sender->isTfrbOfficer() ? 'TFRB Officer' : 'TFRB Staff');
                     @endphp
                     <div class="flex justify-start">
-                        <div class="max-w-[85%] rounded-2xl rounded-tl-md border border-navy-100 bg-navy-50 px-3.5 py-2">
-                            <div class="mb-0.5 flex flex-wrap items-center gap-1.5 text-[0.65rem] font-bold text-navy-600">
-                                <i class="bi bi-person-badge" aria-hidden="true"></i>
-                                {{ $staffLabel }}
-                                <span class="rounded bg-navy-600 px-1.5 py-px text-[0.55rem] font-bold uppercase tracking-wider text-white">{{ $staffLabel === 'Superadmin' ? 'Admin' : 'TFRB' }}</span>
+                        <div class="max-w-[85%]">
+                            <div class="flex items-end gap-2">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy-600/10 text-[0.7rem] font-bold text-navy-700 ring-1 ring-navy-600/20" aria-hidden="true">
+                                    <i class="bi bi-person-badge"></i>
+                                </div>
+                                <div class="rounded-2xl rounded-tl-md border border-navy-100 bg-navy-50 px-3.5 py-2 shadow-sm">
+                                    <div class="mb-0.5 flex flex-wrap items-center gap-1.5 text-[0.65rem] font-bold text-navy-600">
+                                        <i class="bi bi-person-badge" aria-hidden="true"></i>
+                                        {{ $staffLabel }}
+                                        <span class="rounded bg-navy-600 px-1.5 py-px text-[0.55rem] font-bold uppercase tracking-wider text-white">{{ $staffLabel === 'Superadmin' ? 'Admin' : 'TFRB' }}</span>
+                                    </div>
+                                    <p class="text-sm leading-relaxed text-slate-700">{{ $followUp->message }}</p>
+                                    <div class="mt-1 text-right text-[0.62rem] text-slate-400">{{ $followUp->created_at->format('M j, g:i A') }}</div>
+                                </div>
                             </div>
-                            <p class="text-sm leading-relaxed text-slate-700">{{ $followUp->message }}</p>
-                            <div class="mt-1 text-right text-[0.62rem] text-slate-400">{{ $followUp->created_at->format('M j, g:i A') }}</div>
                         </div>
                     </div>
                 @else
                     <div class="flex justify-end">
-                        <div class="max-w-[85%] rounded-2xl rounded-tr-md bg-violet-600 px-3.5 py-2 text-white">
-                            <div class="mb-0.5 text-[0.65rem] font-bold text-violet-200">
-                                {{ $isStaffView ? ($rating->passenger_name ?: 'Passenger') : 'You' }}
+                        <div class="max-w-[85%]">
+                            <div class="flex items-end justify-end gap-2">
+                                <div class="rounded-2xl rounded-tr-md bg-violet-600 px-3.5 py-2 text-white shadow-sm">
+                                    <div class="mb-0.5 text-[0.65rem] font-bold text-violet-200">
+                                        {{ $isStaffView ? ($rating->passenger_name ?: 'Passenger') : 'You' }}
+                                    </div>
+                                    <p class="text-sm leading-relaxed">{{ $followUp->message }}</p>
+                                    <div class="mt-1 text-right text-[0.62rem] text-violet-200">{{ $followUp->created_at->format('M j, g:i A') }}</div>
+                                </div>
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600/10 text-[0.7rem] font-bold text-violet-700 ring-1 ring-violet-300/40" aria-hidden="true">
+                                    <i class="bi bi-person"></i>
+                                </div>
                             </div>
-                            <p class="text-sm leading-relaxed">{{ $followUp->message }}</p>
-                            <div class="mt-1 text-right text-[0.62rem] text-violet-200">{{ $followUp->created_at->format('M j, g:i A') }}</div>
                         </div>
                     </div>
                 @endif
@@ -109,4 +123,20 @@
     @if ($chatOpen)
         <script>(function(){var t=document.getElementById('chat-thread-{{ $rating->id }}');if(t)t.scrollTop=t.scrollHeight;})()</script>
     @endif
+
+    <script>
+        // Chat UX: Enter sends the follow-up/update, Shift+Enter makes a new
+        // line — mirrors a normal chat composer.
+        (function () {
+            var input = document.getElementById('chat-input-{{ $rating->id }}');
+            if (!input) return;
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    var form = input.closest('form');
+                    if (form) { form.requestSubmit ? form.requestSubmit() : form.submit(); }
+                }
+            });
+        })();
+    </script>
 </div>
