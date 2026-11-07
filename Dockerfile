@@ -1,4 +1,4 @@
-# v6 - force rebuild + fileinfo extension (proof MIME validation)
+# v7 - cache dependency installs so code-only deploys never re-download packages
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y \
@@ -7,10 +7,39 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Pin Composer instead of tracking :latest, so a new Composer release can never
+# silently break a Render deploy again.
+COPY --from=composer:2.11.0 /usr/bin/composer /usr/bin/composer
+
+ENV COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_MEMORY_LIMIT=-1 \
+    COMPOSER_MAX_PARALLEL_HTTP=6
 
 WORKDIR /var/www/html
 
+# 1. Dependency layer. Only the Composer manifest is copied first, so this
+#    layer stays cached for every deploy that does not touch composer.json
+#    or composer.lock. That keeps the build fast and avoids re-downloading
+#    ~70 packages from the GitHub API on every push (a source of flaky,
+#    rate-limited builds).
+COPY composer.json composer.lock ./
+
+# Retry transient package-registry/network failures instead of failing the
+# whole deploy on a single hiccup.
+RUN set -eux; \
+    for attempt in 1 2 3; do \
+        if composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist --no-progress; then \
+            break; \
+        fi; \
+        if [ "$attempt" = "3" ]; then \
+            echo "composer install failed after 3 attempts"; \
+            exit 1; \
+        fi; \
+        echo "composer install failed (attempt $attempt), retrying in 5s..."; \
+        sleep 5; \
+    done
+
+# 2. Application source. Changing app code no longer invalidates the layer above.
 COPY . .
 
 RUN cp .env.example .env
@@ -18,7 +47,8 @@ RUN cp .env.example .env
 RUN mkdir -p database storage/framework/sessions storage/framework/views storage/framework/cache storage/logs \
     && touch database/database.sqlite storage/logs/laravel.log
 
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+# Build the optimized autoloader now that app/ and database/ are present.
+RUN composer dump-autoload --no-dev --optimize --no-scripts --no-interaction
 
 RUN php artisan key:generate --force \
     && php artisan package:discover --ansi
