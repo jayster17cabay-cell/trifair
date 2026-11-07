@@ -15,7 +15,7 @@
     <div class="space-y-4 xl:col-span-8">
         <section>
             <h2 class="tw-section-title">Overview</h2>
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" aria-label="Superadmin overview metrics">
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators'), 'icon' => 'bi-people', 'value' => $totalOperators, 'label' => 'Operators', 'live' => 'totalOperators']])
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators', ['status' => 'active']), 'icon' => 'bi-person-check', 'value' => $activeOperators, 'label' => 'Active', 'live' => 'activeOperators']])
                 @include('partials.dashboard-kpi', ['kpi' => ['href' => route('superadmin.operators', ['status' => 'inactive']), 'icon' => 'bi-person-dash', 'value' => $inactiveOperators, 'label' => 'Inactive', 'live' => 'inactiveOperators']])

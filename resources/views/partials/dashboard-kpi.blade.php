@@ -28,10 +28,11 @@
     ];
     $t = $tone[$labelKey] ?? $tone['default'];
 @endphp
-<{{ $tag }} {!! $hrefAttr !!} class="flex items-center gap-3 rounded-xl border border-slate-100 border-l-4 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md {{ $t[0] }}">
-    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base {{ $t[1] }}"><i class="bi {{ $kpi['icon'] }}"></i></div>
+<{{ $tag }} {!! $hrefAttr !!} class="group flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-slate-100 border-l-4 bg-white p-3 shadow-sm transition-all duration-200 {{ !empty($kpi['href']) ? 'cursor-pointer hover:-translate-y-0.5 hover:border-slate-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-navy-600/20' : '' }} {{ $t[0] }}"
+    @if (!empty($kpi['href'])) aria-label="View {{ $kpi['label'] }}" @endif>
+    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base transition-transform duration-200 {{ $t[1] }} {{ !empty($kpi['href']) ? 'group-hover:scale-105' : '' }}"><i class="bi {{ $kpi['icon'] }}" aria-hidden="true"></i></div>
     <div class="min-w-0">
         <div class="text-2xl font-extrabold leading-tight tracking-tight text-slate-900" aria-live="polite"{!! $liveAttr !!}>{!! $kpi['value'] !!}</div>
-        <div class="mt-0.5 truncate text-[11px] font-semibold uppercase tracking-wide text-slate-400">{{ $kpi['label'] }}</div>
+        <div class="mt-0.5 text-[11px] font-semibold uppercase leading-tight tracking-wide text-slate-400">{{ $kpi['label'] }}</div>
     </div>
 </{{ $tag }}>
