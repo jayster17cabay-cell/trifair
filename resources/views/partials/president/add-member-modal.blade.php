@@ -15,7 +15,7 @@
             </button>
         </div>
 
-        <form method="POST" action="{{ route('president.members.store') }}">
+        <form method="POST" action="{{ route('president.members.store') }}" data-submit-loading>
             @csrf
             <div class="tw-modal-body">
                 <div class="space-y-4">

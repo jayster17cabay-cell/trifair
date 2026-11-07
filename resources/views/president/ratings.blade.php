@@ -184,7 +184,7 @@
                                     <i class="bi bi-exclamation-triangle mr-1"></i> This rating needs your response
                                 </small>
                                 <p class="my-1 text-[0.8rem] text-slate-500">Explain your side to the passenger and TFRB Officer. You may attach proof (images or PDF).</p>
-                                <form action="{{ route('president.ratings.respond', $rating) }}" method="POST" enctype="multipart/form-data">
+                                <form action="{{ route('president.ratings.respond', $rating) }}" method="POST" enctype="multipart/form-data" data-submit-loading>
                                     @csrf
                                     <textarea class="tw-textarea text-sm @error('message') is-invalid @enderror"
                                               name="message" rows="2" aria-label="Your explanation" placeholder="Write your explanation here..."></textarea>
@@ -231,3 +231,16 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.querySelectorAll('form[data-submit-loading]').forEach(function (form) {
+        form.addEventListener('submit', function () {
+            var button = form.querySelector('button[type="submit"]');
+            if (!button) return;
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-arrow-repeat animate-spin" aria-hidden="true"></i> Sending...';
+        });
+    });
+</script>
+@endpush

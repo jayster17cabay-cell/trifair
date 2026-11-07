@@ -36,37 +36,37 @@
                     <span class="tw-badge tw-badge-navy mt-2"><i class="bi bi-diagram-3"></i>{{ $operator->toda->name }}</span>
                 @endif
                 <div class="mt-4 w-full border-t border-slate-100 pt-4 text-left text-sm">
-                    <div class="mb-3 flex items-center justify-between">
+                    <div class="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                         <span class="text-navy-600 font-semibold">Body #</span>
-                        <span class="font-bold text-slate-800">{{ $operator->body_number ?? '—' }}</span>
+                        <span class="min-w-0 break-words text-right font-bold text-slate-800">{{ $operator->body_number ?? '—' }}</span>
                     </div>
-                    <div class="mb-3 flex items-center justify-between">
+                    <div class="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                         <span class="text-navy-600 font-semibold">Plate #</span>
-                        <span class="font-bold text-slate-800">{{ $operator->plate_number ?? '—' }}</span>
+                        <span class="min-w-0 break-words text-right font-bold text-slate-800">{{ $operator->plate_number ?? '—' }}</span>
                     </div>
-                    <div class="mb-3 flex items-center justify-between">
+                    <div class="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                         <span class="text-navy-600 font-semibold">Motorcycle Model</span>
-                        <span class="font-bold text-slate-800">{{ $operator->motorcycle_model ?? '—' }}</span>
+                        <span class="min-w-0 break-words text-right font-bold text-slate-800">{{ $operator->motorcycle_model ?? '—' }}</span>
                     </div>
-                    <div class="mb-3 flex items-center justify-between">
+                    <div class="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                         <span class="text-navy-600 font-semibold">Contact</span>
-                        <span class="font-bold text-slate-800">{{ $operator->contact_number ?? '—' }}</span>
+                        <span class="min-w-0 break-words text-right font-bold text-slate-800">{{ $operator->contact_number ?? '—' }}</span>
                     </div>
-                    <div class="mb-3 flex items-center justify-between">
+                    <div class="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                         <span class="text-navy-600 font-semibold">Address</span>
-                        <span class="font-bold text-slate-800">{{ $operator->address ?? '—' }}</span>
+                        <span class="min-w-0 break-words text-right font-bold text-slate-800">{{ $operator->address ?? '—' }}</span>
                     </div>
-                    <div class="mb-3 flex items-center justify-between">
+                    <div class="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                         <span class="text-navy-600 font-semibold">Franchise No.</span>
-                        <span class="font-mono font-bold text-slate-800">{{ $operator->currentTerm?->franchise_no ?? '—' }}</span>
+                        <span class="min-w-0 break-words text-right font-mono font-bold text-slate-800">{{ $operator->currentTerm?->franchise_no ?? '—' }}</span>
                     </div>
-                    <div class="mb-3 flex items-center justify-between">
+                    <div class="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                         <span class="text-navy-600 font-semibold">Date Issued</span>
-                        <span class="font-bold text-slate-800">{{ $operator->currentTerm?->issued_at?->format('M d, Y') ?? '—' }}</span>
+                        <span class="min-w-0 break-words text-right font-bold text-slate-800">{{ $operator->currentTerm?->issued_at?->format('M d, Y') ?? '—' }}</span>
                     </div>
-                    <div class="mb-3 flex items-center justify-between">
+                    <div class="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                         <span class="text-navy-600 font-semibold">Franchise Validity</span>
-                        <span class="font-bold text-slate-800">
+                        <span class="min-w-0 break-words text-right font-bold text-slate-800">
                             @if ($operator->currentTerm && $operator->currentTerm->valid_until)
                                 {{ $operator->currentTerm->valid_until->format('M d, Y') }}
                                 @if ($operator->currentTerm->isExpired())
@@ -84,9 +84,9 @@
                             @endif
                         </span>
                     </div>
-                    <div class="flex items-center justify-between">
+                    <div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
                         <span class="text-navy-600 font-semibold">Member Since</span>
-                        <span class="font-bold text-slate-800">{{ $operator->created_at?->format('M d, Y') ?? '—' }}</span>
+                        <span class="min-w-0 break-words text-right font-bold text-slate-800">{{ $operator->created_at?->format('M d, Y') ?? '—' }}</span>
                     </div>
                 </div>
             </div>

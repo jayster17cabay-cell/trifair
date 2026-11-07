@@ -53,7 +53,7 @@
 </div>
 @endif
 {{-- KPI cards --}}
-<div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+<div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.complaints', ['filter' => 'pending']), 'icon' => 'bi-flag-fill', 'value' => $summary['pendingComplaints'], 'label' => 'Pending Complaints', 'live' => 'pendingComplaints']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating', 'live' => 'ownAvg']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
@@ -143,6 +143,27 @@
     }
 
     (function () {
+        var lastModalTrigger = null;
+        document.querySelectorAll('form[data-submit-loading]').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                var button = form.querySelector('button[type="submit"]');
+                if (!button) return;
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-arrow-repeat animate-spin" aria-hidden="true"></i> Adding...';
+            });
+        });
+        document.addEventListener('click', function (event) {
+            var opener = event.target.closest ? event.target.closest('[data-tw-modal-open="presidentMemberModal"], [data-tw-modal-open="presidentAddMemberModal"]') : null;
+            if (opener) lastModalTrigger = opener;
+            var closer = event.target.closest ? event.target.closest('[data-tw-modal-close]') : null;
+            if (closer && lastModalTrigger) {
+                window.setTimeout(function () {
+                    if (typeof lastModalTrigger.focus === 'function') lastModalTrigger.focus();
+                    lastModalTrigger = null;
+                }, 0);
+            }
+        });
+
         var form = document.getElementById('presidentMemberFilter');
         var searchInput = document.getElementById('presidentMemberSearch');
         var statusSelect = document.getElementById('presidentMemberStatus');

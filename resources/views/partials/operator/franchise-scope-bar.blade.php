@@ -72,15 +72,15 @@
             <div class="mt-1 text-sm font-bold text-slate-800">No active franchise</div>
         @endif
     </div>
-    <form method="GET" action="{{ route($scopeRoute) }}" class="flex flex-wrap items-center gap-3">
+    <form method="GET" action="{{ route($scopeRoute) }}" class="flex w-full flex-wrap items-center gap-3 sm:w-auto">
         @if ($selectedToda)
             <input type="hidden" name="toda" value="{{ $selectedToda->id }}">
         @endif
-        <div class="flex items-center gap-2">
+        <div class="flex w-full items-center gap-2 sm:w-auto">
             <label for="operatorPeriod" class="text-[11px] font-bold uppercase tracking-wide text-slate-400">
                 <i class="bi bi-calendar3 mr-1"></i>Show
             </label>
-            <select name="period" id="operatorPeriod" class="tw-select py-1.5 text-xs" onchange="this.form.submit()">
+            <select name="period" id="operatorPeriod" class="tw-select min-w-0 flex-1 py-1.5 text-xs sm:flex-none" onchange="this.form.submit()">
                 @foreach ($periodLabels as $value => $label)
                     <option value="{{ $value }}" {{ $period === $value ? 'selected' : '' }}>{{ $label }}</option>
                 @endforeach
