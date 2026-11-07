@@ -144,6 +144,32 @@
     </div>
 @endif
 
+{{-- KPI strip: live counts per source so the TFRB/superadmin can monitor every
+    complaint (forwarded, against president, unassigned, awaiting, solved) at a
+    glance. Each card jumps to the matching source tab. --}}
+<div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+    @php
+        $kpiItems = [
+            ['key' => 'all', 'label' => 'All', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $sourceCounts['all'] ?? $totalCount],
+            ['key' => 'actionable', 'label' => 'Actionable', 'icon' => 'bi-lightning-charge-fill', 'chip' => 'bg-navy-50 text-navy-600', 'num' => $sourceCounts['actionable'] ?? 0],
+            ['key' => 'forwarded', 'label' => 'Forwarded', 'icon' => 'bi-send-fill', 'chip' => 'bg-violet-50 text-violet-600', 'num' => $sourceCounts['forwarded'] ?? 0],
+            ['key' => 'against_president', 'label' => 'vs President', 'icon' => 'bi-person-x', 'chip' => 'bg-red-50 text-red-600', 'num' => $sourceCounts['against_president'] ?? 0],
+            ['key' => 'unassigned', 'label' => 'Unassigned', 'icon' => 'bi-person-dash', 'chip' => 'bg-slate-100 text-slate-500', 'num' => $sourceCounts['unassigned'] ?? 0],
+            ['key' => 'awaiting', 'label' => 'Awaiting Pres.', 'icon' => 'bi-hourglass-split', 'chip' => 'bg-amber-50 text-amber-600', 'num' => $sourceCounts['awaiting'] ?? 0],
+        ];
+    @endphp
+    @foreach ($kpiItems as $kpi)
+        <a href="{{ $sourceUrl($kpi['key']) }}"
+           class="flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5 transition hover:bg-slate-100 hover:ring-1 hover:ring-slate-200">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $kpi['chip'] }}"><i class="bi {{ $kpi['icon'] }}"></i></span>
+            <div class="min-w-0">
+                <div class="text-base font-extrabold leading-none text-slate-800">{{ $kpi['num'] }}</div>
+                <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ $kpi['label'] }}</div>
+            </div>
+        </a>
+    @endforeach
+</div>
+
 {{-- Sticky summary + filter panel: stays pinned below the topbar while the list scrolls. --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 border-b border-slate-100 bg-white/95 px-4 pb-4 pt-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
     {{-- Summary stats --}}
