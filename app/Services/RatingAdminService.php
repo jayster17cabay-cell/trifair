@@ -278,6 +278,46 @@ class RatingAdminService
     }
 
     /**
+     * Escalate a solved complaint back into the actionable TFRB / superadmin
+     * queue for a heavier re-review. This is the post-resolution dissatisfaction
+     * path: when the passenger is not satisfied with the resolution that was
+     * handed to them, the case leaves the terminal Solved state and returns to
+     * the actionable pool so the review team can re-resolve it with a stronger
+     * action (re-investigation, stronger remedy, ...).
+     */
+    public function complaintsEscalate(Rating $rating): RedirectResponse
+    {
+        if (!$rating->complaint_type) {
+            return back()->withErrors(['error' => 'Only complaints with a complaint type can be escalated.']);
+        }
+        $this->assertCanActOnComplaint($rating);
+
+        if (!$rating->is_solved) {
+            return back()->withErrors(['error' => 'Only solved complaints can be escalated.']);
+        }
+
+        // Same state reset as a reopen — escalating sends the complaint back
+        // into the actionable queue for a heavier re-resolution.
+        $rating->update([
+            'is_solved' => false,
+            'solved_at' => null,
+            'is_reviewed' => false,
+            'rejected_at' => null,
+            'reviewed_by' => null,
+            'resolution_note' => null,
+        ]);
+        $this->clearResolutionProofs($rating);
+        app(AdminDashboardService::class)->flush();
+
+        ActivityLogger::log('escalate_complaint', "Escalated complaint #{$rating->id} to the TFRB/superadmin for a heavier re-review (operator: {$rating->operator_name})", $rating, 'review');
+
+        $this->notifyAdmins($rating, 'Complaint Escalated', "Complaint {$rating->reference_number} for {$rating->operator_name} was escalated for a heavier re-review.");
+        $this->notifyPassengerInApp($rating, 'Complaint Escalated', 'Your complaint was escalated for a heavier re-review by the TFRB/superadmin team. They will follow up with you.');
+
+        return back()->with('success', 'Complaint escalated to the TFRB/superadmin for a heavier re-review.');
+    }
+
+    /**
      * President forwards a complaint they cannot resolve to TFRB/superadmin.
      * From here on the president keeps no action rights on the complaint —
      * only the TFRB/superadmin review team can act on it. They are all
