@@ -350,12 +350,14 @@
                 <div class="mt-3 hidden" data-resolution-checklist-wrap>
                     <label class="tw-label" for="escalationChecklist">Panel follow-up checklist (optional)</label>
                     <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2" id="escalationChecklistList">
-                        @foreach (\App\Models\Rating::PANEL_ESCALATION_CHECKLIST as $checklistItem)
-                            <label class="flex cursor-pointer items-start gap-2.5 rounded-lg px-2 py-1.5 transition hover:bg-slate-100">
-                                <input type="checkbox" name="escalation_checklist[]" value="{{ $checklistItem['key'] }}" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-navy-600 focus:ring-navy-500">
-                                <span class="text-sm leading-snug text-slate-700">{{ $checklistItem['label'] }}</span>
-                            </label>
-                        @endforeach
+                        <div class="grid gap-1 sm:grid-cols-2">
+                            @foreach (\App\Models\Rating::PANEL_ESCALATION_CHECKLIST as $checklistItem)
+                                <label class="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1 transition hover:bg-white">
+                                    <input type="checkbox" name="escalation_checklist[]" value="{{ $checklistItem['key'] }}" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-navy-600 focus:ring-navy-500">
+                                    <span class="text-xs leading-snug text-slate-700">{{ $checklistItem['label'] }}</span>
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
                     <p class="mt-1.5 text-xs leading-relaxed text-slate-400">Follow-up questions the professional panel should assess (safety re-investigation, conduct, legal reporting, stronger remedy, evidence verification). Stored with the resolution.</p>
                 </div>

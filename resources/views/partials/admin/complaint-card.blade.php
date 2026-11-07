@@ -291,10 +291,10 @@
                 @if ($rating->hasEscalationChecklist())
                     <div class="mt-2.5 border-t border-slate-200 pt-2">
                         <small class="text-[0.65rem] font-bold uppercase tracking-widest text-slate-500"><i class="bi bi-list-check mr-1"></i>Panel Follow-up Checklist</small>
-                        <ul class="mt-1.5 space-y-1">
+                        <ul class="mt-1.5 grid gap-1 sm:grid-cols-2">
                             @foreach ($rating->panelChecklistItems() as $checklistItem)
-                                <li class="flex items-start gap-2 text-sm leading-relaxed {{ $checklistItem['checked'] ? 'text-slate-700' : 'text-slate-400' }}">
-                                    <i class="bi {{ $checklistItem['checked'] ? 'bi-check2-circle-fill text-emerald-600' : 'bi-circle text-slate-300' }}" class="mt-0.5"></i>
+                                <li class="flex items-start gap-2 text-xs leading-relaxed {{ $checklistItem['checked'] ? 'text-slate-700' : 'text-slate-400' }}">
+                                    <i class="bi {{ $checklistItem['checked'] ? 'bi-check2-circle-fill text-emerald-600' : 'bi-circle text-slate-300' }} mt-0.5 shrink-0"></i>
                                     <span>{{ $checklistItem['label'] }}</span>
                                 </li>
                             @endforeach
@@ -380,19 +380,28 @@
                              own that escalate path; the president reaches the
                              same outcome through the one-way Forward action. --}}
                         @if ($actor !== 'president')
-                            <form action="{{ route($routePrefix . '.complaints.escalate', $rating) }}" method="POST" onsubmit="return confirm('Escalate this complaint to the TFRB/superadmin for a heavier re-review? The solved state will be reset and the case will return to the actionable queue.')">
-                                @csrf
-                                @method('PATCH')
-                                @foreach (\App\Models\Rating::PANEL_ESCALATION_CHECKLIST as $checklistItem)
-                                    <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-navy-300 hover:bg-navy-50">
-                                        <input type="checkbox" name="escalation_checklist[]" value="{{ $checklistItem['key'] }}" class="h-3.5 w-3.5 rounded border-slate-300 text-navy-600 focus:ring-navy-500">
-                                        {{ $checklistItem['label'] }}
-                                    </label>
-                                @endforeach
-                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Escalate to the TFRB/superadmin for a heavier re-review">
-                                    <i class="bi bi-arrow-up-right-dots"></i>Escalate to Superadmin
-                                </button>
-                            </form>
+                            <div class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+                                <div class="mb-2 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">
+                                    <i class="bi bi-list-check"></i>Panel follow-up questions (optional)
+                                </div>
+                                <form action="{{ route($routePrefix . '.complaints.escalate', $rating) }}" method="POST" onsubmit="return confirm('Escalate this complaint to the TFRB/superadmin for a heavier re-review? The solved state will be reset and the case will return to the actionable queue.')">
+                                    @csrf
+                                    @method('PATCH')
+                                    <div class="grid gap-1 sm:grid-cols-2">
+                                        @foreach (\App\Models\Rating::PANEL_ESCALATION_CHECKLIST as $checklistItem)
+                                            <label class="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1 transition hover:bg-white">
+                                                <input type="checkbox" name="escalation_checklist[]" value="{{ $checklistItem['key'] }}" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-navy-600 focus:ring-navy-500">
+                                                <span class="text-xs leading-snug text-slate-700">{{ $checklistItem['label'] }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <div class="mt-2.5 flex items-center justify-end">
+                                        <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Escalate to the TFRB/superadmin for a heavier re-review">
+                                            <i class="bi bi-arrow-up-right-dots"></i>Escalate to Superadmin
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         @endif
                         <form action="{{ route($routePrefix . '.complaints.reopen', $rating) }}" method="POST" onsubmit="return confirm('Reopen this complaint?')">
                             @csrf
@@ -405,19 +414,28 @@
 
                     @if ($showForwardButton)
                         <span class="mx-0.5 hidden h-5 w-px bg-slate-200 sm:block" aria-hidden="true"></span>
-                        <form action="{{ route($routePrefix . '.complaints.forward', $rating) }}" method="POST" onsubmit="return confirm('Forward this complaint to the TFRB/superadmin? They will take over completely — you can no longer act on it. This cannot be undone.')">
-                            @csrf
-                            @method('PATCH')
-                            @foreach (\App\Models\Rating::PANEL_ESCALATION_CHECKLIST as $checklistItem)
-                                <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-violet-200 bg-white px-3 py-2 text-xs font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-50">
-                                    <input type="checkbox" name="escalation_checklist[]" value="{{ $checklistItem['key'] }}" class="h-3.5 w-3.5 rounded border-violet-300 text-violet-600 focus:ring-violet-500">
-                                    {{ $checklistItem['label'] }}
-                                </label>
-                            @endforeach
-                            <button type="submit" class="tw-btn tw-btn-sm border border-violet-300 bg-violet-50 font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-100" title="Forward to TFRB/superadmin (one-way)">
-                                <i class="bi bi-send-fill"></i>Forward to TFRB
-                            </button>
-                        </form>
+                        <div class="w-full rounded-lg border border-violet-200 bg-violet-50/60 px-3 py-3">
+                            <div class="mb-2 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-violet-700">
+                                <i class="bi bi-list-check"></i>Panel follow-up questions (optional)
+                            </div>
+                            <form action="{{ route($routePrefix . '.complaints.forward', $rating) }}" method="POST" onsubmit="return confirm('Forward this complaint to the TFRB/superadmin? They will take over completely — you can no longer act on it. This cannot be undone.')">
+                                @csrf
+                                @method('PATCH')
+                                <div class="grid gap-1 sm:grid-cols-2">
+                                    @foreach (\App\Models\Rating::PANEL_ESCALATION_CHECKLIST as $checklistItem)
+                                        <label class="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1 transition hover:bg-white">
+                                            <input type="checkbox" name="escalation_checklist[]" value="{{ $checklistItem['key'] }}" class="mt-0.5 h-4 w-4 shrink-0 rounded border-violet-300 text-violet-600 focus:ring-violet-500">
+                                            <span class="text-xs leading-snug text-violet-800">{{ $checklistItem['label'] }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <div class="mt-2.5 flex items-center justify-end">
+                                    <button type="submit" class="tw-btn tw-btn-sm border border-violet-300 bg-violet-50 font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-100" title="Forward to TFRB/superadmin (one-way)">
+                                        <i class="bi bi-send-fill"></i>Forward to TFRB
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     @elseif ($isForwarded && $isPresidentView)
                         <span class="tw-badge tw-badge-blue"><i class="bi bi-send-fill"></i> Forwarded to TFRB</span>
                     @endif
