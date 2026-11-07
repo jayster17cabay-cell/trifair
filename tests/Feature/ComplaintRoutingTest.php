@@ -502,13 +502,13 @@ class ComplaintRoutingTest extends TestCase
         $this->actingAs($admin)
             ->get('/superadmin/complaints')
             ->assertOk()
-            // Forwarded escalations and direct-to-TFRB cases are actionable.
+            // Forwarded escalations and unassigned-operator cases are actionable.
             ->assertSee($forwarded->reference_number, false)
             ->assertSee($direct->reference_number, false)
             // Still with the president — read-only, so it is hidden by default.
             ->assertDontSee($awaiting->reference_number, false)
             ->assertSee('Forwarded by President')
-            ->assertSee('Direct to TFRB');
+            ->assertSee('Unassigned');
     }
 
     public function test_staff_forwarded_tab_lists_escalations_with_sender()
@@ -541,18 +541,18 @@ class ComplaintRoutingTest extends TestCase
             ->assertSee('With ' . $president->name);
     }
 
-    public function test_staff_direct_tab_lists_only_direct_complaints()
+    public function test_staff_unassigned_tab_lists_only_unassigned_complaints()
     {
         [$forwarded, $direct, $awaiting] = $this->makeComplaintsOfEverySource();
         $admin = $this->makeUser('superadmin');
 
         $this->actingAs($admin)
-            ->get('/superadmin/complaints?source=direct')
+            ->get('/superadmin/complaints?source=unassigned')
             ->assertOk()
             ->assertSee($direct->reference_number, false)
             ->assertDontSee($forwarded->reference_number, false)
             ->assertDontSee($awaiting->reference_number, false)
-            ->assertSee('Direct to TFRB');
+            ->assertSee('Unassigned');
     }
 
     public function test_staff_all_tab_shows_every_source()
@@ -575,7 +575,7 @@ class ComplaintRoutingTest extends TestCase
 
         // Three complaints exist: 1 forwarded, 1 direct, 1 awaiting. Under
         // the default "open" filter all three are open, so actionable = 2
-        // (forwarded + direct), forwarded = 1, direct = 1, awaiting = 1.
+        // (forwarded + against_president + unassigned), forwarded = 1, against_president = 0, unassigned = 1, awaiting = 1.
         $this->actingAs($admin)
             ->getJson('/superadmin/complaints/source-counts')
             ->assertOk()
@@ -583,7 +583,7 @@ class ComplaintRoutingTest extends TestCase
         $payload = $this->getJson('/superadmin/complaints/source-counts')->assertOk()->json();
         $this->assertSame('actionable', $payload['source']);
         $this->assertSame('open', $payload['filter']);
-        $this->assertSame(['actionable' => 2, 'forwarded' => 1, 'direct' => 1, 'awaiting' => 1, 'all' => 3], $payload['sourceCounts']);
+        $this->assertSame(['actionable' => 2, 'forwarded' => 1, 'against_president' => 0, 'unassigned' => 1, 'awaiting' => 1, 'all' => 3], $payload['sourceCounts']);
     }
 
     public function test_source_counts_endpoint_is_staff_only()

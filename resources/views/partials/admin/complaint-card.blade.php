@@ -73,12 +73,15 @@
                 : 'Forwarded to the TFRB',
         ];
     } elseif (!$isPresidentView && $rating->routed_to === null) {
+        $isAgainstPresident = ($rating->operator?->user?->role ?? null) === 'operator_president';
         $sourceBadge = [
-            'label' => 'Direct to TFRB',
-            'short' => 'Direct',
-            'icon' => 'bi-shield-check',
-            'class' => 'border-navy-200 bg-navy-50 text-navy-700',
-            'title' => 'Filed directly to the TFRB / superadmin',
+            'label' => $isAgainstPresident ? 'Against President' : 'Unassigned',
+            'short' => $isAgainstPresident ? 'vs President' : 'Unassigned',
+            'icon' => $isAgainstPresident ? 'bi-person-x' : 'bi-person-dash',
+            'class' => $isAgainstPresident ? 'border-red-200 bg-red-50 text-red-700' : 'border-slate-200 bg-slate-100 text-slate-600',
+            'title' => $isAgainstPresident
+                ? 'Complaint filed against a TODA president — handled by the TFRB / superadmin'
+                : 'Complaint from an unassigned operator (no TODA president) — handled by the TFRB / superadmin',
         ];
     } elseif (!$isPresidentView) {
         $sourceBadge = [

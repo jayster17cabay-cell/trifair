@@ -18,7 +18,8 @@
     $sourceCounts = $sourceCounts ?? [
         'actionable' => 0,
         'forwarded' => 0,
-        'direct' => 0,
+        'against_president' => 0,
+        'unassigned' => 0,
         'awaiting' => 0,
         'all' => $totalCount ?? 0,
     ];
@@ -36,15 +37,17 @@
     $sourceTabs = [
         ['key' => 'actionable', 'label' => 'Actionable', 'short' => 'Actionable', 'icon' => 'bi-lightning-charge-fill', 'tone' => 'text-navy-600'],
         ['key' => 'forwarded', 'label' => 'Forwarded by President', 'short' => 'Forwarded', 'icon' => 'bi-send-fill', 'tone' => 'text-violet-600'],
-        ['key' => 'direct', 'label' => 'Direct to TFRB', 'short' => 'Direct', 'icon' => 'bi-shield-check', 'tone' => 'text-navy-600'],
+        ['key' => 'against_president', 'label' => 'Against President', 'short' => 'vs President', 'icon' => 'bi-person-x', 'tone' => 'text-red-600'],
+        ['key' => 'unassigned', 'label' => 'Unassigned', 'short' => 'Unassigned', 'icon' => 'bi-person-dash', 'tone' => 'text-slate-500'],
         ['key' => 'awaiting', 'label' => 'Awaiting President', 'short' => 'Awaiting', 'icon' => 'bi-hourglass-split', 'tone' => 'text-amber-600'],
         ['key' => 'all', 'label' => 'All complaints', 'short' => 'All', 'icon' => 'bi-collection', 'tone' => 'text-slate-500'],
     ];
 
     $sourceHelp = [
-        'actionable' => 'Forwarded escalations and complaints filed directly to the TFRB — these are the ones you can act on now.',
+        'actionable' => 'Forwarded escalations, complaints against TODA presidents, and unassigned-operator complaints — these are the ones you can act on now.',
         'forwarded' => 'Cases escalated by a TODA president. The president can no longer act; the TFRB/superadmin now owns them.',
-        'direct' => 'Complaints that never went to a TODA president — filed against presidents, unassigned operators, or TODAs without one.',
+        'against_president' => 'Complaints filed against a TODA president — handled directly by the TFRB / superadmin.',
+        'unassigned' => 'Complaints from operators with no assigned TODA president — handled directly by the TFRB / superadmin.',
         'awaiting' => 'Still with the TODA president. Read-only until they solve it or forward it to you.',
         'all' => 'Every complaint from every source, newest first.',
     ][$source] ?? '';
@@ -241,7 +244,8 @@
         // Source-aware copy keeps the empty tab from looking broken.
         if (!$presidentMode && in_array($filter, ['', 'all', 'open'], true)) {
             if ($source === 'forwarded') { $emptyTitle = 'No Forwarded Complaints'; $emptyMsg = 'No TODA president has escalated a complaint to the TFRB yet.'; }
-            elseif ($source === 'direct') { $emptyTitle = 'No Direct Complaints'; $emptyMsg = 'No complaint has been filed straight to the TFRB.'; }
+            elseif ($source === 'against_president') { $emptyTitle = 'No Complaints Against Presidents'; $emptyMsg = 'No complaint has been filed against a TODA president.'; }
+            elseif ($source === 'unassigned') { $emptyTitle = 'No Unassigned Complaints'; $emptyMsg = 'No complaint has come from an unassigned operator.'; }
             elseif ($source === 'awaiting') { $emptyTitle = 'Nothing Awaiting a President'; $emptyMsg = 'Every routed complaint has already been handled or forwarded.'; }
             elseif ($source === 'actionable') { $emptyTitle = 'Nothing to Act On'; $emptyMsg = 'No forwarded or direct complaints are waiting for the TFRB right now.'; }
         }

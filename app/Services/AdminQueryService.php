@@ -36,7 +36,7 @@ class AdminQueryService
         // Where a complaint came from. The superadmin/TFRB inbox is grouped
         // into actionable (forwarded + direct), forwarded by a TODA president,
         // direct to TFRB, awaiting a TODA president, or everything.
-        $allowedSources = ['actionable', 'forwarded', 'direct', 'awaiting', 'all'];
+        $allowedSources = ['actionable', 'forwarded', 'against_president', 'unassigned', 'awaiting', 'all'];
         $source = $president ? 'all' : (string) $request->query('source', 'actionable');
         if (!in_array($source, $allowedSources, true)) {
             $source = 'actionable';
@@ -66,7 +66,8 @@ class AdminQueryService
         $sourceCounts = [
             'actionable' => (int) ($sourceTallies->actionable_count ?? 0),
             'forwarded' => (int) ($sourceTallies->forwarded_count ?? 0),
-            'direct' => (int) ($sourceTallies->direct_count ?? 0),
+            'against_president' => (int) ($sourceTallies->against_president_count ?? 0),
+            'unassigned' => (int) ($sourceTallies->unassigned_count ?? 0),
             'awaiting' => (int) ($sourceTallies->awaiting_count ?? 0),
             'all' => (int) ($sourceTallies->all_count ?? 0),
         ];
@@ -74,8 +75,18 @@ class AdminQueryService
         if (!$president) {
             if ($source === 'forwarded') {
                 $base->whereNotNull('forwarded_at');
-            } elseif ($source === 'direct') {
-                $base->whereNull('routed_to')->whereNull('forwarded_at');
+            } elseif ($source === 'against_president') {
+                $base->whereNull('routed_to')->whereNull('forwarded_at')
+                    ->whereHas('operator.user', function ($q) {
+                        $q->where('role', 'operator_president');
+                    });
+            } elseif ($source === 'unassigned') {
+                $base->whereNull('routed_to')->whereNull('forwarded_at')
+                    ->where(function ($q) {
+                        $q->whereHas('operator.user', function ($u) {
+                            $u->where('role', '!=', 'operator_president');
+                        })->orWhereDoesntHave('operator.user');
+                    });
             } elseif ($source === 'awaiting') {
                 $base->whereNotNull('routed_to')->whereNull('forwarded_at');
             } elseif ($source === 'actionable') {
@@ -174,13 +185,17 @@ class AdminQueryService
         }
         $this->applyStatusFilter($sourceBase, $filter);
 
-        return $sourceBase->selectRaw(
-            'COUNT(*) as all_count'
-            . ', SUM(CASE WHEN forwarded_at IS NOT NULL THEN 1 ELSE 0 END) as forwarded_count'
-            . ', SUM(CASE WHEN routed_to IS NULL AND forwarded_at IS NULL THEN 1 ELSE 0 END) as direct_count'
-            . ', SUM(CASE WHEN routed_to IS NOT NULL AND forwarded_at IS NULL THEN 1 ELSE 0 END) as awaiting_count'
-            . ', SUM(CASE WHEN forwarded_at IS NOT NULL OR routed_to IS NULL THEN 1 ELSE 0 END) as actionable_count'
-        )->first();
+        return $sourceBase
+            ->leftJoin('operators as _src_op', '_src_op.id', '=', 'ratings.operator_id')
+            ->leftJoin('users as _src_u', '_src_u.id', '=', '_src_op.user_id')
+            ->selectRaw(
+                'COUNT(*) as all_count'
+                . ', SUM(CASE WHEN forwarded_at IS NOT NULL THEN 1 ELSE 0 END) as forwarded_count'
+                . ", SUM(CASE WHEN routed_to IS NULL AND forwarded_at IS NULL AND _src_u.role = 'operator_president' THEN 1 ELSE 0 END) as against_president_count"
+                . ", SUM(CASE WHEN routed_to IS NULL AND forwarded_at IS NULL AND (_src_u.role IS NULL OR _src_u.role <> 'operator_president') THEN 1 ELSE 0 END) as unassigned_count"
+                . ', SUM(CASE WHEN routed_to IS NOT NULL AND forwarded_at IS NULL THEN 1 ELSE 0 END) as awaiting_count'
+                . ', SUM(CASE WHEN forwarded_at IS NOT NULL OR routed_to IS NULL THEN 1 ELSE 0 END) as actionable_count'
+            )->first();
     }
 
     /**
@@ -199,7 +214,7 @@ class AdminQueryService
             $filter = 'open';
         }
 
-        $allowedSources = ['actionable', 'forwarded', 'direct', 'awaiting', 'all'];
+        $allowedSources = ['actionable', 'forwarded', 'against_president', 'unassigned', 'awaiting', 'all'];
         $source = $president ? 'all' : (string) $request->query('source', 'actionable');
         if (!in_array($source, $allowedSources, true)) {
             $source = 'actionable';
@@ -219,7 +234,8 @@ class AdminQueryService
             'sourceCounts' => [
                 'actionable' => (int) ($sourceTallies->actionable_count ?? 0),
                 'forwarded' => (int) ($sourceTallies->forwarded_count ?? 0),
-                'direct' => (int) ($sourceTallies->direct_count ?? 0),
+                'against_president' => (int) ($sourceTallies->against_president_count ?? 0),
+                'unassigned' => (int) ($sourceTallies->unassigned_count ?? 0),
                 'awaiting' => (int) ($sourceTallies->awaiting_count ?? 0),
                 'all' => (int) ($sourceTallies->all_count ?? 0),
             ],
@@ -779,8 +795,18 @@ class AdminQueryService
         }
         if ($source === 'forwarded') {
             $base->whereNotNull('forwarded_at');
-        } elseif ($source === 'direct') {
-            $base->whereNull('routed_to')->whereNull('forwarded_at');
+        } elseif ($source === 'against_president') {
+            $base->whereNull('routed_to')->whereNull('forwarded_at')
+                ->whereHas('operator.user', function ($q) {
+                    $q->where('role', 'operator_president');
+                });
+        } elseif ($source === 'unassigned') {
+            $base->whereNull('routed_to')->whereNull('forwarded_at')
+                ->where(function ($q) {
+                    $q->whereHas('operator.user', function ($u) {
+                        $u->where('role', '!=', 'operator_president');
+                    })->orWhereDoesntHave('operator.user');
+                });
         } elseif ($source === 'awaiting') {
             $base->whereNotNull('routed_to')->whereNull('forwarded_at');
         } elseif ($source === 'actionable') {
