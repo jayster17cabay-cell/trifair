@@ -318,7 +318,7 @@ class TfrbOfficerController extends Controller
         $request->validate([
             'resolution_note' => 'nullable|string|max:2000',
             'resolution_proofs' => 'nullable|array|max:5',
-            'resolution_proofs.*' => 'nullable|file|max:10240',
+            'resolution_proofs.*' => 'nullable|file|mimes:jpg,jpeg,png,webp,gif,mp4,mov,avi,pdf,doc,docx|max:10240',
             'escalation_checklist' => 'nullable|array',
             'escalation_checklist.*' => 'nullable|string|max:255',
         ]);
@@ -385,7 +385,7 @@ class TfrbOfficerController extends Controller
             'recommended_action' => 'nullable|string|max:255',
             'penalty_imposed' => 'nullable|string|max:2000',
             'resolution_proofs' => 'nullable|array|max:5',
-            'resolution_proofs.*' => 'nullable|file|max:10240',
+            'resolution_proofs.*' => 'nullable|file|mimes:jpg,jpeg,png,webp,gif,mp4,mov,avi,pdf,doc,docx|max:10240',
         ]);
 
         app(SuspensionViolationService::class)->markSolved(
