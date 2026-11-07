@@ -22,6 +22,11 @@ class Kernel extends ConsoleKernel
         // Members whose TODA suspension has run its course are switched back to
         // active so a lapsed suspension never leaves them locked out.
         $schedule->command('suspension:sync-status')->dailyAt('00:06');
+
+        // Solved complaints that went un-acted on past the post-resolution
+        // SLA window are auto-escalated back into the TFRB/superadmin
+        // actionable queue for a heavier re-review.
+        $schedule->command('complaints:auto-escalate')->dailyAt('00:07');
     }
 
     /**

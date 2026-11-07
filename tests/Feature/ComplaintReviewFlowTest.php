@@ -606,6 +606,25 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertFalse((bool) $complaint->fresh()->is_solved);
     }
 
+    public function test_auto_escalate_command_escalates_solved_complaints_past_the_sla()
+    {
+        $operator = $this->makeOperator();
+
+        $old = $this->makeValidComplaint($operator, 1);
+        $old->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()->subDays(10), 'resolution_note' => 'Old resolution.']);
+
+        $recent = $this->makeValidComplaint($operator, 1);
+        $recent->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
+
+        $this->artisan('complaints:auto-escalate', ['--days' => 7])
+            ->assertExitCode(0);
+
+        // Solved longer than the SLA window (and without a follow-up action)
+        // gets auto-escalated back into the actionable queue.
+        $this->assertFalse((bool) $old->fresh()->is_solved);
+        $this->assertTrue((bool) $recent->fresh()->is_solved);
+    }
+
     public function test_landing_page_uses_live_system_overall_rating()
     {
         $operator = $this->makeOperator();

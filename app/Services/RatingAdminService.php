@@ -296,6 +296,34 @@ class RatingAdminService
             return back()->withErrors(['error' => 'Only solved complaints can be escalated.']);
         }
 
+        $this->escalateSolvedComplaint($rating, Auth::user());
+
+        return back()->with('success', 'Complaint escalated to the TFRB/superadmin for a heavier re-review.');
+    }
+
+    /**
+     * Escalate a solved complaint back into the actionable TFRB / superadmin
+     * queue for a heavier re-review. This is the post-resolution dissatisfaction
+     * path: when the passenger is not satisfied with the resolution that was
+     * handed to them, the case leaves the terminal Solved state and returns to
+     * the actionable pool so the review team can re-resolve it with a stronger
+     * action (re-investigation, stronger remedy, ...).
+     *
+     * Shared by the staff escalate action and the complaints:auto-escalate
+     * scheduler so both paths behave identically. An optional actor (defaults
+     * to the currently authenticated staff user) drives the notification
+     * fan-out; when null the action is treated as a system-level escalation.
+     */
+    public function escalateSolvedComplaint(Rating $rating, ?User $actor = null): void
+    {
+        if (!$rating->complaint_type) {
+            return;
+        }
+
+        if (!$rating->is_solved) {
+            return;
+        }
+
         // Same state reset as a reopen — escalating sends the complaint back
         // into the actionable queue for a heavier re-resolution.
         $rating->update([
@@ -311,10 +339,8 @@ class RatingAdminService
 
         ActivityLogger::log('escalate_complaint', "Escalated complaint #{$rating->id} to the TFRB/superadmin for a heavier re-review (operator: {$rating->operator_name})", $rating, 'review');
 
-        $this->notifyAdmins($rating, 'Complaint Escalated', "Complaint {$rating->reference_number} for {$rating->operator_name} was escalated for a heavier re-review.");
+        $this->notifyAdmins($rating, 'Complaint Escalated', "Complaint {$rating->reference_number} for {$rating->operator_name} was escalated for a heavier re-review.", $actor);
         $this->notifyPassengerInApp($rating, 'Complaint Escalated', 'Your complaint was escalated for a heavier re-review by the TFRB/superadmin team. They will follow up with you.');
-
-        return back()->with('success', 'Complaint escalated to the TFRB/superadmin for a heavier re-review.');
     }
 
     /**
@@ -543,12 +569,13 @@ class RatingAdminService
      * confirmation banner). Presidents acting on their own pipeline don't
      * notify TFRB/superadmin — they only notify on forward.
      */
-    private function notifyAdmins(Rating $rating, string $title, string $message): void
+    private function notifyAdmins(Rating $rating, string $title, string $message, ?User $actor = null): void
     {
-        $actorId = Auth::id();
-        $actorRole = Auth::user()?->role;
+        $actorUser = $actor ?? Auth::user();
+        $actorId = $actorUser?->id;
+        $actorRole = $actorUser?->role;
 
-        if ($actorRole !== 'tfrb_officer' && $actorRole !== 'superadmin') {
+        if ($actor && $actorRole !== 'tfrb_officer' && $actorRole !== 'superadmin') {
             // Actions taken by a TODA president stay inside their pipeline
             // unless the case is forwarded to TFRB.
             return;
