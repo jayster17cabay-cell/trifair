@@ -53,7 +53,10 @@
     // and once forwarded.
     $showForwardButton = $isPresidentView
         && $canAct
-        && in_array($rating->status_label, ['Pending', 'Reviewed', 'Solved'], true)
+        // Open is the current status label for an unresolved complaint. Keep
+        // the legacy labels for older rows/views so the president's required
+        // one-way escalation action remains available in every valid state.
+        && in_array($rating->status_label, ['Open', 'Pending', 'Reviewed', 'Solved'], true)
         && empty($rating->forwarded_at);
     $isForwarded = !empty($rating->forwarded_at);
     $isForwardedByPresident = !empty($rating->forwarded_by);

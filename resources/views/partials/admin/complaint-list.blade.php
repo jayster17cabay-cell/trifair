@@ -1,19 +1,20 @@
 {{--
     Reusable complaints list. Requires:
     - $routePrefix     string             'superadmin' | 'tfrb-officer' | 'president'
-    - $presidentMode   bool               (optional) true = president's queue: no export, simpler copy
+    - $presidentMode   bool               (optional) true = president's queue
     - $complaints      LengthAwarePaginator of App\Models\Rating
-    - $filter          string             'pending' | 'reviewed' | 'rejected' | 'solved' | 'all'
+    - $filter          string             'open' | 'rejected' | 'solved' | 'all'
     - $ratingFilter    int|null           star rating filter: 1 | 2 | null
-    - $pendingCount, $reviewedCount, $rejectedCount, $solvedCount, $totalCount int
-    - $star1Count, $star2Count           int  (badges on the star chips)
+    - $rejectedCount, $solvedCount, $totalCount, $openCount int
+    - $star1Count, $star2Count           int
     - $activeOperators Collection          active operators for export filter
-    - $proofsTotal    int|null         (optional) global proof count across all complaints
+    - $proofsTotal    int|null         (optional)
+    - $readOnly       bool              (optional) hide action buttons
 --}}
-
 @php
     $search = trim((string) ($search ?? request('search', '')));
     $presidentMode = $presidentMode ?? false;
+    $readOnly = $readOnly ?? false;
     $source = $source ?? 'all';
     $sourceCounts = $sourceCounts ?? [
         'actionable' => 0,
@@ -23,7 +24,7 @@
         'awaiting' => 0,
         'all' => $totalCount ?? 0,
     ];
-    $openCount = $openCount ?? (($pendingCount ?? 0) + ($reviewedCount ?? 0));
+    $openCount = $openCount ?? 0;
 
     $sourceUrl = function (string $key) use ($routePrefix, $filter, $ratingFilter, $search) {
         return route($routePrefix . '.complaints', array_filter([
@@ -36,28 +37,18 @@
 
     $sourceTabs = [
         ['key' => 'actionable', 'label' => 'Actionable', 'short' => 'Actionable', 'icon' => 'bi-lightning-charge-fill', 'tone' => 'text-navy-600'],
-        ['key' => 'forwarded', 'label' => 'Forwarded by President', 'short' => 'Forwarded', 'icon' => 'bi-send-fill', 'tone' => 'text-violet-600'],
-        ['key' => 'against_president', 'label' => 'Against President', 'short' => 'vs President', 'icon' => 'bi-person-x', 'tone' => 'text-red-600'],
+        ['key' => 'forwarded', 'label' => 'Forwarded', 'short' => 'Forwarded', 'icon' => 'bi-send-fill', 'tone' => 'text-violet-600'],
+        ['key' => 'against_president', 'label' => 'vs President', 'short' => 'vs Pres', 'icon' => 'bi-person-x', 'tone' => 'text-red-600'],
         ['key' => 'unassigned', 'label' => 'Unassigned', 'short' => 'Unassigned', 'icon' => 'bi-person-dash', 'tone' => 'text-slate-500'],
-        ['key' => 'awaiting', 'label' => 'Awaiting President', 'short' => 'Awaiting', 'icon' => 'bi-hourglass-split', 'tone' => 'text-amber-600'],
-        ['key' => 'all', 'label' => 'All complaints', 'short' => 'All', 'icon' => 'bi-collection', 'tone' => 'text-slate-500'],
+        ['key' => 'awaiting', 'label' => 'Awaiting', 'short' => 'Awaiting', 'icon' => 'bi-hourglass-split', 'tone' => 'text-amber-600'],
+        ['key' => 'all', 'label' => 'All', 'short' => 'All', 'icon' => 'bi-collection', 'tone' => 'text-slate-500'],
     ];
-
-    $sourceHelp = [
-        'actionable' => 'Forwarded escalations, complaints against TODA presidents, and unassigned-operator complaints — these are the ones you can act on now.',
-        'forwarded' => 'Cases escalated by a TODA president. The president can no longer act; the TFRB/superadmin now owns them.',
-        'against_president' => 'Complaints filed against a TODA president — handled directly by the TFRB / superadmin.',
-        'unassigned' => 'Complaints from operators with no assigned TODA president — handled directly by the TFRB / superadmin.',
-        'awaiting' => 'Still with the TODA president. Read-only until they solve it or forward it to you.',
-        'all' => 'Every complaint from every source, newest first.',
-    ][$source] ?? '';
 
     $statItems = [
         ['num' => $totalCount, 'label' => 'Total', 'icon' => 'bi-exclamation-circle', 'chip' => 'bg-blue-50 text-navy-600'],
         ['num' => $openCount, 'label' => 'Open', 'icon' => 'bi-clock-history', 'chip' => 'bg-amber-50 text-amber-600'],
         ['num' => $rejectedCount, 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600'],
         ['num' => $solvedCount, 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600'],
-        ['num' => $sourceCounts['forwarded'] ?? 0, 'label' => 'Forwarded', 'icon' => 'bi-send-fill', 'chip' => 'bg-violet-50 text-violet-600', 'href' => $presidentMode ? null : $sourceUrl('forwarded')],
     ];
 @endphp
 
@@ -71,14 +62,9 @@
                     <i class="bi bi-hourglass-split"></i>{{ $actionableCount }} waiting for your action
                 </span>
             @endif
-            @if (($forwardedForTfrbCount ?? 0) > 0)
-                <span class="mt-2 inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">
-                    <i class="bi bi-send-fill"></i>You forwarded {{ $forwardedForTfrbCount }} complaint{{ $forwardedForTfrbCount > 1 ? 's' : '' }} — handed over to the TFRB for handling
-                </span>
-            @endif
         @else
             <h1 class="tw-page-title"><i class="bi bi-exclamation-triangle mr-2 text-amber-500"></i>Complaints</h1>
-            <p class="tw-page-sub">Organized by source — forwarded escalations from TODA presidents stay visible at a glance.</p>
+            <p class="tw-page-sub">Organized by source — pick a tab to filter.</p>
         @endif
     </div>
     @unless ($presidentMode)
@@ -101,79 +87,10 @@
     @endunless
 </div>
 
-@if ($presidentMode)
-    {{-- How the complaint pipeline works for presidents — shown on every visit --}}
-    <div class="mb-5 rounded-2xl border border-navy-100 bg-navy-50 px-4 py-4">
-        <div class="text-[11px] font-bold uppercase tracking-widest text-navy-600"><i class="bi bi-signpost-2 mr-1"></i>How complaints flow</div>
-        <ol class="mt-3 grid gap-2.5 text-xs text-navy-800 sm:grid-cols-3">
-            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
-                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">1</span>
-                <span class="leading-relaxed"><strong>Passenger files</strong> — the complaint lands here, assigned to you.</span>
-            </li>
-            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
-                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">2</span>
-                <span class="leading-relaxed"><strong>You decide</strong> — mark it solved (it then counts toward the operator's rating) or reject it.</span>
-            </li>
-            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
-                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">3</span>
-                <span class="leading-relaxed"><strong>Can't resolve? Forward to TFRB</strong> — one-way hand-off; only TFRB/superadmin can act afterwards.</span>
-            </li>
-        </ol>
-    </div>
-@endif
-@unless ($presidentMode)
-    {{-- How complaints reach the staff queue and what to do with the
-         actionable ones. Closed cases (solved / rejected) stay viewable here
-         for reference. --}}
-    <div class="mb-5 rounded-2xl border border-navy-100 bg-navy-50 px-4 py-4">
-        <div class="text-[11px] font-bold uppercase tracking-widest text-navy-600"><i class="bi bi-signpost-2 mr-1"></i>How complaints reach you</div>
-        <ol class="mt-3 grid gap-2.5 text-xs text-navy-800 sm:grid-cols-3">
-            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
-                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">1</span>
-                <span class="leading-relaxed"><strong>Forwarded or direct</strong> — TODA presidents forward unresolved complaints here, and complaints filed straight to the TFRB land here. These are the actionable cases.</span>
-            </li>
-            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
-                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">2</span>
-                <span class="leading-relaxed"><strong>Solve or reject</strong> — solving marks the complaint reviewed and counts toward the operator's rating; rejecting closes it with a reason.</span>
-            </li>
-            <li class="flex items-start gap-2.5 rounded-xl border border-navy-100 bg-white px-3.5 py-3">
-                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy-600 text-[10px] font-bold text-white">3</span>
-                <span class="leading-relaxed"><strong>Closed cases stay viewable</strong> — solved and rejected complaints remain here for reference; forwarded cases are sealed off from the president for good.</span>
-            </li>
-        </ol>
-    </div>
-@endif
-
-{{-- KPI strip: live counts per source so the TFRB/superadmin can monitor every
-    complaint (forwarded, against president, unassigned, awaiting, solved) at a
-    glance. Each card jumps to the matching source tab. --}}
-<div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-    @php
-        $kpiItems = [
-            ['key' => 'all', 'label' => 'All', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $sourceCounts['all'] ?? $totalCount],
-            ['key' => 'actionable', 'label' => 'Actionable', 'icon' => 'bi-lightning-charge-fill', 'chip' => 'bg-navy-50 text-navy-600', 'num' => $sourceCounts['actionable'] ?? 0],
-            ['key' => 'forwarded', 'label' => 'Forwarded', 'icon' => 'bi-send-fill', 'chip' => 'bg-violet-50 text-violet-600', 'num' => $sourceCounts['forwarded'] ?? 0],
-            ['key' => 'against_president', 'label' => 'vs President', 'icon' => 'bi-person-x', 'chip' => 'bg-red-50 text-red-600', 'num' => $sourceCounts['against_president'] ?? 0],
-            ['key' => 'unassigned', 'label' => 'Unassigned', 'icon' => 'bi-person-dash', 'chip' => 'bg-slate-100 text-slate-500', 'num' => $sourceCounts['unassigned'] ?? 0],
-            ['key' => 'awaiting', 'label' => 'Awaiting Pres.', 'icon' => 'bi-hourglass-split', 'chip' => 'bg-amber-50 text-amber-600', 'num' => $sourceCounts['awaiting'] ?? 0],
-        ];
-    @endphp
-    @foreach ($kpiItems as $kpi)
-        <a href="{{ $sourceUrl($kpi['key']) }}"
-           class="flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5 transition hover:bg-slate-100 hover:ring-1 hover:ring-slate-200">
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $kpi['chip'] }}"><i class="bi {{ $kpi['icon'] }}"></i></span>
-            <div class="min-w-0">
-                <div class="text-base font-extrabold leading-none text-slate-800">{{ $kpi['num'] }}</div>
-                <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ $kpi['label'] }}</div>
-            </div>
-        </a>
-    @endforeach
-</div>
-
-{{-- Sticky summary + filter panel: stays pinned below the topbar while the list scrolls. --}}
+{{-- Sticky summary + filter panel --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 border-b border-slate-100 bg-white/95 px-4 pb-4 pt-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
     {{-- Summary stats --}}
-    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         @foreach ($statItems as $stat)
             @php $statTag = !empty($stat['href']) ? 'a' : 'div'; @endphp
             <{{ $statTag }}
@@ -192,8 +109,7 @@
     </div>
 
     @unless ($presidentMode)
-        {{-- Where each complaint came from. Forwarded escalations stay one
-             click away and are listed first in the actionable inbox. --}}
+        {{-- Source tabs --}}
         <div class="mt-3 flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Complaint source" data-source-tablist data-source-poll-url="{{ route($routePrefix . '.complaints.sourceCounts') }}">
             @foreach ($sourceTabs as $tab)
                 @php $isActiveSource = $source === $tab['key']; @endphp
@@ -206,12 +122,6 @@
                 </a>
             @endforeach
         </div>
-        @if ($sourceHelp !== '')
-            <p class="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-slate-500">
-                <i class="bi bi-info-circle mt-0.5 shrink-0 text-slate-400"></i>
-                <span>{{ $sourceHelp }}</span>
-            </p>
-        @endif
     @endunless
 
     {{-- Status, severity and search filters. --}}
@@ -267,7 +177,6 @@
         elseif ($filter === 'rejected') { $emptyTitle = 'No Rejected Complaints'; $emptyMsg = 'Complaints rejected after review will appear here.'; }
         elseif ($filter === 'solved') { $emptyTitle = 'No Solved Complaints'; $emptyMsg = 'Complaints you mark as solved will appear here.'; }
 
-        // Source-aware copy keeps the empty tab from looking broken.
         if (!$presidentMode && in_array($filter, ['', 'all', 'open'], true)) {
             if ($source === 'forwarded') { $emptyTitle = 'No Forwarded Complaints'; $emptyMsg = 'No TODA president has escalated a complaint to the TFRB yet.'; }
             elseif ($source === 'against_president') { $emptyTitle = 'No Complaints Against Presidents'; $emptyMsg = 'No complaint has been filed against a TODA president.'; }
@@ -298,7 +207,6 @@
     (function () {
         var input = document.querySelector('input[data-complaint-live-search]');
         if (input && input.form) {
-            // Search on Enter only: typing must never submit the filter form.
             input.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -311,9 +219,6 @@
 
 <script>
     (function () {
-        // Live refresh of the source tab badges while the complaints inbox is
-        // open. Hits the source-counts AJAX endpoint and updates the per-source
-        // counters without a full page reload.
         var board = document.querySelector('[data-source-tablist]');
         if (!board) return;
         var pollUrl = board.getAttribute('data-source-poll-url');
@@ -341,9 +246,7 @@
     })();
 </script>
 
-{{-- Shared resolution modal opened by the Reject / Solved buttons on a card.
-     The note is required here in the UI; the server keeps it optional so the
-     plain reject/solve endpoints remain backwards compatible. --}}
+{{-- Shared resolution modal --}}
 <div id="complaintResolutionModal" class="tw-modal-backdrop hidden" data-complaint-resolution-modal>
     <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="complaintResolutionTitle">
         <div class="tw-modal-head">
@@ -379,7 +282,7 @@
                             @endforeach
                         </div>
                     </div>
-                    <p class="mt-1.5 text-xs leading-relaxed text-slate-400">Follow-up questions the professional panel should assess (safety re-investigation, conduct, legal reporting, stronger remedy, evidence verification). Stored with the resolution.</p>
+                    <p class="mt-1.5 text-xs leading-relaxed text-slate-400">Follow-up questions the professional panel should assess. Stored with the resolution.</p>
                 </div>
             </div>
             <div class="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">

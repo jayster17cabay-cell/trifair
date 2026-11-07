@@ -358,7 +358,7 @@ class ComplaintRoutingTest extends TestCase
 
     // ---- queue visibility & lock badge ----------------------------------------
 
-    public function test_president_queue_hides_locks_and_forwarded_note()
+    public function test_president_queue_shows_action_for_assigned_open_complaint()
     {
         $toda = $this->makeToda();
         $president = $this->makePresident($toda);
@@ -370,7 +370,7 @@ class ComplaintRoutingTest extends TestCase
         $this->actingAs($president)
             ->get('/president/complaints')
             ->assertOk()
-            ->assertSee('How complaints flow')
+            ->assertSee($complaint->reference_number, false)
             ->assertSee('Forward to TFRB', false);
     }
 
@@ -594,13 +594,16 @@ class ComplaintRoutingTest extends TestCase
         $this->actingAs($president)->getJson('/superadmin/complaints/source-counts')->assertStatus(403);
     }
 
-    public function test_president_queue_shows_forwarded_handoff_summary()
+    public function test_president_queue_shows_forwarded_complaint_as_read_only()
     {
         [$forwarded, $direct, $awaiting, $president] = $this->makeComplaintsOfEverySource();
 
         $this->actingAs($president)
             ->get('/president/complaints')
             ->assertOk()
-            ->assertSee('You forwarded 1 complaint — handed over to the TFRB for handling');
+            ->assertSee($forwarded->reference_number, false)
+            ->assertSee('Forwarded to TFRB', false)
+            ->assertSee('only TFRB / superadmin can act on it now.', false)
+            ->assertDontSee('data-mode="solve" data-action="http://localhost/president/complaints/' . $forwarded->id . '/solve"', false);
     }
 }
