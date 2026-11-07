@@ -202,7 +202,7 @@ class RatingAdminService
      * optional resolution note and proof attachments are stored so the
      * passenger can see how the matter was resolved.
      */
-    public function complaintsMarkSolved(Rating $rating, ?string $note = null, array $files = []): RedirectResponse
+    public function complaintsMarkSolved(Rating $rating, ?string $note = null, array $files = [], ?array $checkedItems = null): RedirectResponse
     {
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be marked solved here.']);
@@ -220,6 +220,7 @@ class RatingAdminService
             'rejected_at' => null,
             'reviewed_by' => Auth::id(),
             'resolution_note' => $note,
+            'escalation_checklist' => $checkedItems ?? ($rating->escalation_checklist ?? []),
         ]);
 
         // Only replace the evidence when fresh files are supplied, so re-saving
@@ -285,7 +286,7 @@ class RatingAdminService
      * the actionable pool so the review team can re-resolve it with a stronger
      * action (re-investigation, stronger remedy, ...).
      */
-    public function complaintsEscalate(Rating $rating): RedirectResponse
+    public function complaintsEscalate(Request $request, Rating $rating): RedirectResponse
     {
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be escalated.']);
@@ -296,9 +297,12 @@ class RatingAdminService
             return back()->withErrors(['error' => 'Only solved complaints can be escalated.']);
         }
 
-        $this->escalateSolvedComplaint($rating, Auth::user());
+        $emailError = $this->escalateSolvedComplaint($rating, Auth::user(), $request->input('escalation_checklist'));
 
-        return back()->with('success', 'Complaint escalated to the TFRB/superadmin for a heavier re-review.');
+        return $this->withEmailWarning(
+            back()->with('success', 'Complaint escalated to the TFRB/superadmin for a heavier re-review.'),
+            $emailError
+        );
     }
 
     /**
@@ -313,16 +317,28 @@ class RatingAdminService
      * scheduler so both paths behave identically. An optional actor (defaults
      * to the currently authenticated staff user) drives the notification
      * fan-out; when null the action is treated as a system-level escalation.
+     * The optional panel follow-up checklist is persisted with the ticket before
+     * the solved state resets, so the heavier re-review sees which follow-ups
+     * were asked (or deemed warranted) at escalation time.
+     *
+     * @return string|null Email delivery warning when the passenger could not
+     *                   be notified — surfaced to the staff via the flash banner.
      */
-    public function escalateSolvedComplaint(Rating $rating, ?User $actor = null): void
+    public function escalateSolvedComplaint(Rating $rating, ?User $actor = null, ?array $checkedItems = null): ?string
     {
         if (!$rating->complaint_type) {
-            return;
+            return null;
         }
 
         if (!$rating->is_solved) {
-            return;
+            return null;
         }
+
+        // Panel follow-up checklist captured at escalation time — persisted
+        // with the ticket so the TFRB / superadmin re-resolution can see which
+        // follow-ups were asked (or deemed warranted) before escalating.
+        $checked = collect($checkedItems ?? $rating->escalation_checklist ?? [])->map(fn ($key) => (string) $key)->filter()->values()->all();
+        $rating->update(['escalation_checklist' => $checked]);
 
         // Same state reset as a reopen — escalating sends the complaint back
         // into the actionable queue for a heavier re-resolution.
@@ -339,8 +355,11 @@ class RatingAdminService
 
         ActivityLogger::log('escalate_complaint', "Escalated complaint #{$rating->id} to the TFRB/superadmin for a heavier re-review (operator: {$rating->operator_name})", $rating, 'review');
 
+        $emailError = $this->notifyComplaintStatus($rating, 'escalated');
         $this->notifyAdmins($rating, 'Complaint Escalated', "Complaint {$rating->reference_number} for {$rating->operator_name} was escalated for a heavier re-review.", $actor);
         $this->notifyPassengerInApp($rating, 'Complaint Escalated', 'Your complaint was escalated for a heavier re-review by the TFRB/superadmin team. They will follow up with you.');
+
+        return $emailError;
     }
 
     /**
@@ -349,7 +368,7 @@ class RatingAdminService
      * only the TFRB/superadmin review team can act on it. They are all
      * notified; the passenger gets an email and an in-app notice as well.
      */
-    public function complaintsForward(Rating $rating): RedirectResponse
+    public function complaintsForward(Rating $rating, ?array $checkedItems = null): RedirectResponse
     {
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be forwarded.']);
@@ -370,6 +389,11 @@ class RatingAdminService
         // the terminal Solved state is reset so the case re-enters the
         // actionable TFRB / superadmin queue for the heavier re-resolution.
         if ($rating->is_solved) {
+            // Panel follow-up checklist captured at forward time — persisted
+            // with the ticket before the solved state resets.
+            $checked = collect($checkedItems ?? $rating->escalation_checklist ?? [])->map(fn ($key) => (string) $key)->filter()->values()->all();
+            $rating->update(['escalation_checklist' => $checked]);
+
             $rating->update([
                 'is_solved' => false,
                 'solved_at' => null,

@@ -50,6 +50,21 @@ class Rating extends Model
     ];
 
     /**
+     * Professional panel follow-up checklist. When a passenger is not
+     * satisfied with a resolved complaint, the staff / panel answers the
+     * follow-up questions that a heavier re-review should reopen — and the
+     * checked keys are stored on the complaint (escalation_checklist) while the
+     * case is escalated / re-solved.
+     */
+    public const PANEL_ESCALATION_CHECKLIST = [
+        ['key' => 'safety_reinvestigation', 'label' => 'Safety / reckless driving re-investigation warranted'],
+        ['key' => 'conduct_review', 'label' => 'Professional conduct review warranted'],
+        ['key' => 'legal_reporting', 'label' => 'Legal / regulatory reporting warranted'],
+        ['key' => 'stronger_remedy', 'label' => 'Stronger remedy (recompense) warranted'],
+        ['key' => 'evidence_verification', 'label' => 'Witness / evidence verification needed'],
+    ];
+
+    /**
      * Star rating -> card left-border color used to color-code rating cards
      * by severity (1-star danger, 2-3 warning, 4-5 good). Adjust the values
      * here to change the colors without touching the views.
@@ -97,6 +112,7 @@ class Rating extends Model
         'forwarded_by',
         'start_location',
         'end_location',
+        'escalation_checklist',
     ];
 
     protected $casts = [
@@ -113,6 +129,7 @@ class Rating extends Model
         'forwarded_by' => 'integer',
         'franchise_term_id' => 'integer',
         'toda_id' => 'integer',
+        'escalation_checklist' => 'array',
     ];
 
     /**
@@ -405,6 +422,34 @@ class Rating extends Model
             $reasons[] = 'No proof attached for low rating';
         }
         return implode(' & ', $reasons);
+    }
+
+    /**
+     * Whether the complaint already carries a panel follow-up checklist (i.e.
+     * it was resolved or escalated through the post-resolution dissatisfaction
+     * flow).
+     */
+    public function hasEscalationChecklist(): bool
+    {
+        return !empty($this->escalation_checklist);
+    }
+
+    /**
+     * The professional panel follow-up checklist for a complaint: every
+     * candidate follow-up question with its checked flag resolved from the
+     * stored escalation_checklist JSON.
+     */
+    public function panelChecklistItems(): array
+    {
+        $checked = collect($this->escalation_checklist ?? [])->map(fn ($key) => (string) $key)->all();
+
+        return collect(self::PANEL_ESCALATION_CHECKLIST)->map(function ($item) use ($checked) {
+            return [
+                'key' => $item['key'],
+                'label' => $item['label'],
+                'checked' => in_array($item['key'], $checked, true),
+            ];
+        })->values()->all();
     }
 
     public function getStartLocationAttribute($value)

@@ -18,9 +18,28 @@
                     <tr>
                         <td style="padding:30px 32px;">
                             @php
-                                $statusLabel = $status === 'solved' ? 'Solved' : ($status === 'accepted' ? 'Reviewed' : ($status === 'reviewed' ? 'Reviewed' : ($status === 'rejected' ? 'Rejected' : ($status === 'submitted' ? 'Received' : ($status === 'forwarded' ? 'Forwarded to TFRB' : 'Reviewed')))));
-                                $heading = $status === 'solved' ? 'has been solved' : ($status === 'rejected' ? 'was not upheld after review' : ($status === 'submitted' ? 'was received' : ($status === 'forwarded' ? 'has been forwarded to the TFRB' : 'has been reviewed')));
-                                $statusColor = in_array($status, ['solved'], true) ? '#059669' : ($status === 'rejected' ? '#dc2626' : ($status === 'forwarded' ? '#0a2a5e' : '#0f172a'));
+                                $statusLabel = 'Reviewed';
+                                $heading = 'has been reviewed';
+                                $statusColor = '#0f172a';
+                                if ($status === 'solved') {
+                                    $statusLabel = 'Solved';
+                                    $heading = 'has been solved';
+                                    $statusColor = '#059669';
+                                } elseif ($status === 'rejected') {
+                                    $statusLabel = 'Rejected';
+                                    $heading = 'was not upheld after review';
+                                    $statusColor = '#dc2626';
+                                } elseif ($status === 'submitted') {
+                                    $statusLabel = 'Received';
+                                    $heading = 'was received';
+                                } elseif ($status === 'forwarded') {
+                                    $statusLabel = 'Forwarded to TFRB';
+                                    $heading = 'has been forwarded to the TFRB';
+                                    $statusColor = '#0a2a5e';
+                                } elseif ($status === 'escalated') {
+                                    $statusLabel = 'Escalated for Re-Review';
+                                    $heading = 'was escalated for a heavier re-review';
+                                }
                             @endphp
                             <h1 style="margin:0 0 10px;font-size:18px;color:#0f172a;">
                                 Your complaint {{ $rating->reference_number }} {{ $heading }}
@@ -77,6 +96,10 @@
                                 @elseif ($status === 'forwarded')
                                     Your complaint has been forwarded to the TFRB/superadmin by the TODA president for further
                                     action. They will review it from here and notify you once it is resolved.
+                                @elseif ($status === 'escalated')
+                                    Your complaint was escalated for a heavier re-review after the previous resolution did not
+                                    satisfy you. The TFRB/superadmin team will investigate further and follow up with you —
+                                    you will receive another notification once this escalated case is resolved.
                                 @elseif ($status === 'submitted')
                                     We have received your complaint. The responsible office will review it shortly, and you will
                                     receive a notification here once it is reviewed or resolved. Keep this reference number

@@ -196,6 +196,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::get('/complaints/export', [SuperadminController::class, 'exportComplaints'])->name('complaints.export');
     Route::get('/activity-logs/export', [SuperadminController::class, 'exportActivityLogs'])->name('activity-logs.export');
     Route::get('/settings', [SuperadminController::class, 'showSettings'])->name('settings');
+    Route::put('/settings/complaint-escalation', [SuperadminController::class, 'updateComplaintEscalation'])->name('settings.complaintEscalation');
     Route::put('/settings/password', [SuperadminController::class, 'updatePassword'])->name('settings.password');
 });
 

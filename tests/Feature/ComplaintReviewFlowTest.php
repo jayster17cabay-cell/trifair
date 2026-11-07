@@ -625,6 +625,113 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertTrue((bool) $recent->fresh()->is_solved);
     }
 
+    public function test_escalate_with_checklist_stores_it_on_the_complaint()
+    {
+        Http::fake();
+
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator, 1);
+        $complaint->update([
+            'is_reviewed' => true,
+            'is_solved' => true,
+            'solved_at' => now(),
+            'resolution_note' => 'Resolved already.',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $complaint->id . '/escalate', [
+                'escalation_checklist' => ['safety_reinvestigation', 'conduct_review'],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $fresh = $complaint->fresh();
+        $this->assertFalse((bool) $fresh->is_solved);
+        $this->assertContains('safety_reinvestigation', (array) $fresh->escalation_checklist);
+        $this->assertContains('conduct_review', (array) $fresh->escalation_checklist);
+    }
+
+    public function test_solve_with_checklist_stores_it_on_the_complaint()
+    {
+        Http::fake();
+
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator, 1);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $complaint->id . '/solve', [
+                'resolution_note' => 'Resolved with follow-ups.',
+                'escalation_checklist' => ['evidence_verification'],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $fresh = $complaint->fresh();
+        $this->assertTrue((bool) $fresh->is_solved);
+        $this->assertContains('evidence_verification', (array) $fresh->escalation_checklist);
+    }
+
+    public function test_auto_escalate_uses_configured_sla_from_settings()
+    {
+        $operator = $this->makeOperator();
+
+        $old = $this->makeValidComplaint($operator, 1);
+        $old->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()->subDays(3), 'resolution_note' => 'Old resolution.']);
+
+        $recent = $this->makeValidComplaint($operator, 1);
+        $recent->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
+
+        // Configure SLA to 2 days so the 3-day-old complaint is escalated.
+        \App\Models\Setting::setValue('complaint_escalation_sla_days', 2);
+
+        $this->artisan('complaints:auto-escalate')
+            ->assertExitCode(0);
+
+        $this->assertFalse((bool) $old->fresh()->is_solved);
+        $this->assertTrue((bool) $recent->fresh()->is_solved);
+    }
+
+    public function test_escalate_notifies_passenger_in_app()
+    {
+        Http::fake();
+
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $passenger = $this->makeUser('passenger');
+        $complaint = $this->makeValidComplaint($operator, 1);
+        $complaint->update([
+            'is_reviewed' => true,
+            'is_solved' => true,
+            'solved_at' => now(),
+            'passenger_user_id' => $passenger->id,
+            'resolution_note' => 'Resolved already.',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $complaint->id . '/escalate')
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $passenger->id,
+            'rating_id' => $complaint->id,
+            'title' => 'Complaint Escalated',
+        ]);
+    }
+
+    public function test_superadmin_can_update_complaint_escalation_sla()
+    {
+        $admin = $this->makeUser('superadmin');
+
+        $this->actingAs($admin)
+            ->put('/superadmin/settings/complaint-escalation', ['sla_days' => 14])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame('14', (string) \App\Models\Setting::getValue('complaint_escalation_sla_days'));
+    }
+
     public function test_landing_page_uses_live_system_overall_rating()
     {
         $operator = $this->makeOperator();

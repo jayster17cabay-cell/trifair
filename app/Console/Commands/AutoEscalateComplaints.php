@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\ActivityLog;
 use App\Models\Rating;
+use App\Models\Setting;
 use App\Services\RatingAdminService;
 use Illuminate\Console\Command;
 
@@ -14,7 +15,7 @@ class AutoEscalateComplaints extends Command
      *
      * @var string
      */
-    protected $signature = 'complaints:auto-escalate {--days=7 : Escalate solved complaints resolved this many days ago without an intervening review action}';
+    protected $signature = 'complaints:auto-escalate {--days= : Escalate solved complaints resolved this many days ago without an intervening review action. Defaults to the configured complaint escalation SLA.}';
 
     /**
      * The console command description.
@@ -25,7 +26,9 @@ class AutoEscalateComplaints extends Command
 
     public function handle(): int
     {
-        $days = max(0, (int) $this->option('days'));
+        $days = $this->option('days') !== null && $this->option('days') !== ''
+            ? max(0, (int) $this->option('days'))
+            : max(0, (int) Setting::getValue('complaint_escalation_sla_days', 7));
         $cutoff = now()->subDays($days);
 
         $candidates = Rating::isValid()

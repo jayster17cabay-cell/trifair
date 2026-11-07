@@ -97,12 +97,15 @@ class PresidentComplaintsController extends Controller
             'resolution_note' => 'nullable|string|max:2000',
             'resolution_proofs' => 'nullable|array|max:5',
             'resolution_proofs.*' => 'nullable|file|max:10240',
+            'escalation_checklist' => 'nullable|array',
+            'escalation_checklist.*' => 'nullable|string|max:255',
         ]);
 
         return app(RatingAdminService::class)->complaintsMarkSolved(
             $rating,
             $request->input('resolution_note'),
-            $request->file('resolution_proofs', [])
+            $request->file('resolution_proofs', []),
+            $request->input('escalation_checklist')
         );
     }
 
@@ -125,9 +128,17 @@ class PresidentComplaintsController extends Controller
         return app(RatingAdminService::class)->complaintsReopen($rating);
     }
 
-    public function forward(Rating $rating)
+    public function forward(Request $request, Rating $rating)
     {
-        return app(RatingAdminService::class)->complaintsForward($rating);
+        // The panel follow-up checklist rides along on the forward (which is
+        // the one-way escalation path for presidents) so the TFRB / superadmin
+        // re-review sees which follow-ups were deemed warranted.
+        $request->validate([
+            'escalation_checklist' => 'nullable|array',
+            'escalation_checklist.*' => 'nullable|string|max:255',
+        ]);
+
+        return app(RatingAdminService::class)->complaintsForward($rating, $request->input('escalation_checklist'));
     }
 
     public function reply(Request $request, Rating $rating)

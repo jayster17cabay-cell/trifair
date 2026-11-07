@@ -346,6 +346,19 @@
                            accept="image/*,video/*,.pdf,.doc,.docx" class="tw-input">
                     <p class="mt-1 text-xs text-slate-400">Attach evidence that the complaint was resolved (photos, documents, up to 5 files).</p>
                 </div>
+
+                <div class="mt-3 hidden" data-resolution-checklist-wrap>
+                    <label class="tw-label" for="escalationChecklist">Panel follow-up checklist (optional)</label>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2" id="escalationChecklistList">
+                        @foreach (\App\Models\Rating::PANEL_ESCALATION_CHECKLIST as $checklistItem)
+                            <label class="flex cursor-pointer items-start gap-2.5 rounded-lg px-2 py-1.5 transition hover:bg-slate-100">
+                                <input type="checkbox" name="escalation_checklist[]" value="{{ $checklistItem['key'] }}" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-navy-600 focus:ring-navy-500">
+                                <span class="text-sm leading-snug text-slate-700">{{ $checklistItem['label'] }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    <p class="mt-1.5 text-xs leading-relaxed text-slate-400">Follow-up questions the professional panel should assess (safety re-investigation, conduct, legal reporting, stronger remedy, evidence verification). Stored with the resolution.</p>
+                </div>
             </div>
             <div class="flex items-center justify-end gap-2 border-t border-slate-100 px-6 py-4">
                 <button type="button" class="tw-btn tw-btn-sm tw-btn-outline" data-resolution-close>Cancel</button>
@@ -367,6 +380,7 @@
         var note = document.getElementById('resolutionNote');
         var proofWrap = modal.querySelector('[data-resolution-proof-wrap]');
         var proofInput = document.getElementById('resolutionProofs');
+        var checklistWrap = modal.querySelector('[data-resolution-checklist-wrap]');
         var submit = modal.querySelector('[data-resolution-submit]');
 
         function open(mode, action, ref) {
@@ -380,6 +394,7 @@
                 ? 'Explain how complaint ' + ref + ' was resolved. The passenger will see this and any proof you attach.'
                 : 'Explain why complaint ' + ref + ' is being rejected. The passenger will see this reason.';
             proofWrap.classList.toggle('hidden', !solved);
+            checklistWrap?.classList.toggle('hidden', !solved);
             if (submit) { submit.textContent = solved ? 'Mark Solved' : 'Reject'; }
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';

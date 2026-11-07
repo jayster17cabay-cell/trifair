@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\SuspendsOperator;
 use App\Models\Operator;
 use App\Models\Rating;
+use App\Models\Setting;
 use App\Models\SuspensionViolation;
 use App\Models\User;
 use App\Models\Toda;
@@ -174,6 +175,31 @@ class SuperadminController extends Controller
         return view('superadmin.settings');
     }
 
+    /**
+     * Update the post-resolution complaint auto-escalation SLA (in days). The
+     * value drives the `complaints:auto-escalate` scheduler, which escalates
+     * solved complaints that were not re-opened / re-reviewed within this
+     * window back into the actionable TFRB / superadmin queue.
+     */
+    public function updateComplaintEscalation(Request $request)
+    {
+        $data = $request->validate([
+            'sla_days' => 'required|integer|min:0|max:365',
+        ]);
+
+        Setting::setValue('complaint_escalation_sla_days', (int) $data['sla_days']);
+
+        ActivityLogger::log(
+            'update_complaint_escalation_sla',
+            "Updated complaint auto-escalation SLA to {$data['sla_days']} day(s)",
+            null,
+            'review'
+        );
+        app(AdminDashboardService::class)->flush();
+
+        return back()->with('success', 'Complaint escalation SLA updated successfully.');
+    }
+
     public function updatePassword(Request $request)
     {
         $data = $request->validate([
@@ -280,12 +306,15 @@ class SuperadminController extends Controller
             'resolution_note' => 'nullable|string|max:2000',
             'resolution_proofs' => 'nullable|array|max:5',
             'resolution_proofs.*' => 'nullable|file|max:10240',
+            'escalation_checklist' => 'nullable|array',
+            'escalation_checklist.*' => 'nullable|string|max:255',
         ]);
 
         return app(RatingAdminService::class)->complaintsMarkSolved(
             $rating,
             $request->input('resolution_note'),
-            $request->file('resolution_proofs') ?: []
+            $request->file('resolution_proofs') ?: [],
+            $request->input('escalation_checklist')
         );
     }
 
@@ -294,9 +323,14 @@ class SuperadminController extends Controller
         return app(RatingAdminService::class)->complaintsReopen($rating);
     }
 
-    public function complaintsEscalate(Rating $rating)
+    public function complaintsEscalate(Request $request, Rating $rating)
     {
-        return app(RatingAdminService::class)->complaintsEscalate($rating);
+        $request->validate([
+            'escalation_checklist' => 'nullable|array',
+            'escalation_checklist.*' => 'nullable|string|max:255',
+        ]);
+
+        return app(RatingAdminService::class)->complaintsEscalate($request, $rating);
     }
 
     public function complaintsReply(Request $request, Rating $rating)
