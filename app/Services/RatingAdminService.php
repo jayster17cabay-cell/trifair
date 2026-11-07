@@ -338,6 +338,23 @@ class RatingAdminService
             'forwarded_at' => now(),
             'forwarded_by' => Auth::id(),
         ]);
+
+        // Escalation semantics: when a president forwards a complaint that
+        // was already solved (passenger dissatisfaction → heavier re-review),
+        // the terminal Solved state is reset so the case re-enters the
+        // actionable TFRB / superadmin queue for the heavier re-resolution.
+        if ($rating->is_solved) {
+            $rating->update([
+                'is_solved' => false,
+                'solved_at' => null,
+                'is_reviewed' => false,
+                'rejected_at' => null,
+                'reviewed_by' => null,
+                'resolution_note' => null,
+            ]);
+            $this->clearResolutionProofs($rating);
+        }
+
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log('forward_complaint', "Forwarded complaint #{$rating->id} to TFRB/superadmin (operator: {$rating->operator_name})", $rating, 'review');

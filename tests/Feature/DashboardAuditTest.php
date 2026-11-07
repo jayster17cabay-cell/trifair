@@ -185,6 +185,22 @@ class DashboardAuditTest extends TestCase
             ->assertOk()->assertJsonStructure(['html', 'pagination']);
     }
 
+    public function test_staff_dashboard_live_json_includes_complaint_actionable_counts()
+    {
+        $admin = $this->makeUser('superadmin');
+        $this->seedOperators();
+
+        $resp = $this->actingAs($admin)->getJson('/superadmin/dashboard')->assertOk();
+
+        // Live dashboard payload keys consumed by the polling loop for the
+        // complaint KPIs shown on the Overview tab — these refresh in realtime
+        // when a passenger files or escalates a complaint.
+        $this->assertArrayHasKey('actionableComplaints', $resp->json());
+        $this->assertArrayHasKey('awaitingPresidentComplaints', $resp->json());
+        $this->assertArrayHasKey('totalComplaints', $resp->json());
+        $this->assertArrayHasKey('complaintsHtml', $resp->json());
+    }
+
     public function test_complaints_search_by_reference_number()
     {
         $admin = $this->makeUser('superadmin');

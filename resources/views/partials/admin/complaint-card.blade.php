@@ -45,11 +45,14 @@
     $assignmentNote = $complaintRouting->assignmentNote($rating);
 
     // Forward affordance: ONLY the assigned TODA president, and only while
-    // the case is still Pending/Reviewed and not yet forwarded. Hidden on
-    // staff queues, on solved/rejected cases, and once forwarded.
+    // the case is still Pending/Reviewed/Solved and not yet forwarded. A
+    // solved case the president cannot fully resolve is escalated the same
+    // way staff escalate a solved case: it goes straight back to the
+    // TFRB / superadmin queue. Hidden on staff queues, on rejected cases,
+    // and once forwarded.
     $showForwardButton = $isPresidentView
         && $canAct
-        && in_array($rating->status_label, ['Pending', 'Reviewed'], true)
+        && in_array($rating->status_label, ['Pending', 'Reviewed', 'Solved'], true)
         && empty($rating->forwarded_at);
     $isForwarded = !empty($rating->forwarded_at);
     $isForwardedByPresident = !empty($rating->forwarded_by);
@@ -356,6 +359,21 @@
                             </button>
                         </form>
                     @elseif ($rating->status_label === 'Solved')
+                        {{-- Solved but the passenger is not satisfied? The case
+                             leaves the terminal Solved state and re-enters the
+                             actionable queue for a heavier TFRB / superadmin
+                             re-review instead of staying closed for good. Staff
+                             own that escalate path; the president reaches the
+                             same outcome through the one-way Forward action. --}}
+                        @if ($actor !== 'president')
+                            <form action="{{ route($routePrefix . '.complaints.escalate', $rating) }}" method="POST" onsubmit="return confirm('Escalate this complaint to the TFRB/superadmin for a heavier re-review? The solved state will be reset and the case will return to the actionable queue.')">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-outline-danger" title="Escalate to the TFRB/superadmin for a heavier re-review">
+                                    <i class="bi bi-arrow-up-right-dots"></i>Escalate to Superadmin
+                                </button>
+                            </form>
+                        @endif
                         <form action="{{ route($routePrefix . '.complaints.reopen', $rating) }}" method="POST" onsubmit="return confirm('Reopen this complaint?')">
                             @csrf
                             @method('PATCH')

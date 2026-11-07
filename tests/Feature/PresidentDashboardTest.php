@@ -121,6 +121,28 @@ class PresidentDashboardTest extends TestCase
             ->assertDontSee('Avg rating per member');
     }
 
+    public function test_president_dashboard_live_json_includes_complaint_summary_for_polling()
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+        $member = $this->makeOperator($toda);
+
+        $this->makeValidRating($member, 2, 'Overcharging');
+
+        $resp = $this->actingAs($pres['user'])
+            ->getJson('/president/dashboard')
+            ->assertOk();
+
+        // Live dashboard payload keys consumed by the polling loop so the
+        // president's complaint/rating KPIs refresh in realtime when a
+        // passenger files against their TODA.
+        $this->assertArrayHasKey('pendingComplaints', $resp->json());
+        $this->assertArrayHasKey('totalComplaints', $resp->json());
+        $this->assertArrayHasKey('ownAvg', $resp->json());
+        $this->assertArrayHasKey('html', $resp->json());
+        $this->assertArrayHasKey('pagination', $resp->json());
+    }
+
     public function test_non_president_cannot_access_dashboard()
     {
         $toda = $this->makeToda();

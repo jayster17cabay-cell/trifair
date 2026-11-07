@@ -103,7 +103,7 @@ Route::middleware(['auth', 'role:tfrb_officer'])->prefix('tfrb-officer')->name('
     Route::patch('/complaints/{rating}/reset', [TfrbOfficerController::class, 'complaintsResetReview'])->name('complaints.reset');
     Route::patch('/complaints/{rating}/solve', [TfrbOfficerController::class, 'complaintsMarkSolved'])->name('complaints.solve');
     Route::patch('/complaints/{rating}/reopen', [TfrbOfficerController::class, 'complaintsReopen'])->name('complaints.reopen');
-Route::patch('/complaints/{rating}/escalate', [TfrbOfficerController::class, 'complaintsEscalate'])->name('complaints.escalate');
+    Route::patch('/complaints/{rating}/escalate', [TfrbOfficerController::class, 'complaintsEscalate'])->name('complaints.escalate');
     Route::post('/complaints/{rating}/reply', [TfrbOfficerController::class, 'complaintsReply'])->name('complaints.reply');
     Route::delete('/complaints/{rating}', [TfrbOfficerController::class, 'destroyComplaint'])->name('complaints.destroy');
     Route::post('/complaints/bulk-review', [TfrbOfficerController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');
@@ -158,7 +158,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
         Route::patch('/complaints/{rating}/reset', [SuperadminController::class, 'complaintsResetReview'])->name('complaints.reset');
     Route::patch('/complaints/{rating}/solve', [SuperadminController::class, 'complaintsMarkSolved'])->name('complaints.solve');
     Route::patch('/complaints/{rating}/reopen', [SuperadminController::class, 'complaintsReopen'])->name('complaints.reopen');
-Route::patch('/complaints/{rating}/escalate', [SuperadminController::class, 'complaintsEscalate'])->name('complaints.escalate');
+    Route::patch('/complaints/{rating}/escalate', [SuperadminController::class, 'complaintsEscalate'])->name('complaints.escalate');
     Route::post('/complaints/{rating}/reply', [SuperadminController::class, 'complaintsReply'])->name('complaints.reply');
     Route::delete('/complaints/{rating}', [SuperadminController::class, 'destroyComplaint'])->name('complaints.destroy');
     Route::post('/complaints/bulk-review', [SuperadminController::class, 'complaintsBulkReview'])->name('complaints.bulkReview');

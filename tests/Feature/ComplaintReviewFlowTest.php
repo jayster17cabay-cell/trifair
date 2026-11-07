@@ -556,6 +556,56 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertNull($freshSolved->reviewed_by);
     }
 
+    public function test_escalating_a_solved_complaint_returns_it_to_the_actionable_queue()
+    {
+        Http::fake();
+
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator, 1);
+        $complaint->update([
+            'is_reviewed' => true,
+            'is_solved' => true,
+            'solved_at' => now(),
+            'resolution_note' => 'Resolved already.',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $complaint->id . '/escalate')
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $fresh = $complaint->fresh();
+        // Escalation resets the terminal solved state so the case re-enters
+        // the actionable TFRB / superadmin queue for a heavier re-review.
+        $this->assertFalse((bool) $fresh->is_solved);
+        $this->assertFalse((bool) $fresh->is_reviewed);
+        $this->assertNull($fresh->solved_at);
+        $this->assertNull($fresh->resolution_note);
+
+        // ...and it shows up back in the actionable inbox instead of the
+        // solved tab.
+        $this->actingAs($admin)
+            ->get('/superadmin/complaints?filter=open&source=actionable')
+            ->assertOk()
+            ->assertSee($complaint->reference_number, false);
+    }
+
+    public function test_escalating_a_complaint_that_is_not_solved_is_refused()
+    {
+        Http::fake();
+
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator, 1);
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/complaints/' . $complaint->id . '/escalate')
+            ->assertRedirect();
+
+        $this->assertFalse((bool) $complaint->fresh()->is_solved);
+    }
+
     public function test_landing_page_uses_live_system_overall_rating()
     {
         $operator = $this->makeOperator();

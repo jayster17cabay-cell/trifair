@@ -160,6 +160,6 @@
     }
 
     setTimeout(poll, 1500);
-    setInterval(poll, 30000);
+    setInterval(poll, 10000);
 })();
 </script>

@@ -54,14 +54,14 @@
 @endif
 {{-- KPI cards --}}
 <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.complaints', ['filter' => 'pending']), 'icon' => 'bi-flag-fill', 'value' => $summary['pendingComplaints'], 'label' => 'Pending Complaints']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.complaints', ['filter' => 'pending']), 'icon' => 'bi-flag-fill', 'value' => $summary['pendingComplaints'], 'label' => 'Pending Complaints', 'live' => 'pendingComplaints']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating', 'live' => 'ownAvg']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
     {{-- Member-level averages and complaints are reviewed per member, so both
          cards deep-link into the members section (same table the summary counts
          are drawn from) instead of being dead panels. --}}
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-star-half', 'value' => number_format($summary['avgMemberRating'], 1), 'label' => 'Avg Rating']])
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-flag', 'value' => $summary['totalComplaints'], 'label' => 'Complaints']])
+    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-flag', 'value' => $summary['totalComplaints'], 'label' => 'Complaints', 'live' => 'totalComplaints']])
 </div>
 
 {{-- Section 1 — My Ratings (the president's own performance as an operator).
@@ -184,4 +184,6 @@
         });
     @endif
 </script>
+
+@include('partials.dashboard-live')
 @endsection

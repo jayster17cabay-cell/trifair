@@ -70,7 +70,13 @@ class PresidentController extends Controller
 
         if (request()->wantsJson()) {
             $html = view('partials.president.members-table', ['members' => $members, 'memberDetailUrl' => route('president.members')])->render();
+            // Live dashboard payload for the polling loop — the complaint and
+            // rating summary values keep the president's KPIs fresh when a
+            // passenger files a rating/complaint while the dashboard is open.
             return response()->json([
+                'pendingComplaints' => (int) ($summary['pendingComplaints'] ?? 0),
+                'totalComplaints' => (int) ($summary['totalComplaints'] ?? 0),
+                'ownAvg' => (float) ($summary['ownAvg'] ?? 0),
                 'html' => $html,
                 'pagination' => $members->links('pagination::tailwind')->render(),
             ]);

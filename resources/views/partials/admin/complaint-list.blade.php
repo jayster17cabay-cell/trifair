@@ -317,7 +317,7 @@
         }
 
         refreshSourceCounts();
-        setInterval(refreshSourceCounts, 20000);
+        setInterval(refreshSourceCounts, 10000);
     })();
 </script>
 
