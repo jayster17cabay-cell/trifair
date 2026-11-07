@@ -239,7 +239,7 @@ class RatingController extends Controller
             }
         }
 
-        $rating = DB::transaction(function () use ($request, $operator, $clientId, $data, $passengerUser, $passengerEmail, $selectedToda) {
+        $rating = DB::transaction(function () use ($request, $operator, $clientId, $data, $passengerUser, $passengerEmail, $selectedToda, $isComplaint) {
             // Re-check inside the transaction (with a row lock) so two
             // simultaneous submissions cannot both pass the dedup check.
             $existing = $this->existingRatingFor($operator, $clientId, true);
@@ -269,6 +269,7 @@ class RatingController extends Controller
 
             ActivityLogger::log('submit_rating', "Rating #{$rating->id} submitted (" . ($rating->rating <= 2 ? 'complaint' : $rating->rating . '-star') . ") for operator {$operator->user->name}", $rating, 'review');
 
+            $storedProofCount = 0;
             if ($request->hasFile('proofs')) {
                 foreach ($request->file('proofs') as $file) {
                     if (!$file || !$file->isValid()) continue;
@@ -286,13 +287,14 @@ class RatingController extends Controller
 
                         if (!$path) {
                             $dir = 'proofs/' . $operator->qr_code;
-                            $file->storeAs($dir, $filename, 'public');
-                            $path = $dir . '/' . $filename;
+                            if ($file->storeAs($dir, $filename, 'public')) {
+                                $path = $dir . '/' . $filename;
+                            }
                         }
                     } catch (\Throwable $e) {
-                        // A storage outage (Supabase down, disk full on the
-                        // host) must never fail the complaint submission —
-                        // same "guarded" policy as the confirmation email.
+                        // A storage outage is tolerated for ordinary ratings;
+                        // low-rating complaints are rejected below if no proof
+                        // can be persisted.
                         \Illuminate\Support\Facades\Log::error('Complaint proof save failed: ' . get_class($e) . ': ' . $e->getMessage(), ['path' => $remotePath]);
                         $path = null;
                     }
@@ -307,7 +309,14 @@ class RatingController extends Controller
                         'file_type' => (string) ($file->getMimeType() ?: 'application/octet-stream'),
                         'original_name' => $file->getClientOriginalName(),
                     ]);
+                    $storedProofCount++;
                 }
+            }
+
+            if ($isComplaint && $storedProofCount === 0) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'proofs' => 'At least one proof file must be saved before a complaint can be submitted. Please try again.',
+                ]);
             }
 
             // Same validity rule as Rating::evaluateValidity() — both locations

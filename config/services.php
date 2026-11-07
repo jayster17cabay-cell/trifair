@@ -35,6 +35,10 @@ return [
         'url' => env('SUPABASE_URL', ''),
         'key' => env('SUPABASE_SERVICE_ROLE_KEY', ''),
         'bucket' => env('SUPABASE_BUCKET', 'proofs'),
+        // Keep existing public-bucket deployments working. Set this to false
+        // when the Supabase bucket is private so the app issues short-lived
+        // signed object URLs instead of redirecting to a public URL.
+        'bucket_public' => env('SUPABASE_BUCKET_PUBLIC', true),
     ],
 
     'cleanup_token' => env('CLEANUP_TOKEN', ''),

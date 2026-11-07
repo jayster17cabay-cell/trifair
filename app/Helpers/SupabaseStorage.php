@@ -83,6 +83,48 @@ class SupabaseStorage
         return self::baseUrl() . '/object/public/' . self::bucket() . '/' . $path;
     }
 
+    public static function getAccessUrl(string $path): ?string
+    {
+        if ((bool) config('services.supabase.bucket_public', true)) {
+            return self::getPublicUrl($path);
+        }
+
+        if (!self::configured()) {
+            return null;
+        }
+
+        try {
+            $response = Http::timeout(15)
+                ->withHeaders(['Authorization' => 'Bearer ' . self::apiKey()])
+                ->post(self::baseUrl() . '/object/sign/' . self::bucket() . '/' . $path, [
+                    'expiresIn' => 300,
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('SupabaseStorage signed URL failed', [
+                    'status' => $response->status(),
+                    'path' => $path,
+                ]);
+                return null;
+            }
+
+            $signedPath = $response->json('signedURL');
+            if (!is_string($signedPath) || $signedPath === '') {
+                return null;
+            }
+
+            return str_starts_with($signedPath, 'http')
+                ? $signedPath
+                : rtrim((string) config('services.supabase.url'), '/') . $signedPath;
+        } catch (\Throwable $e) {
+            Log::error('SupabaseStorage signed URL exception', [
+                'message' => $e->getMessage(),
+                'path' => $path,
+            ]);
+            return null;
+        }
+    }
+
     public static function delete(string $path): bool
     {
         if (!self::configured()) {

@@ -272,8 +272,56 @@ Route::middleware(['auth', 'role:superadmin,tfrb_officer,operator_president'])->
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
 });
 
+// Known proof paths are additionally checked against the authenticated
+// user's resource ownership. Guest links remain supported for signed email
+// links and public complaint follow-up links.
+$authorizeProofPath = static function (string $path): void {
+    $user = request()->user();
+    if (!$user) {
+        return;
+    }
+
+    if ($user->isTfrbOfficerOrSuperadmin()) {
+        return;
+    }
+
+    $rating = null;
+    foreach ([
+        \App\Models\RatingProof::class,
+        \App\Models\OperatorProof::class,
+        \App\Models\ResolutionProof::class,
+    ] as $proofModel) {
+        $proof = $proofModel::where('file_path', $path)->with('rating.operator')->first();
+        if ($proof) {
+            $rating = $proof->rating;
+            break;
+        }
+    }
+
+    if ($rating) {
+        $allowed = ($user->isPassenger() && (int) $rating->passenger_user_id === (int) $user->id)
+            || ($user->isOperator() && (int) optional($rating->operator)->user_id === (int) $user->id)
+            || ($user->isOperatorPresident() && $user->isPresidentOf($rating->toda_id));
+
+        if (!$allowed) {
+            abort(403);
+        }
+
+        return;
+    }
+
+    $violationProof = \App\Models\SuspensionViolationProof::where('file_path', $path)
+        ->with('violation')
+        ->first();
+    if ($violationProof && (int) optional($violationProof->violation)->reported_by !== (int) $user->id) {
+        abort(403);
+    }
+};
+
 // Serve storage files (path traversal protected, signed URL required)
-Route::get('/file-storage/{path}', function ($path) {
+Route::get('/file-storage/{path}', function ($path) use ($authorizeProofPath) {
+    $authorizeProofPath($path);
+    $baseDir = realpath(storage_path('app/public'));
     $baseDir = realpath(storage_path('app/public'));
     $candidates = [
         $baseDir !== false ? $baseDir . '/' . $path : null,
@@ -288,14 +336,15 @@ Route::get('/file-storage/{path}', function ($path) {
         }
     }
     if (class_exists(\App\Helpers\SupabaseStorage::class)) {
-        $url = \App\Helpers\SupabaseStorage::getPublicUrl($path);
-        return redirect()->away($url);
+        $url = \App\Helpers\SupabaseStorage::getAccessUrl($path);
+        if ($url) return redirect()->away($url);
     }
     abort(404);
 })->where('path', '.*')->middleware('signed')->name('storage.serve');
 
 // Serve proof inline (path traversal protected, signed URL required)
-Route::get('/proof/{path}', function ($path) {
+Route::get('/proof/{path}', function ($path) use ($authorizeProofPath) {
+    $authorizeProofPath($path);
     $baseDir = realpath(storage_path('app/public'));
     $candidates = [
         $baseDir !== false ? $baseDir . '/' . $path : null,
@@ -313,8 +362,8 @@ Route::get('/proof/{path}', function ($path) {
         }
     }
     if (class_exists(\App\Helpers\SupabaseStorage::class)) {
-        $url = \App\Helpers\SupabaseStorage::getPublicUrl($path);
-        return redirect()->away($url);
+        $url = \App\Helpers\SupabaseStorage::getAccessUrl($path);
+        if ($url) return redirect()->away($url);
     }
     abort(404);
 })->where('path', '.*')->middleware('signed')->name('proof.serve');
@@ -426,5 +475,3 @@ Route::get('/route', [RouteController::class, 'fetch'])->middleware('throttle:60
 // Server-side geocoding proxy for the passenger map (cached)
 Route::get('/geocode/reverse', [GeocodeController::class, 'reverse'])->middleware('throttle:60,1');
 Route::get('/geocode/search', [GeocodeController::class, 'search'])->middleware('throttle:60,1');
-
-
