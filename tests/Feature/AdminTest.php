@@ -813,13 +813,13 @@ class AdminTest extends TestCase
             ->get('/superadmin/reports/operators/' . $operator->id . '/trips')
             ->assertOk()
             ->json('html');
-        $this->assertStringContainsString('3 trips', $all);
+        $this->assertStringContainsString('4 trips', $all);
 
         $today = $this->actingAs($admin)
             ->get('/superadmin/reports/operators/' . $operator->id . '/trips?date_from=' . now()->toDateString())
             ->assertOk()
             ->json('html');
-        $this->assertStringContainsString('2 trips', $today);
+        $this->assertStringContainsString('3 trips', $today);
     }
 
     public function test_superadmin_can_delete_complaint()

@@ -196,8 +196,6 @@
             <select name="filter" id="complaint_filter" class="tw-select py-2 text-xs" onchange="this.form.submit()" aria-label="Filter complaints by status">
                 <option value="open" {{ $filter === 'open' ? 'selected' : '' }}>Open ({{ $openCount }})</option>
                 <option value="all" {{ $filter === 'all' ? 'selected' : '' }}>All status ({{ $totalCount }})</option>
-                <option value="pending" {{ $filter === 'pending' ? 'selected' : '' }}>Pending ({{ $pendingCount }})</option>
-                <option value="reviewed" {{ $filter === 'reviewed' ? 'selected' : '' }}>Reviewed ({{ $reviewedCount }})</option>
                 <option value="rejected" {{ $filter === 'rejected' ? 'selected' : '' }}>Rejected ({{ $rejectedCount }})</option>
                 <option value="solved" {{ $filter === 'solved' ? 'selected' : '' }}>Solved ({{ $solvedCount }})</option>
             </select>
@@ -238,8 +236,6 @@
         $emptyTitle = 'No Complaints';
         $emptyMsg = 'All operators are doing great! No complaints filed.';
         if ($filter === 'open') { $emptyTitle = 'No Open Complaints'; $emptyMsg = 'Nothing is pending or under review right now. Everything is closed out.'; }
-        elseif ($filter === 'pending') { $emptyTitle = 'No Pending Complaints'; $emptyMsg = 'Nothing waiting for action. Keep it up!'; }
-        elseif ($filter === 'reviewed') { $emptyTitle = 'No Reviewed Complaints'; $emptyMsg = 'Complaints accepted but not yet closed will appear here.'; }
         elseif ($filter === 'rejected') { $emptyTitle = 'No Rejected Complaints'; $emptyMsg = 'Complaints rejected after review will appear here.'; }
         elseif ($filter === 'solved') { $emptyTitle = 'No Solved Complaints'; $emptyMsg = 'Complaints you mark as solved will appear here.'; }
 

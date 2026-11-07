@@ -132,12 +132,10 @@
             </div>
             @if ($rating->status_label === 'Solved')
                 <span class="tw-badge tw-badge-navy"><i class="bi bi-patch-check-fill"></i> Solved</span>
-            @elseif ($rating->status_label === 'Reviewed')
-                <span class="tw-badge tw-badge-green"><i class="bi bi-check-circle-fill"></i> Reviewed</span>
             @elseif ($rating->status_label === 'Rejected')
                 <span class="tw-badge tw-badge-red"><i class="bi bi-x-circle-fill"></i> Rejected</span>
             @else
-                <span class="tw-badge tw-badge-amber"><i class="bi bi-clock-fill"></i> Pending</span>
+                <span class="tw-badge tw-badge-amber"><i class="bi bi-clock-fill"></i> Open</span>
             @endif
             <i class="bi bi-chevron-down text-slate-400 transition-transform duration-200" data-complaint-chevron></i>
         </div>
@@ -346,7 +344,7 @@
                     </div>
                 @endif
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
-                    @if (in_array($rating->status_label, ['Pending', 'Reviewed'], true))
+                    @if (in_array($rating->status_label, ['Open'], true))
                         {{-- An incoming complaint only offers the two final
                              decisions. Solving also marks it reviewed (so it
                              counts towards the rating); rejecting closes it

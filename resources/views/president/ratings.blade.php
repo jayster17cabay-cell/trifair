@@ -14,15 +14,13 @@
     // Review state of a complaint, phrased for the person it was filed against.
     $statusTone = [
         'Solved' => 'tw-badge tw-badge-navy',
-        'Reviewed' => 'tw-badge tw-badge-green',
+        'Open' => 'tw-badge tw-badge-amber',
         'Rejected' => 'tw-badge tw-badge-red',
-        'Pending' => 'tw-badge tw-badge-amber',
     ];
     $statusText = [
         'Solved' => 'Solved',
-        'Reviewed' => 'Reviewed',
+        'Open' => 'Under review',
         'Rejected' => 'Rejected',
-        'Pending' => 'Under review',
     ];
 @endphp
 

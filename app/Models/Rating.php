@@ -312,21 +312,25 @@ class Rating extends Model
 
     /**
      * Rows allowed to influence an operator's star average. A plain rating
-     * (no complaint type) always counts; a complaint counts once the
-     * responsible party (TODA president or TFRB/superadmin) has reviewed it.
-     * Rejected complaints never count — they were reviewed and not upheld.
+     * (no complaint type) always counts; a complaint counts unless it has been
+     * rejected (rejected_at is not null). Solving implies it counts, and a
+     * rejected complaint never counts — it was reviewed and not upheld. Stars
+     * are therefore added automatically and only removed on rejection.
      */
     public function scopeCountsTowardRating($query)
     {
         return $query->where(function ($q) {
             $q->whereNull('complaint_type')
-                ->orWhere(fn ($q) => $q->where('is_reviewed', true)->whereNull('rejected_at'));
+                ->orWhereNull('rejected_at');
         });
     }
 
     /**
      * Combined review status shown on complaint badges, filters and exports:
-     * Solved > Rejected > Reviewed > Pending.
+     * Solved > Rejected > Open. A complaint is "Open" until it is closed as
+     * either Solved (counts toward the operator's rating) or Rejected (does
+     * not count). There is no separate "Reviewed" step — solving/rejecting
+     * is the direct decision.
      */
     public function getStatusLabelAttribute(): string
     {
@@ -336,11 +340,8 @@ class Rating extends Model
         if ($this->rejected_at) {
             return 'Rejected';
         }
-        if ($this->is_reviewed) {
-            return 'Reviewed';
-        }
 
-        return 'Pending';
+        return 'Open';
     }
 
     public static function paddedComplaintStats($stats)

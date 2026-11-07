@@ -690,12 +690,12 @@ class FeatureImprovementsTest extends TestCase
         }
 
         $data = app(\App\Services\AdminQueryService::class)->ratingsData(request());
-        $this->assertSame(3, $data['totalCount']);
-        $this->assertSame(3, array_sum($data['starCounts']));
+        $this->assertSame(5, $data['totalCount']);
+        $this->assertSame(5, array_sum($data['starCounts']));
 
         $response = $this->actingAs($this->makeUser('superadmin'))->get('/superadmin/ratings');
         $response->assertOk();
-        $this->assertSame(3, substr_count($response->getContent(), 'data-rating-card'));
+        $this->assertSame(5, substr_count($response->getContent(), 'data-rating-card'));
     }
 
     public function test_reports_page_filters_by_toda_and_min_rating()

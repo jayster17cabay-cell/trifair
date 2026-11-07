@@ -1476,8 +1476,8 @@ class DashboardAuditTest extends TestCase
             'Active + Inactive + Suspended must equal the Operators total'
         );
 
-        $this->assertSame(6, $stats['totalRatings'], 'Only valid, counted ratings');
-        $this->assertSame(6, array_sum($stats['ratingDistribution']), 'Distribution must sum to the Ratings KPI');
-        $this->assertSame([1 => 1, 2 => 1, 3 => 1, 4 => 1, 5 => 2], $stats['ratingDistribution']);
+        $this->assertSame(7, $stats['totalRatings'], 'Only valid, counted ratings (pending complaint now counts)');
+        $this->assertSame(7, array_sum($stats['ratingDistribution']), 'Distribution must sum to the Ratings KPI');
+        $this->assertSame([1 => 2, 2 => 1, 3 => 1, 4 => 1, 5 => 2], $stats['ratingDistribution']);
     }
 }

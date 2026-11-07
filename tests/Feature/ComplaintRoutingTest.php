@@ -455,7 +455,7 @@ class ComplaintRoutingTest extends TestCase
         $complaint = $this->makeComplaint($operator, $toda);
         $complaint->update(['routed_to' => $president->id]);
 
-        $this->assertEqualsWithDelta(5.0, (float) $operator->averageRating(), 0.001);
+        $this->assertEqualsWithDelta(3.0, (float) $operator->averageRating(), 0.001);
 
         $this->actingAs($president)
             ->patch('/president/complaints/' . $complaint->id . '/review')

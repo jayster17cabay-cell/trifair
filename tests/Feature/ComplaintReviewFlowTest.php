@@ -96,14 +96,15 @@ class ComplaintReviewFlowTest extends TestCase
         return $rating;
     }
 
-    public function test_pending_complaint_does_not_affect_operator_average()
+    public function test_complaint_counts_toward_operator_average_automatically()
     {
         $operator = $this->makeOperator();
         $this->makeValidRating($operator, 5);
         $this->makeValidComplaint($operator, 1);
 
-        $this->assertEqualsWithDelta(5.0, (float) $operator->averageRating(), 0.001);
-        $this->assertSame(1, $operator->totalRatings());
+        // A complaint counts automatically (stars added) unless it is rejected.
+        $this->assertEqualsWithDelta(3.0, (float) $operator->averageRating(), 0.001);
+        $this->assertSame(2, $operator->totalRatings());
     }
 
     public function test_reviewed_complaint_counts_toward_operator_average()
@@ -246,10 +247,10 @@ class ComplaintReviewFlowTest extends TestCase
 
         Cache::flush();
         $stats = app(AdminDashboardService::class)->stats(['includeOfficers' => true]);
-        $this->assertEqualsWithDelta(5.0, (float) $stats['averageRating'], 0.001);
-        $this->assertSame(1, $stats['totalRatings']);
+        $this->assertEqualsWithDelta(3.0, (float) $stats['averageRating'], 0.001);
+        $this->assertSame(2, $stats['totalRatings']);
 
-        // Marking the complaint reviewed pulls the shared average down to 3.0.
+        // The complaint already counts (auto); marking it reviewed keeps it counted.
         $complaint->update(['is_reviewed' => true]);
         Cache::flush();
         $stats = app(AdminDashboardService::class)->stats(['includeOfficers' => true]);
@@ -320,15 +321,15 @@ class ComplaintReviewFlowTest extends TestCase
             ->assertDontSee($solved->reference_number, false);
     }
 
-    public function test_status_label_priority_is_solved_then_rejected_then_reviewed()
+    public function test_status_label_priority_is_solved_then_rejected_then_open()
     {
         $operator = $this->makeOperator();
         $complaint = $this->makeValidComplaint($operator, 1);
 
-        $this->assertSame('Pending', $complaint->status_label);
+        $this->assertSame('Open', $complaint->status_label);
 
         $complaint->update(['is_reviewed' => true]);
-        $this->assertSame('Reviewed', $complaint->fresh()->status_label);
+        $this->assertSame('Open', $complaint->fresh()->status_label);
 
         $complaint->update(['rejected_at' => now()]);
         $this->assertSame('Rejected', $complaint->fresh()->status_label);
