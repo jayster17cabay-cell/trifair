@@ -90,7 +90,7 @@
         </div>
 
         @if ($canChat)
-            <form action="{{ $composerAction }}" method="POST" class="border-t border-slate-100 px-3.5 py-3">
+            <form action="{{ $composerAction }}" method="POST" class="border-t border-slate-100 px-3.5 py-3" data-chat-form>
                 @csrf
                 @if (!$isStaffView)
                     <input type="hidden" name="follow_up_rating_id" value="{{ $rating->id }}">
@@ -130,13 +130,20 @@
         (function () {
             var input = document.getElementById('chat-input-{{ $rating->id }}');
             if (!input) return;
-            input.addEventListener('keydown', function (e) {
+             input.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     var form = input.closest('form');
                     if (form) { form.requestSubmit ? form.requestSubmit() : form.submit(); }
                 }
-            });
-        })();
+             });
+             var chatForm = input.closest('form[data-chat-form]');
+             if (chatForm) chatForm.addEventListener('submit', function () {
+                 var button = chatForm.querySelector('button[type="submit"]');
+                 if (!button) return;
+                 button.disabled = true;
+                 button.innerHTML = '<i class="bi bi-arrow-repeat animate-spin" aria-hidden="true"></i> Sending...';
+             });
+         })();
     </script>
 </div>

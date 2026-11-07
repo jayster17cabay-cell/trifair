@@ -106,7 +106,7 @@
                 ['key' => 'solved', 'label' => 'Solved', 'count' => $solvedCount, 'icon' => 'bi-patch-check', 'color' => 'navy'],
             ];
         @endphp
-        <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Complaint status filters">
             @foreach ($statusTabs as $tab)
                 @php
                     $isActive = $tab['key'] === null ? $activeStatus === null : $activeStatus === $tab['key'];

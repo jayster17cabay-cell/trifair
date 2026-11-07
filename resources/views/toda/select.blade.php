@@ -36,7 +36,7 @@
                     $isPresidency = in_array((int) $toda->id, $presidencyIds, true);
                     $isSuspended = $operator && $operator->isSuspendedForToda((int) $toda->id);
                 @endphp
-                <form method="POST" action="{{ route('toda.select.store') }}">
+                <form method="POST" action="{{ route('toda.select.store') }}" data-submit-loading>
                     @csrf
                     <input type="hidden" name="toda_id" value="{{ $toda->id }}">
                     <button type="submit"
@@ -72,4 +72,15 @@
         </p>
     </div>
 </div>
+<script>
+    document.querySelectorAll('form[data-submit-loading]').forEach(function (form) {
+        form.addEventListener('submit', function () {
+            var button = form.querySelector('button[type="submit"]');
+            if (!button) return;
+            button.disabled = true;
+            button.classList.add('opacity-70');
+            button.innerHTML = '<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15"><i class="bi bi-arrow-repeat animate-spin text-lg"></i></span><span class="min-w-0 flex-1 text-sm font-extrabold text-white">Opening TODA...</span>';
+        });
+    });
+</script>
 @endsection

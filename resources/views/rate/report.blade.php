@@ -229,6 +229,7 @@
                     <div style="margin-top: 0.75rem;">
                         <label for="proofs" class="rate-label"><i class="bi bi-paperclip" style="color:#dc2626;"></i> Proof attachments (optional)</label>
                         <input type="file" name="proofs[]" id="proofs" multiple accept=".jpg,.jpeg,.png,.pdf,.mp4" class="rate-field">
+                        <div id="reportFileSummary" class="file-hint" aria-live="polite"></div>
                         <p class="file-hint">Photos, video or documents — up to 5 files, 10 MB each.</p>
                     </div>
 
@@ -606,6 +607,16 @@
     }
 
     /* ---- Submit feedback ---- */
+
+    var reportFiles = document.getElementById('proofs');
+    var reportFileSummary = document.getElementById('reportFileSummary');
+    if (reportFiles && reportFileSummary) {
+        reportFiles.addEventListener('change', function () {
+            var files = Array.prototype.slice.call(reportFiles.files || []);
+            if (!files.length) { reportFileSummary.textContent = ''; return; }
+            reportFileSummary.textContent = files.length + ' file' + (files.length === 1 ? '' : 's') + ' selected: ' + files.map(function (file) { return file.name; }).join(', ');
+        });
+    }
 
     var form = document.getElementById('reportForm');
     if (form) {
