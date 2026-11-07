@@ -114,9 +114,18 @@ class SupabaseStorage
                 return null;
             }
 
-            return str_starts_with($signedPath, 'http')
-                ? $signedPath
-                : rtrim((string) config('services.supabase.url'), '/') . $signedPath;
+            if (str_starts_with($signedPath, 'http')) {
+                return $signedPath;
+            }
+
+            // Supabase returns a path relative to /storage/v1 (for example
+            // /object/sign/proofs/...); keep the storage API prefix when
+            // turning that path into an absolute URL.
+            $prefix = str_starts_with($signedPath, '/storage/v1/')
+                ? rtrim((string) config('services.supabase.url'), '/')
+                : rtrim(self::baseUrl(), '/');
+
+            return $prefix . '/' . ltrim($signedPath, '/');
         } catch (\Throwable $e) {
             Log::error('SupabaseStorage signed URL exception', [
                 'message' => $e->getMessage(),
