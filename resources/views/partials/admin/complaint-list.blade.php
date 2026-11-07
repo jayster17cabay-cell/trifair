@@ -51,8 +51,7 @@
 
     $statItems = [
         ['num' => $totalCount, 'label' => 'Total', 'icon' => 'bi-exclamation-circle', 'chip' => 'bg-blue-50 text-navy-600'],
-        ['num' => $pendingCount, 'label' => 'Pending', 'icon' => 'bi-clock-history', 'chip' => 'bg-amber-50 text-amber-600'],
-        ['num' => $reviewedCount, 'label' => 'Reviewed', 'icon' => 'bi-check-circle', 'chip' => 'bg-emerald-50 text-emerald-600'],
+        ['num' => $openCount, 'label' => 'Open', 'icon' => 'bi-clock-history', 'chip' => 'bg-amber-50 text-amber-600'],
         ['num' => $rejectedCount, 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600'],
         ['num' => $solvedCount, 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600'],
         ['num' => $sourceCounts['forwarded'] ?? 0, 'label' => 'Forwarded', 'icon' => 'bi-send-fill', 'chip' => 'bg-violet-50 text-violet-600', 'href' => $presidentMode ? null : $sourceUrl('forwarded')],
@@ -87,7 +86,7 @@
             'activeOperators' => $activeOperators,
             'exportFilters' => [
                 ['type' => 'select', 'name' => 'filter', 'label' => 'Status', 'options' => [
-                    '' => 'All', 'open' => 'Open', 'pending' => 'Pending', 'reviewed' => 'Reviewed', 'rejected' => 'Rejected', 'solved' => 'Solved',
+                    '' => 'All', 'open' => 'Open', 'rejected' => 'Rejected', 'solved' => 'Solved',
                 ], 'value' => $filter],
                 ['type' => 'select', 'name' => 'rating', 'label' => 'Stars', 'options' => [
                     '' => 'All stars', '1' => '1 Star', '2' => '2 Stars',

@@ -626,10 +626,10 @@ class DashboardAuditTest extends TestCase
         $reviewed->update(['is_reviewed' => true, 'is_accepted' => true]);
         $two = $this->makeRating($op, 2, true, true);
 
-        $this->actingAs($admin)->get('/superadmin/complaints?filter=pending&rating=1')
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=open&rating=1')
             ->assertOk()
             ->assertSee($pending->reference_number, false)
-            ->assertDontSee($reviewed->reference_number, false)
+            ->assertSee($reviewed->reference_number, false)
             ->assertDontSee($two->reference_number, false);
     }
 
@@ -844,16 +844,11 @@ class DashboardAuditTest extends TestCase
             ->assertDontSee($pending->reference_number, false)
             ->assertDontSee($reviewed->reference_number, false);
 
-        // Reviewed filter excludes solved complaints; pending excludes reviewed+solved.
-        $this->actingAs($admin)->get('/superadmin/complaints?filter=reviewed')
-            ->assertOk()
-            ->assertSee($reviewed->reference_number, false)
-            ->assertDontSee($solved->reference_number, false);
-
-        $this->actingAs($admin)->get('/superadmin/complaints?filter=pending')
+        // Open filter shows non-closed complaints; solved filter shows solved.
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=open')
             ->assertOk()
             ->assertSee($pending->reference_number, false)
-            ->assertDontSee($reviewed->reference_number, false)
+            ->assertSee($reviewed->reference_number, false)
             ->assertDontSee($solved->reference_number, false);
 
         $solvedPage = $this->actingAs($admin)->get('/superadmin/complaints?filter=solved')->getContent();

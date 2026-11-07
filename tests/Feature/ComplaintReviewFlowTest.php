@@ -271,17 +271,10 @@ class ComplaintReviewFlowTest extends TestCase
         $solved = $this->makeValidComplaint($operator, 1);
         $solved->update(['is_reviewed' => true, 'is_solved' => true, 'solved_at' => now()]);
 
-        $this->actingAs($admin)->get('/superadmin/complaints?filter=pending')
+        $this->actingAs($admin)->get('/superadmin/complaints?filter=open')
             ->assertOk()
             ->assertSee($pending->reference_number, false)
-            ->assertDontSee($reviewed->reference_number, false)
-            ->assertDontSee($rejected->reference_number, false)
-            ->assertDontSee($solved->reference_number, false);
-
-        $this->actingAs($admin)->get('/superadmin/complaints?filter=reviewed')
-            ->assertOk()
             ->assertSee($reviewed->reference_number, false)
-            ->assertDontSee($pending->reference_number, false)
             ->assertDontSee($rejected->reference_number, false)
             ->assertDontSee($solved->reference_number, false);
 

@@ -22,15 +22,15 @@ class AdminQueryService
 {
     public function complaintsData(Request $request, ?User $president = null): array
     {
-        $filter = (string) $request->query('filter', $president ? 'pending' : 'open');
+        $filter = (string) $request->query('filter', 'open');
         $ratingKey = $request->query('rating');
         $allowStar = ['1', '2'];
         $ratingFilter = in_array($ratingKey, $allowStar, true) ? (int) $ratingKey : null;
         $search = trim((string) $request->query('search'));
 
-        $allowedFilters = ['', 'all', 'open', 'pending', 'reviewed', 'rejected', 'solved'];
+        $allowedFilters = ['', 'all', 'open', 'rejected', 'solved'];
         if (!in_array($filter, $allowedFilters, true)) {
-            $filter = $president ? 'pending' : 'open';
+            $filter = 'open';
         }
 
         // Where a complaint came from. The superadmin/TFRB inbox is grouped
@@ -52,10 +52,6 @@ class AdminQueryService
         $applyStatusFilter = function ($query, string $filter) {
             if ($filter === 'open') {
                 $query->where('is_solved', false)->whereNull('rejected_at');
-            } elseif ($filter === 'pending') {
-                $query->where('is_reviewed', false)->where('is_solved', false);
-            } elseif ($filter === 'reviewed') {
-                $query->where('is_reviewed', true)->where('is_solved', false)->whereNull('rejected_at');
             } elseif ($filter === 'rejected') {
                 $query->whereNotNull('rejected_at');
             } elseif ($filter === 'solved') {
@@ -94,22 +90,19 @@ class AdminQueryService
         // remote database each avoided count() saves a full network round-trip.
         $counts = (clone $base)->selectRaw(
             'COUNT(*) as total_count'
-            . ', SUM(CASE WHEN is_reviewed = false AND is_solved = false THEN 1 ELSE 0 END) as pending_count'
-            . ', SUM(CASE WHEN is_reviewed = true AND is_solved = false AND rejected_at IS NULL THEN 1 ELSE 0 END) as reviewed_count'
+            . ', SUM(CASE WHEN is_solved = false AND rejected_at IS NULL THEN 1 ELSE 0 END) as open_count'
             . ', SUM(CASE WHEN rejected_at IS NOT NULL THEN 1 ELSE 0 END) as rejected_count'
             . ', SUM(CASE WHEN is_solved = true THEN 1 ELSE 0 END) as solved_count'
             . ', SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as star1_count'
             . ', SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as star2_count'
         )->first();
 
-        $pendingCount = (int) ($counts->pending_count ?? 0);
-        $reviewedCount = (int) ($counts->reviewed_count ?? 0);
+        $openCount = (int) ($counts->open_count ?? 0);
         $rejectedCount = (int) ($counts->rejected_count ?? 0);
         $solvedCount = (int) ($counts->solved_count ?? 0);
         $totalCount = (int) ($counts->total_count ?? 0);
         $star1Count = (int) ($counts->star1_count ?? 0);
         $star2Count = (int) ($counts->star2_count ?? 0);
-        $openCount = $pendingCount + $reviewedCount;
 
         // Global count of proof files attached to valid complaints (not just the
         // current page) so the stats bar stays accurate across pagination.
@@ -145,7 +138,7 @@ class AdminQueryService
             ->paginate(20)
             ->withQueryString();
 
-        return compact('complaints', 'filter', 'ratingFilter', 'search', 'pendingCount', 'reviewedCount', 'rejectedCount', 'solvedCount', 'totalCount', 'openCount', 'star1Count', 'star2Count', 'proofsTotal', 'source', 'sourceCounts') + ['presidentMode' => (bool) $president];
+        return compact('complaints', 'filter', 'ratingFilter', 'search', 'openCount', 'rejectedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal', 'source', 'sourceCounts') + ['presidentMode' => (bool) $president];
     }
 
     /**
@@ -197,13 +190,13 @@ class AdminQueryService
      */
     public function complaintSourceCounts(Request $request, ?User $president = null): array
     {
-        $filter = (string) $request->query('filter', $president ? 'pending' : 'open');
+        $filter = (string) $request->query('filter', 'open');
         $ratingKey = $request->query('rating');
         $ratingFilter = in_array($ratingKey, ['1', '2'], true) ? (int) $ratingKey : null;
 
-        $allowedFilters = ['', 'all', 'open', 'pending', 'reviewed', 'rejected', 'solved'];
+        $allowedFilters = ['', 'all', 'open', 'rejected', 'solved'];
         if (!in_array($filter, $allowedFilters, true)) {
-            $filter = $president ? 'pending' : 'open';
+            $filter = 'open';
         }
 
         $allowedSources = ['actionable', 'forwarded', 'direct', 'awaiting', 'all'];
