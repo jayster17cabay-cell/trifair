@@ -41,6 +41,7 @@
     $canAct = $actionableComplaintIds !== null
         ? in_array((int) $rating->id, $actionableComplaintIds, true)
         : ($complaintRouting->actingAs(Auth::user(), $rating) !== null);
+    $canAct = $canAct && !($readOnly ?? false);
     $assigneeBadge = $complaintRouting->assigneeBadge($rating);
     $assignmentNote = $complaintRouting->assignmentNote($rating);
 

@@ -279,7 +279,7 @@
 @endphp
 
 @forelse ($complaints as $rating)
-    @include('partials.admin.complaint-card', ['rating' => $rating, 'routePrefix' => $routePrefix, 'actor' => $actor])
+    @include('partials.admin.complaint-card', ['rating' => $rating, 'routePrefix' => $routePrefix, 'actor' => $actor, 'readOnly' => $readOnly ?? false])
 @empty
     <div class="tw-empty py-16">
         <div class="tw-empty-icon"><i class="bi bi-check-circle text-emerald-500"></i></div>

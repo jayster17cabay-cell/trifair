@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
  */
 class AdminQueryService
 {
-    public function complaintsData(Request $request, ?User $president = null): array
+    public function complaintsData(Request $request, ?User $president = null, string $pageName = 'page'): array
     {
         $filter = (string) $request->query('filter', 'open');
         $ratingKey = $request->query('rating');
@@ -146,7 +146,7 @@ class AdminQueryService
 
         $complaints = $base->with(['operator.user', 'proofs', 'response', 'operatorProofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user', 'forwardedBy', 'routedToPresident'])
             ->latest()
-            ->paginate(20)
+            ->paginate(20, ['*'], $pageName)
             ->withQueryString();
 
         return compact('complaints', 'filter', 'ratingFilter', 'search', 'openCount', 'rejectedCount', 'solvedCount', 'totalCount', 'star1Count', 'star2Count', 'proofsTotal', 'source', 'sourceCounts') + ['presidentMode' => (bool) $president];
