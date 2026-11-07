@@ -498,7 +498,7 @@
         @apply fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm;
     }
     .tw-modal {
-        @apply w-full max-w-lg rounded-xl bg-white shadow-soft;
+        @apply max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-soft;
     }
     .tw-modal-sm {
         @apply max-w-[400px];
@@ -507,7 +507,7 @@
         @apply flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-4;
     }
     .tw-modal-body {
-        @apply px-6 py-5;
+        @apply max-h-[calc(100dvh-9rem)] overflow-y-auto overscroll-contain px-6 py-5;
     }
     .tw-modal-close {
         @apply rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600;

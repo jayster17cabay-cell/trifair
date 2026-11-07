@@ -119,44 +119,14 @@
         </aside>
 
         <main class="min-h-screen w-full min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
-            @if (session('success'))
-                <div class="tw-alert tw-alert-success">
-                    <i class="bi bi-check-circle-fill tw-alert-icon"></i>
-                    <span>{{ session('success') }}</span>
-                    <button type="button" class="tw-alert-close" data-tw-dismiss aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="tw-alert tw-alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill tw-alert-icon"></i>
-                    <span>{{ session('error') }}</span>
-                    <button type="button" class="tw-alert-close" data-tw-dismiss aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
-                </div>
-            @endif
-
-            @if (session('warning'))
-                <div class="tw-alert tw-alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill tw-alert-icon"></i>
-                    <span>{{ session('warning') }}</span>
-                    <button type="button" class="tw-alert-close" data-tw-dismiss aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="tw-alert tw-alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill tw-alert-icon"></i>
-                    <div>
-                        <strong>Please fix the following errors:</strong>
-                        <ul class="mt-1 list-inside list-disc space-y-0.5">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    <button type="button" class="tw-alert-close" data-tw-dismiss aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
-                </div>
-            @endif
+            @include('partials.ui.alert', ['type' => 'success', 'message' => session('success')])
+            @include('partials.ui.alert', ['type' => 'danger', 'message' => session('error')])
+            @include('partials.ui.alert', ['type' => 'amber', 'message' => session('warning')])
+            @include('partials.ui.alert', [
+                'type' => 'danger',
+                'messages' => $errors->all(),
+                'heading' => 'Please fix the following errors:',
+            ])
 
             @yield('content')
         </main>
