@@ -202,8 +202,9 @@ class SuspensionViolationService
                     $path = $remotePath;
                 }
                 if (!$path) {
-                    $file->storeAs('violation-proofs/' . $violation->id, $filename, 'public');
-                    $path = 'violation-proofs/' . $violation->id . '/' . $filename;
+                    if ($file->storeAs('violation-proofs/' . $violation->id, $filename, 'public')) {
+                        $path = 'violation-proofs/' . $violation->id . '/' . $filename;
+                    }
                 }
             } catch (\Throwable $e) {
                 Log::error('Violation proof save failed: ' . get_class($e) . ': ' . $e->getMessage(), ['path' => $remotePath]);
@@ -225,6 +226,9 @@ class SuspensionViolationService
 
     private function clearProofs(SuspensionViolation $violation): void
     {
+        foreach ($violation->proofs as $proof) {
+            SupabaseStorage::deleteStored($proof->file_path);
+        }
         SuspensionViolationProof::where('violation_id', $violation->id)->delete();
     }
 

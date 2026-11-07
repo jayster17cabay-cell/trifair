@@ -5,6 +5,7 @@ namespace App\Helpers;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class SupabaseStorage
 {
@@ -142,5 +143,18 @@ class SupabaseStorage
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * Remove a proof regardless of whether it was stored remotely or on the
+     * local public disk. Both calls are intentional: legacy rows do not record
+     * which backend originally accepted the upload.
+     */
+    public static function deleteStored(string $path): bool
+    {
+        $remoteDeleted = self::delete($path);
+        $localDeleted = Storage::disk('public')->delete($path);
+
+        return $remoteDeleted || $localDeleted;
     }
 }

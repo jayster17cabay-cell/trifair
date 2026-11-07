@@ -705,7 +705,7 @@ class RatingAdminService
 
         foreach ($proofs as $proof) {
             try {
-                SupabaseStorage::delete($proof->file_path);
+                SupabaseStorage::deleteStored($proof->file_path);
             } catch (\Throwable $e) {
                 Log::error('Resolution proof delete failed: ' . get_class($e) . ': ' . $e->getMessage());
             }
@@ -764,14 +764,18 @@ class RatingAdminService
         $operatorName = $rating->operator->user->name ?? 'Unknown';
 
         foreach ($rating->proofs as $proof) {
-            SupabaseStorage::delete($proof->file_path);
+            SupabaseStorage::deleteStored($proof->file_path);
         }
         foreach ($rating->operatorProofs as $proof) {
-            SupabaseStorage::delete($proof->file_path);
+            SupabaseStorage::deleteStored($proof->file_path);
+        }
+        foreach ($rating->resolutionProofs as $proof) {
+            SupabaseStorage::deleteStored($proof->file_path);
         }
 
         $rating->proofs()->delete();
         $rating->operatorProofs()->delete();
+        $rating->resolutionProofs()->delete();
         $rating->response()->delete();
         Notification::where('rating_id', $rating->id)->delete();
         $rating->delete();

@@ -238,22 +238,40 @@ class OperatorController extends Controller
         // reachable from the public app (the local 'public' disk is ephemeral
         // on the Render host), falling back to local storage when not available.
         if ($request->hasFile('files')) {
+            foreach ($rating->operatorProofs as $oldProof) {
+                \App\Helpers\SupabaseStorage::deleteStored($oldProof->file_path);
+            }
             $rating->operatorProofs()->delete();
             foreach ($request->file('files') as $file) {
                 if (!$file || !$file->isValid()) continue;
-                    $filename = time() . '_' . uniqid() . '.' . $file->extension();
+                $filename = time() . '_' . uniqid() . '.' . $file->extension();
                 $remotePath = 'operator-proofs/' . $rating->id . '/' . $filename;
 
                 $saved = false;
-                $path = $remotePath;
+                $path = null;
                 if (class_exists(\App\Helpers\SupabaseStorage::class)) {
-                    $result = \App\Helpers\SupabaseStorage::upload($file, $remotePath);
-                    $saved = (bool) $result;
+                    try {
+                        $result = \App\Helpers\SupabaseStorage::upload($file, $remotePath);
+                        $saved = (bool) $result;
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error('Operator proof save failed: ' . get_class($e) . ': ' . $e->getMessage(), ['path' => $remotePath]);
+                    }
                 }
 
                 if (!$saved) {
-                    $file->storeAs('operator-proofs/' . $rating->id, $filename, 'public');
-                    $path = 'operator-proofs/' . $rating->id . '/' . $filename;
+                    try {
+                        if ($file->storeAs('operator-proofs/' . $rating->id, $filename, 'public')) {
+                            $path = 'operator-proofs/' . $rating->id . '/' . $filename;
+                        }
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error('Operator proof local save failed: ' . get_class($e) . ': ' . $e->getMessage(), ['path' => $remotePath]);
+                    }
+                } else {
+                    $path = $remotePath;
+                }
+
+                if (!$path) {
+                    continue;
                 }
 
                 OperatorProof::create([
