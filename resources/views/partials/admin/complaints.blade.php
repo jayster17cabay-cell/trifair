@@ -4,12 +4,30 @@
     $presidentMode = $presidentMode ?? false;
     $actor = $actor ?? (auth()->check() && auth()->user()->role === 'operator_president' ? 'president' : 'staff');
     $monitoringComplaints = $monitoringComplaints ?? null;
-    $readOnly = false;
+    $monitoringSourceCounts = $monitoringSourceCounts ?? [];
+    $monitoringTotalCount = $monitoringTotalCount ?? $totalCount;
+    $view = request('view', 'action');
+    if (!in_array($view, ['action', 'monitor'], true)) {
+        $view = 'action';
+    }
 @endphp
 
 @if (!$presidentMode)
-{{-- Section 1: Actionable by TFRB / superadmin --}}
-<div class="mb-8">
+{{-- Top-level tabs: Aksyon vs Monitoring --}}
+<div class="mb-5 flex flex-wrap items-center gap-2">
+    <a href="{{ route($routePrefix . '.complaints', array_merge(request()->except('view', 'page', 'mpage'), ['view' => 'action'])) }}"
+       class="inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-bold transition {{ $view === 'action' ? 'border-navy-600 bg-navy-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-200 hover:bg-slate-50' }}">
+        <i class="bi bi-lightning-charge-fill"></i> Aksyon (TFRB / Superadmin)
+    </a>
+    <a href="{{ route($routePrefix . '.complaints', array_merge(request()->except('view', 'page', 'mpage'), ['view' => 'monitor'])) }}"
+       class="inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-bold transition {{ $view === 'monitor' ? 'border-slate-600 bg-slate-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50' }}">
+        <i class="bi bi-eye-fill"></i> Monitoring (Lahat ng Complaints)
+    </a>
+</div>
+@endif
+
+@if ($view === 'action' || $presidentMode)
+    @if (!$presidentMode)
     <div class="mb-3 flex items-center gap-2">
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-600 text-white"><i class="bi bi-lightning-charge-fill"></i></span>
         <div>
@@ -17,17 +35,38 @@
             <p class="text-xs text-slate-500">Complaints na kaya mong i-solve o i-reject — forwarded, against president, unassigned.</p>
         </div>
     </div>
+    @endif
     @include('partials.admin.complaint-list')
-</div>
-
-{{-- Section 2: Monitoring — lahat ng complaints (kasama ang nasa TODA president) --}}
-<div class="mb-8">
+@else
     <div class="mb-3 flex items-center gap-2">
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-600 text-white"><i class="bi bi-eye-fill"></i></span>
         <div>
             <h2 class="text-base font-bold text-slate-800">Monitoring (Lahat ng Complaints)</h2>
             <p class="text-xs text-slate-500">Viewing lang — kasama ang nasa TODA president, para mamonitor ang kanilang actions. (Read-only)</p>
         </div>
+    </div>
+    {{-- KPI strip --}}
+    <div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+        @php
+            $kpiItems = [
+                ['key' => 'all', 'label' => 'All', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $monitoringSourceCounts['all'] ?? $monitoringTotalCount],
+                ['key' => 'actionable', 'label' => 'Actionable', 'icon' => 'bi-lightning-charge-fill', 'chip' => 'bg-navy-50 text-navy-600', 'num' => $monitoringSourceCounts['actionable'] ?? 0],
+                ['key' => 'forwarded', 'label' => 'Forwarded', 'icon' => 'bi-send-fill', 'chip' => 'bg-violet-50 text-violet-600', 'num' => $monitoringSourceCounts['forwarded'] ?? 0],
+                ['key' => 'against_president', 'label' => 'vs President', 'icon' => 'bi-person-x', 'chip' => 'bg-red-50 text-red-600', 'num' => $monitoringSourceCounts['against_president'] ?? 0],
+                ['key' => 'unassigned', 'label' => 'Unassigned', 'icon' => 'bi-person-dash', 'chip' => 'bg-slate-100 text-slate-500', 'num' => $monitoringSourceCounts['unassigned'] ?? 0],
+                ['key' => 'awaiting', 'label' => 'Awaiting Pres.', 'icon' => 'bi-hourglass-split', 'chip' => 'bg-amber-50 text-amber-600', 'num' => $monitoringSourceCounts['awaiting'] ?? 0],
+            ];
+        @endphp
+        @foreach ($kpiItems as $kpi)
+            <a href="{{ route($routePrefix . '.complaints', array_merge(request()->except('view', 'page', 'mpage'), ['view' => 'monitor'])) }}"
+               class="flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5 transition hover:bg-slate-100 hover:ring-1 hover:ring-slate-200">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $kpi['chip'] }}"><i class="bi {{ $kpi['icon'] }}"></i></span>
+                <div class="min-w-0">
+                    <div class="text-base font-extrabold leading-none text-slate-800">{{ $kpi['num'] }}</div>
+                    <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ $kpi['label'] }}</div>
+                </div>
+            </a>
+        @endforeach
     </div>
     @if ($monitoringComplaints && $monitoringComplaints->count() > 0)
         @foreach ($monitoringComplaints as $rating)
@@ -43,9 +82,4 @@
             <p class="text-sm text-slate-500">Lahat ng complaints ay nasa actionable section o wala pang nai-file.</p>
         </div>
     @endif
-</div>
-@endif
-
-@if ($presidentMode)
-    @include('partials.admin.complaint-list')
 @endif

@@ -260,11 +260,12 @@
              staff/president updates, with a composer only for whoever may act
              on the complaint. --}}
         <div class="mx-4 mb-4 sm:mx-5">
-            @if ($canAct)
+            @if ($canAct || ($readOnly ?? false))
                 @include('partials.complaint-chat', [
                     'rating' => $rating,
                     'viewSide' => 'staff',
                     'composerAction' => route($routePrefix . '.complaints.reply', $rating),
+                    'readOnly' => $readOnly ?? false,
                 ])
             @else
                 <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">

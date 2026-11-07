@@ -12,7 +12,7 @@
 --}}
 @php
     $thread = $rating->passengerFollowUps;
-    $canChat = !$rating->is_solved;
+    $canChat = !$rating->is_solved && !($readOnly ?? false);
     $isStaffView = $viewSide === 'staff';
     $chatOpen = $chatOpen ?? false;
     $composerError = $isStaffView
