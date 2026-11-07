@@ -125,32 +125,32 @@
     @endunless
 
     {{-- Status, severity and search filters. --}}
-    <form method="GET" action="{{ route($routePrefix . '.complaints') }}" class="mt-3.5 flex flex-wrap items-center gap-3">
+    <form method="GET" action="{{ route($routePrefix . '.complaints') }}" class="mt-3.5 flex flex-wrap items-end gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 sm:bg-transparent sm:p-0">
         @unless ($presidentMode)
             <input type="hidden" name="source" value="{{ $source }}">
         @endunless
-        <div>
-            <label for="complaint_filter" class="sr-only">Status</label>
-            <select name="filter" id="complaint_filter" class="tw-select py-2 text-xs" onchange="this.form.submit()" aria-label="Filter complaints by status">
+        <div class="min-w-[9rem] flex-1 sm:flex-none">
+            <label for="complaint_filter" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:sr-only">Status</label>
+            <select name="filter" id="complaint_filter" class="tw-select w-full py-2 text-xs sm:w-auto" onchange="this.form.submit()" aria-label="Filter complaints by status">
                 <option value="open" {{ $filter === 'open' ? 'selected' : '' }}>Open ({{ $openCount }})</option>
                 <option value="all" {{ $filter === 'all' ? 'selected' : '' }}>All status ({{ $totalCount }})</option>
                 <option value="rejected" {{ $filter === 'rejected' ? 'selected' : '' }}>Rejected ({{ $rejectedCount }})</option>
                 <option value="solved" {{ $filter === 'solved' ? 'selected' : '' }}>Solved ({{ $solvedCount }})</option>
             </select>
         </div>
-        <div>
-            <label for="complaint_rating" class="sr-only">Severity</label>
-            <select name="rating" id="complaint_rating" class="tw-select py-2 text-xs" onchange="this.form.submit()" aria-label="Filter complaints by severity">
+        <div class="min-w-[9rem] flex-1 sm:flex-none">
+            <label for="complaint_rating" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:sr-only">Rating</label>
+            <select name="rating" id="complaint_rating" class="tw-select w-full py-2 text-xs sm:w-auto" onchange="this.form.submit()" aria-label="Filter complaints by severity">
                 <option value="" {{ $ratingFilter === null ? 'selected' : '' }}>All stars</option>
                 <option value="1" {{ $ratingFilter === 1 ? 'selected' : '' }}>1 Star ({{ $star1Count }})</option>
                 <option value="2" {{ $ratingFilter === 2 ? 'selected' : '' }}>2 Stars ({{ $star2Count }})</option>
             </select>
         </div>
-        <div class="ml-auto flex flex-wrap items-center gap-2">
+        <div class="flex w-full flex-wrap items-end gap-2 sm:ml-auto sm:w-auto">
             <div class="tw-input-group">
                 <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
                 <input type="text" name="search" value="{{ $search }}" placeholder="Search by reference #"
-                       class="tw-input py-2" style="width: min(14rem, 100%);" aria-label="Search complaint by reference number"
+                       class="tw-input w-full py-2 sm:w-56" aria-label="Search complaint by reference number"
                        data-complaint-live-search>
             </div>
             @if ($search !== '')
@@ -205,6 +205,25 @@
 
 <script>
     (function () {
+        document.querySelectorAll('[data-complaint-toggle]').forEach(function (toggle) {
+            function toggleDetails() {
+                var details = document.getElementById(toggle.getAttribute('aria-controls'));
+                if (!details) return;
+                var expanded = toggle.getAttribute('aria-expanded') === 'true';
+                toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+                details.classList.toggle('hidden', expanded);
+                var chevron = toggle.querySelector('[data-complaint-chevron]');
+                if (chevron) chevron.classList.toggle('rotate-180', !expanded);
+            }
+            toggle.addEventListener('click', toggleDetails);
+            toggle.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    toggleDetails();
+                }
+            });
+        });
+
         var input = document.querySelector('input[data-complaint-live-search]');
         if (input && input.form) {
             input.addEventListener('keydown', function (e) {
@@ -241,8 +260,18 @@
                 .catch(function () { /* polling is best-effort */ });
         }
 
+        var pollTimer = null;
+        function startPolling() {
+            if (!pollTimer && !document.hidden) pollTimer = setInterval(refreshSourceCounts, 15000);
+        }
+        function stopPolling() {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        }
         refreshSourceCounts();
-        setInterval(refreshSourceCounts, 5000);
+        startPolling();
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) stopPolling(); else { refreshSourceCounts(); startPolling(); }
+        });
     })();
 </script>
 
@@ -306,9 +335,11 @@
         var proofWrap = modal.querySelector('[data-resolution-proof-wrap]');
         var proofInput = document.getElementById('resolutionProofs');
         var checklistWrap = modal.querySelector('[data-resolution-checklist-wrap]');
-        var submit = modal.querySelector('[data-resolution-submit]');
+         var submit = modal.querySelector('[data-resolution-submit]');
+         var lastTrigger = null;
 
-        function open(mode, action, ref) {
+         function open(mode, action, ref) {
+             lastTrigger = document.activeElement;
             form.setAttribute('action', action);
             note.value = '';
             if (proofInput) { proofInput.value = ''; }
@@ -326,9 +357,11 @@
             note.focus();
         }
 
-        function close() {
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
+         function close() {
+             modal.classList.add('hidden');
+             document.body.style.overflow = '';
+             if (lastTrigger && typeof lastTrigger.focus === 'function') lastTrigger.focus();
+             lastTrigger = null;
         }
 
         document.addEventListener('click', function (e) {
@@ -347,10 +380,16 @@
             }
         });
 
-        document.addEventListener('keydown', function (e) {
+         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
                 close();
             }
-        });
-    })();
+         });
+
+         form.addEventListener('submit', function () {
+             if (!submit) return;
+             submit.disabled = true;
+             submit.innerHTML = '<i class="bi bi-arrow-repeat animate-spin" aria-hidden="true"></i> Saving...';
+         });
+     })();
 </script>
