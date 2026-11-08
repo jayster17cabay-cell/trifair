@@ -58,7 +58,12 @@ return [
             'search_path' => 'public',
             'sslmode' => env('PGSQL_SSLMODE', 'require'),
             'options' => extension_loaded('pdo_pgsql')
-                ? [PDO::ATTR_PERSISTENT => (bool) env('PGSQL_PERSISTENT', false)]
+                ? [
+                    // Never let an unavailable Supabase connection keep every
+                    // Render request in an infinite loading state.
+                    PDO::ATTR_TIMEOUT => (int) env('PGSQL_CONNECT_TIMEOUT', 10),
+                    PDO::ATTR_PERSISTENT => (bool) env('PGSQL_PERSISTENT', false),
+                ]
                 : [],
         ],
 

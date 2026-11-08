@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/landing-stats', [LandingController::class, 'stats'])->name('landing.stats');
+// Render health checks must not depend on Supabase or the session database.
+Route::get('/health', fn () => response()->json(['status' => 'ok']))->name('health');
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
