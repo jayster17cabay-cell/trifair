@@ -99,7 +99,9 @@
 @endphp
 
 <div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
-    <div class="flex cursor-pointer select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-navy-600/20 sm:px-5" data-complaint-toggle role="button" tabindex="0" aria-expanded="false" aria-controls="complaint-details-{{ $rating->id }}">
+    <div class="flex cursor-pointer select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-navy-600/20 sm:px-5" data-complaint-toggle role="button" tabindex="0" aria-expanded="false" aria-controls="complaint-details-{{ $rating->id }}"
+         onclick="var d=document.getElementById(this.getAttribute('aria-controls'));if(!d)return;var x=this.getAttribute('aria-expanded')==='true';this.setAttribute('aria-expanded',x?'false':'true');d.classList.toggle('hidden',x);var c=this.querySelector('[data-complaint-chevron]');if(c)c.classList.toggle('rotate-180',!x);"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
         <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <span class="truncate text-sm font-bold text-slate-800">{{ $operatorName }}</span>

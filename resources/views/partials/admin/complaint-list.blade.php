@@ -205,25 +205,6 @@
 
 <script>
     (function () {
-        document.querySelectorAll('[data-complaint-toggle]').forEach(function (toggle) {
-            function toggleDetails() {
-                var details = document.getElementById(toggle.getAttribute('aria-controls'));
-                if (!details) return;
-                var expanded = toggle.getAttribute('aria-expanded') === 'true';
-                toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-                details.classList.toggle('hidden', expanded);
-                var chevron = toggle.querySelector('[data-complaint-chevron]');
-                if (chevron) chevron.classList.toggle('rotate-180', !expanded);
-            }
-            toggle.addEventListener('click', toggleDetails);
-            toggle.addEventListener('keydown', function (event) {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    toggleDetails();
-                }
-            });
-        });
-
         var input = document.querySelector('input[data-complaint-live-search]');
         if (input && input.form) {
             input.addEventListener('keydown', function (e) {
