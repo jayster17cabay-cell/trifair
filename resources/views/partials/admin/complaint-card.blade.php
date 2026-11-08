@@ -102,14 +102,10 @@
 
 <div class="tw-card {{ $standalone ? 'shadow-lg' : 'mb-3' }} overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
     <div class="flex {{ $standalone ? '' : 'cursor-pointer' }} select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:px-5"
-         @if (!$standalone && !$isPresidentView)
+         @if (!$standalone)
              role="link" tabindex="0" aria-label="Open complaint {{ $rating->reference_number }}"
              onclick="window.location.href='{{ route($routePrefix . '.complaints.show', $rating) }}';"
              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{{ route($routePrefix . '.complaints.show', $rating) }}';}"
-         @elseif (!$standalone)
-             role="button" tabindex="0" aria-expanded="false" aria-controls="complaint-details-{{ $rating->id }}"
-             onclick="var d=document.getElementById(this.getAttribute('aria-controls'));if(!d)return;var x=this.getAttribute('aria-expanded')==='true';this.setAttribute('aria-expanded',x?'false':'true');d.style.setProperty('display',x?'none':'block','important');var c=this.querySelector('[data-complaint-chevron]');if(c)c.classList.toggle('rotate-180',!x);"
-             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"
          @endif>
         <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
@@ -161,7 +157,7 @@
                 <span class="tw-badge tw-badge-amber"><i class="bi bi-clock-fill"></i> Open</span>
             @endif
             @unless ($standalone)
-                <i class="bi {{ $isPresidentView ? 'bi-chevron-down' : 'bi-arrow-up-right' }} text-slate-400" data-complaint-chevron aria-hidden="true"></i>
+                <i class="bi bi-arrow-up-right text-slate-400" data-complaint-chevron aria-hidden="true"></i>
             @endunless
         </div>
     </div>

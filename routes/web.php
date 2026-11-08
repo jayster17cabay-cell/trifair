@@ -255,6 +255,7 @@ Route::middleware(['auth', 'role:operator_president', 'president.active', 'toda.
     // Passenger complaints routed to this TODA's president — they can
     // review, solve, reject or forward them (forward is one-way).
     Route::get('/complaints', [PresidentComplaintsController::class, 'index'])->name('complaints');
+    Route::get('/complaints/{rating}', [PresidentComplaintsController::class, 'complaint'])->whereNumber('rating')->name('complaints.show');
     Route::patch('/complaints/{rating}/review', [PresidentComplaintsController::class, 'markReviewed'])->name('complaints.review');
     Route::patch('/complaints/{rating}/solve', [PresidentComplaintsController::class, 'markSolved'])->name('complaints.solve');
     Route::patch('/complaints/{rating}/reject', [PresidentComplaintsController::class, 'reject'])->name('complaints.reject');

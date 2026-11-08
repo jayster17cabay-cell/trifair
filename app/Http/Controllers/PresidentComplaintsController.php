@@ -86,6 +86,21 @@ class PresidentComplaintsController extends Controller
         ]);
     }
 
+    public function complaint(Rating $rating)
+    {
+        $user = Auth::user();
+
+        // Presidents may open only complaints assigned to their own queue.
+        // Forwarded cases remain readable here, but no longer actionable.
+        if ((int) $rating->routed_to !== (int) $user->id) {
+            abort(403, 'This complaint is not assigned to your TODA queue.');
+        }
+
+        $rating->load(['operator.user', 'proofs', 'response', 'operatorProofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user', 'forwardedBy', 'routedToPresident']);
+
+        return view('president.complaint', compact('rating'));
+    }
+
     public function markReviewed(Rating $rating)
     {
         return app(RatingAdminService::class)->complaintsMarkReviewed($rating);
