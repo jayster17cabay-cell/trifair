@@ -61,6 +61,11 @@
     $isForwarded = !empty($rating->forwarded_at);
     $isForwardedByPresident = !empty($rating->forwarded_by);
     $appeals = $rating->passengerFollowUps->filter(fn ($followUp) => (bool) $followUp->is_appeal);
+    // Escalation is a response to a passenger appeal, not a second action
+    // that should appear on every already-solved complaint. Keep the manual
+    // escalation form hidden until the passenger actually asks for a heavier
+    // review; the scheduled SLA escalation remains available server-side.
+    $hasPassengerAppeal = $appeals->isNotEmpty();
     $standalone = $standalone ?? false;
 
     // At-a-glance origin badge. Staff queues distinguish forwarded
@@ -364,7 +369,7 @@
                 {{-- Contextual next step so staff always know what to do with
                      an actionable complaint: solve it or reject it. Solving
                      marks the complaint reviewed; rejecting closes it. --}}
-                @if ($actor !== 'president')
+                @if ($actor !== 'president' && $rating->status_label === 'Open')
                     <div class="w-full rounded-lg border border-navy-100 bg-navy-50 px-3 py-2 text-[11px] font-semibold leading-snug text-navy-700">
                         <i class="bi bi-arrow-right-circle mr-1"></i>@if ($rating->status_label === 'Pending')
                             Next step: solve or reject this complaint — solving marks it reviewed and counts toward the operator's rating; rejecting closes it with a reason.
@@ -407,7 +412,7 @@
                              re-review instead of staying closed for good. Staff
                              own that escalate path; the president reaches the
                              same outcome through the one-way Forward action. --}}
-                        @if ($actor !== 'president')
+                        @if ($actor !== 'president' && $hasPassengerAppeal)
                             <div class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
                                 <div class="mb-2 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">
                                     <i class="bi bi-list-check"></i>Panel follow-up questions (optional)
