@@ -277,6 +277,11 @@
                     'viewSide' => 'staff',
                     'composerAction' => route($routePrefix . '.complaints.reply', $rating),
                     'readOnly' => $readOnly ?? false,
+                    // Keep the conversation visible when a passenger has
+                    // already written, especially after an appeal, so the
+                    // full TODA/passenger history is not hidden in a second
+                    // collapsed control.
+                    'chatOpen' => $rating->passengerFollowUps->isNotEmpty(),
                 ])
             @else
                 <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">
