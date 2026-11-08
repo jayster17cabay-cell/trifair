@@ -112,9 +112,12 @@ class SocialiteController extends Controller
         // Default to false when the flag is absent, and use filter_var so the string
         // "false" is not treated as truthy (a naive (bool) cast would).
         $raw = (array) $googleUser->user;
-        $emailVerified = array_key_exists('email_verified', $raw)
-            ? filter_var($raw['email_verified'], FILTER_VALIDATE_BOOLEAN)
-            : false;
+        // Google may expose this claim as email_verified (OIDC) or
+        // verified_email (older Socialite Google payloads). Accept either,
+        // but never treat a missing claim as verified.
+        $verificationClaim = $raw['email_verified'] ?? ($raw['verified_email'] ?? null);
+        $emailVerified = $verificationClaim !== null
+            && filter_var($verificationClaim, FILTER_VALIDATE_BOOLEAN);
 
         if (!$emailVerified) {
             return $this->connectFailure($request, 'Your Google account email is not verified. Please verify it with Google first, then try again.', $isConnect, $intended);

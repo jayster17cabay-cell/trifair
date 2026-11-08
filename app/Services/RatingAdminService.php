@@ -577,7 +577,7 @@ class RatingAdminService
         // a solved complaint still appears in the passenger's Google login.
         if (!$passengerId && $rating->passenger_email) {
             $passengerId = User::query()
-                ->where('email', $rating->passenger_email)
+                ->whereRaw('LOWER(email) = ?', [strtolower(trim($rating->passenger_email))])
                 ->where('role', 'passenger')
                 ->value('id');
         }
