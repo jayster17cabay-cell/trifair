@@ -1230,6 +1230,8 @@
         if (navigator.vibrate) navigator.vibrate(15);
     }
 
+    var rateDraftKey = 'trifairRateDraft:' + window.location.pathname;
+
     function saveRateDraft() {
         var val = function (id) {
             var el = document.getElementById(id);
@@ -1243,19 +1245,25 @@
             passenger_contact: val('passenger_contact'),
             passenger_email: val('passenger_email'),
             start_location: val('rateMapStart'),
-            end_location: val('rateMapEnd')
+            end_location: val('rateMapEnd'),
+            saved_at: Date.now()
         };
-        try { localStorage.setItem('trifairRateDraft', JSON.stringify(draft)); } catch (e) {}
+        try { localStorage.setItem(rateDraftKey, JSON.stringify(draft)); } catch (e) {}
     }
 
     function restoreRateDraft() {
         var raw;
-        try { raw = localStorage.getItem('trifairRateDraft'); } catch (e) { return; }
+        try { raw = localStorage.getItem(rateDraftKey); } catch (e) { return; }
         if (!raw) return;
-        try { localStorage.removeItem('trifairRateDraft'); } catch (e) {}
         var draft;
         try { draft = JSON.parse(raw); } catch (e) { return; }
         if (!draft || typeof draft !== 'object') return;
+        // Do not restore an old complaint when the passenger returns days
+        // later. Keep the draft during the Google round-trip, then expire it.
+        if (draft.saved_at && Date.now() - draft.saved_at > 30 * 60 * 1000) {
+            try { localStorage.removeItem(rateDraftKey); } catch (e) {}
+            return;
+        }
 
         if (draft.rating && draft.rating <= 2) {
             applyStar(parseInt(draft.rating, 10));
@@ -1374,6 +1382,7 @@
                 return false;
             }
             autoSubmitting = true;
+            try { localStorage.removeItem(rateDraftKey); } catch (e) {}
             var btn = document.getElementById('submitBtn');
             if (btn) {
                 btn.disabled = true;
