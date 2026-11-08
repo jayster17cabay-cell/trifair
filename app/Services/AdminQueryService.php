@@ -33,6 +33,14 @@ class AdminQueryService
             $filter = 'open';
         }
 
+        // Monitoring is the complete oversight view. It must not inherit the
+        // action queue's default Open filter, otherwise solved/rejected cases
+        // belonging to a TODA president disappear from the monitoring list
+        // and cannot be found by reference number.
+        if (!$president && $pageName === 'mpage') {
+            $filter = 'all';
+        }
+
         // Where a complaint came from. The superadmin/TFRB inbox is grouped
         // into actionable (forwarded + direct), forwarded by a TODA president,
         // direct to TFRB, awaiting a TODA president, or everything.
@@ -56,7 +64,9 @@ class AdminQueryService
             $source = 'all';
         }
 
-        $base = Rating::isValid()->isComplaint();
+        $base = (!$president && $pageName === 'mpage')
+            ? Rating::isComplaint()
+            : Rating::isValid()->isComplaint();
         if ($president) {
             // Presidents only see complaints routed to them (including
             // ones they have forwarded — they keep visibility to monitor).
