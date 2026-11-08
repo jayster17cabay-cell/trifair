@@ -26,20 +26,38 @@ final class TransactionalMail
     {
         $default = trim((string) config('mail.default', ''));
 
+        // Prefer the Gmail API whenever it is fully configured. It sends as the
+        // real Gmail mailbox, so SPF/DKIM/DMARC align and Gmail does not treat
+        // the message as a spoofed @gmail.com sender. This is the only transport
+        // that fixes spam placement without a custom domain.
+        if (self::gmailApiConfigured()) {
+            return 'gmail-api';
+        }
+
         // Outside production, keep whatever the app configured. The test suite
         // relies on the "array" transport, so it must never be overridden.
         if (!app()->environment('production')) {
-            return $default !== '' ? $default : 'sendinblue';
+            return $default !== '' && $default !== 'gmail-api' ? $default : 'sendinblue';
         }
 
         // Production guard: the "log" transport (and a missing value) silently
         // discards mail. Only in that broken state do we fall back to Brevo, so
-        // a real, explicitly configured mailer (e.g. a future SMTP relay or the
-        // Gmail API transport) is always honoured instead of being overridden.
-        if ($default === '' || $default === 'log') {
+        // a real, explicitly configured mailer is always honoured.
+        if ($default === '' || $default === 'log' || $default === 'gmail-api') {
             return filled(config('services.sendinblue.key')) ? 'sendinblue' : $default;
         }
 
         return $default;
+    }
+
+    private static function gmailApiConfigured(): bool
+    {
+        foreach (['client_id', 'client_secret', 'refresh_token', 'sender'] as $key) {
+            if (!filled(config("services.gmail_api.{$key}"))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

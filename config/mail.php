@@ -38,6 +38,15 @@ return [
             'transport' => 'sendinblue',
         ],
 
+        // Sends as the real Gmail mailbox over HTTPS, so SPF/DKIM/DMARC align
+        // and Gmail does not file the message under Spam. Used automatically
+        // when the GMAIL_API_* credentials are configured (see
+        // App\Support\TransactionalMail). Works on Render's free tier, which
+        // blocks outbound SMTP ports.
+        'gmail-api' => [
+            'transport' => 'gmail-api',
+        ],
+
         'smtp' => [
             'transport' => 'smtp',
             'host' => env('MAIL_HOST', 'smtp.mailgun.org'),

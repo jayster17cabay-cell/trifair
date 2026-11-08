@@ -56,4 +56,14 @@ return [
         'key' => trim((string) env('SENDINBLUE_KEY')),
     ],
 
+    // Gmail API transport (no custom domain required). When all four values are
+    // present, TransactionalMail sends every notification through Gmail so the
+    // mailbox provider sees a genuinely authenticated Gmail message.
+    'gmail_api' => [
+        'client_id' => trim((string) env('GMAIL_API_CLIENT_ID')),
+        'client_secret' => trim((string) env('GMAIL_API_CLIENT_SECRET')),
+        'refresh_token' => trim((string) env('GMAIL_API_REFRESH_TOKEN')),
+        'sender' => trim((string) env('GMAIL_API_SENDER', env('MAIL_FROM_ADDRESS'))),
+    ],
+
 ];

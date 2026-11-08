@@ -69,6 +69,20 @@ services:
         value: jayster17cabay@gmail.com
       - key: MAIL_REPLY_TO_NAME
         value: TriFair Support
+      # Optional Gmail API transport (no custom domain needed). Complete the
+      # one-time Google OAuth setup described in .env.example, then add these
+      # four variables in the Render dashboard. TransactionalMail switches to
+      # Gmail automatically as soon as all four are present; until then Brevo
+      # keeps working. Set MAIL_FROM_ADDRESS to the same address as
+      # GMAIL_API_SENDER.
+      # - key: GMAIL_API_CLIENT_ID
+      #   sync: false
+      # - key: GMAIL_API_CLIENT_SECRET
+      #   sync: false
+      # - key: GMAIL_API_REFRESH_TOKEN
+      #   sync: false
+      # - key: GMAIL_API_SENDER
+      #   sync: false
       # Google OAuth (superadmin / TFRB Officer "Sign in with Google")
       - key: GOOGLE_CLIENT_ID
         value: 877167041441-rnahjnhl7ke6ru7m5i3654gs2c6rtf95.apps.googleusercontent.com
