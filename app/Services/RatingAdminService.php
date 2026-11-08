@@ -143,6 +143,11 @@ class RatingAdminService
             'rejected_at' => now(),
             'reviewed_by' => Auth::id(),
             'resolution_note' => $note,
+            // A new status needs a fresh delivery attempt. If the previous
+            // attempt failed, the nullable value also enables a later retry.
+            'complaint_status_email_sent_at' => $wasRejected
+                ? $rating->complaint_status_email_sent_at
+                : null,
         ]);
         // A rejection carries no resolution proof, so drop any evidence left
         // over from a previous "solved" state to avoid showing stale files.
@@ -151,7 +156,7 @@ class RatingAdminService
 
         ActivityLogger::log('reject_complaint', "Rejected complaint #{$rating->id} (operator: {$rating->operator_name})", $rating, 'review');
 
-        if (!$wasRejected) {
+        if (!$wasRejected || !$rating->complaint_status_email_sent_at) {
             $emailError = $this->notifyComplaintStatus($rating, 'rejected');
             $message = 'After review, your complaint was not validated and will not affect the operator\'s record. Thank you for your report.';
             if ($note) {
@@ -222,6 +227,11 @@ class RatingAdminService
             'reviewed_by' => Auth::id(),
             'resolution_note' => $note,
             'escalation_checklist' => $checkedItems ?? ($rating->escalation_checklist ?? []),
+            // Solved is a new status even when the complaint was previously
+            // rejected, so its passenger email must be sent again.
+            'complaint_status_email_sent_at' => $wasSolved
+                ? $rating->complaint_status_email_sent_at
+                : null,
         ]);
 
         // Only replace the evidence when fresh files are supplied, so re-saving
@@ -234,7 +244,7 @@ class RatingAdminService
 
         ActivityLogger::log('mark_solved', "Marked complaint #{$rating->id} as solved (operator: {$rating->operator_name})", $rating, 'review');
 
-        if (!$wasSolved) {
+        if (!$wasSolved || !$rating->complaint_status_email_sent_at) {
             $emailError = $this->notifyComplaintStatus($rating, 'solved');
             $message = 'Your complaint has been marked as solved.';
             if ($note) {
@@ -537,15 +547,40 @@ class RatingAdminService
      */
     private function notifyComplaintStatus(Rating $rating, string $status): ?string
     {
-        // Prefer the address stored on the complaint, which for connected
-        // passengers is their linked Google account email.
-        $email = $rating->passenger_email ?: ($rating->passenger?->email);
+        // Do not send duplicates after a successful delivery. A null value
+        // deliberately means "not delivered yet" and allows retries after a
+        // Brevo/API/network failure, even if the complaint is already solved
+        // or rejected in the database.
+        if ($rating->complaint_status_email_sent_at) {
+            return null;
+        }
+
+        // Resolve the current Google/passenger account directly. Do not rely
+        // only on a possibly stale Eloquent relation or the guest email copy
+        // stored on the rating.
+        $email = $rating->passenger_user_id
+            ? User::query()->whereKey($rating->passenger_user_id)->where('role', 'passenger')->value('email')
+            : null;
+        $email = $email ?: $rating->passenger_email;
+        $email = $email ? strtolower(trim($email)) : null;
         if (!$email) {
+            Log::warning('Complaint status email skipped: passenger email is missing', [
+                'rating_id' => $rating->id,
+                'status' => $status,
+            ]);
             return null;
         }
 
         try {
             Mail::to($email)->send(new ComplaintStatus($rating, $status));
+            $rating->forceFill([
+                'complaint_status_email_sent_at' => now(),
+            ])->saveQuietly();
+            Log::info('Complaint status email sent', [
+                'rating_id' => $rating->id,
+                'status' => $status,
+                'recipient' => $email,
+            ]);
 
             return null;
         } catch (\Throwable $e) {
