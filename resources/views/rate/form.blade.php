@@ -1265,7 +1265,7 @@
             return;
         }
 
-        if (draft.rating && draft.rating <= 2) {
+        if (draft.rating && draft.rating >= 1 && draft.rating <= 5) {
             applyStar(parseInt(draft.rating, 10));
         }
         if (draft.complaint_type) {
