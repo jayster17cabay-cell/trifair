@@ -238,6 +238,13 @@ class SuperadminController extends Controller
         return view('superadmin.complaints', $data);
     }
 
+    public function complaint(Rating $rating)
+    {
+        $rating->load(['operator.user', 'proofs', 'response', 'operatorProofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user', 'forwardedBy', 'routedToPresident']);
+
+        return view('superadmin.complaint', compact('rating'));
+    }
+
     /**
      * AJAX endpoint for the complaints source tabs: returns live per-source
      * tallies (forwarded / direct / awaiting / actionable / all) honoring the

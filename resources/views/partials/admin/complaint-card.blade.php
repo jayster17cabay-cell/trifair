@@ -61,6 +61,7 @@
     $isForwarded = !empty($rating->forwarded_at);
     $isForwardedByPresident = !empty($rating->forwarded_by);
     $appeals = $rating->passengerFollowUps->filter(fn ($followUp) => (bool) $followUp->is_appeal);
+    $standalone = $standalone ?? false;
 
     // At-a-glance origin badge. Staff queues distinguish forwarded
     // escalations, direct-to-TFRB complaints and cases still with a
@@ -99,10 +100,17 @@
     }
 @endphp
 
-<div class="tw-card mb-3 overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
-    <div class="flex cursor-pointer select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-navy-600/20 sm:px-5" data-complaint-toggle role="button" tabindex="0" aria-expanded="false" aria-controls="complaint-details-{{ $rating->id }}"
-         onclick="var d=document.getElementById(this.getAttribute('aria-controls'));if(!d)return;var x=this.getAttribute('aria-expanded')==='true';this.setAttribute('aria-expanded',x?'false':'true');d.style.setProperty('display',x?'none':'block','important');var c=this.querySelector('[data-complaint-chevron]');if(c)c.classList.toggle('rotate-180',!x);"
-         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
+<div class="tw-card {{ $standalone ? 'shadow-lg' : 'mb-3' }} overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
+    <div class="flex {{ $standalone ? '' : 'cursor-pointer' }} select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:px-5"
+         @if (!$standalone && !$isPresidentView)
+             role="link" tabindex="0" aria-label="Open complaint {{ $rating->reference_number }}"
+             onclick="window.location.href='{{ route($routePrefix . '.complaints.show', $rating) }}';"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{{ route($routePrefix . '.complaints.show', $rating) }}';}"
+         @elseif (!$standalone)
+             role="button" tabindex="0" aria-expanded="false" aria-controls="complaint-details-{{ $rating->id }}"
+             onclick="var d=document.getElementById(this.getAttribute('aria-controls'));if(!d)return;var x=this.getAttribute('aria-expanded')==='true';this.setAttribute('aria-expanded',x?'false':'true');d.style.setProperty('display',x?'none':'block','important');var c=this.querySelector('[data-complaint-chevron]');if(c)c.classList.toggle('rotate-180',!x);"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"
+         @endif>
         <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 <span class="truncate text-sm font-bold text-slate-800">{{ $operatorName }}</span>
@@ -152,11 +160,13 @@
             @else
                 <span class="tw-badge tw-badge-amber"><i class="bi bi-clock-fill"></i> Open</span>
             @endif
-            <i class="bi bi-chevron-down text-slate-400 transition-transform duration-200" data-complaint-chevron></i>
+            @unless ($standalone)
+                <i class="bi {{ $isPresidentView ? 'bi-chevron-down' : 'bi-arrow-up-right' }} text-slate-400" data-complaint-chevron aria-hidden="true"></i>
+            @endunless
         </div>
     </div>
 
-    <div id="complaint-details-{{ $rating->id }}" class="border-t border-slate-100 bg-slate-50/40" style="display:none!important" data-complaint-details>
+    <div id="complaint-details-{{ $rating->id }}" class="border-t border-slate-100 bg-slate-50/40" @unless ($standalone) style="display:none!important" @endunless data-complaint-details>
         @if ($isForwarded)
             {{-- Escalation trail: makes it obvious the case came from a TODA
                  president and that ownership now sits with the TFRB. --}}
@@ -180,33 +190,35 @@
         <div class="grid gap-x-10 gap-y-5 p-4 sm:p-5 md:grid-cols-2">
             <div class="space-y-4">
                 <div>
-                    <div class="tw-stat-label mb-1.5"><i class="bi bi-exclamation-triangle mr-1 {{ $typeIconClass }}"></i>Complaint Type</div>
-                    <div class="text-sm font-semibold text-slate-700">{{ $rating->complaint_type }}</div>
+                    <div class="tw-stat-label mb-1.5"><i class="bi bi-exclamation-triangle mr-1 {{ $typeIconClass }}"></i>Complaint type</div>
+                    <div class="inline-flex items-center rounded-lg border border-amber-100 bg-amber-50 px-3 py-1.5 text-sm font-bold text-amber-800">{{ $rating->complaint_type ?: 'General complaint' }}</div>
                     @if ($rating->complaint_details)
                         <p class="mt-1.5 rounded-lg border border-slate-100 bg-white px-3 py-2.5 text-sm leading-relaxed text-slate-600">"{{ $rating->complaint_details }}"</p>
                     @endif
                 </div>
                 <div>
-                    <div class="tw-stat-label mb-1.5"><i class="bi bi-person mr-1 text-violet-500"></i>Passenger</div>
-                    <div class="text-sm text-slate-700">
-                        {{ $rating->passenger_name ?: 'Anonymous' }}
-                        @if ($rating->passenger_contact)
-                            &middot; <a href="tel:{{ $rating->passenger_contact }}" class="font-semibold text-navy-600 hover:underline">{{ $rating->passenger_contact }}</a>
-                        @endif
-                        @if ($rating->passenger_email)
-                            &middot; <a href="mailto:{{ $rating->passenger_email }}" class="font-semibold text-navy-600 hover:underline">{{ $rating->passenger_email }}</a>
-                        @endif
+                    <div class="tw-stat-label mb-1.5"><i class="bi bi-person mr-1 text-violet-500"></i>Passenger information</div>
+                    <div class="rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2.5">
+                        <div class="text-sm font-bold text-slate-700">{{ $rating->passenger_name ?: 'Passenger' }}</div>
+                        <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                            @if ($rating->passenger_contact)
+                                <a href="tel:{{ $rating->passenger_contact }}" class="font-semibold text-navy-600 hover:underline"><i class="bi bi-telephone mr-1"></i>{{ $rating->passenger_contact }}</a>
+                            @endif
+                            @if ($rating->passenger_email)
+                                <a href="mailto:{{ $rating->passenger_email }}" class="font-semibold text-navy-600 hover:underline"><i class="bi bi-envelope mr-1"></i>{{ $rating->passenger_email }}</a>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-4">
                 <div>
-                    <div class="tw-stat-label mb-1.5"><i class="bi bi-signpost-2 mr-1 text-blue-500"></i>Route</div>
+                    <div class="tw-stat-label mb-1.5"><i class="bi bi-signpost-2 mr-1 text-blue-500"></i>Trip route</div>
                     @if ($rating->start_location || $rating->end_location)
-                        <div class="flex flex-wrap items-center gap-1.5">
+                        <div class="flex flex-col gap-1.5 rounded-lg border border-blue-100 bg-blue-50/50 p-2.5 sm:flex-row sm:items-center">
                             @if ($rating->start_location)
-                                <span class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+                                <span class="inline-flex min-w-0 items-center gap-1.5 break-words rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600">
                                     <i class="bi bi-circle-fill text-[0.55rem] text-emerald-600"></i> {{ $rating->start_location }}
                                 </span>
                             @endif
@@ -214,7 +226,7 @@
                                 <i class="bi bi-arrow-right text-[0.7rem] text-slate-300"></i>
                             @endif
                             @if ($rating->end_location)
-                                <span class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+                                <span class="inline-flex min-w-0 items-center gap-1.5 break-words rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600">
                                     <i class="bi bi-circle-fill text-[0.55rem] text-red-600"></i> {{ $rating->end_location }}
                                 </span>
                             @endif
