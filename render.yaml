@@ -37,7 +37,7 @@ services:
       - key: CLEANUP_TOKEN
         sync: false
       - key: SESSION_DRIVER
-        value: file
+        value: database
       - key: SESSION_SAME_SITE
         value: lax
       - key: SESSION_SECURE_COOKIE

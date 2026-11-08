@@ -21,4 +21,6 @@
         'readOnly' => false,
         'standalone' => true,
     ])
+
+    @include('partials.admin.complaint-resolution-modal')
 @endsection
