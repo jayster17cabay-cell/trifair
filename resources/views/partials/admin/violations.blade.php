@@ -50,10 +50,10 @@
             </select>
         </div>
         <div class="ml-auto flex flex-wrap items-center gap-2">
-            <div class="tw-input-group">
+            <div class="tw-input-group rounded-xl border border-slate-200 bg-white shadow-sm transition focus-within:border-navy-500 focus-within:ring-2 focus-within:ring-navy-600/10">
                 <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
                 <input type="text" name="search" value="{{ $search }}" placeholder="Search operator, type, location"
-                       class="tw-input py-2" style="width: min(16rem, 100%);" aria-label="Search violation reports">
+                       class="tw-input py-2.5 w-full sm:w-64" aria-label="Search violation reports">
             </div>
             <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy"><i class="bi bi-search"></i><span class="hidden sm:inline">Search</span></button>
             @if ($search !== '')

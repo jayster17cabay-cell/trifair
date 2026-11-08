@@ -95,7 +95,7 @@
         <div class="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             <form id="presidentMemberFilter" class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center" method="GET" action="{{ route('president.dashboard') }}">
                 <input type="text" id="presidentMemberSearch" name="search" value="{{ request('search') }}" placeholder="Search name, body #, plate…" aria-label="Search members by name, body number, or plate"
-                       class="h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 placeholder-slate-400 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold sm:w-56">
+                        class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm placeholder-slate-400 transition focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/20 sm:w-64">
                 <select id="presidentMemberStatus" name="status" aria-label="Filter members by status" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
                     <option value="">All status</option>
                     @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $val => $label)

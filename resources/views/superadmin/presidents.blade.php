@@ -23,10 +23,10 @@
     </div>
 </div>
 
-<div class="mb-4 max-w-md">
-    <div class="tw-input-group">
+<div class="mb-5 w-full max-w-xl">
+    <div class="tw-input-group rounded-xl border border-slate-200 bg-white shadow-sm transition focus-within:border-navy-500 focus-within:ring-2 focus-within:ring-navy-600/10">
         <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
-        <input type="text" id="presidentSearchInput" class="tw-input" placeholder="Search presidents by name or email..." value="{{ $search ?? '' }}" aria-label="Search presidents by name or email">
+        <input type="text" id="presidentSearchInput" class="tw-input w-full py-2.5" placeholder="Search presidents by name or email..." value="{{ $search ?? '' }}" aria-label="Search presidents by name or email">
         @if ($search)
             <a href="{{ route('superadmin.presidents') }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700" aria-label="Clear search">
                 <i class="bi bi-x-lg"></i>

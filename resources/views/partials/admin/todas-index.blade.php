@@ -19,10 +19,10 @@
 </div>
 
 <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <div class="w-full max-w-md">
-        <div class="tw-input-group">
+    <div class="w-full max-w-xl">
+        <div class="tw-input-group rounded-xl border border-slate-200 bg-white shadow-sm transition focus-within:border-navy-500 focus-within:ring-2 focus-within:ring-navy-600/10">
             <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
-            <input type="text" id="todaSearchInput" class="tw-input" placeholder="Search TODA by name or area..." value="{{ $search ?? '' }}" aria-label="Search TODA by name or area">
+            <input type="text" id="todaSearchInput" class="tw-input w-full py-2.5" placeholder="Search TODA by name or area..." value="{{ $search ?? '' }}" aria-label="Search TODA by name or area">
             <button type="button" class="tw-btn tw-btn-gold shrink-0 px-4" onclick="liveTodaSearch(document.getElementById('todaSearchInput').value)" aria-label="Search">
                 <i class="bi bi-search"></i>
             </button>

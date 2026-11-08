@@ -49,7 +49,7 @@
         <input type="hidden" name="view" value="monitor">
         <div class="min-w-0 flex-1 sm:max-w-md">
             <label for="monitoring_complaint_search" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Search all complaint references</label>
-            <div class="tw-input-group bg-white">
+            <div class="tw-input-group rounded-xl border border-slate-200 bg-white shadow-sm transition focus-within:border-navy-500 focus-within:ring-2 focus-within:ring-navy-600/10">
                 <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
                 <input type="text" id="monitoring_complaint_search" name="search" value="{{ request('search') }}"
                        placeholder="Type TFR-2026-0396" class="tw-input w-full" aria-label="Search all complaints by reference number">
