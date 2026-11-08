@@ -25,7 +25,6 @@ return new class extends Migration
                 'forwarded_at' => null,
                 'forwarded_by' => null,
                 'solved_at' => null,
-                'resolution_at' => null,
             ]);
     }
 
