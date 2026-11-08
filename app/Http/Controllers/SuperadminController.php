@@ -230,7 +230,7 @@ class SuperadminController extends Controller
 
         // Monitoring view: all complaints (including those with the TODA
         // president) so the TFRB/superadmin can oversee every case.
-        $monitoringData = app(AdminQueryService::class)->complaintsData($request, null, 'all', 'mpage');
+        $monitoringData = app(AdminQueryService::class)->complaintsData($request, null, 'mpage');
         $data['monitoringComplaints'] = $monitoringData['complaints'];
         $data['monitoringSourceCounts'] = $monitoringData['sourceCounts'];
         $data['monitoringTotalCount'] = $monitoringData['totalCount'];
