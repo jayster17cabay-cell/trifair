@@ -19,7 +19,17 @@ final class TransactionalMail
 {
     public static function send(string $to, Mailable $mailable): void
     {
-        Mail::mailer(self::mailer())->to($to)->send($mailable);
+        $mailer = self::mailer();
+
+        \Illuminate\Support\Facades\Log::info('TransactionalMail sending', [
+            'mailer' => $mailer,
+            'to' => $to,
+            'mailable' => get_class($mailable),
+            'gmail_api_configured' => self::gmailApiConfigured(),
+            'mail_default' => config('mail.default'),
+        ]);
+
+        Mail::mailer($mailer)->to($to)->send($mailable);
     }
 
     public static function mailer(): string

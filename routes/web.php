@@ -27,6 +27,29 @@ Route::get('/landing-stats', [LandingController::class, 'stats'])->name('landing
 // Render health checks must not depend on Supabase or the session database.
 Route::get('/health', fn () => response()->json(['status' => 'ok']))->name('health');
 
+// Temporary diagnostic route for email delivery troubleshooting.
+Route::get('/mail-diagnostic', function () {
+    $mailer = \App\Support\TransactionalMail::mailer();
+    $gmailConfigured = true;
+    foreach (['client_id', 'client_secret', 'refresh_token', 'sender'] as $key) {
+        if (!filled(config("services.gmail_api.{$key}"))) {
+            $gmailConfigured = false;
+            break;
+        }
+    }
+
+    return response()->json([
+        'environment' => app()->environment(),
+        'mail_default' => config('mail.default'),
+        'resolved_mailer' => $mailer,
+        'gmail_api_configured' => $gmailConfigured,
+        'gmail_api_sender' => config('services.gmail_api.sender'),
+        'mail_from_address' => config('mail.from.address'),
+        'mail_reply_to_address' => config('mail.reply_to.address'),
+        'brevo_key_present' => filled(config('services.sendinblue.key')),
+    ]);
+})->name('mail.diagnostic');
+
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
