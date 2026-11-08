@@ -454,7 +454,11 @@ class RatingAdminService
         }
         $this->assertCanActOnComplaint($rating);
 
-        if ($rating->is_solved) {
+        $hasAppeal = $rating->passengerFollowUps()
+            ->where('is_appeal', true)
+            ->exists();
+
+        if ($rating->is_solved && !$hasAppeal) {
             return back()->withErrors(['chat' => 'This complaint is already resolved — the chat is closed.']);
         }
 

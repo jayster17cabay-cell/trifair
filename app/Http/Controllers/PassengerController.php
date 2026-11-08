@@ -131,6 +131,23 @@ class PassengerController extends Controller
             'message.max' => 'The follow-up message must not exceed 1,000 characters.',
         ]);
 
+        if ($isAppeal) {
+            // An appeal reopens the case and sends ownership back to the
+            // TFRB/superadmin queue, even when a TODA president already solved
+            // or rejected it. This makes it actionable, not just a message
+            // hidden in a closed thread.
+            $rating->update([
+                'is_solved' => false,
+                'is_reviewed' => false,
+                'rejected_at' => null,
+                'routed_to' => null,
+                'forwarded_at' => null,
+                'forwarded_by' => null,
+                'solved_at' => null,
+                'resolution_at' => null,
+            ]);
+        }
+
         $rating->passengerFollowUps()->create([
             'user_id' => $user->id,
             'message' => $data['message'],

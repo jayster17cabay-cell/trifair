@@ -12,7 +12,10 @@
 --}}
 @php
     $thread = $rating->passengerFollowUps;
-    $canChat = !$rating->is_solved && !($readOnly ?? false);
+    $hasAppeal = $thread->contains(fn ($followUp) => (bool) $followUp->is_appeal);
+    // A solved complaint normally has a closed thread, but a passenger appeal
+    // reopens the staff side so TFRB/superadmin can answer that appeal.
+    $canChat = (!$rating->is_solved || ($isStaffView && $hasAppeal)) && !($readOnly ?? false);
     $isStaffView = $viewSide === 'staff';
     $standalone = $standalone ?? false;
     $chatOpen = $chatOpen ?? false;
