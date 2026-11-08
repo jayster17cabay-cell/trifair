@@ -42,6 +42,14 @@ class AdminQueryService
             $source = 'actionable';
         }
 
+        // A reference-number search is an explicit request for one known
+        // complaint. Do not hide it just because it is currently assigned to
+        // a TODA president while the inbox is on the default actionable tab.
+        // An explicitly selected source still remains respected.
+        if (!$president && $search !== '' && !$request->has('source')) {
+            $source = 'all';
+        }
+
         $base = Rating::isValid()->isComplaint();
         if ($president) {
             // Presidents only see complaints routed to them (including
