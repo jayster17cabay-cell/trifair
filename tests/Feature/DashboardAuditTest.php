@@ -734,7 +734,7 @@ class DashboardAuditTest extends TestCase
 
         // Simulate a broken mail transport (e.g. a missing or invalid Brevo key)
         // so the guarded send throws instead of silently succeeding.
-        Mail::shouldReceive('to')->andThrow(new \RuntimeException('SMTP transport unavailable'));
+        Mail::shouldReceive('mailer')->andThrow(new \RuntimeException('Brevo transport unavailable'));
 
         $this->actingAs($officer)
             ->patch('/tfrb-officer/complaints/' . $rating->id . '/solve', [

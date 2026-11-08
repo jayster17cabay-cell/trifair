@@ -582,7 +582,10 @@ class RatingAdminService
         }
 
         try {
-            Mail::to($email)->send(new ComplaintStatus($rating, $status));
+            // Complaint status mail must use Brevo explicitly. Relying on the
+            // default mailer can silently select the framework fallback when
+            // a cached Render environment still has an old MAIL_MAILER value.
+            Mail::mailer('sendinblue')->to($email)->send(new ComplaintStatus($rating, $status));
             $rating->forceFill([
                 'complaint_status_email_sent_at' => now(),
             ])->saveQuietly();
