@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Mail\VerifyEmail;
+use App\Mail\VerifyEmailCode;
 use App\Support\TransactionalMail;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -36,6 +36,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'provider',
         'provider_id',
         'toda_id',
+        'email_verification_code',
+        'email_verification_code_expires_at',
     ];
 
     protected $hidden = [
@@ -45,6 +47,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'email_verification_code_expires_at' => 'datetime',
         'is_active' => 'boolean',
         'must_change_password' => 'boolean',
     ];
@@ -61,13 +64,13 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Send the branded verification email through the application's
-     * transactional mail pipeline.
+     * Send a one-time verification code through the application's transactional
+     * mail pipeline.
      *
-     * Overriding the framework notification keeps the verification message on
-     * the same Brevo transport, From/Reply-To identity and HTML + plain-text
-     * multipart format as every other TriFair email. That consistency is what
-     * keeps the verification link out of spam folders.
+     * A short numeric code is used instead of a clickable link because Gmail's
+     * spam filter aggressively flags emails containing URLs to shared hosting
+     * domains (like onrender.com). A code-only message has a much lower spam
+     * score and is the format users expect for OTP-style verification.
      */
     public function sendEmailVerificationNotification()
     {
@@ -75,10 +78,17 @@ class User extends Authenticatable implements MustVerifyEmail
             return;
         }
 
+        $code = (string) random_int(100000, 999999);
+
+        $this->forceFill([
+            'email_verification_code' => $code,
+            'email_verification_code_expires_at' => now()->addMinutes(10),
+        ])->saveQuietly();
+
         try {
             TransactionalMail::send(
                 $this->getEmailForVerification(),
-                new VerifyEmail($this)
+                new VerifyEmailCode($this, $code, 10)
             );
         } catch (\Throwable $e) {
             Log::error('Email verification send failed: ' . get_class($e) . ': ' . $e->getMessage(), [
@@ -88,6 +98,36 @@ class User extends Authenticatable implements MustVerifyEmail
 
             throw $e;
         }
+    }
+
+    /**
+     * Verify the submitted code. Returns true on success.
+     */
+    public function verifyEmailCode(string $code): bool
+    {
+        if ($this->hasVerifiedEmail()) {
+            return true;
+        }
+
+        if (
+            $this->email_verification_code === null
+            || $this->email_verification_code_expires_at === null
+            || $this->email_verification_code_expires_at->isPast()
+        ) {
+            return false;
+        }
+
+        if (!hash_equals($this->email_verification_code, trim($code))) {
+            return false;
+        }
+
+        $this->forceFill([
+            'email_verified_at' => now(),
+            'email_verification_code' => null,
+            'email_verification_code_expires_at' => null,
+        ])->saveQuietly();
+
+        return true;
     }
 
     public function setNameAttribute($value)

@@ -158,7 +158,7 @@ class AuditFixRegressionTest extends TestCase
             ->assertOk()
             ->assertSee('Account Pending Approval');
 
-        $response->assertSee('Resend Verification Link');
+        $response->assertSee('Resend Code');
     }
 
     public function test_verification_verify_redirects_by_role()
@@ -191,10 +191,10 @@ class AuditFixRegressionTest extends TestCase
             ->from('/operator/pending')
             ->post('/email/resend')
             ->assertRedirect('/operator/pending')
-            ->assertSessionHas('message', 'Verification link sent!');
+            ->assertSessionHas('message', 'Verification code sent!');
 
         $this->actingAs($user)
             ->post('/email/resend')
-            ->assertSessionHas('message', 'Verification link sent!');
+            ->assertSessionHas('message', 'Verification code sent!');
     }
 }

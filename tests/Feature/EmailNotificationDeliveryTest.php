@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\ComplaintStatus;
-use App\Mail\VerifyEmail;
+use App\Mail\VerifyEmailCode;
 use App\Models\Operator;
 use App\Models\Rating;
 use App\Models\Toda;
@@ -137,15 +137,15 @@ class EmailNotificationDeliveryTest extends TestCase
         $user = User::where('email', 'newop@example.com')->firstOrFail();
         $this->assertNull($user->email_verified_at);
 
-        Mail::assertSent(VerifyEmail::class, function (VerifyEmail $mail) use ($user) {
+        Mail::assertSent(VerifyEmailCode::class, function (VerifyEmailCode $mail) use ($user) {
             // Mail::fake() stores the mailable before build() runs, so build it
             // here to inspect the configured HTML/text views.
             $mail->build();
 
             return $mail->hasTo($user->email)
-                && $mail->view === 'emails.verify-email'
-                && $mail->textView === 'emails.verify-email-text'
-                && str_contains($mail->verificationUrl, '/email/verify/');
+                && $mail->view === 'emails.verify-email-code'
+                && $mail->textView === 'emails.verify-email-code-text'
+                && strlen($mail->code) === 6;
         });
     }
 
@@ -161,10 +161,10 @@ class EmailNotificationDeliveryTest extends TestCase
         $this->actingAs($unverified)
             ->post('/email/resend')
             ->assertRedirect()
-            ->assertSessionHas('message', 'Verification link sent!');
+            ->assertSessionHas('message', 'Verification code sent!');
 
-        Mail::assertSent(VerifyEmail::class, fn (VerifyEmail $mail) => $mail->hasTo('unverified@example.com'));
-        Mail::assertSent(VerifyEmail::class, 1);
+        Mail::assertSent(VerifyEmailCode::class, fn (VerifyEmailCode $mail) => $mail->hasTo('unverified@example.com'));
+        Mail::assertSent(VerifyEmailCode::class, 1);
 
         // A verified account must not receive another verification message.
         $verified = $this->makeUser('passenger', ['email' => 'verified@example.com']);
@@ -174,7 +174,7 @@ class EmailNotificationDeliveryTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('message', 'Your email address is already verified.');
 
-        Mail::assertSent(VerifyEmail::class, 1);
+        Mail::assertSent(VerifyEmailCode::class, 1);
     }
 
     // ---- solve emails across every acting role ------------------------------

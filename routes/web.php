@@ -80,6 +80,42 @@ Route::get('/email/verify', function () {
     return view('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
 
+Route::post('/email/verify-code', function (\Illuminate\Http\Request $request) {
+    $user = $request->user();
+
+    if ($user->hasVerifiedEmail()) {
+        return redirect()->intended('/');
+    }
+
+    $request->validate([
+        'code' => ['required', 'string', 'size:6'],
+    ]);
+
+    if (!$user->verifyEmailCode($request->input('code'))) {
+        return back()->withErrors(['code' => 'The verification code is invalid or has expired.']);
+    }
+
+    $user = $request->user()->fresh();
+
+    if ($user->role === 'operator') {
+        $operator = $user->operator;
+        if ($operator && $operator->status === 'active') {
+            return redirect()->route('operator.dashboard');
+        }
+        return redirect()->route('operator.pending');
+    }
+
+    if ($user->role === 'tfrb_officer' || $user->role === 'superadmin') {
+        return redirect()->route('tfrb-officer.dashboard');
+    }
+
+    if ($user->role === 'operator_president') {
+        return redirect()->route('dashboard');
+    }
+
+    return redirect('/');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.code');
+
 Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Foundation\Auth\EmailVerificationRequest $request) {
     $request->fulfill();
     $user = $request->user();
@@ -120,7 +156,7 @@ Route::post('/email/resend', function (\Illuminate\Http\Request $request) {
         ]);
     }
 
-    return back()->with('message', 'Verification link sent!');
+    return back()->with('message', 'Verification code sent!');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.resend');
 
 Route::middleware(['auth', 'role:tfrb_officer'])->prefix('tfrb-officer')->name('tfrb-officer.')->group(function () {

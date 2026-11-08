@@ -9,7 +9,7 @@
                         <i class="bi bi-envelope-check"></i> Email Verification
                     </div>
                     <h4 class="text-2xl font-extrabold tracking-tight text-navy-700">Verify Your Email</h4>
-                    <p class="mt-1 text-sm text-slate-500">A verification link has been sent to your email address.</p>
+                    <p class="mt-1 text-sm text-slate-500">A verification code has been sent to your email address.</p>
                 </div>
 
                 @if (session('message'))
@@ -19,28 +19,43 @@
                     </div>
                 @endif
 
+                @if ($errors->has('code'))
+                    <div class="tw-alert tw-alert-danger mt-4">
+                        <i class="bi bi-exclamation-circle-fill mt-0.5"></i>
+                        <span>{{ $errors->first('code') }}</span>
+                    </div>
+                @endif
+
                 <div class="mt-8 flex flex-col items-center">
                     <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gold/10 text-4xl text-gold-dark">
                         <i class="bi bi-envelope-open"></i>
                     </div>
 
                     <p class="mb-4 text-center text-sm text-slate-500">
-                        Please check your email inbox and click the verification link to activate your account.
+                        Check your email inbox for a 6-digit verification code and enter it below.
                     </p>
 
-                    <p class="mb-2 text-center text-sm text-slate-500">
-                        Can't find the email? Check your <strong>Spam</strong> or <strong>Junk</strong> folder first,
-                        then click the button below to resend.
-                    </p>
-                    <p class="mb-6 text-center text-xs text-slate-400">
-                        Add the TriFair sender to your contacts so future verification and complaint updates reach
-                        your inbox.
-                    </p>
-
-                    <form method="POST" action="{{ route('verification.resend') }}" class="w-full">
+                    <form method="POST" action="{{ route('verification.code') }}" class="w-full">
                         @csrf
+                        <div class="mb-4">
+                            <input type="text" name="code" id="code" maxlength="6" pattern="[0-9]{6}"
+                                   inputmode="numeric" autocomplete="one-time-code"
+                                   class="w-full rounded-lg border border-slate-300 px-4 py-3 text-center text-2xl font-bold tracking-widest text-navy-700 focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
+                                   placeholder="000000" required autofocus>
+                        </div>
                         <button type="submit" class="tw-btn tw-btn-gold w-full tw-btn-lg">
-                            <i class="bi bi-arrow-repeat"></i> Resend Verification Link
+                            <i class="bi bi-check-lg"></i> Verify Email
+                        </button>
+                    </form>
+
+                    <p class="mt-4 text-center text-xs text-slate-400">
+                        Can't find the email? Check your Spam or Junk folder, or click below to resend.
+                    </p>
+
+                    <form method="POST" action="{{ route('verification.resend') }}" class="w-full mt-2">
+                        @csrf
+                        <button type="submit" class="tw-btn tw-btn-ghost w-full text-sm">
+                            <i class="bi bi-arrow-repeat"></i> Resend Code
                         </button>
                     </form>
 
