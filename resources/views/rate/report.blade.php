@@ -186,7 +186,7 @@
                             <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
                             <span>You are connected as <strong>{{ $linkedEmail }}</strong>. You can track this report in your <a href="{{ route('passenger.dashboard') }}" style="color:#0A2A5E;text-decoration:underline;font-weight:700;">Passenger Dashboard</a>.</span>
                         </div>
-                        <a href="{{ route('login.google', ['intended' => request()->path()]) }}"
+                        <a href="{{ route('login.google', ['intended' => request()->getRequestUri()]) }}"
                            class="rate-connect-btn"
                            id="googleSwitchBtn"
                            title="Choose a different Google account">
@@ -243,7 +243,7 @@
                         <h4>Sign in to file your report</h4>
                         <p>Your report goes straight to the TFRB review queue, and you will be able to monitor its status in your <strong>Passenger Dashboard</strong> — exactly like your complaints.</p>
                         @if (config('services.google.client_id') && config('services.google.client_secret'))
-                            <a href="{{ route('login.google', ['intended' => request()->path()]) }}" class="rate-connect-btn" id="googleConnectBtn">
+                            <a href="{{ route('login.google', ['intended' => request()->getRequestUri()]) }}" class="rate-connect-btn" id="googleConnectBtn">
                                 @include('partials.google-g', ['class' => 'h-4 w-4 shrink-0'])
                                 Continue with Google
                                 <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>

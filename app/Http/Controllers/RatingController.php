@@ -200,7 +200,10 @@ class RatingController extends Controller
             // the complaint is rejected — the details are only required for
             // "Others".
             $rules['complaint_details'] = 'nullable|required_if:complaint_type,Others|string|max:2000';
-            $rules['proofs'] = 'required|array|min:1|max:3';
+            // Allow passengers to attach several pieces of evidence. The
+            // browser's normal upload limit is the only practical ceiling;
+            // each individual file is still validated below.
+            $rules['proofs'] = 'required|array|min:1|max:20';
             $rules['proofs.*'] = 'file|mimes:jpg,jpeg,png,gif,mp4,avi,mov,pdf,doc,docx|max:20480';
 
             if (!$passengerUser || !$passengerUser->email) {
@@ -210,7 +213,7 @@ class RatingController extends Controller
             // Validate proof files whenever they are actually uploaded (any star
             // rating), so the rules always match the upload loop below and a crafted
             // 3-5 star POST can no longer sneak unvalidated files into storage.
-            $rules['proofs'] = 'nullable|array|max:3';
+            $rules['proofs'] = 'nullable|array|max:20';
             $rules['proofs.*'] = 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,avi,mov,pdf,doc,docx|max:20480';
         }
 
@@ -545,7 +548,7 @@ class RatingController extends Controller
             'start_location' => 'nullable|string|max:500',
             'end_location' => 'nullable|string|max:500',
             'toda_id' => 'nullable|integer',
-            'proofs' => 'nullable|array|max:5',
+            'proofs' => 'nullable|array|max:20',
             'proofs.*' => 'file|mimes:jpg,jpeg,png,pdf,mp4|max:10240',
         ];
 

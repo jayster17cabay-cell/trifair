@@ -303,7 +303,7 @@
                                                 <i class="bi bi-check-circle-fill" style="color:#059669;" aria-hidden="true"></i>
                                                 <span>You are connected as <strong>{{ auth()->user()->email }}</strong>. You can see your complaints and their status in your <a href="{{ route('passenger.dashboard') }}" style="color:#0A2A5E;text-decoration:underline;font-weight:700;">Passenger Dashboard</a>.</span>
                                             </div>
-                                            <a href="{{ route('login.google', ['intended' => request()->path()]) }}"
+                                            <a href="{{ route('login.google', ['intended' => request()->getRequestUri()]) }}"
                                                class="rate-connect-btn"
                                                id="googleSwitchBtn"
                                                title="Choose a different Google account">
@@ -312,7 +312,7 @@
                                                 <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
                                             </a>
                                         @else
-                                            <a href="{{ route('login.google', ['intended' => request()->path()]) }}" class="rate-connect-btn" id="googleConnectBtn">
+                                            <a href="{{ route('login.google', ['intended' => request()->getRequestUri()]) }}" class="rate-connect-btn" id="googleConnectBtn">
                                                 @include('partials.google-g', ['class' => 'h-4 w-4 shrink-0'])
                                                 Continue with Google
                                                 <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>
@@ -328,7 +328,7 @@
                             <div class="rate-upload" id="uploadZone">
                                 <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
                                 <div class="main-text">Upload evidence</div>
-                                <div class="sub-text">Photo, video, or document (max 20MB)</div>
+                                <div class="sub-text">Add as many photos, videos, or documents as needed (20MB each)</div>
                             </div>
                             <input type="file" name="proofs[]" id="proofInput" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="display:none;">
                             <div class="rate-file-chips" id="fileChips"></div>
@@ -1311,13 +1311,13 @@
             var files = [];
             var fl = this.files;
             for (var fi = 0; fi < fl.length; fi++) { files.push(fl[fi]); }
-            var MAX_FILES = 3;
+            var MAX_FILES = 20;
             var MAX_SIZE = 20 * 1024 * 1024;
             var oversized = files.filter(function (f) { return f.size > MAX_SIZE; });
 
             chips.innerHTML = '';
             if (files.length > MAX_FILES) {
-                chips.innerHTML = '<span class="rate-file-chip" style="background:#fef2f2;color:#dc2626;"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Up to 3 files only — ' + files.length + ' selected</span>';
+                chips.innerHTML = '<span class="rate-file-chip" style="background:#fef2f2;color:#dc2626;"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Up to 20 files can be attached — ' + files.length + ' selected</span>';
                 this.value = '';
                 refreshSubmitAvailability();
                 return;
