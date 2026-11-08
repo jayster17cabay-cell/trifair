@@ -463,6 +463,7 @@ Route::get('/rate/{qrCode}/report/submitted', [RatingController::class, 'reportS
 
 Route::group(['prefix' => 'passenger', 'middleware' => ['auth', 'role:passenger']], function () {
     Route::get('/dashboard', [PassengerController::class, 'dashboard'])->name('passenger.dashboard');
+    Route::get('/complaints/{rating}', [PassengerController::class, 'complaint'])->name('passenger.complaints.show');
     // A passenger follows up on their own complaint while it is still open.
     Route::post('/complaints/{rating}/follow-up', [PassengerController::class, 'followUp'])
         ->middleware('throttle:10,1')

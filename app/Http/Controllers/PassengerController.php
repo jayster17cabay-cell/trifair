@@ -88,6 +88,20 @@ class PassengerController extends Controller
     }
 
     /**
+     * Show one complaint on its own screen. The list stays intentionally
+     * lightweight; follow-ups and appeals belong to this focused view.
+     */
+    public function complaint(Request $request, Rating $rating)
+    {
+        abort_unless((int) $rating->passenger_user_id === (int) $request->user()->id, 404);
+        abort_unless($rating->complaint_type !== null, 404);
+
+        $rating->load(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user']);
+
+        return view('passenger.complaint', compact('rating'));
+    }
+
+    /**
      * Add a follow-up message to the passenger's own complaint so they can ask
      * for an update or supply extra context while the ticket is still open.
      */
@@ -100,14 +114,17 @@ class PassengerController extends Controller
         abort_unless((int) $rating->passenger_user_id === (int) $user->id, 403);
         abort_unless($rating->complaint_type !== null, 404);
 
-        if ($rating->is_solved) {
+        $isAppeal = $request->boolean('appeal');
+
+        if (($rating->is_solved || $rating->rejected_at) && !$isAppeal) {
             return back()->withErrors([
-                'follow_up' => 'This complaint has already been resolved. If you have a new issue, file a new complaint.',
+                'follow_up' => 'This complaint is closed. Use the appeal form if you are not satisfied with the decision.',
             ]);
         }
 
         $data = $request->validate([
             'message' => 'required|string|min:3|max:1000',
+            'appeal' => 'nullable|boolean',
         ], [
             'message.required' => 'Enter your follow-up message before submitting.',
             'message.min' => 'Enter at least 3 characters.',
@@ -118,11 +135,13 @@ class PassengerController extends Controller
             'user_id' => $user->id,
             'message' => $data['message'],
             'sender_role' => 'passenger',
+            'is_appeal' => $isAppeal,
         ]);
 
-        return redirect()
-            ->route('passenger.dashboard')
-            ->with('status', 'Your follow-up has been sent. It will be shown to the TFRB/superadmin for your complaint.')
+        return redirect()->route($isAppeal ? 'passenger.complaints.show' : 'passenger.dashboard', $isAppeal ? [$rating] : [])
+            ->with('status', $isAppeal
+                ? 'Your appeal has been sent to the TFRB/superadmin for review.'
+                : 'Your follow-up has been sent. It will be shown to the TFRB/superadmin for your complaint.')
             ->with('open_follow_up', $rating->id);
     }
 }

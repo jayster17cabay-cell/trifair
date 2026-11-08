@@ -18,17 +18,26 @@
         'solved' => ['label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'badge' => 'tw-badge tw-badge-navy', 'border' => 'border-l-navy-600', 'avatar' => 'bg-navy-600/10 text-navy-700'],
     ];
     $status = $statusMap[$statusKey];
+    $standalone = $standalone ?? false;
 
     // A failed follow-up submission reopens this card and its chat thread, as
     // does the redirect right after a successful send, so the passenger always
     // lands on their own message instead of a collapsed card.
-    $detailsOpen = ($errors->has('message') && old('follow_up_rating_id') == $rating->id)
+    $detailsOpen = $standalone || ($errors->has('message') && old('follow_up_rating_id') == $rating->id)
         || (int) session('open_follow_up') === (int) $rating->id;
 @endphp
-<div class="tw-card mb-3.5 overflow-hidden border-l-4 {{ $status['border'] }}">
+<div class="tw-card {{ $standalone ? 'shadow-lg' : 'mb-3.5' }} overflow-hidden border-l-4 {{ $status['border'] }}">
+    @if ($standalone)
+        <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-5">
+            <a href="{{ route('passenger.dashboard') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-navy-600 hover:text-navy-800">
+                <i class="bi bi-arrow-left"></i> Back to all complaints
+            </a>
+            <span class="text-[0.68rem] font-semibold uppercase tracking-widest text-slate-400">Complaint details</span>
+        </div>
+    @endif
     <button type="button"
-            onclick="var b=this.parentElement.querySelector('[data-complaint-details]');var o=b.classList.toggle('hidden')===false;this.setAttribute('aria-expanded',o?'true':'false');var c=this.querySelector('[data-complaint-chevron]');if(c)c.classList.toggle('rotate-180',o);"
-            aria-expanded="{{ $detailsOpen ? 'true' : 'false' }}"
+            @if (!$standalone) onclick="window.location.href='{{ route('passenger.complaints.show', $rating) }}';" @endif
+            @if ($standalone) aria-expanded="true" @endif
             class="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50 sm:px-5">
         <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full {{ $status['avatar'] }}" aria-hidden="true">
             <i class="bi {{ $status['icon'] }}"></i>
@@ -59,10 +68,12 @@
             </div>
         </div>
 
-        <i data-complaint-chevron class="bi bi-chevron-down mt-2 shrink-0 text-slate-400 transition-transform duration-200 {{ $detailsOpen ? 'rotate-180' : '' }}" aria-hidden="true"></i>
+        @if (!$standalone)
+            <i data-complaint-chevron class="bi bi-chevron-down mt-2 shrink-0 text-slate-400 transition-transform duration-200 {{ $detailsOpen ? 'rotate-180' : '' }}" aria-hidden="true"></i>
+        @endif
     </button>
 
-    <div data-complaint-details class="{{ $detailsOpen ? '' : 'hidden' }} border-t border-slate-100 bg-slate-50/40 px-4 py-4 sm:px-5">
+    <div data-complaint-details class="{{ ($standalone || $detailsOpen) ? '' : 'hidden' }} border-t border-slate-100 bg-slate-50/40 px-4 py-4 sm:px-5">
         @if ($rating->complaint_details)
             <p class="text-sm italic leading-relaxed text-slate-500">"{{ $rating->complaint_details }}"</p>
         @endif
@@ -162,7 +173,7 @@
 
         {{-- Chat with the TFRB/superadmin on this complaint — the thread stays
              readable after solving, but the composer is withdrawn. --}}
-        @if ($rating->is_solved && $rating->passengerFollowUps->isEmpty())
+        @if ($rating->is_solved && $rating->passengerFollowUps->isEmpty() && !$standalone)
             <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
                 <i class="bi bi-check2-all text-emerald-500"></i>
                 This complaint has been resolved — you can no longer follow up.
@@ -172,7 +183,8 @@
                 'rating' => $rating,
                 'viewSide' => 'passenger',
                 'composerAction' => route('passenger.complaints.followUp', $rating),
-                'chatOpen' => $detailsOpen,
+                'chatOpen' => $standalone || $detailsOpen,
+                'standalone' => $standalone,
             ])
         @endif
     </div>

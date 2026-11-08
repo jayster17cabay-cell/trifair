@@ -18,11 +18,13 @@ class PassengerFollowUp extends Model
         'user_id',
         'message',
         'sender_role',
+        'is_appeal',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'is_appeal' => 'boolean',
     ];
 
     public function rating()
