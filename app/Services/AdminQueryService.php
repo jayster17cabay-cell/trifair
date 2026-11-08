@@ -37,7 +37,13 @@ class AdminQueryService
         // into actionable (forwarded + direct), forwarded by a TODA president,
         // direct to TFRB, awaiting a TODA president, or everything.
         $allowedSources = ['actionable', 'forwarded', 'against_president', 'unassigned', 'awaiting', 'all'];
-        $source = $president ? 'all' : (string) $request->query('source', 'actionable');
+        // The monitoring list is deliberately unscoped: it must include
+        // complaints still assigned to a TODA president as well as complaints
+        // already actionable by TFRB/superadmin. The action queue keeps its
+        // source filter and permissions unchanged.
+        $source = $president || $pageName === 'mpage'
+            ? 'all'
+            : (string) $request->query('source', 'actionable');
         if (!in_array($source, $allowedSources, true)) {
             $source = 'actionable';
         }
