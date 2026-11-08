@@ -48,11 +48,11 @@
     <form method="GET" action="{{ route($routePrefix . '.complaints') }}" class="mb-5 flex flex-wrap items-end gap-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
         <input type="hidden" name="view" value="monitor">
         <div class="min-w-0 flex-1 sm:max-w-md">
-            <label for="monitoring_complaint_search" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Search complaint reference</label>
-            <div class="tw-input-group">
+            <label for="monitoring_complaint_search" class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Search all complaint references</label>
+            <div class="tw-input-group bg-white">
                 <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
                 <input type="text" id="monitoring_complaint_search" name="search" value="{{ request('search') }}"
-                       placeholder="e.g. TFR-2026-0407" class="tw-input w-full" aria-label="Search all complaints by reference number">
+                       placeholder="Type TFR-2026-0396" class="tw-input w-full" aria-label="Search all complaints by reference number">
             </div>
         </div>
         <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy"><i class="bi bi-search"></i> Search</button>

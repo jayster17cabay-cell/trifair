@@ -64,9 +64,16 @@ class AdminQueryService
             $source = 'all';
         }
 
-        $base = (!$president && $pageName === 'mpage')
-            ? Rating::isComplaint()
-            : Rating::isValid()->isComplaint();
+        // For an explicit reference lookup, search the ratings table directly
+        // before applying complaint/status scopes. The passenger dashboard can
+        // still show a complaint whose record was later marked invalid or no
+        // longer has its original complaint metadata; staff must still be able
+        // to locate that reference in Monitoring.
+        $base = (!$president && $pageName === 'mpage' && $search !== '')
+            ? Rating::query()
+            : ((!$president && $pageName === 'mpage')
+                ? Rating::isComplaint()
+                : Rating::isValid()->isComplaint());
         if ($president) {
             // Presidents only see complaints routed to them (including
             // ones they have forwarded — they keep visibility to monitor).
