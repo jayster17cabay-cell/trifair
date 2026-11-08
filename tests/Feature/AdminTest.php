@@ -963,6 +963,8 @@ class AdminTest extends TestCase
         $this->actingAs($admin)
             ->get('/notifications/' . $notification->id . '/read')
             ->assertRedirect(route('superadmin.complaints', [
+                'view' => 'action',
+                'source' => 'actionable',
                 'filter' => 'all',
                 'search' => $complaint->reference_number,
             ]));

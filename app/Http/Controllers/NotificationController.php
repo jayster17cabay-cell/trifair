@@ -91,6 +91,11 @@ class NotificationController extends Controller
             && $notification->rating->complaint_type) {
             $route = $user->isSuperadmin() ? 'superadmin.complaints' : 'tfrb-officer.complaints';
             return redirect()->route($route, [
+                // Complaint notifications are actionable work for TFRB /
+                // superadmin. Keep the destination explicit so a forwarded
+                // case never lands in the read-only Monitoring tab.
+                'view' => 'action',
+                'source' => 'actionable',
                 'filter' => 'all',
                 'search' => $notification->rating->reference_number,
             ]);
