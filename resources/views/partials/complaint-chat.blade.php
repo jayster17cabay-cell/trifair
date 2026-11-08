@@ -53,13 +53,13 @@
                             : ($sender && $sender->isTfrbOfficer() ? 'TFRB Officer' : 'TFRB Staff');
                     @endphp
                     <div class="flex justify-start">
-                        <div class="max-w-[85%]">
+                        <div class="{{ $followUp->is_appeal ? 'max-w-[68%]' : 'max-w-[85%]' }}">
                             <div class="flex items-end gap-2">
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy-600/10 text-[0.7rem] font-bold text-navy-700 ring-1 ring-navy-600/20" aria-hidden="true">
+                                <div class="flex {{ $followUp->is_appeal ? 'h-6 w-6 text-[0.6rem]' : 'h-8 w-8 text-[0.7rem]' }} shrink-0 items-center justify-center rounded-full bg-navy-600/10 font-bold text-navy-700 ring-1 ring-navy-600/20" aria-hidden="true">
                                     <i class="bi bi-person-badge"></i>
                                 </div>
-                                <div class="rounded-2xl rounded-tl-md border border-navy-100 bg-navy-50 px-3.5 py-2 shadow-sm">
-                                    <div class="mb-0.5 flex flex-wrap items-center gap-1.5 text-[0.65rem] font-bold text-navy-600">
+                                <div class="rounded-2xl rounded-tl-md border border-navy-100 bg-navy-50 {{ $followUp->is_appeal ? 'px-2.5 py-1.5' : 'px-3.5 py-2' }} shadow-sm">
+                                    <div class="mb-0.5 flex flex-wrap items-center gap-1.5 {{ $followUp->is_appeal ? 'text-[0.58rem]' : 'text-[0.65rem]' }} font-bold text-navy-600">
                                         <i class="bi bi-person-badge" aria-hidden="true"></i>
                                          {{ $staffLabel }}
                                          @if ($followUp->is_appeal)
@@ -67,27 +67,27 @@
                                          @endif
                                         <span class="rounded bg-navy-600 px-1.5 py-px text-[0.55rem] font-bold uppercase tracking-wider text-white">{{ $staffLabel === 'Superadmin' ? 'Admin' : 'TFRB' }}</span>
                                     </div>
-                                    <p class="text-sm leading-relaxed text-slate-700">{{ $followUp->message }}</p>
-                                    <div class="mt-1 text-right text-[0.62rem] text-slate-400">{{ $followUp->created_at->format('M j, g:i A') }}</div>
+                                    <p class="{{ $followUp->is_appeal ? 'text-xs leading-snug' : 'text-sm leading-relaxed' }} text-slate-700">{{ $followUp->message }}</p>
+                                    <div class="mt-1 text-right {{ $followUp->is_appeal ? 'text-[0.55rem]' : 'text-[0.62rem]' }} text-slate-400">{{ $followUp->created_at->format('M j, g:i A') }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 @else
                     <div class="flex justify-end">
-                        <div class="max-w-[85%]">
+                        <div class="{{ $followUp->is_appeal ? 'max-w-[68%]' : 'max-w-[85%]' }}">
                             <div class="flex items-end justify-end gap-2">
-                                <div class="rounded-2xl rounded-tr-md bg-violet-600 px-3.5 py-2 text-white shadow-sm">
-                                    <div class="mb-0.5 text-[0.65rem] font-bold text-violet-200">
+                                <div class="rounded-2xl rounded-tr-md bg-violet-600 {{ $followUp->is_appeal ? 'px-2.5 py-1.5' : 'px-3.5 py-2' }} text-white shadow-sm">
+                                    <div class="mb-0.5 {{ $followUp->is_appeal ? 'text-[0.58rem]' : 'text-[0.65rem]' }} font-bold text-violet-200">
                                          {{ $isStaffView ? ($rating->passenger_name ?: 'Passenger') : 'You' }}
                                          @if ($followUp->is_appeal)
                                              <span class="ml-1 rounded bg-amber-100 px-1.5 py-px text-[0.55rem] font-bold uppercase tracking-wider text-amber-700">Appeal</span>
                                          @endif
                                     </div>
-                                    <p class="text-sm leading-relaxed">{{ $followUp->message }}</p>
-                                    <div class="mt-1 text-right text-[0.62rem] text-violet-200">{{ $followUp->created_at->format('M j, g:i A') }}</div>
+                                    <p class="{{ $followUp->is_appeal ? 'text-xs leading-snug' : 'text-sm leading-relaxed' }}">{{ $followUp->message }}</p>
+                                    <div class="mt-1 text-right {{ $followUp->is_appeal ? 'text-[0.55rem]' : 'text-[0.62rem]' }} text-violet-200">{{ $followUp->created_at->format('M j, g:i A') }}</div>
                                 </div>
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600/10 text-[0.7rem] font-bold text-violet-700 ring-1 ring-violet-300/40" aria-hidden="true">
+                                <div class="flex {{ $followUp->is_appeal ? 'h-6 w-6 text-[0.6rem]' : 'h-8 w-8 text-[0.7rem]' }} shrink-0 items-center justify-center rounded-full bg-violet-600/10 font-bold text-violet-700 ring-1 ring-violet-300/40" aria-hidden="true">
                                     <i class="bi bi-person"></i>
                                 </div>
                             </div>
