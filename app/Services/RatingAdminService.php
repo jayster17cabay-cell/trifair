@@ -570,7 +570,10 @@ class RatingAdminService
      */
     private function notifyPassengerInApp(Rating $rating, string $title, string $message): void
     {
-        $passengerId = $rating->passenger_user_id;
+        $passengerId = User::query()
+            ->whereKey($rating->passenger_user_id)
+            ->where('role', 'passenger')
+            ->value('id');
 
         // Legacy/guest complaints may have the Google email saved without the
         // passenger_user_id being backfilled. Resolve that account by email so
@@ -580,6 +583,12 @@ class RatingAdminService
                 ->whereRaw('LOWER(email) = ?', [strtolower(trim($rating->passenger_email))])
                 ->where('role', 'passenger')
                 ->value('id');
+
+            if ($passengerId && !$rating->passenger_user_id) {
+                // Permanently link the legacy complaint so future status
+                // updates do not depend on another email lookup.
+                $rating->forceFill(['passenger_user_id' => $passengerId])->saveQuietly();
+            }
         }
 
         if (!$passengerId) {
