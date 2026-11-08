@@ -76,15 +76,26 @@
             </div>
         @endif
 
-        <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h1 class="text-xl font-extrabold text-slate-900 sm:text-2xl">My Complaints</h1>
-                <p class="mt-1 text-sm text-slate-500">Your filed complaints, grouped by status — open tickets stay on top.</p>
+                <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">Your filed complaints only. Violation reports are kept in their own section below.</p>
             </div>
             <a href="/" class="tw-btn tw-btn-sm tw-btn-navy shrink-0">
                 <i class="bi bi-qr-code-scan"></i> Scan a QR code
             </a>
         </div>
+
+        <nav class="mb-8 grid gap-2 sm:grid-cols-2" aria-label="Passenger dashboard sections">
+            <a href="#complaints" class="flex items-center justify-between rounded-xl border border-navy-200 bg-navy-50 px-4 py-3 text-sm font-bold text-navy-700 transition hover:border-navy-500 hover:shadow-sm">
+                <span class="flex items-center gap-2"><i class="bi bi-chat-square-text"></i> Complaints</span>
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs font-extrabold text-navy-600">{{ $totalCount }}</span>
+            </a>
+            <a href="#violation-reports" class="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800 transition hover:border-amber-400 hover:shadow-sm">
+                <span class="flex items-center gap-2"><i class="bi bi-flag"></i> Violation reports</span>
+                <span class="rounded-full bg-white px-2 py-0.5 text-xs font-extrabold text-amber-700">{{ $violations->count() }}</span>
+            </a>
+        </nav>
 
         <div class="mb-6 flex items-start gap-3 rounded-2xl border border-navy-200 bg-navy-600/5 px-4 py-3.5">
             <i class="bi bi-shield-lock-fill mt-0.5 text-navy-600" aria-hidden="true"></i>
@@ -97,7 +108,8 @@
             </div>
         </div>
 
-        {{-- Status overview — each card doubles as a filter for the list below. --}}
+        <section id="complaints" class="scroll-mt-6">
+        {{-- Status overview — each card doubles as a filter for the complaints list below. --}}
         @php
             $statusTabs = [
                 ['key' => null, 'label' => 'Total', 'count' => $totalCount, 'icon' => 'bi-list-ul', 'color' => 'violet'],
@@ -247,16 +259,18 @@
             @endif
         @endif
 
+        </section>
+
         {{-- Violation reports filed by this passenger against suspended / lapsed
-             operators — monitored here alongside complaints. --}}
-        <section class="mt-10 border-t border-slate-200 pt-8">
+             operators — intentionally kept separate from complaints. --}}
+        <section id="violation-reports" class="mt-12 scroll-mt-6 rounded-2xl border border-amber-200 bg-white p-5 shadow-sm sm:p-7">
             <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <div>
                     <h2 class="text-xl font-extrabold text-slate-900">
-                        My Violation Reports
+                        <i class="bi bi-flag-fill mr-1 text-amber-500"></i>My Violation Reports
                         <span class="ml-1 rounded-full bg-slate-100 px-2 py-0.5 align-middle text-sm font-bold text-slate-500">{{ $violations->count() }}</span>
                     </h2>
-                    <p class="mt-1 text-sm text-slate-500">Reports you filed from an operator's QR code — the TFRB reviews these and posts the outcome here.</p>
+                    <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">Separate from complaints: reports you filed from an operator's QR code. The TFRB reviews these and posts the outcome here.</p>
                 </div>
                 <a href="/" class="tw-btn tw-btn-sm tw-btn-navy shrink-0">
                     <i class="bi bi-qr-code-scan"></i> Scan a QR code
