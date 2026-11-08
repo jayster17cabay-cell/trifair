@@ -335,6 +335,18 @@ class DashboardAuditTest extends TestCase
         $this->assertDatabaseMissing('todas', ['id' => $toda->id]);
     }
 
+    public function test_empty_toda_can_be_deleted()
+    {
+        $admin = $this->makeUser('superadmin');
+        $toda = Toda::create(['name' => 'Empty TODA', 'area' => 'Caloocan']);
+
+        $this->actingAs($admin)
+            ->delete('/superadmin/todas/' . $toda->id)
+            ->assertRedirect(route('superadmin.todas'));
+
+        $this->assertDatabaseMissing('todas', ['id' => $toda->id]);
+    }
+
     public function test_superadmin_can_create_and_delete_officer_account()
     {
         $admin = $this->makeUser('superadmin');

@@ -657,7 +657,20 @@ class SuperadminController extends Controller
 
     public function destroyToda(Toda $toda)
     {
-        if ($toda->operators()->count() > 0) {
+        // Archived operators and inactive membership rows are historical data,
+        // not current TODA members. They must not prevent removing an empty
+        // TODA; active members still block deletion so they can be reassigned
+        // first. Ratings and other historical TODA references use nullOnDelete
+        // and remain available after the TODA is removed.
+        $hasCurrentMembers = Operator::query()
+            ->notArchived()
+            ->whereHas('user', function ($query) {
+                $query->whereIn('role', ['operator', 'operator_president']);
+            })
+            ->belongsToToda($toda->id)
+            ->exists();
+
+        if ($hasCurrentMembers) {
             return back()->withErrors(['error' => 'Cannot delete TODA with existing operators. Reassign operators first.']);
         }
 
