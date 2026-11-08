@@ -53,10 +53,10 @@
     // and once forwarded.
     $showForwardButton = $isPresidentView
         && $canAct
-        // Open is the current status label for an unresolved complaint. Keep
-        // the legacy labels for older rows/views so the president's required
-        // one-way escalation action remains available in every valid state.
-        && in_array($rating->status_label, ['Open', 'Pending', 'Reviewed', 'Solved'], true)
+        // A solved case is terminal until the passenger files an appeal. The
+        // appeal reopens and routes it to TFRB directly, so a president must
+        // not forward a solved case from this screen.
+        && $rating->status_label === 'Open'
         && empty($rating->forwarded_at);
     $isForwarded = !empty($rating->forwarded_at);
     $isForwardedByPresident = !empty($rating->forwarded_by);

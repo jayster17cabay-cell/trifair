@@ -264,7 +264,7 @@ class ComplaintRoutingTest extends TestCase
         ]);
     }
 
-    public function test_president_forward_of_solved_complaint_escalates_it_back()
+    public function test_president_cannot_forward_solved_complaint_before_passenger_appeal()
     {
         $toda = $this->makeToda();
         $president = $this->makePresident($toda);
@@ -280,17 +280,13 @@ class ComplaintRoutingTest extends TestCase
 
         $this->actingAs($president)
             ->patch('/president/complaints/' . $complaint->id . '/forward')
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHasErrors('error');
 
         $fresh = $complaint->fresh();
-        $this->assertNotNull($fresh->forwarded_at);
-
-        // Escalation: forwarding a solved complaint resets the terminal
-        // solved state so the case re-enters the actionable TFRB / superadmin
-        // queue for a heavier re-review.
-        $this->assertFalse((bool) $fresh->is_solved);
-        $this->assertFalse((bool) $fresh->is_reviewed);
-        $this->assertNull($fresh->solved_at);
+        $this->assertNull($fresh->forwarded_at);
+        $this->assertTrue((bool) $fresh->is_solved);
+        $this->assertTrue((bool) $fresh->is_reviewed);
     }
 
     public function test_forwarded_complaint_cannot_be_acted_on_by_president()

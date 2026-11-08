@@ -386,6 +386,16 @@ class RatingAdminService
         }
         $this->assertCanActOnComplaint($rating, true);
 
+        // A solved complaint is closed. If the passenger is dissatisfied,
+        // their appeal reopens it and routes it to TFRB/superadmin directly;
+        // the TODA president must not bypass that decision by forwarding a
+        // solved case from the admin screen.
+        if ($rating->is_solved) {
+            return back()->withErrors([
+                'error' => 'This complaint is already solved. The passenger must submit an appeal before further review.',
+            ]);
+        }
+
         if ($rating->forwarded_at) {
             return back()->with('success', 'This complaint has already been forwarded to the TFRB.');
         }
