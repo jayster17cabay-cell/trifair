@@ -102,6 +102,7 @@
 
 <div class="tw-card {{ $standalone ? 'shadow-lg' : 'mb-3' }} overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
     <div class="flex {{ $standalone ? '' : 'cursor-pointer' }} select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:px-5"
+         data-complaint-toggle
          @if (!$standalone)
              role="link" tabindex="0" aria-label="Open complaint {{ $rating->reference_number }}"
              onclick="window.location.href='{{ route($routePrefix . '.complaints.show', $rating) }}';"
