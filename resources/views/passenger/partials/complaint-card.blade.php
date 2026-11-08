@@ -14,8 +14,8 @@
     }
     $statusMap = [
         'open' => ['label' => 'Open', 'icon' => 'bi-clock-fill', 'badge' => 'tw-badge tw-badge-amber', 'border' => 'border-l-amber-400', 'avatar' => 'bg-amber-500/10 text-amber-600'],
-        'rejected' => ['label' => 'Rejected', 'icon' => 'bi-x-circle-fill', 'badge' => 'tw-badge tw-badge-red', 'border' => 'border-l-red-500', 'avatar' => 'bg-red-500/10 text-red-600'],
-        'solved' => ['label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'badge' => 'tw-badge tw-badge-navy', 'border' => 'border-l-navy-600', 'avatar' => 'bg-navy-600/10 text-navy-700'],
+        'rejected' => ['label' => 'Complaint Rejected', 'icon' => 'bi-x-circle-fill', 'badge' => 'tw-badge tw-badge-red', 'border' => 'border-l-red-500', 'avatar' => 'bg-red-500/10 text-red-600'],
+        'solved' => ['label' => 'Complaint Solved', 'icon' => 'bi-patch-check-fill', 'badge' => 'tw-badge tw-badge-navy', 'border' => 'border-l-navy-600', 'avatar' => 'bg-navy-600/10 text-navy-700'],
     ];
     $status = $statusMap[$statusKey];
     $standalone = $standalone ?? false;
