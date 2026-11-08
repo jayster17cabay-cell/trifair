@@ -570,12 +570,24 @@ class RatingAdminService
      */
     private function notifyPassengerInApp(Rating $rating, string $title, string $message): void
     {
-        if (!$rating->passenger_user_id) {
+        $passengerId = $rating->passenger_user_id;
+
+        // Legacy/guest complaints may have the Google email saved without the
+        // passenger_user_id being backfilled. Resolve that account by email so
+        // a solved complaint still appears in the passenger's Google login.
+        if (!$passengerId && $rating->passenger_email) {
+            $passengerId = User::query()
+                ->where('email', $rating->passenger_email)
+                ->where('role', 'passenger')
+                ->value('id');
+        }
+
+        if (!$passengerId) {
             return;
         }
 
         Notification::create([
-            'user_id' => $rating->passenger_user_id,
+            'user_id' => $passengerId,
             'rating_id' => $rating->id,
             'type' => 'complaint_status',
             'title' => $title,
