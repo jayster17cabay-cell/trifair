@@ -60,6 +60,7 @@
         && empty($rating->forwarded_at);
     $isForwarded = !empty($rating->forwarded_at);
     $isForwardedByPresident = !empty($rating->forwarded_by);
+    $appeals = $rating->passengerFollowUps->filter(fn ($followUp) => (bool) $followUp->is_appeal);
 
     // At-a-glance origin badge. Staff queues distinguish forwarded
     // escalations, direct-to-TFRB complaints and cases still with a
@@ -127,6 +128,11 @@
                         <i class="bi bi-chat-left-text"></i>{{ $rating->passengerFollowUps->count() }} follow-up{{ $rating->passengerFollowUps->count() > 1 ? 's' : '' }}
                     </span>
                 @endif
+                @if ($appeals->isNotEmpty())
+                    <span class="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-extrabold text-amber-700" title="Passenger appeal requires attention">
+                        <i class="bi bi-megaphone-fill"></i>{{ $appeals->count() }} appeal{{ $appeals->count() > 1 ? 's' : '' }}
+                    </span>
+                @endif
             </div>
         </div>
 
@@ -151,6 +157,19 @@
     </div>
 
     <div id="complaint-details-{{ $rating->id }}" class="border-t border-slate-100 bg-slate-50/40" style="display:none!important" data-complaint-details>
+        @if ($appeals->isNotEmpty())
+            <div class="mx-4 mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 sm:mx-5">
+                <div class="mb-2 flex items-center gap-1.5 text-[0.7rem] font-extrabold uppercase tracking-widest text-amber-700">
+                    <i class="bi bi-megaphone-fill"></i> Passenger appeal{{ $appeals->count() > 1 ? 's' : '' }}
+                </div>
+                @foreach ($appeals as $appeal)
+                    <div class="{{ !$loop->last ? 'mb-2 border-b border-amber-200 pb-2' : '' }}">
+                        <p class="text-sm leading-relaxed text-amber-950">{{ $appeal->message }}</p>
+                        <p class="mt-1 text-[0.65rem] text-amber-700">{{ $appeal->created_at->format('M j, Y g:i A') }}</p>
+                    </div>
+                @endforeach
+            </div>
+        @endif
         @if ($isForwarded)
             {{-- Escalation trail: makes it obvious the case came from a TODA
                  president and that ownership now sits with the TFRB. --}}
