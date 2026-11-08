@@ -32,13 +32,12 @@
 
         @include('passenger.partials.complaint-card', ['rating' => $rating, 'standalone' => true, 'detailsOpen' => true])
 
-        @if ($rating->is_solved || $rating->rejected_at)
-            <section class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+        <section class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
                 <div class="flex items-start gap-3">
                     <i class="bi bi-megaphone-fill mt-0.5 text-amber-600"></i>
                     <div class="min-w-0 flex-1">
-                        <h2 class="text-sm font-extrabold text-amber-900">Not satisfied with the decision?</h2>
-                        <p class="mt-1 text-xs leading-relaxed text-amber-800">Send an appeal to the TFRB/superadmin. Explain what should be reviewed again and include any important details.</p>
+                        <h2 class="text-sm font-extrabold text-amber-900">Need immediate TFRB review?</h2>
+                        <p class="mt-1 text-xs leading-relaxed text-amber-800">You may appeal at any time — even while the TODA/operator has not solved the complaint yet. Use this for serious incidents or if you are not satisfied with the action taken.</p>
                         <form action="{{ route('passenger.complaints.followUp', $rating) }}" method="POST" class="mt-3">
                             @csrf
                             <input type="hidden" name="appeal" value="1">
@@ -49,7 +48,7 @@
                     </div>
                 </div>
             </section>
-        @endif
+        </section>
     </main>
 </body>
 </html>
