@@ -1,16 +1,16 @@
-TriFair — Verify your email address
+TriFair account confirmation
 
 Hi {{ $user->nameParts()['first'] ?: $user->name }},
 
-Please confirm that {{ $user->getEmailForVerification() }} is your TriFair email address.
+Thanks for creating a TriFair account. To finish setting it up, please confirm that
+{{ $user->getEmailForVerification() }} is your email address by opening the link below.
 
-Verify your account by opening this link:
 {{ $verificationUrl }}
 
-This link expires in {{ $expiresInMinutes }} minutes.
+This link expires in {{ $expiresInMinutes }} minutes. If it has expired, you can request
+a new one from the TriFair website.
 
-If you did not create a TriFair account, you can safely ignore this email. No further action is required.
+If you did not create a TriFair account, you can safely ignore this message.
 
-Tip: To make sure future TriFair emails reach you, add this sender to your contacts or mark this message as "Not spam".
-
-This is an automated message from the TriFair Passenger Feedback System. Please do not reply to this email.
+— The TriFair Team
+This is an automated message. Please do not reply.

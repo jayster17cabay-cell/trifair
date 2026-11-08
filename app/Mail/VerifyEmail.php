@@ -43,7 +43,7 @@ class VerifyEmail extends TransactionalMailable
     public function build()
     {
         return $this
-            ->subject('Verify your TriFair email address')
+            ->subject('TriFair account confirmation')
             ->view('emails.verify-email')
             ->text('emails.verify-email-text')
             ->transactional();
