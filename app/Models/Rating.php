@@ -113,6 +113,11 @@ class Rating extends Model
         'start_location',
         'end_location',
         'escalation_checklist',
+        // Internal delivery marker for the passenger status email. It must be
+        // mass assignable so the review service can reset it when a complaint
+        // re-enters the queue (reopen/escalate/forward); otherwise Eloquent
+        // silently drops the reset and suppresses the next status email.
+        'complaint_status_email_sent_at',
     ];
 
     protected $casts = [
@@ -130,6 +135,7 @@ class Rating extends Model
         'franchise_term_id' => 'integer',
         'toda_id' => 'integer',
         'escalation_checklist' => 'array',
+        'complaint_status_email_sent_at' => 'datetime',
     ];
 
     /**

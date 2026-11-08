@@ -28,8 +28,13 @@
                         Please check your email inbox and click the verification link to activate your account.
                     </p>
 
-                    <p class="mb-6 text-center text-sm text-slate-500">
-                        If you did not receive the email, click the button below to resend.
+                    <p class="mb-2 text-center text-sm text-slate-500">
+                        Can't find the email? Check your <strong>Spam</strong> or <strong>Junk</strong> folder first,
+                        then click the button below to resend.
+                    </p>
+                    <p class="mb-6 text-center text-xs text-slate-400">
+                        Add the TriFair sender to your contacts so future verification and complaint updates reach
+                        your inbox.
                     </p>
 
                     <form method="POST" action="{{ route('verification.resend') }}" class="w-full">

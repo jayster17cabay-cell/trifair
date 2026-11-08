@@ -9,9 +9,9 @@ use App\Models\Notification;
 use App\Models\SuspensionViolation;
 use App\Models\SuspensionViolationProof;
 use App\Models\User;
+use App\Support\TransactionalMail;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class SuspensionViolationService
 {
@@ -175,7 +175,7 @@ class SuspensionViolationService
             ]);
 
             if (filled($reporter->email)) {
-                Mail::to($reporter->email)->send(new ViolationStatus($violation, $status));
+                TransactionalMail::send($reporter->email, new ViolationStatus($violation, $status));
             }
         } catch (\Throwable $e) {
             Log::error('Violation reporter notification failed: ' . $e->getMessage());

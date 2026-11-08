@@ -4,10 +4,9 @@ namespace App\Mail;
 
 use App\Models\SuspensionViolation;
 use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class ViolationStatus extends Mailable
+class ViolationStatus extends TransactionalMailable
 {
     use Queueable, SerializesModels;
 
@@ -30,6 +29,8 @@ class ViolationStatus extends Mailable
 
         return $this
             ->subject($subject)
-            ->view('emails.violation-status');
+            ->view('emails.violation-status')
+            ->text('emails.violation-status-text')
+            ->transactional();
     }
 }

@@ -4,10 +4,9 @@ namespace App\Mail;
 
 use App\Models\Rating;
 use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class ComplaintStatus extends Mailable
+class ComplaintStatus extends TransactionalMailable
 {
     use Queueable, SerializesModels;
 
@@ -36,6 +35,8 @@ class ComplaintStatus extends Mailable
 
         return $this
             ->subject($subject)
-            ->view('emails.complaint-status');
+            ->view('emails.complaint-status')
+            ->text('emails.complaint-status-text')
+            ->transactional();
     }
 }

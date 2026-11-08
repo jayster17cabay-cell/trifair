@@ -20,6 +20,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PassengerController;
 use App\Http\Controllers\TodaSelectionController;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/landing-stats', [LandingController::class, 'stats'])->name('landing.stats');
@@ -80,7 +81,22 @@ Route::get('/email/verify/{id}/{hash}', function (\Illuminate\Foundation\Auth\Em
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
 Route::post('/email/resend', function (\Illuminate\Http\Request $request) {
-    $request->user()->sendEmailVerificationNotification();
+    $user = $request->user();
+
+    if ($user->hasVerifiedEmail()) {
+        return back()->with('message', 'Your email address is already verified.');
+    }
+
+    try {
+        $user->sendEmailVerificationNotification();
+    } catch (\Throwable $e) {
+        Log::error('Email verification resend failed: ' . get_class($e) . ': ' . $e->getMessage());
+
+        return back()->withErrors([
+            'email' => 'We could not send the verification email right now. Please try again in a few minutes.',
+        ]);
+    }
+
     return back()->with('message', 'Verification link sent!');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.resend');
 

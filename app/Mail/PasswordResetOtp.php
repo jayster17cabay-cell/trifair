@@ -4,10 +4,9 @@ namespace App\Mail;
 
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class PasswordResetOtp extends Mailable
+class PasswordResetOtp extends TransactionalMailable
 {
     use Queueable, SerializesModels;
 
@@ -25,6 +24,8 @@ class PasswordResetOtp extends Mailable
     {
         return $this
             ->subject('Your TriFair Account Recovery Code')
-            ->view('emails.password-reset-otp');
+            ->view('emails.password-reset-otp')
+            ->text('emails.password-reset-otp-text')
+            ->transactional();
     }
 }

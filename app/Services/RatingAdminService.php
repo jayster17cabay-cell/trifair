@@ -10,10 +10,10 @@ use App\Models\Rating;
 use App\Models\ResolutionProof;
 use App\Models\User;
 use App\Services\AdminDashboardService;
+use App\Support\TransactionalMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -192,6 +192,10 @@ class RatingAdminService
             'rejected_at' => null,
             'reviewed_by' => null,
             'resolution_note' => null,
+            // Returning to the pending queue starts a new notification cycle:
+            // the next solve/reject must reach the passenger again instead of
+            // being suppressed by a marker left over from the previous cycle.
+            'complaint_status_email_sent_at' => null,
         ]);
         $this->clearResolutionProofs($rating);
         app(AdminDashboardService::class)->flush();
@@ -280,6 +284,9 @@ class RatingAdminService
             'rejected_at' => null,
             'reviewed_by' => null,
             'resolution_note' => null,
+            // A reopened complaint is pending again; do not let the previous
+            // delivery marker swallow the next solve/reject email.
+            'complaint_status_email_sent_at' => null,
         ]);
         $this->clearResolutionProofs($rating);
         app(AdminDashboardService::class)->flush();
@@ -360,6 +367,9 @@ class RatingAdminService
             'rejected_at' => null,
             'reviewed_by' => null,
             'resolution_note' => null,
+            // The escalation is a new passenger-facing status; clear the old
+            // delivery marker so the escalation email is not suppressed.
+            'complaint_status_email_sent_at' => null,
         ]);
         $this->clearResolutionProofs($rating);
         app(AdminDashboardService::class)->flush();
@@ -403,6 +413,9 @@ class RatingAdminService
         $rating->update([
             'forwarded_at' => now(),
             'forwarded_by' => Auth::id(),
+            // Forwarding is a new passenger-facing status. A previous solve or
+            // reject marker must not suppress the forward notification.
+            'complaint_status_email_sent_at' => null,
         ]);
 
         // Escalation semantics: when a president forwards a complaint that
@@ -582,10 +595,10 @@ class RatingAdminService
         }
 
         try {
-            // Complaint status mail must use Brevo explicitly. Relying on the
-            // default mailer can silently select the framework fallback when
-            // a cached Render environment still has an old MAIL_MAILER value.
-            Mail::mailer('sendinblue')->to($email)->send(new ComplaintStatus($rating, $status));
+            // Route through the shared transactional pipeline so the status
+            // update uses the same Brevo sender, Reply-To and multipart
+            // HTML/text format as verification and password-reset mail.
+            TransactionalMail::send($email, new ComplaintStatus($rating, $status));
             $rating->forceFill([
                 'complaint_status_email_sent_at' => now(),
             ])->saveQuietly();

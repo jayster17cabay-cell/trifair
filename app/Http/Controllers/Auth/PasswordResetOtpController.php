@@ -7,11 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Mail\PasswordResetOtp;
 use App\Models\PasswordResetCode;
 use App\Models\User;
+use App\Support\TransactionalMail;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -57,7 +57,7 @@ class PasswordResetOtpController extends Controller
             ]);
 
             try {
-                Mail::to($user->email)->send(new PasswordResetOtp($user, $otp));
+                TransactionalMail::send($user->email, new PasswordResetOtp($user, $otp));
             } catch (\Throwable $e) {
                 Log::error('Forgot-password OTP email failed: ' . get_class($e) . ': ' . $e->getMessage());
             }

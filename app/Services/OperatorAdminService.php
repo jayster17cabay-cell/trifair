@@ -12,13 +12,13 @@ use App\Models\Rating;
 use App\Models\User;
 use App\Models\Toda;
 use App\Services\AdminDashboardService;
+use App\Support\TransactionalMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -444,7 +444,7 @@ class OperatorAdminService
         );
 
         try {
-            Mail::to($operator->user->email)->send(new OperatorCredentials($operator->user, $tempPassword));
+            TransactionalMail::send($operator->user->email, new OperatorCredentials($operator->user, $tempPassword));
         } catch (\Throwable $e) {
             Log::warning('Operator credentials e-mail failed for ' . $operator->user->email . ': ' . $e->getMessage());
         }

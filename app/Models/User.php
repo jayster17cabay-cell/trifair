@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Mail\VerifyEmail;
+use App\Support\TransactionalMail;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +11,7 @@ use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -55,6 +58,36 @@ class User extends Authenticatable implements MustVerifyEmail
     public function setEmailAttribute($value)
     {
         $this->attributes['email'] = $value === null ? null : strtolower(trim($value));
+    }
+
+    /**
+     * Send the branded verification email through the application's
+     * transactional mail pipeline.
+     *
+     * Overriding the framework notification keeps the verification message on
+     * the same Brevo transport, From/Reply-To identity and HTML + plain-text
+     * multipart format as every other TriFair email. That consistency is what
+     * keeps the verification link out of spam folders.
+     */
+    public function sendEmailVerificationNotification()
+    {
+        if ($this->hasVerifiedEmail()) {
+            return;
+        }
+
+        try {
+            TransactionalMail::send(
+                $this->getEmailForVerification(),
+                new VerifyEmail($this)
+            );
+        } catch (\Throwable $e) {
+            Log::error('Email verification send failed: ' . get_class($e) . ': ' . $e->getMessage(), [
+                'user_id' => $this->getKey(),
+                'email' => $this->getEmailForVerification(),
+            ]);
+
+            throw $e;
+        }
     }
 
     public function setNameAttribute($value)

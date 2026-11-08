@@ -54,10 +54,21 @@ services:
         value: sendinblue
       - key: SENDINBLUE_KEY
         sync: false
+      # Deliverability: the From address should be on a domain authenticated in
+      # Brevo (SPF + DKIM + DMARC). A @gmail.com sender cannot be aligned with
+      # Brevo's sending domain and is commonly filtered into spam. Replace this
+      # value with e.g. no-reply@your-verified-domain.com once that domain is
+      # verified in Brevo.
       - key: MAIL_FROM_ADDRESS
         value: jayster17cabay@gmail.com
       - key: MAIL_FROM_NAME
         value: TriFair
+      # Replies go to a monitored mailbox; transactional mail should never ask
+      # recipients to reply to a no-reply sender.
+      - key: MAIL_REPLY_TO_ADDRESS
+        value: jayster17cabay@gmail.com
+      - key: MAIL_REPLY_TO_NAME
+        value: TriFair Support
       # Google OAuth (superadmin / TFRB Officer "Sign in with Google")
       - key: GOOGLE_CLIENT_ID
         value: 877167041441-rnahjnhl7ke6ru7m5i3654gs2c6rtf95.apps.googleusercontent.com

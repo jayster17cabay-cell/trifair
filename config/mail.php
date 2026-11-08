@@ -104,6 +104,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Global "Reply-To" Address
+    |--------------------------------------------------------------------------
+    |
+    | Transactional mail should point replies at a monitored mailbox instead of
+    | the no-reply sender. A valid Reply-To is also a positive deliverability
+    | signal, so it is applied to every TriFair mailable.
+    |
+    */
+
+    'reply_to' => [
+        'address' => trim((string) env('MAIL_REPLY_TO_ADDRESS', env('MAIL_FROM_ADDRESS', 'hello@example.com'))),
+        'name' => trim((string) env('MAIL_REPLY_TO_NAME', env('MAIL_FROM_NAME', 'TriFair'))),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Markdown Mail Settings
     |--------------------------------------------------------------------------
     |

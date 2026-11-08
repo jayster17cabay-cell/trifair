@@ -4,10 +4,9 @@ namespace App\Mail;
 
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class OperatorCredentials extends Mailable
+class OperatorCredentials extends TransactionalMailable
 {
     use Queueable, SerializesModels;
 
@@ -25,6 +24,8 @@ class OperatorCredentials extends Mailable
     {
         return $this
             ->subject('Your TriFair Account Password Has Been Reset')
-            ->view('emails.operator-credentials');
+            ->view('emails.operator-credentials')
+            ->text('emails.operator-credentials-text')
+            ->transactional();
     }
 }
