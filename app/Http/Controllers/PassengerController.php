@@ -58,6 +58,10 @@ class PassengerController extends Controller
         $complaints = $query->paginate(15)->withQueryString();
 
         $notifications = Notification::where('user_id', $user->id)
+            // Complaint status is already shown in the separate complaint
+            // cards below. Keep this dashboard feed exclusively for violation
+            // report updates so the two workflows never appear mixed.
+            ->where('type', 'violation')
             ->with('rating')
             ->latest()
             ->limit(10)

@@ -154,7 +154,7 @@
         @if ($notifications->isNotEmpty())
             <section class="mb-8">
                 <h2 class="mb-3 text-sm font-bold uppercase tracking-widest text-slate-400">
-                    <i class="bi bi-bell-fill mr-1"></i>Recent updates
+                    <i class="bi bi-bell-fill mr-1"></i>Violation report updates
                 </h2>
                 <div class="space-y-2">
                     @foreach ($notifications as $notification)
