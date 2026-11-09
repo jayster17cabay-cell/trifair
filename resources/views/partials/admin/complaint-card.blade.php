@@ -106,7 +106,7 @@
 @endphp
 
 <div class="tw-card {{ $standalone ? 'shadow-lg' : 'mb-3' }} overflow-hidden border-l-4 {{ $borderClass }}" data-complaint-card>
-    <div class="flex {{ $standalone ? '' : 'cursor-pointer' }} select-none items-center gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:px-5"
+    <div class="flex {{ $standalone ? '' : 'cursor-pointer' }} select-none items-center gap-3 px-4 py-4 transition-colors hover:bg-slate-50 sm:px-5"
          data-complaint-toggle
          @if (!$standalone)
              role="link" tabindex="0" aria-label="Open complaint {{ $rating->reference_number }}"
@@ -360,7 +360,7 @@
             </div>
         @endif
 
-        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white/80 px-4 py-3.5 sm:px-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white/80 px-4 py-3 sm:px-5">
             @if ($rating->response)
                 <span class="text-xs font-medium text-emerald-600"><i class="bi bi-check2-all mr-1"></i>Operator responded</span>
             @elseif (!$rating->is_solved && !$rating->rejected_at)
