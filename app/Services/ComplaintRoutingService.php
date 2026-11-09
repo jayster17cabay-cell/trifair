@@ -106,7 +106,7 @@ class ComplaintRoutingService
             return ['label' => 'Forwarded to TFRB', 'icon' => 'bi-send-fill', 'class' => 'tw-badge-blue'];
         }
 
-        return ['label' => 'Awaiting TODA president', 'icon' => 'bi-person-badge', 'class' => 'tw-badge-amber'];
+        return ['label' => '', 'icon' => '', 'class' => ''];
     }
 
     /**
@@ -124,9 +124,10 @@ class ComplaintRoutingService
                 . ' — only TFRB / superadmin can act on it now.';
         }
 
-        $president = $complaint->routedToPresident?->name ?? 'the TODA president';
+        $todaName = $complaint->toda?->name;
+        $office = $todaName ? $todaName . ' President' : 'the TODA president';
 
-        return 'With ' . $president . ' (TODA president) — they can solve it or forward it to the TFRB.';
+        return 'With ' . $office . ' — they can solve it or forward it to the TFRB.';
     }
 
     /**

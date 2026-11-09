@@ -96,7 +96,7 @@
         ];
     } elseif (!$isPresidentView) {
         $sourceBadge = [
-            'label' => 'With ' . ($rating->routedToPresident?->name ?? 'TODA president'),
+            'label' => 'With ' . ($rating->toda?->name ? $rating->toda->name . ' President' : 'TODA president'),
             'short' => 'With President',
             'icon' => 'bi-hourglass-split',
             'class' => 'border-amber-200 bg-amber-50 text-amber-700',
@@ -368,7 +368,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white/80 px-4 py-3.5 sm:px-5">
             @if ($rating->response)
                 <span class="text-xs font-medium text-emerald-600"><i class="bi bi-check2-all mr-1"></i>Operator responded</span>
-            @else
+            @elseif (!$rating->is_solved && !$rating->rejected_at)
                 <span class="text-xs font-medium text-slate-400"><i class="bi bi-hourglass mr-1"></i>No response yet</span>
             @endif
             @if ($canAct)
@@ -501,9 +501,11 @@
                     @endif
                 </div>
             @else
-                <div class="flex shrink-0 items-center">
-                    <span class="tw-badge {{ $assigneeBadge['class'] }}"><i class="bi {{ $assigneeBadge['icon'] }}"></i> {{ $assigneeBadge['label'] }}</span>
-                </div>
+                @if (!empty($assigneeBadge['label']))
+                    <div class="flex shrink-0 items-center">
+                        <span class="tw-badge {{ $assigneeBadge['class'] }}"><i class="bi {{ $assigneeBadge['icon'] }}"></i> {{ $assigneeBadge['label'] }}</span>
+                    </div>
+                @endif
             @endif
         </div>
     </div>

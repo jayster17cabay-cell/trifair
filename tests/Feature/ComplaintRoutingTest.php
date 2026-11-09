@@ -583,7 +583,7 @@ class ComplaintRoutingTest extends TestCase
             ->assertSee($awaiting->reference_number, false)
             ->assertDontSee($forwarded->reference_number, false)
             ->assertDontSee($direct->reference_number, false)
-            ->assertSee('With ' . $president->name);
+            ->assertSee('With ' . $awaiting->toda->name . ' President');
     }
 
     public function test_staff_unassigned_tab_lists_only_unassigned_complaints()
