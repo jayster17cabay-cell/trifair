@@ -648,7 +648,6 @@ class ComplaintRoutingTest extends TestCase
             ->assertOk()
             ->assertSee($forwarded->reference_number, false)
             ->assertSee('Forwarded to TFRB', false)
-            ->assertSee('only TFRB / superadmin can act on it now.', false)
             ->assertDontSee('data-mode="solve" data-action="http://localhost/president/complaints/' . $forwarded->id . '/solve"', false);
     }
 }

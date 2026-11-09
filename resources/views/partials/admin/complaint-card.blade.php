@@ -303,11 +303,6 @@
                     // collapsed control.
                     'chatOpen' => $rating->passengerFollowUps->isNotEmpty(),
                 ])
-            @else
-                <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5">
-                    <i class="bi bi-lock-fill mt-0.5 shrink-0 text-amber-600" aria-hidden="true"></i>
-                    <span class="text-xs font-semibold leading-relaxed text-amber-800">{{ $assignmentNote }}</span>
-                </div>
             @endif
         </div>
 
