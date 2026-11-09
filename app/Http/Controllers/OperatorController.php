@@ -207,6 +207,19 @@ class OperatorController extends Controller
         };
     }
 
+    public function ratingShow(Rating $rating)
+    {
+        $operator = Auth::user()->operator;
+
+        if (!$operator || (int) $rating->operator_id !== (int) $operator->id) {
+            abort(403);
+        }
+
+        $rating->load(['proofs', 'response', 'operatorProofs', 'reviewer']);
+
+        return view('operator.rating', compact('operator', 'rating'));
+    }
+
     public function respond(Request $request, Rating $rating)
     {
         $operator = Auth::user()->operator;

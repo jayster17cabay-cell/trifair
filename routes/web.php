@@ -283,6 +283,7 @@ Route::middleware(['auth', 'role:operator,operator_president'])->prefix('operato
     Route::middleware(['verified', 'operator.active', 'toda.selection'])->group(function () {
         Route::get('/dashboard', [OperatorController::class, 'dashboard'])->name('dashboard');
         Route::get('/ratings', [OperatorController::class, 'ratings'])->name('ratings');
+        Route::get('/ratings/{rating}', [OperatorController::class, 'ratingShow'])->name('ratings.show');
         Route::post('/ratings/{rating}/respond', [OperatorController::class, 'respond'])->name('ratings.respond');
         Route::get('/profile', [OperatorController::class, 'profile'])->name('profile');
         // Self-service request to join another TODA. The TODA president is the
