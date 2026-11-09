@@ -76,6 +76,9 @@ class PresidentController extends Controller
             return response()->json([
                 'pendingComplaints' => (int) ($summary['pendingComplaints'] ?? 0),
                 'totalComplaints' => (int) ($summary['totalComplaints'] ?? 0),
+                'complaintStats' => ($summary['complaintsByType']['stats'] ?? collect())->map(function ($c) {
+                    return ['complaint_type' => $c->complaint_type, 'total' => (int) $c->total];
+                })->values(),
                 'ownAvg' => (float) ($summary['ownAvg'] ?? 0),
                 'html' => $html,
                 'pagination' => $members->links('pagination::tailwind')->render(),

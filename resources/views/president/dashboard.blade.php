@@ -64,6 +64,15 @@
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-flag', 'value' => $summary['totalComplaints'], 'label' => 'Complaints', 'live' => 'totalComplaints']])
 </div>
 
+{{-- Complaints by type — the same breakdown the superadmin / TFRB officer
+     dashboards show, but scoped to the TODA this president governs, so they can
+     see which complaint categories their members actually run into. --}}
+<div class="mt-5 tw-card transition-shadow duration-200 hover:shadow-md">
+    @include('partials.complaint-bar-chart', ['complaintStats' => $summary['complaintsByType']['stats'], 'totalComplaints' => (int) ($summary['complaintsByType']['total'] ?? 0)])
+</div>
+
+@include('partials.complaint-breakdown-modal', ['complaintStats' => $summary['complaintsByType']['stats'], 'totalComplaints' => (int) ($summary['complaintsByType']['total'] ?? 0)])
+
 {{-- Section 1 — My Ratings (the president's own performance as an operator).
      Member-level ratings are intentionally omitted here; the president reviews
      them per member from the TODA members list below. --}}

@@ -98,12 +98,13 @@ class PresidentQueryService
             ->whereNull('forwarded_at')
             ->count();
 
-        $totalComplaints = Rating::query()
-            ->whereIn('operator_id', $memberIdsForList)
-            ->where('toda_id', $toda->id)
-            ->isValid()
-            ->isComplaint()
-            ->count();
+        // Complaints by type for this TODA — the same breakdown the superadmin
+        // and TFRB officer dashboards show, scoped to the TODA the president
+        // governs (including the president's own operator record, when they
+        // filed against themselves, so nothing falls through the cracks).
+        $complaintsByType = $this->complaintsByType($toda, $ownOperator);
+
+        $totalComplaints = $complaintsByType['total'];
 
         // The president's own averages/count are scoped to this TODA too, so
         // their multi-TODA rating is never mixed across organizations.
@@ -122,8 +123,50 @@ class PresidentQueryService
             'avgMemberRating' => $avgMemberRating,
             'pendingComplaints' => $pendingComplaints,
             'totalComplaints' => $totalComplaints,
+            'complaintsByType' => $complaintsByType,
             'ownAvg' => $ownAvg,
             'ownTotal' => $ownTotal,
+        ];
+    }
+
+    /**
+     * Complaints grouped by type for the president's TODA, so the president
+     * sees which complaint categories their members actually run into — the
+     * same breakdown the superadmin / TFRB officer dashboards show, but scoped
+     * to the TODA the president governs (no cross-TODA leakage).
+     *
+     * @return array{stats: \Illuminate\Support\Collection, total: int}
+     */
+    public function complaintsByType(Toda $toda, ?Operator $ownOperator): array
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $memberQuery = $this->todaOperators($toda, $user);
+        $memberIdsForList = (clone $memberQuery)->pluck('id');
+
+        $ratingIds = $memberIdsForList->all();
+        if ($ownOperator
+            && ($ownOperator->isMemberOfToda($toda->id) || (int) $ownOperator->toda_id === (int) $toda->id)
+            && !in_array($ownOperator->id, $ratingIds)
+        ) {
+            $ratingIds[] = $ownOperator->id;
+        }
+
+        $stats = Rating::query()
+            ->whereIn('operator_id', $ratingIds)
+            ->where('toda_id', $toda->id)
+            ->isValid()
+            ->isComplaint()
+            ->selectRaw("COALESCE(complaint_type, 'Others') as complaint_type")
+            ->selectRaw('count(*) as total')
+            ->groupBy('complaint_type')
+            ->orderByDesc('total')
+            ->get();
+
+        $padded = Rating::paddedComplaintStats($stats);
+
+        return [
+            'stats' => $padded,
+            'total' => (int) $padded->sum('total'),
         ];
     }
 

@@ -347,7 +347,7 @@ class MultiTodaPresidentTest extends TestCase
         ]);
     }
 
-    public function test_president_dashboard_separates_own_ratings_per_toda_with_total(): void
+    public function test_president_dashboard_no_longer_renders_the_removed_my_ratings_section(): void
     {
         $admin = $this->makeUser('superadmin');
         $todaA = $this->makeToda();
@@ -360,7 +360,7 @@ class MultiTodaPresidentTest extends TestCase
         $this->actingAs($admin)
             ->post('/superadmin/operators/' . $operator->id . '/assign-president', ['toda_id' => $todaA->id]);
 
-        // 5 stars under TODA A, 1 star under TODA B -> 3.0 combined.
+        // 5 stars under TODA A, 1 star under TODA B -> combined own average.
         $this->rate($operator, $todaA, 5);
         $this->rate($operator, $todaA, 5);
         $this->rate($operator, $todaB, 1);
@@ -370,16 +370,16 @@ class MultiTodaPresidentTest extends TestCase
             ->withSession([TodaContext::SESSION_KEY => $todaA->id])
             ->get('/president/dashboard')
             ->assertOk()
-            ->assertSee('Per TODA', false)
-            ->assertSee($todaA->name, false)
-            ->assertSee($todaB->name, false)
-            ->assertSee('Total (2 TODAs)', false);
+            ->assertDontSee('Per TODA', false)
+            ->assertDontSee('Total (2 TODAs)', false);
 
-        // The combined total (5,5,1 -> 3.7) must be present alongside both rows.
+        // The removed My Ratings block is replaced on the dashboard by the
+        // complaints-by-type breakdown scoped to the president's TODA.
         $this->actingAs($user->fresh())
             ->withSession([TodaContext::SESSION_KEY => $todaA->id])
             ->get('/president/dashboard')
-            ->assertSee('3.7', false);
+            ->assertOk()
+            ->assertSee('Complaints by Type', false);
     }
 
     public function test_president_sidebar_section_shows_only_the_selected_block(): void
@@ -394,28 +394,27 @@ class MultiTodaPresidentTest extends TestCase
         $memberOperator = $this->makeOperator($member, $toda);
         $this->rate($memberOperator, $toda, 5);
 
-        // Text that only exists inside the ratings block (the sidebar also has a
-        // "My Ratings" link, so the block is tracked by its own container id).
+        // Text that only exists inside the removed ratings block (the sidebar
+        // also has a "My Ratings" link, so the block is tracked by its own copy).
         $ratingsCopy = 'Passenger ratings for your own driving will appear here.';
 
-        // Overview (no section) shows everything.
+        // Overview (no section) shows the remaining dashboard blocks only.
         $this->actingAs($pres)
             ->get('/president/dashboard')
             ->assertOk()
-            ->assertSee($ratingsCopy, false)
+            ->assertDontSee($ratingsCopy, false)
             ->assertSee('id="membersSection"', false);
 
-        // ?section=ratings shows the ratings block but hides the members block.
+        // ?section=ratings no longer maps to a dashboard block — the ratings
+        // list lives on its own page now.
         $this->actingAs($pres)->get('/president/dashboard?section=ratings')
             ->assertOk()
-            ->assertSee($ratingsCopy, false)
-            ->assertDontSee('id="membersSection"', false);
+            ->assertDontSee($ratingsCopy, false);
 
-        // ?section=members shows members but hides the ratings block.
+        // ?section=members shows members but hides the other dashboard blocks.
         $this->actingAs($pres)->get('/president/dashboard?section=members')
             ->assertOk()
-            ->assertSee('id="membersSection"', false)
-            ->assertDontSee($ratingsCopy, false);
+            ->assertSee('id="membersSection"', false);
     }
 
     public function test_sidebar_members_link_reveals_the_list_and_summary_cards_are_actionable(): void

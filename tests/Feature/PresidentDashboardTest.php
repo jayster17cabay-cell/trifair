@@ -76,6 +76,7 @@ class PresidentDashboardTest extends TestCase
     {
         return Rating::create([
             'operator_id' => $operator->id,
+            'toda_id' => (int) $operator->toda_id,
             'rating' => $stars,
             'complaint_type' => $complaintType,
             'complaint_details' => $complaintType ? 'Complaint details here' : null,
@@ -138,9 +139,50 @@ class PresidentDashboardTest extends TestCase
         // passenger files against their TODA.
         $this->assertArrayHasKey('pendingComplaints', $resp->json());
         $this->assertArrayHasKey('totalComplaints', $resp->json());
+        $this->assertArrayHasKey('complaintStats', $resp->json());
         $this->assertArrayHasKey('ownAvg', $resp->json());
         $this->assertArrayHasKey('html', $resp->json());
         $this->assertArrayHasKey('pagination', $resp->json());
+    }
+
+    public function test_president_dashboard_shows_complaints_by_type_scoped_to_own_toda(): void
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+        $member = $this->makeOperator($toda);
+
+        $this->makeValidRating($member, 2, 'Overcharging');
+
+        $html = $this->actingAs($pres['user'])
+            ->get('/president/dashboard')
+            ->assertOk()
+            ->getContent();
+
+        // Complaints by type breakdown — scoped to the president's TODA.
+        $this->assertStringContainsString('Complaints by Type', $html);
+        $this->assertStringContainsString('Overcharging', $html);
+    }
+
+    public function test_president_dashboard_complaints_by_type_do_not_leak_across_todas(): void
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $pres = $this->makePresident($todaA);
+
+        $memberA = $this->makeOperator($todaA);
+        $this->makeValidRating($memberA, 2, 'Overcharging');
+
+        $memberB = $this->makeOperator($todaB);
+        $this->makeValidRating($memberB, 2, 'Rude Driver');
+
+        // The live payload only carries the president's own TODA's complaints.
+        $resp = $this->actingAs($pres['user'])
+            ->getJson('/president/dashboard')
+            ->assertOk();
+
+        $stats = collect($resp->json('complaintStats') ?? []);
+        $this->assertSame(1, (int) ($stats->firstWhere('complaint_type', 'Overcharging')['total'] ?? 0));
+        $this->assertSame(0, (int) ($stats->firstWhere('complaint_type', 'Rude Driver')['total'] ?? 0));
     }
 
     public function test_non_president_cannot_access_dashboard()

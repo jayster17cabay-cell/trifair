@@ -256,7 +256,7 @@ class PresidentRatingsPageTest extends TestCase
         $this->assertStringContainsString('Ratings &amp; Complaints', $aside);
     }
 
-    public function test_dashboard_card_links_to_the_full_ratings_page(): void
+    public function test_dashboard_no_longer_renders_the_removed_my_ratings_section(): void
     {
         $toda = $this->makeToda();
         $pres = $this->makeUser('operator_president');
@@ -268,14 +268,17 @@ class PresidentRatingsPageTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        // "View all" on the summary card opens the full page.
+        // The My Ratings summary card ("View all" → full page) was removed from
+        // the dashboard per request; the full list lives behind the sidebar
+        // "Ratings & Complaints" link and the president's own ratings page.
         $this->assertStringContainsString(route('president.ratings'), $html);
-        $this->assertStringContainsString('View all', $html);
+        $this->assertStringNotContainsString('View all', $html);
 
-        // A pending complaint shows up in the recent list with its review
-        // state — the president is never left guessing about new complaints.
-        $this->assertStringContainsString('Under review', $html);
-        $this->assertStringContainsString('Late arrival at the terminal', $html);
+        // The full ratings page itself still renders the removed card's content.
+        $this->actingAs($pres)
+            ->get('/president/ratings')
+            ->assertOk()
+            ->assertSee('My Own Ratings');
     }
 
     public function test_ratings_page_renders_an_empty_state(): void
