@@ -47,13 +47,13 @@ class AdminTest extends TestCase
         ]);
     }
 
-    private function makeOperator(string $status = 'active', ?Toda $toda = null): Operator
+    private function makeOperator(string $status = 'active', ?Toda $toda = null, bool $assignToda = true): Operator
     {
         $user = $this->makeUser('operator');
 
         return Operator::create([
             'user_id' => $user->id,
-            'toda_id' => ($toda ?? $this->makeToda())->id,
+            'toda_id' => $assignToda ? ($toda ?? $this->makeToda())->id : null,
             'qr_code' => Str::random(32),
             'status' => $status,
             'contact_number' => '09171234567',
@@ -359,7 +359,7 @@ class AdminTest extends TestCase
     public function test_approve_pending_operator()
     {
         $admin = $this->makeUser('superadmin');
-        $operator = $this->makeOperator('pending');
+        $operator = $this->makeOperator('pending', null, false);
 
         $this->actingAs($admin)->patch('/superadmin/operators/' . $operator->id . '/approve')
             ->assertRedirect();
@@ -371,7 +371,7 @@ class AdminTest extends TestCase
     public function test_reject_pending_operator_deletes()
     {
         $admin = $this->makeUser('superadmin');
-        $operator = $this->makeOperator('pending');
+        $operator = $this->makeOperator('pending', null, false);
         $userId = $operator->user_id;
 
         $this->actingAs($admin)->patch('/superadmin/operators/' . $operator->id . '/reject')
@@ -379,6 +379,55 @@ class AdminTest extends TestCase
 
         $this->assertNull(Operator::find($operator->id));
         $this->assertNull(User::find($userId));
+    }
+
+    public function test_admin_cannot_approve_a_toda_linked_pending_operator()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator('pending');
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/operators/' . $operator->id . '/approve')
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSame('pending', $operator->fresh()->status);
+    }
+
+    public function test_admin_cannot_reject_a_toda_linked_pending_operator()
+    {
+        $admin = $this->makeUser('superadmin');
+        $operator = $this->makeOperator('pending');
+
+        $this->actingAs($admin)
+            ->patch('/superadmin/operators/' . $operator->id . '/reject')
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertNotNull(Operator::find($operator->id));
+        $this->assertNotNull(User::find($operator->user_id));
+    }
+
+    public function test_admin_pending_queue_only_lists_toda_less_operators()
+    {
+        $admin = $this->makeUser('superadmin');
+
+        $todaPending = $this->makeOperator('pending');
+        $todaPending->user->forceFill(['name' => 'Toda Pending'])->save();
+
+        $freePending = $this->makeOperator('pending', null, false);
+        $freePending->user->forceFill(['name' => 'Free Pending'])->save();
+
+        $this->actingAs($admin)
+            ->get('/superadmin/operators?status=pending')
+            ->assertOk()
+            ->assertSee('Free Pending', false)
+            ->assertDontSee('Toda Pending', false);
+
+        $data = app(AdminQueryService::class)->operatorsData(
+            \Illuminate\Http\Request::create('/superadmin/operators', 'GET')
+        );
+        $this->assertSame(1, (int) $data['pendingCount']);
     }
 
     public function test_marking_complaint_reviewed_counts_toward_rating()

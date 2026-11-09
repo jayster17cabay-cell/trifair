@@ -231,6 +231,28 @@ class TodaMembershipTest extends TestCase
         ]);
     }
 
+    public function test_president_approval_activates_a_self_registered_pending_account()
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+        $operator = $this->makeOperator($toda, 'pending');
+
+        // Reproduce a self-registration: the home-TODA membership waits for
+        // the president's decision.
+        $membership = $operator->todaMemberships()
+            ->where('toda_id', $toda->id)
+            ->firstOrFail();
+        $membership->update(['status' => OperatorToda::STATUS_PENDING]);
+
+        $this->actingAs($pres['user'])
+            ->patch(route('president.memberships.approve', $membership))
+            ->assertRedirect(route('president.members'));
+
+        $this->assertSame(OperatorToda::STATUS_ACTIVE, $membership->fresh()->status);
+        $this->assertSame('active', $operator->fresh()->status);
+        $this->assertTrue((bool) $operator->fresh()->user->is_active);
+    }
+
     public function test_president_cannot_approve_their_own_request()
     {
         $todaB = $this->makeToda();

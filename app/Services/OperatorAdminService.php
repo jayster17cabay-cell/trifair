@@ -460,6 +460,9 @@ class OperatorAdminService
         if ($operator->user->role !== 'operator') {
             return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be approved.');
         }
+        if ($operator->toda_id !== null) {
+            return redirect()->route($redirectRoute)->with('error', 'This operator chose a TODA, so only that TODA\'s president can approve the account.');
+        }
         if ($operator->isArchived()) {
             return redirect()->route($redirectRoute)->with('error', 'Archived operators cannot be approved. Restore them first.');
         }
@@ -506,6 +509,9 @@ class OperatorAdminService
 
         if ($operator->user->role !== 'operator') {
             return redirect()->route($redirectRoute)->with('error', 'Only operator accounts can be rejected.');
+        }
+        if ($operator->toda_id !== null) {
+            return redirect()->route($redirectRoute)->with('error', 'This operator chose a TODA, so only that TODA\'s president can reject the account.');
         }
 
         $operatorName = $operator->user->name;

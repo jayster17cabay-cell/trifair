@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Operator;
+use App\Models\OperatorToda;
 use App\Models\Toda;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -73,8 +74,12 @@ class RegisterController extends Controller
             'status' => 'pending',
         ]);
 
+        // The operator picked the TODA they want to join up front, so that
+        // TODA's president — not TFRB/superadmin — is the one who approves the
+        // account. The membership waits in the president's queue until then;
+        // approving it switches the account on (see TodaMembershipService).
         if (!empty($data['toda_id'])) {
-            $operator->joinToda($data['toda_id']);
+            $operator->joinToda($data['toda_id'], OperatorToda::STATUS_PENDING);
         }
 
         try {

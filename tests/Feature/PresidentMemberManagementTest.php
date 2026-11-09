@@ -77,7 +77,7 @@ class PresidentMemberManagementTest extends TestCase
         return $operator;
     }
 
-    public function test_president_can_add_member_creating_a_pending_account()
+    public function test_president_can_add_member_creating_an_active_account()
     {
         $toda = $this->makeToda();
         $pres = $this->makePresident($toda);
@@ -89,18 +89,21 @@ class PresidentMemberManagementTest extends TestCase
             'plate_number' => 'ABC 1234',
             'body_number' => 'TODA-99',
             'motorcycle_model' => 'Honda Click 125i',
-        ])->assertRedirect(route('president.members', ['status' => 'pending']));
+        ])->assertRedirect(route('president.members'));
 
         $user = User::where('email', 'newmember@example.com')->first();
         $this->assertNotNull($user);
         $this->assertSame('operator', $user->role);
+        $this->assertTrue((bool) $user->is_active);
         $this->assertTrue(Hash::check(User::DEFAULT_OPERATOR_PASSWORD, $user->password));
         $this->assertTrue($user->must_change_password);
 
+        // The president is the approver for their own TODA, so the account is
+        // active immediately instead of waiting in the admin queue.
         $this->assertDatabaseHas('operators', [
             'user_id' => $user->id,
             'toda_id' => $toda->id,
-            'status' => 'pending',
+            'status' => 'active',
             'plate_number' => 'ABC 1234',
             'body_number' => 'TODA-99',
         ]);
@@ -126,7 +129,7 @@ class PresidentMemberManagementTest extends TestCase
             'plate_number' => 'JDC-001',
             'body_number' => 'JDC-01',
             'motorcycle_model' => 'Honda Click 125i',
-        ])->assertRedirect(route('president.members', ['status' => 'pending']));
+        ])->assertRedirect(route('president.members'));
 
         $user = User::where('email', 'jandelacruz@example.com')->first();
         $this->assertNotNull($user);
@@ -140,25 +143,31 @@ class PresidentMemberManagementTest extends TestCase
         $this->assertSame('Cruz Juan Dela', User::composeName($user->first_name, $user->middle_name, $user->last_name));
     }
 
-    public function test_added_member_appears_in_admin_pending_list()
+    public function test_president_added_member_is_active_and_not_in_admin_pending_list()
     {
         $toda = $this->makeToda();
         $pres = $this->makePresident($toda);
-        $admin = $this->makeUser('superadmin');
 
         $this->actingAs($pres['user'])->post('/president/members', [
-            'name' => 'Pending Juan',
-            'email' => 'pendingjuan@example.com',
+            'name' => 'Active Juan',
+            'email' => 'activejuan@example.com',
             'contact_number' => '09171234567',
-            'plate_number' => 'PEND 001',
-            'body_number' => 'PEND-01',
+            'plate_number' => 'ACT 001',
+            'body_number' => 'ACT-01',
             'motorcycle_model' => 'Yamaha Mio',
-        ]);
+        ])->assertRedirect(route('president.members'));
 
-        $this->actingAs($admin)
-            ->get('/superadmin/operators?status=pending')
-            ->assertOk()
-            ->assertSee('Juan Pending', false);
+        $user = User::where('email', 'activejuan@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertSame('active', $user->operator->status);
+
+        // The admin pending queue (and its count) must not include a TODA-linked
+        // account, whether it is active or waiting for its president.
+        $data = app(\App\Services\AdminQueryService::class)->operatorsData(
+            \Illuminate\Http\Request::create('/superadmin/operators?status=pending', 'GET')
+        );
+        $this->assertFalse($data['operators']->contains('id', $user->operator->id));
+        $this->assertSame(0, (int) $data['pendingCount']);
     }
 
     public function test_add_member_rejects_duplicate_plate_number()

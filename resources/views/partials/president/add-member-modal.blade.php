@@ -1,6 +1,7 @@
 {{--
-    Add Member modal (president). Onboards a new TODA member; the account is
-    created as pending and still needs superadmin/TFRB approval. Opened by the
+    Add Member modal (president). Onboards a new TODA member; because the
+    president approves their own TODA, the account is active immediately and
+    must change the default password on first sign-in. Opened by the
     [data-tw-modal-open="presidentAddMemberModal"] button in the members section.
 --}}
 <div id="presidentAddMemberModal" class="tw-modal-backdrop hidden">
@@ -8,7 +9,7 @@
         <div class="tw-modal-head">
             <div class="min-w-0 flex-1">
                 <div id="addMemberModalTitle" class="truncate text-base font-bold text-slate-900">Add Member</div>
-                <div class="truncate text-xs text-slate-500">The account will be created as <strong>pending</strong> and must be approved by superadmin/TFRB.</div>
+                <div class="truncate text-xs text-slate-500">The account will be created as <strong>active</strong>. They must change the default password on first sign-in.</div>
             </div>
             <button type="button" class="tw-modal-close" data-tw-modal-close aria-label="Close">
                 <i class="bi bi-x-lg"></i>

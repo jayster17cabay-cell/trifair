@@ -109,6 +109,19 @@ class TodaMembershipService
     {
         $membership->update(['status' => OperatorToda::STATUS_ACTIVE, 'joined_at' => now()]);
 
+        $operator = $membership->operator;
+
+        // A self-registered operator chooses their TODA up front and waits in
+        // the pending state. That TODA's president approving the home-TODA
+        // membership is what activates the account; until then the operator
+        // middleware keeps them on the "pending approval" screen.
+        if ($operator
+            && (int) $operator->toda_id === (int) $membership->toda_id
+            && $operator->status === 'pending') {
+            $operator->update(['status' => 'active']);
+            $operator->user?->forceFill(['is_active' => true])->save();
+        }
+
         app(AdminDashboardService::class)->flush();
 
         ActivityLogger::log(

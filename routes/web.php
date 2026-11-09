@@ -298,8 +298,9 @@ Route::middleware(['auth', 'role:operator_president', 'president.active', 'toda.
     Route::get('/ratings', [PresidentController::class, 'ratings'])->name('ratings');
     Route::post('/ratings/{rating}/respond', [OperatorController::class, 'respond'])->name('ratings.respond');
     Route::get('/members', [PresidentController::class, 'members'])->name('members');
-    // President can onboard a new member (lands as a pending account for
-    // superadmin/tfrb approval) and remove one (they become a TODA-less operator).
+    // President can onboard a new member (active immediately — the president
+    // is the approver for their own TODA) and remove one (they become a
+    // TODA-less operator).
     Route::post('/members', [PresidentController::class, 'storeMember'])->name('members.store');
     Route::get('/members/{member}', [PresidentController::class, 'memberDetail'])->name('members.detail');
     Route::post('/members/{member}/suspend', [PresidentController::class, 'suspendMember'])->name('members.suspend');

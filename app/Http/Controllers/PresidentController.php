@@ -253,10 +253,10 @@ class PresidentController extends Controller
     }
 
     /**
-     * Onboard a new TODA member on the president's behalf. The account is
-     * created in the pending state, so it still has to be reviewed and approved
-     * by a superadmin or TFRB officer before it can be used — the president
-     * cannot self-approve.
+     * Onboard a new TODA member on the president's behalf. Because the
+     * president is the approver for their own TODA, the account is active
+     * immediately: the operator can sign in with the default password and is
+     * required to change it on first sign-in.
      */
     public function storeMember(Request $request)
     {
@@ -320,11 +320,12 @@ class PresidentController extends Controller
                 'body_number' => $data['body_number'],
                 'motorcycle_model' => $data['motorcycle_model'],
                 'qr_code' => Str::random(32),
-                'status' => 'pending',
+                'status' => 'active',
             ]);
 
-            // Register the TODA membership alongside the home TODA so the
-            // rating flow recognizes the member even before approval.
+            // Register the TODA membership alongside the home TODA. The
+            // president is adding this member themselves, so the membership is
+            // active straight away.
             $operator->joinToda($toda->id);
 
             return $user;
@@ -332,14 +333,14 @@ class PresidentController extends Controller
 
         ActivityLogger::log(
             'add_member',
-            "Added member {$user->name} ({$user->email}) to {$toda->name} — pending approval",
+            "Added member {$user->name} ({$user->email}) to {$toda->name} — account is active",
             $user,
             ActivityLogger::CATEGORY_OPERATOR
         );
 
         return redirect()
-            ->route('president.members', ['status' => 'pending'])
-            ->with('success', "{$user->name} added. The account is pending — superadmin/TFRB must approve it before it becomes active. Default password: " . User::DEFAULT_OPERATOR_PASSWORD . ' — they must change it on first sign-in.');
+            ->route('president.members')
+            ->with('success', "{$user->name} added and activated. Default password: " . User::DEFAULT_OPERATOR_PASSWORD . ' — they must change it on first sign-in.');
     }
 
     /**

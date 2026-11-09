@@ -3,13 +3,20 @@
 @section('title', 'Account Pending Approval')
 
 @section('content')
+@php($todaName = $operator?->toda?->name)
 @include('auth.partials.auth-shell-open')
                 <div class="mb-6">
                     <div class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-widest text-gold-dark">
                         <i class="bi bi-clock-history"></i> Under Review
                     </div>
                     <h4 class="text-2xl font-extrabold tracking-tight text-navy-700">Account Pending Approval</h4>
-                    <p class="mt-1 text-sm text-slate-500">Your registration is under review.</p>
+                    <p class="mt-1 text-sm text-slate-500">
+                        @if ($todaName)
+                            Your registration will be reviewed by the {{ $todaName }} President.
+                        @else
+                            Your registration is under review by TFRB/superadmin.
+                        @endif
+                    </p>
                 </div>
 
                 <div class="mt-8 flex flex-col items-center">
@@ -22,7 +29,11 @@
                     </p>
 
                     <p class="mb-6 text-center text-sm text-slate-500">
-                        A TFRB Officer or Superadmin will review your information and approve your account. <br>
+                        @if ($todaName)
+                            The <strong class="text-slate-700">{{ $todaName }} President</strong> will review your information and approve your account. <br>
+                        @else
+                            A <strong class="text-slate-700">TFRB Officer or Superadmin</strong> will review your information and approve your account. <br>
+                        @endif
                         You will be able to access your dashboard once approved.
                     </p>
 
@@ -31,8 +42,12 @@
                             <i class="bi bi-info-circle me-1"></i> What happens next?
                         </p>
                         <ul class="list-inside list-disc space-y-1 pl-2 text-xs text-slate-500">
-                            <li>Your details will be verified by a TFRB Officer</li>
-                            <li>Verify your email address by clicking the link sent to you</li>
+                            @if ($todaName)
+                                <li>Your details will be verified by the {{ $todaName }} President</li>
+                            @else
+                                <li>Your details will be verified by a TFRB Officer</li>
+                            @endif
+                            <li>Enter the 6-digit code sent to your email to verify your address</li>
                             <li>You'll receive a notification once approved</li>
                             <li>Then you can log in and access your dashboard</li>
                         </ul>

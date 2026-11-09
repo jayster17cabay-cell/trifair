@@ -685,11 +685,23 @@ class AdminQueryService
 
         if ($status === 'archived') {
             $query->archived();
-        } elseif ($status && in_array($status, ['active', 'inactive', 'suspended', 'pending', 'rejected'])) {
+        } elseif ($status === 'pending') {
+            // Only TODA-less registrations wait for TFRB/superadmin. An
+            // operator who picked a TODA is approved by that TODA's president,
+            // so they must not appear in the admin approval queue.
+            $query->notArchived()
+                ->where('status', 'pending')
+                ->whereNull('operators.toda_id');
+        } elseif ($status && in_array($status, ['active', 'inactive', 'suspended', 'rejected'])) {
             $query->notArchived()->where('status', $status);
         } else {
             $status = null;
-            $query->notArchived();
+            // Keep the general list tidy too: a TODA-linked pending account
+            // belongs to the president's queue, not the admin list.
+            $query->notArchived()->where(function ($q) {
+                $q->where('operators.status', '!=', 'pending')
+                    ->orWhereNull('operators.toda_id');
+            });
         }
 
         if ($account && $account !== 'all') {
@@ -755,7 +767,7 @@ class AdminQueryService
             ->join('users', 'users.id', '=', 'operators.user_id')
             ->whereIn('users.role', ['operator', 'operator_president'])
             ->selectRaw(
-                "SUM(CASE WHEN operators.status = 'pending' THEN 1 ELSE 0 END) as pending_count"
+                "SUM(CASE WHEN operators.status = 'pending' AND operators.toda_id IS NULL THEN 1 ELSE 0 END) as pending_count"
                 . ", SUM(CASE WHEN operators.status = 'suspended' THEN 1 ELSE 0 END) as suspended_count"
                 . ", SUM(CASE WHEN operators.status = 'active' THEN 1 ELSE 0 END) as active_status_count"
                 . ", SUM(CASE WHEN operators.status = 'inactive' THEN 1 ELSE 0 END) as inactive_status_count"

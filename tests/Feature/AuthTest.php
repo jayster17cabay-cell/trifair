@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\OperatorToda;
+use App\Models\Toda;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -151,5 +153,45 @@ class AuthTest extends TestCase
         $this->assertContains('rate/*', $exempt);
         $this->assertNotContains('login', $exempt);
         $this->assertNotContains('register', $exempt);
+    }
+
+    public function test_register_with_a_toda_waits_for_that_todas_president()
+    {
+        $toda = Toda::create([
+            'name' => 'Registration TODA',
+            'area' => 'Quezon City',
+            'is_active' => true,
+        ]);
+
+        $this->post('/register', [
+            'first_name' => 'Waiting',
+            'last_name' => 'Operator',
+            'email' => 'waiting@example.com',
+            'contact_number' => '09171234567',
+            'plate_number' => 'WAIT-1001',
+            'body_number' => 'WAIT-2001',
+            'motorcycle_model' => 'Honda Wave 125',
+            'toda_id' => $toda->id,
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])->assertRedirect(route('verification.notice'));
+
+        $user = User::where('email', 'waiting@example.com')->first();
+        $this->assertNotNull($user);
+
+        $operator = $user->operator;
+        $this->assertNotNull($operator);
+        $this->assertSame('pending', $operator->status);
+        $this->assertSame($toda->id, (int) $operator->toda_id);
+
+        // The membership waits in the president's queue instead of being
+        // active straight away (which would make the account rateable before
+        // approval).
+        $this->assertDatabaseHas('operator_toda', [
+            'operator_id' => $operator->id,
+            'toda_id' => $toda->id,
+            'status' => OperatorToda::STATUS_PENDING,
+        ]);
+        $this->assertFalse($operator->getRateableTodas()->contains('id', $toda->id));
     }
 }
