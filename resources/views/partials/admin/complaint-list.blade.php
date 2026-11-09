@@ -44,10 +44,9 @@
     ];
 
     $statItems = [
-        ['num' => $totalCount, 'label' => 'Total', 'icon' => 'bi-exclamation-circle', 'chip' => 'bg-blue-50 text-navy-600'],
-        ['num' => $openCount, 'label' => 'Open', 'icon' => 'bi-clock-history', 'chip' => 'bg-amber-50 text-amber-600'],
-        ['num' => $rejectedCount, 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600'],
-        ['num' => $solvedCount, 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600'],
+        ['num' => $totalCount, 'label' => 'All complaints', 'icon' => 'bi-exclamation-circle', 'chip' => 'bg-blue-50 text-navy-600', 'href' => route($routePrefix . '.complaints', array_filter(['source' => $presidentMode ? null : $source, 'filter' => 'all', 'rating' => $ratingFilter, 'search' => $search], fn ($v) => $v !== null && $v !== ''))],
+        ['num' => $rejectedCount, 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600', 'href' => route($routePrefix . '.complaints', array_filter(['source' => $presidentMode ? null : $source, 'filter' => 'rejected', 'rating' => $ratingFilter, 'search' => $search], fn ($v) => $v !== null && $v !== ''))],
+        ['num' => $solvedCount, 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600', 'href' => route($routePrefix . '.complaints', array_filter(['source' => $presidentMode ? null : $source, 'filter' => 'solved', 'rating' => $ratingFilter, 'search' => $search], fn ($v) => $v !== null && $v !== ''))],
     ];
 @endphp
 
@@ -89,11 +88,11 @@
 {{-- Sticky summary + filter panel --}}
 <div class="sticky top-[70px] z-20 -mx-4 mb-5 border-b border-slate-100 bg-white/95 px-4 pb-4 pt-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.25)] backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
     {{-- Summary stats --}}
-    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         @foreach ($statItems as $stat)
             @php $statTag = !empty($stat['href']) ? 'a' : 'div'; @endphp
             <{{ $statTag }}
-                @if (!empty($stat['href'])) href="{{ $stat['href'] }}" title="Show forwarded complaints" @endif
+                @if (!empty($stat['href'])) href="{{ $stat['href'] }}" @if (!empty($stat['title'])) title="{{ $stat['title'] }}" @endif @endif
                 class="flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5 {{ !empty($stat['href']) ? 'transition hover:bg-violet-50 hover:ring-1 hover:ring-violet-200' : '' }}">
                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $stat['chip'] }}"><i class="bi {{ $stat['icon'] }}"></i></span>
                 <div class="min-w-0">
