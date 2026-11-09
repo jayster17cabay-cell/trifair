@@ -148,6 +148,38 @@
             </div>
         @endif
 
+        {{-- Follow-up thread with the passenger --}}
+        <div class="mt-3 border-t border-slate-100 pt-3">
+            @if ($violation->followUps->count() > 0)
+                <div class="mb-3 space-y-2">
+                    @foreach ($violation->followUps as $fu)
+                        @if ($fu->isFromStaff())
+                            <div class="flex justify-end">
+                                <div class="max-w-[85%] rounded-xl bg-navy-600 px-3 py-2 text-sm text-white">
+                                    <div class="mb-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-navy-100">TFRB / Superadmin</div>
+                                    {{ $fu->message }}
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex justify-start">
+                                <div class="max-w-[85%] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                                    <div class="mb-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-slate-500">Passenger</div>
+                                    {{ $fu->message }}
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+            @endif
+            <form method="POST" action="{{ route($routePrefix . '.violations.reply', $violation->id) }}" class="flex flex-col gap-2">
+                @csrf
+                <textarea name="message" rows="2" maxlength="1000" required class="tw-textarea w-full bg-white" placeholder="Reply to the passenger..."></textarea>
+                <div class="flex justify-end">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy"><i class="bi bi-send-fill"></i> Reply</button>
+                </div>
+            </form>
+        </div>
+
         {{-- Actions --}}
         <div class="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
             @if (!$violation->is_solved)

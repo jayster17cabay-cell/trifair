@@ -134,31 +134,6 @@
                 @endforeach
             </div>
 
-            @if ($notifications->isNotEmpty())
-                <section class="mb-6">
-                    <h2 class="mb-3 text-sm font-bold uppercase tracking-widest text-slate-400">
-                        <i class="bi bi-bell-fill mr-1"></i>Account updates
-                    </h2>
-                    <div class="space-y-2">
-                        @foreach ($notifications as $notification)
-                            <div class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-                                <i class="bi {{ $notification->rating && $notification->rating->is_solved ? 'bi-patch-check-fill text-navy-600' : 'bi-check-circle-fill text-emerald-500' }} mt-0.5"></i>
-                                <div class="min-w-0">
-                                    <div class="text-sm font-semibold text-slate-800">
-                                        {{ $notification->title }}
-                                        @if ($notification->rating && $notification->rating->reference_number)
-                                            <span class="ml-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.7rem] font-semibold text-navy-600">{{ $notification->rating->reference_number }}</span>
-                                        @endif
-                                    </div>
-                                    <p class="text-xs text-slate-500">{{ $notification->message }}</p>
-                                    <div class="mt-1 text-[0.68rem] text-slate-400">{{ $notification->created_at->diffForHumans() }}</div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </section>
-            @endif
-
             @if ($tab === 'violations')
                 <h2 class="mb-4 text-xl font-extrabold text-slate-900">
                     <i class="bi bi-flag-fill mr-1 text-amber-500"></i>My Violation Reports

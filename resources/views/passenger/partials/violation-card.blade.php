@@ -110,5 +110,38 @@
                 @endif
             </div>
         @endif
+
+        {{-- Follow-up thread with the TFRB --}}
+        <div class="mt-4 border-t border-slate-200 pt-4">
+            @php $vThread = $violation->followUps; @endphp
+            @if ($vThread->count() > 0)
+                <div class="mb-3 space-y-2">
+                    @foreach ($vThread as $fu)
+                        @if ($fu->isFromStaff())
+                            <div class="flex justify-start">
+                                <div class="max-w-[85%] rounded-xl border border-navy-100 bg-navy-50 px-3 py-2 text-sm text-slate-700">
+                                    <div class="mb-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-navy-600">TFRB / Superadmin</div>
+                                    {{ $fu->message }}
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex justify-end">
+                                <div class="max-w-[85%] rounded-xl bg-violet-600 px-3 py-2 text-sm text-white">
+                                    <div class="mb-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-violet-100">You</div>
+                                    {{ $fu->message }}
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+            @endif
+            <form action="{{ route('passenger.violations.followUp', $violation) }}" method="POST" class="flex flex-col gap-2">
+                @csrf
+                <textarea name="message" rows="2" maxlength="1000" required class="tw-textarea w-full bg-white" placeholder="Add a follow-up message to your report..."></textarea>
+                <div class="flex justify-end">
+                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy"><i class="bi bi-send-fill"></i> Send</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

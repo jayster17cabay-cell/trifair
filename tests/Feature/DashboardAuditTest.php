@@ -1083,7 +1083,7 @@ class DashboardAuditTest extends TestCase
             ->where('title', 'Complaint Solved')
             ->first());
 
-        $this->actingAs($passenger)->get('/passenger/dashboard')
+        $this->actingAs($passenger)->get('/passenger/dashboard?tab=solved')
             ->assertOk()
             ->assertSee('Complaint Solved', false);
     }

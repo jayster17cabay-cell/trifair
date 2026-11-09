@@ -328,7 +328,7 @@ class AdminQueryService
             });
         }
 
-        $violations = $base->with(['operator.user', 'toda', 'reporter', 'reviewer', 'proofs'])
+        $violations = $base->with(['operator.user', 'toda', 'reporter', 'reviewer', 'proofs', 'followUps'])
             ->latest()
             ->paginate(20)
             ->withQueryString();

@@ -81,7 +81,7 @@ class PassengerController extends Controller
 
         // Violation reports this passenger filed against suspended / lapsed
         // operators — monitored on this page alongside complaints.
-        $violations = SuspensionViolation::with(['operator.user', 'toda', 'proofs', 'reviewer'])
+        $violations = SuspensionViolation::with(['operator.user', 'toda', 'proofs', 'reviewer', 'followUps'])
             ->where('reported_by', $user->id)
             ->latest()
             ->limit(50)
@@ -184,5 +184,29 @@ class PassengerController extends Controller
                 ? 'Your appeal has been sent to the TFRB/superadmin for review.'
                 : 'Your follow-up has been sent. It will be shown to the TFRB/superadmin for your complaint.')
             ->with('open_follow_up', $rating->id);
+    }
+
+    public function violationFollowUp(Request $request, SuspensionViolation $violation)
+    {
+        $user = $request->user();
+        abort_unless((int) $violation->reported_by === (int) $user->id, 403);
+
+        $data = $request->validate([
+            'message' => 'required|string|min:3|max:1000',
+        ], [
+            'message.required' => 'Enter your follow-up message before submitting.',
+            'message.min' => 'Enter at least 3 characters.',
+            'message.max' => 'The follow-up message must not exceed 1,000 characters.',
+        ]);
+
+        $violation->followUps()->create([
+            'user_id' => $user->id,
+            'message' => $data['message'],
+            'sender_role' => 'passenger',
+        ]);
+
+        return redirect()->route('passenger.dashboard', ['tab' => 'violations'])
+            ->with('status', 'Your follow-up has been sent. The TFRB will see it on your report.')
+            ->with('open_violation_follow_up', $violation->id);
     }
 }

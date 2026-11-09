@@ -425,6 +425,25 @@ class SuperadminController extends Controller
         return back()->with('success', 'Violation report reopened.');
     }
 
+    public function violationsReply(Request $request, SuspensionViolation $violation)
+    {
+        $data = $request->validate([
+            'message' => 'required|string|min:3|max:1000',
+        ], [
+            'message.required' => 'Enter your reply before submitting.',
+            'message.min' => 'Enter at least 3 characters.',
+            'message.max' => 'The reply must not exceed 1,000 characters.',
+        ]);
+
+        $violation->followUps()->create([
+            'user_id' => $request->user()->id,
+            'message' => $data['message'],
+            'sender_role' => 'staff',
+        ]);
+
+        return back()->with('success', 'Reply sent to the passenger.');
+    }
+
     public function operators(Request $request)
     {
         $data = app(AdminQueryService::class)->operatorsData($request);

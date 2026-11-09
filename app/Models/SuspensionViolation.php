@@ -84,6 +84,11 @@ class SuspensionViolation extends Model
         return $this->hasMany(SuspensionViolationProof::class, 'violation_id');
     }
 
+    public function followUps()
+    {
+        return $this->hasMany(ViolationFollowUp::class, 'violation_id')->orderBy('created_at');
+    }
+
     public function scopePending($query)
     {
         return $query->where('status', 'pending');

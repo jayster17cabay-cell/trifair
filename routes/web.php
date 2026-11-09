@@ -168,6 +168,7 @@ Route::middleware(['auth', 'role:tfrb_officer'])->prefix('tfrb-officer')->name('
     Route::patch('/violations/{violation}/review', [TfrbOfficerController::class, 'violationsReview'])->name('violations.review');
     Route::patch('/violations/{violation}/solve', [TfrbOfficerController::class, 'violationsSolve'])->name('violations.solve');
     Route::patch('/violations/{violation}/reopen', [TfrbOfficerController::class, 'violationsReopen'])->name('violations.reopen');
+    Route::post('/violations/{violation}/reply', [TfrbOfficerController::class, 'violationsReply'])->name('violations.reply');
     Route::get('/activity-logs', [TfrbOfficerController::class, 'activityLogs'])->name('activity-logs');
     Route::get('/todas', [TfrbOfficerController::class, 'todas'])->name('todas');
     Route::get('/toda/{toda}/members', [TfrbOfficerController::class, 'todaMembers'])->name('todas.members');
@@ -224,6 +225,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::patch('/violations/{violation}/review', [SuperadminController::class, 'violationsReview'])->name('violations.review');
     Route::patch('/violations/{violation}/solve', [SuperadminController::class, 'violationsSolve'])->name('violations.solve');
     Route::patch('/violations/{violation}/reopen', [SuperadminController::class, 'violationsReopen'])->name('violations.reopen');
+    Route::post('/violations/{violation}/reply', [SuperadminController::class, 'violationsReply'])->name('violations.reply');
     Route::get('/ratings', [SuperadminController::class, 'ratings'])->name('ratings');
     Route::patch('/ratings/{rating}/review', [SuperadminController::class, 'markReviewed'])->name('ratings.review');
     Route::post('/ratings/bulk-review', [SuperadminController::class, 'ratingsBulkReview'])->name('ratings.bulkReview');
@@ -523,6 +525,7 @@ Route::get('/rate/{qrCode}/report/submitted', [RatingController::class, 'reportS
 
 Route::group(['prefix' => 'passenger', 'middleware' => ['auth', 'role:passenger']], function () {
     Route::get('/dashboard', [PassengerController::class, 'dashboard'])->name('passenger.dashboard');
+    Route::post('/violations/{violation}/follow-up', [PassengerController::class, 'violationFollowUp'])->name('passenger.violations.followUp');
     Route::get('/complaints/{rating}', [PassengerController::class, 'complaint'])->name('passenger.complaints.show');
     // A passenger follows up on their own complaint while it is still open.
     Route::post('/complaints/{rating}/follow-up', [PassengerController::class, 'followUp'])
