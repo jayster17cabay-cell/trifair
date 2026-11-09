@@ -28,7 +28,8 @@ class PresidentQueryService
     {
         $query = Operator::query()
             ->belongsToToda($toda->id)
-            ->notArchived();
+            ->notArchived()
+            ->where('operators.status', '!=', 'pending');
 
         if ($user && method_exists($user, 'isOperatorPresident') && $user->isOperatorPresident()) {
             if (method_exists($user, 'isPresidentOf') && $user->isPresidentOf($toda->id)) {
@@ -225,7 +226,7 @@ class PresidentQueryService
             });
         }
 
-        if ($status && in_array($status, ['active', 'inactive', 'suspended', 'pending', 'rejected'], true)) {
+        if ($status && in_array($status, ['active', 'inactive', 'suspended', 'rejected'], true)) {
             $base->where('status', $status);
         }
 

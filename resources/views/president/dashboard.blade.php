@@ -98,7 +98,7 @@
                         class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm placeholder-slate-400 transition focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/20 sm:w-64">
                 <select id="presidentMemberStatus" name="status" aria-label="Filter members by status" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
                     <option value="">All status</option>
-                    @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $val => $label)
+                    @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended', 'rejected' => 'Rejected'] as $val => $label)
                         <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
