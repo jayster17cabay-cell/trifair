@@ -29,8 +29,8 @@
     <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
         <div class="min-w-0">
             <div class="text-[11px] font-bold uppercase tracking-widest text-gold">TODA President</div>
-            <h1 class="text-lg font-extrabold leading-tight text-white">My Ratings &amp; Complaints</h1>
-            <p class="mt-0.5 text-xs text-white/70">Everything passengers said about your own driving — ratings, complaints and your responses.</p>
+            <h1 class="text-lg font-extrabold leading-tight text-white">My Own Ratings &amp; Complaints</h1>
+            <p class="mt-0.5 text-xs text-white/70">Everything passengers said about <strong>your own driving</strong> — ratings, complaints and your responses. Members' ratings are viewed per member in the Members section.</p>
         </div>
         <span class="tw-badge !bg-white/10 !text-white"><i class="bi bi-geo-alt mr-1"></i>{{ $toda->name }}</span>
     </div>
