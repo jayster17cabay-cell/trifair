@@ -64,13 +64,13 @@
     <div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         @php
             $kpiItems = [
-                ['key' => 'all', 'label' => 'All Complaints', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $monitoringTotalCount],
-                ['key' => 'solved', 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600', 'num' => $monitoringSolvedCount ?? 0],
-                ['key' => 'rejected', 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600', 'num' => $monitoringRejectedCount ?? 0],
+                ['key' => 'all', 'label' => 'All Complaints', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $monitoringTotalCount, 'filter' => 'all'],
+                ['key' => 'solved', 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600', 'num' => $monitoringSolvedCount ?? 0, 'filter' => 'solved'],
+                ['key' => 'rejected', 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600', 'num' => $monitoringRejectedCount ?? 0, 'filter' => 'rejected'],
             ];
         @endphp
         @foreach ($kpiItems as $kpi)
-            <a href="{{ route($routePrefix . '.complaints', array_merge(request()->except('view', 'page', 'mpage'), ['view' => 'monitor'])) }}"
+            <a href="{{ route($routePrefix . '.complaints', array_merge(request()->except('view', 'page', 'mpage', 'filter'), ['view' => 'monitor', 'filter' => $kpi['filter'] ?? 'all'])) }}"
                class="flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5 transition hover:bg-slate-100 hover:ring-1 hover:ring-slate-200">
                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ $kpi['chip'] }}"><i class="bi {{ $kpi['icon'] }}"></i></span>
                 <div class="min-w-0">

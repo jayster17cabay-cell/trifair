@@ -37,7 +37,7 @@ class AdminQueryService
         // action queue's default Open filter, otherwise solved/rejected cases
         // belonging to a TODA president disappear from the monitoring list
         // and cannot be found by reference number.
-        if (!$president && $pageName === 'mpage') {
+        if (!$president && $pageName === 'mpage' && !$request->has('filter')) {
             $filter = 'all';
         }
 
