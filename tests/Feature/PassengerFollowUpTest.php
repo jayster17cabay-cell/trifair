@@ -398,14 +398,14 @@ class PassengerFollowUpTest extends TestCase
         $rating = $this->markResolved($rating, $president, 'solved');
 
         $this->assertTrue($rating->canAppeal());
-        $this->assertSame($president->name . ' (TODA President)', $rating->reviewed_by_display);
+        $this->assertSame($rating->operator->toda->name . ' President', $rating->reviewed_by_display);
 
         $this->actingAs($passenger)
             ->get(route('passenger.complaints.show', $rating))
             ->assertOk()
             ->assertSee('Not satisfied with the decision?')
             ->assertSee('Send appeal')
-            ->assertSee('TODA President');
+            ->assertSee($rating->operator->toda->name . ' President');
 
         $this->actingAs($passenger)
             ->post(route('passenger.complaints.followUp', $rating), [

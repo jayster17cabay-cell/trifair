@@ -505,14 +505,16 @@ class ComplaintReviewFlowTest extends TestCase
 
         $html = (new ComplaintStatus($complaint->fresh(), 'solved'))->render();
         $this->assertStringContainsString('Solved by', $html);
-        $this->assertStringContainsString($president->name . ' (TODA President)', $html);
+        $this->assertStringContainsString($operator->toda->name . ' President', $html);
+        $this->assertStringNotContainsString($president->name, $html);
         $this->assertStringContainsString('file an appeal', $html);
 
         $officer = $this->makeUser('tfrb_officer');
         $complaint->update(['reviewed_by' => $officer->id]);
 
         $html = (new ComplaintStatus($complaint->fresh(), 'solved'))->render();
-        $this->assertStringContainsString($officer->name . ' (TFRB Officer)', $html);
+        $this->assertStringContainsString('TFRB Officer', $html);
+        $this->assertStringNotContainsString($officer->name, $html);
         $this->assertStringContainsString('decision was made by the TFRB/superadmin and is final', $html);
         $this->assertStringNotContainsString('file an appeal', $html);
     }
@@ -577,7 +579,7 @@ class ComplaintReviewFlowTest extends TestCase
 
         $this->actingAs($admin)->get('/superadmin/complaints?filter=rejected')
             ->assertOk()
-            ->assertSee('Reviewed by ' . $admin->name)
+            ->assertSee('Reviewed by Superadmin')
             ->assertSee($fresh->rejected_at->format('M j, Y g:i A'), false);
     }
 

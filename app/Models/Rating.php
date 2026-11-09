@@ -266,18 +266,34 @@ class Rating extends Model
     }
 
     /**
-     * Reviewer name plus role, e.g. "Juan Dela Cruz (TODA President)".
+     * Who resolved the complaint, described by office rather than by the
+     * person's name: "San Jose TODA President", "TFRB Officer" or
+     * "Superadmin". Null when no reviewer was recorded (legacy rows).
      */
     public function getReviewedByDisplayAttribute(): ?string
     {
-        $name = $this->reviewed_by_name;
-        if ($name === null || $name === '') {
+        $reviewer = $this->reviewer;
+        if ($reviewer === null) {
             return null;
         }
 
-        $role = $this->reviewed_by_role_label;
+        if ($reviewer->role === 'operator_president') {
+            return $this->resolverTodaName() . ' President';
+        }
 
-        return $role ? "{$name} ({$role})" : $name;
+        return $reviewer->role_label;
+    }
+
+    /**
+     * TODA whose president handled this complaint. Prefer the TODA recorded
+     * on the complaint, then the reported operator's TODA, so the label stays
+     * accurate even for older complaints that predate ratings.toda_id.
+     */
+    private function resolverTodaName(): string
+    {
+        return $this->toda?->name
+            ?? $this->operator?->toda?->name
+            ?? 'TODA';
     }
 
     /**

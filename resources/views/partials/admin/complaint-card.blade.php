@@ -350,7 +350,7 @@
                 @endif
                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-200 pt-2 text-[0.7rem] text-slate-500">
                     @if ($rating->reviewed_by_display)
-                        <span><i class="bi bi-person-badge mr-1"></i>Reviewed by {{ $rating->reviewed_by_display }}</span>
+                        <span><i class="bi bi-person-badge mr-1"></i>{{ $isSolved ? 'Solved by' : 'Reviewed by' }} {{ $rating->reviewed_by_display }}</span>
                     @endif
                     @if ($rating->resolution_at)
                         <span><i class="bi bi-clock-history mr-1"></i>{{ $rating->resolution_at->format('M j, Y g:i A') }}</span>
