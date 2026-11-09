@@ -28,8 +28,20 @@ Current status: {{ $statusLabel }}
 {{ $status === 'rejected' ? 'Reason' : 'Resolution details' }}: {{ $rating->resolution_note }}
 @endif
 
-@if ($status === 'solved')
-Sign in to TriFair and open My Complaints to view any photos attached to the resolution.
+@if (in_array($status, ['solved', 'rejected'], true) && $rating->reviewed_by_display)
+{{ $status === 'solved' ? 'Solved by' : 'Reviewed by' }} {{ $rating->reviewed_by_display }}@if ($rating->resolution_at) on {{ $rating->resolution_at->format('M j, Y g:i A') }}@endif.
+@endif
+
+@if ($status === 'solved' && $attachedProofCount > 0)
+{{ $attachedProofCount }} resolution photo{{ $attachedProofCount === 1 ? '' : 's' }} {{ $attachedProofCount === 1 ? 'is' : 'are' }} attached to this email. You can also view {{ $attachedProofCount === 1 ? 'it' : 'them' }} under My Complaints in TriFair.
+@endif
+
+@if (in_array($status, ['solved', 'rejected'], true))
+@if ($rating->canAppeal())
+If you are not satisfied with this decision, sign in to TriFair and open My Complaints to file an appeal with the TFRB/superadmin.
+@else
+This decision was made by the TFRB/superadmin and is final.
+@endif
 @endif
 
 Thank you for helping keep our transport services safe and accountable.

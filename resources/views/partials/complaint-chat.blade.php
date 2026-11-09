@@ -14,9 +14,10 @@
     $thread = $rating->passengerFollowUps;
     $isStaffView = $viewSide === 'staff';
     $hasAppeal = $thread->contains(fn ($followUp) => (bool) $followUp->is_appeal);
-    // A solved complaint normally has a closed thread, but a passenger appeal
+    // A resolved complaint normally has a closed thread, but a passenger appeal
     // reopens the staff side so TFRB/superadmin can answer that appeal.
-    $canChat = (!$rating->is_solved || ($isStaffView && $hasAppeal)) && !($readOnly ?? false);
+    $isResolved = $rating->is_solved || (bool) $rating->rejected_at;
+    $canChat = (!$isResolved || ($isStaffView && $hasAppeal)) && !($readOnly ?? false);
     $standalone = $standalone ?? false;
     $chatOpen = $chatOpen ?? false;
     $composerError = $isStaffView

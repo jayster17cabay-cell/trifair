@@ -32,23 +32,46 @@
 
         @include('passenger.partials.complaint-card', ['rating' => $rating, 'standalone' => true, 'detailsOpen' => true])
 
-        <section class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+        @if ($rating->canAppeal())
+            <section class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
                 <div class="flex items-start gap-3">
                     <i class="bi bi-megaphone-fill mt-0.5 text-amber-600"></i>
                     <div class="min-w-0 flex-1">
-                        <h2 class="text-sm font-extrabold text-amber-900">Need immediate TFRB review?</h2>
-                        <p class="mt-1 text-xs leading-relaxed text-amber-800">You may appeal at any time — even while the TODA/operator has not solved the complaint yet. Use this for serious incidents or if you are not satisfied with the action taken.</p>
-                        <form action="{{ route('passenger.complaints.followUp', $rating) }}" method="POST" class="mt-3">
+                        <h2 class="text-sm font-extrabold text-amber-900">
+                            {{ ($rating->is_solved || $rating->rejected_at) ? 'Not satisfied with the decision?' : 'Need immediate TFRB review?' }}
+                        </h2>
+                        <p class="mt-1 text-xs leading-relaxed text-amber-800">
+                            @if ($rating->is_solved || $rating->rejected_at)
+                                This complaint was resolved by the TODA president. You may appeal it to the TFRB/superadmin for a heavier review.
+                            @else
+                                You may appeal at any time — even while the TODA/operator has not solved the complaint yet. Use this for serious incidents or if you are not satisfied with the action taken.
+                            @endif
+                        </p>
+                        <form action="{{ route('passenger.complaints.followUp', $rating) }}" method="POST" class="mt-4 space-y-3">
                             @csrf
                             <input type="hidden" name="appeal" value="1">
                             <input type="hidden" name="follow_up_rating_id" value="{{ $rating->id }}">
                             <textarea name="message" rows="3" maxlength="1000" required class="tw-textarea w-full bg-white" placeholder="Explain why you are appealing this decision..."></textarea>
-                            <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy mt-2"><i class="bi bi-send-fill"></i> Send appeal</button>
+                            <div class="flex justify-end">
+                                <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy"><i class="bi bi-send-fill"></i> Send appeal</button>
+                            </div>
                         </form>
                     </div>
                 </div>
             </section>
-        </section>
+        @elseif ($rating->is_solved || $rating->rejected_at)
+            <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div class="flex items-start gap-3">
+                    <i class="bi bi-shield-check mt-0.5 text-slate-500"></i>
+                    <div class="min-w-0 flex-1">
+                        <h2 class="text-sm font-extrabold text-slate-800">Final decision</h2>
+                        <p class="mt-1 text-xs leading-relaxed text-slate-500">
+                            This complaint was decided by the TFRB/superadmin. The decision is final and the appeal option is no longer available.
+                        </p>
+                    </div>
+                </div>
+            </section>
+        @endif
     </main>
 </body>
 </html>

@@ -14,6 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -403,8 +404,10 @@ class ComplaintReviewFlowTest extends TestCase
             ->assertSee('resolved.jpg');
     }
 
-    public function test_solved_complaint_email_has_no_remote_links_or_images()
+    public function test_solved_complaint_email_attaches_resolution_proof_without_remote_links()
     {
+        Storage::fake('public');
+
         $operator = $this->makeOperator();
         $complaint = $this->makeValidComplaint($operator, 1);
         $complaint->update([
@@ -414,25 +417,104 @@ class ComplaintReviewFlowTest extends TestCase
             'resolution_note' => 'The driver was warned.',
         ]);
 
+        $path = 'resolution-proofs/' . $complaint->id . '/resolved.jpg';
+        Storage::disk('public')->put($path, 'fake-jpeg-bytes');
+
         ResolutionProof::create([
             'rating_id' => $complaint->id,
-            'file_path' => 'resolution-proofs/' . $complaint->id . '/resolved.jpg',
+            'file_path' => $path,
             'file_type' => 'image/jpeg',
             'original_name' => 'resolved.jpg',
         ]);
 
-        $html = (new ComplaintStatus($complaint->fresh(), 'solved'))->render();
+        $mail = new ComplaintStatus($complaint->fresh(), 'solved');
+        $mail->build();
+        $html = $mail->render();
 
-        // Remote images and signed links to the shared hosting domain are the
-        // strongest spam signals for this sender. The email stays link-free and
-        // points the passenger at the dashboard instead.
+        // The photo travels as a regular attachment, not a remote <img> or a
+        // signed link to the shared hosting domain — the two patterns Gmail
+        // flagged as spam before.
         $this->assertStringNotContainsString('<img', $html);
         $this->assertStringNotContainsString('file-storage', $html);
         $this->assertStringNotContainsString('http://', $html);
         $this->assertStringNotContainsString('https://', $html);
         $this->assertStringNotContainsString('automated', strtolower($html));
-        $this->assertStringContainsString('Sign in to TriFair and open My Complaints', $html);
         $this->assertStringContainsString('The driver was warned.', $html);
+        $this->assertStringContainsString('1 resolution photo', $html);
+        $this->assertStringContainsString('attached to this email', $html);
+
+        $this->assertCount(1, $mail->rawAttachments);
+        $this->assertSame('resolved.jpg', $mail->rawAttachments[0]['name']);
+        $this->assertSame('fake-jpeg-bytes', $mail->rawAttachments[0]['data']);
+        $this->assertSame('image/jpeg', $mail->rawAttachments[0]['options']['mime']);
+        $this->assertSame(1, $mail->attachedProofCount);
+    }
+
+    public function test_solved_email_counts_only_proofs_it_could_actually_attach()
+    {
+        Storage::fake('public');
+
+        $operator = $this->makeOperator();
+        $complaint = $this->makeValidComplaint($operator, 1);
+        $complaint->update([
+            'is_reviewed' => true,
+            'is_solved' => true,
+            'solved_at' => now(),
+        ]);
+
+        $validPath = 'resolution-proofs/' . $complaint->id . '/resolved.jpg';
+        Storage::disk('public')->put($validPath, 'fake-jpeg-bytes');
+
+        ResolutionProof::create([
+            'rating_id' => $complaint->id,
+            'file_path' => $validPath,
+            'file_type' => 'image/jpeg',
+            'original_name' => 'resolved.jpg',
+        ]);
+
+        // This proof has a database row but no readable file. It must not be
+        // counted in the "attached to this email" note.
+        ResolutionProof::create([
+            'rating_id' => $complaint->id,
+            'file_path' => 'resolution-proofs/' . $complaint->id . '/missing.jpg',
+            'file_type' => 'image/jpeg',
+            'original_name' => 'missing.jpg',
+        ]);
+
+        $mail = new ComplaintStatus($complaint->fresh(), 'solved');
+        $mail->build();
+        $html = $mail->render();
+
+        $this->assertCount(1, $mail->rawAttachments);
+        $this->assertSame(1, $mail->attachedProofCount);
+        $this->assertStringContainsString('1 resolution photo', $html);
+        $this->assertStringNotContainsString('2 resolution photos', $html);
+    }
+
+    public function test_solved_email_names_the_reviewer_role_and_appeal_rule()
+    {
+        $operator = $this->makeOperator();
+        $president = $this->makeUser('operator_president');
+        $complaint = $this->makeValidComplaint($operator, 1);
+        $complaint->update([
+            'is_reviewed' => true,
+            'is_solved' => true,
+            'solved_at' => now(),
+            'reviewed_by' => $president->id,
+        ]);
+
+        $html = (new ComplaintStatus($complaint->fresh(), 'solved'))->render();
+        $this->assertStringContainsString('Solved by', $html);
+        $this->assertStringContainsString($president->name . ' (TODA President)', $html);
+        $this->assertStringContainsString('file an appeal', $html);
+
+        $officer = $this->makeUser('tfrb_officer');
+        $complaint->update(['reviewed_by' => $officer->id]);
+
+        $html = (new ComplaintStatus($complaint->fresh(), 'solved'))->render();
+        $this->assertStringContainsString($officer->name . ' (TFRB Officer)', $html);
+        $this->assertStringContainsString('decision was made by the TFRB/superadmin and is final', $html);
+        $this->assertStringNotContainsString('file an appeal', $html);
     }
 
     public function test_reset_and_reopen_clear_the_resolution_details()

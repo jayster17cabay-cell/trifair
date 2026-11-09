@@ -375,4 +375,104 @@ class PassengerFollowUpTest extends TestCase
 
         $this->assertDatabaseCount('passenger_follow_ups', 0);
     }
+
+    private function markResolved(Rating $rating, User $reviewer, string $status): Rating
+    {
+        $rating->update([
+            'is_reviewed' => true,
+            'is_solved' => $status === 'solved',
+            'solved_at' => $status === 'solved' ? now() : null,
+            'rejected_at' => $status === 'rejected' ? now() : null,
+            'reviewed_by' => $reviewer->id,
+            'resolution_note' => $status === 'solved' ? 'Driver was warned.' : 'Not enough evidence.',
+        ]);
+
+        return $rating->fresh();
+    }
+
+    public function test_passenger_can_appeal_after_a_toda_president_solves()
+    {
+        $passenger = $this->makeUser('passenger');
+        $rating = $this->makeComplaint($this->makeOperator(), $passenger);
+        $president = $this->makeUser('operator_president');
+        $rating = $this->markResolved($rating, $president, 'solved');
+
+        $this->assertTrue($rating->canAppeal());
+        $this->assertSame($president->name . ' (TODA President)', $rating->reviewed_by_display);
+
+        $this->actingAs($passenger)
+            ->get(route('passenger.complaints.show', $rating))
+            ->assertOk()
+            ->assertSee('Not satisfied with the decision?')
+            ->assertSee('Send appeal')
+            ->assertSee('TODA President');
+
+        $this->actingAs($passenger)
+            ->post(route('passenger.complaints.followUp', $rating), [
+                'follow_up_rating_id' => (string) $rating->id,
+                'appeal' => '1',
+                'message' => 'I am not satisfied with the TODA decision.',
+            ])
+            ->assertRedirect(route('passenger.complaints.show', $rating))
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseHas('passenger_follow_ups', [
+            'rating_id' => $rating->id,
+            'user_id' => $passenger->id,
+            'is_appeal' => true,
+        ]);
+
+        $fresh = $rating->fresh();
+        $this->assertFalse($fresh->is_solved);
+        $this->assertNull($fresh->reviewed_by);
+        $this->assertNull($fresh->resolution_note);
+    }
+
+    public function test_passenger_cannot_appeal_after_tfrb_or_superadmin_solves()
+    {
+        foreach (['tfrb_officer', 'superadmin'] as $role) {
+            $passenger = $this->makeUser('passenger');
+            $rating = $this->makeComplaint($this->makeOperator(), $passenger);
+            $reviewer = $this->makeUser($role);
+            $rating = $this->markResolved($rating, $reviewer, 'solved');
+
+            $this->assertFalse($rating->canAppeal());
+
+            $this->actingAs($passenger)
+                ->get(route('passenger.complaints.show', $rating))
+                ->assertOk()
+                ->assertDontSee('Send appeal')
+                ->assertSee('Final decision');
+
+            $this->actingAs($passenger)
+                ->from(route('passenger.complaints.show', $rating))
+                ->post(route('passenger.complaints.followUp', $rating), [
+                    'follow_up_rating_id' => (string) $rating->id,
+                    'appeal' => '1',
+                    'message' => 'I want to appeal the final decision.',
+                ])
+                ->assertRedirect(route('passenger.complaints.show', $rating))
+                ->assertSessionHasErrors('follow_up');
+
+            $this->assertDatabaseCount('passenger_follow_ups', 0);
+            $this->assertTrue($rating->fresh()->is_solved);
+        }
+    }
+
+    public function test_rejected_complaint_appeal_rule_matches_solved()
+    {
+        foreach (['operator_president' => true, 'tfrb_officer' => false, 'superadmin' => false] as $role => $expected) {
+            $passenger = $this->makeUser('passenger');
+            $rating = $this->makeComplaint($this->makeOperator(), $passenger);
+            $reviewer = $this->makeUser($role);
+            $rating = $this->markResolved($rating, $reviewer, 'rejected');
+
+            $this->assertSame($expected, $rating->canAppeal(), "Role {$role} appeal expectation failed.");
+
+            $this->actingAs($passenger)
+                ->get(route('passenger.complaints.show', $rating))
+                ->assertOk()
+                ->assertSee($expected ? 'Send appeal' : 'Final decision', false);
+        }
+    }
 }

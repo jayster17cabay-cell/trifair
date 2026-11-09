@@ -257,6 +257,47 @@ class Rating extends Model
     }
 
     /**
+     * Role label of the reviewer: TODA President, TFRB Officer or Superadmin.
+     * Null when no reviewer was recorded (legacy rows).
+     */
+    public function getReviewedByRoleLabelAttribute(): ?string
+    {
+        return $this->reviewer?->role_label;
+    }
+
+    /**
+     * Reviewer name plus role, e.g. "Juan Dela Cruz (TODA President)".
+     */
+    public function getReviewedByDisplayAttribute(): ?string
+    {
+        $name = $this->reviewed_by_name;
+        if ($name === null || $name === '') {
+            return null;
+        }
+
+        $role = $this->reviewed_by_role_label;
+
+        return $role ? "{$name} ({$role})" : $name;
+    }
+
+    /**
+     * Whether the passenger may still appeal this complaint.
+     *
+     * An open complaint can always be appealed. Once resolved, only a TODA
+     * president's decision is appealable — a TFRB officer / superadmin
+     * decision is final and the appeal option is withdrawn. This mirrors the
+     * business rule used by the passenger UI and is enforced server-side too.
+     */
+    public function canAppeal(): bool
+    {
+        if (!$this->is_solved && !$this->rejected_at) {
+            return true;
+        }
+
+        return $this->reviewer?->role === 'operator_president';
+    }
+
+    /**
      * Human-friendly reference number for a complaint ticket (1-2 star
      * ratings only), derived from the row id so it stays stable and unique
      * without a migration. Example: TFR-2026-0042. Positive ratings (3-5

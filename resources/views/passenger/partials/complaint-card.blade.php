@@ -122,8 +122,8 @@
                     <p class="mb-0 text-sm text-slate-700">{{ $rating->resolution_note }}</p>
                 @endif
                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-red-100 pt-2 text-[0.7rem] text-slate-500">
-                    @if ($rating->reviewed_by_name)
-                        <span><i class="bi bi-person-badge mr-1"></i>Reviewed by {{ $rating->reviewed_by_name }}</span>
+                    @if ($rating->reviewed_by_display)
+                        <span><i class="bi bi-person-badge mr-1"></i>Reviewed by {{ $rating->reviewed_by_display }}</span>
                     @endif
                     @if ($rating->resolution_at)
                         <span><i class="bi bi-clock-history mr-1"></i>{{ $rating->resolution_at->format('M j, Y g:i A') }}</span>
@@ -161,8 +161,8 @@
                     </div>
                 @endif
                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-emerald-100 pt-2 text-[0.7rem] text-slate-500">
-                    @if ($rating->reviewed_by_name)
-                        <span><i class="bi bi-person-badge mr-1"></i>Reviewed by {{ $rating->reviewed_by_name }}</span>
+                    @if ($rating->reviewed_by_display)
+                        <span><i class="bi bi-person-badge mr-1"></i>Reviewed by {{ $rating->reviewed_by_display }}</span>
                     @endif
                     @if ($rating->resolution_at)
                         <span><i class="bi bi-clock-history mr-1"></i>{{ $rating->resolution_at->format('M j, Y g:i A') }}</span>
@@ -173,11 +173,18 @@
 
         {{-- Chat with the TFRB/superadmin on this complaint — the thread stays
              readable after solving, but the composer is withdrawn. --}}
-        @if ($rating->is_solved && $rating->passengerFollowUps->isEmpty() && !$standalone)
-            <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
-                <i class="bi bi-check2-all text-emerald-500"></i>
-                This complaint has been resolved — you can no longer follow up.
-            </p>
+        @if (($rating->is_solved || $rating->rejected_at) && $rating->passengerFollowUps->isEmpty() && !$standalone)
+            @if ($rating->canAppeal())
+                <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+                    <i class="bi bi-info-circle text-amber-500"></i>
+                    This complaint was resolved by the TODA president. Open it if you want to appeal.
+                </p>
+            @else
+                <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
+                    <i class="bi bi-check2-all text-emerald-500"></i>
+                    This complaint has been resolved — you can no longer follow up.
+                </p>
+            @endif
         @else
             @include('partials.complaint-chat', [
                 'rating' => $rating,

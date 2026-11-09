@@ -116,6 +116,12 @@ class PassengerController extends Controller
 
         $isAppeal = $request->boolean('appeal');
 
+        if ($isAppeal && !$rating->canAppeal()) {
+            return back()->withErrors([
+                'follow_up' => 'This complaint was decided by the TFRB/superadmin and can no longer be appealed.',
+            ]);
+        }
+
         if (($rating->is_solved || $rating->rejected_at) && !$isAppeal) {
             return back()->withErrors([
                 'follow_up' => 'This complaint is closed. Use the appeal form if you are not satisfied with the decision.',
@@ -144,6 +150,12 @@ class PassengerController extends Controller
                 'forwarded_at' => null,
                 'forwarded_by' => null,
                 'solved_at' => null,
+                'reviewed_by' => null,
+                'resolution_note' => null,
+                // The appeal gives the TFRB/superadmin a fresh decision cycle;
+                // clearing the marker guarantees the next resolution emails
+                // the passenger again.
+                'complaint_status_email_sent_at' => null,
             ]);
         }
 

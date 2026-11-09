@@ -30,37 +30,56 @@
             }
         @endphp
 
-        <p style="margin:0 0 16px;font-size:15px;">Hi {{ $rating->passenger_name ?: 'there' }},</p>
+        <p style="margin:0 0 18px;font-size:15px;">Hi {{ $rating->passenger_name ?: 'there' }},</p>
 
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
+        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">
             This is an update about your TriFair complaint
             <strong>{{ $rating->reference_number }}</strong> against operator
             <strong>{{ $rating->operator->user->name ?? 'Unknown' }}</strong>@if ($rating->operator && $rating->operator->body_number) (B#{{ $rating->operator->body_number }})@endif
             for <strong>{{ $rating->complaint_type ?: 'Complaint' }}</strong>.
         </p>
 
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
+        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">
             Current status: <strong style="color:{{ $statusColor }};">{{ $statusLabel }}</strong>
         </p>
 
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
+        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">
             {{ $statusMessage }}
         </p>
 
         @if ($rating->resolution_note)
-            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
+            <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">
                 {{ $status === 'rejected' ? 'Reason' : 'Resolution details' }}:
                 {{ $rating->resolution_note }}
             </p>
         @endif
 
-        @if ($status === 'solved')
-            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
-                Sign in to TriFair and open My Complaints to view any photos attached to the resolution.
+        @if (in_array($status, ['solved', 'rejected'], true) && $rating->reviewed_by_display)
+            <p style="margin:0 0 18px;font-size:14px;line-height:1.6;color:#475569;">
+                {{ $status === 'solved' ? 'Solved by' : 'Reviewed by' }}
+                <strong>{{ $rating->reviewed_by_display }}</strong>@if ($rating->resolution_at) on {{ $rating->resolution_at->format('M j, Y g:i A') }}@endif.
             </p>
         @endif
 
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">
+        @if ($status === 'solved' && $attachedProofCount > 0)
+            <p style="margin:0 0 18px;font-size:14px;line-height:1.6;color:#475569;">
+                {{ $attachedProofCount }} resolution photo{{ $attachedProofCount === 1 ? '' : 's' }}
+                {{ $attachedProofCount === 1 ? 'is' : 'are' }} attached to this email.
+                You can also view {{ $attachedProofCount === 1 ? 'it' : 'them' }} under My Complaints in TriFair.
+            </p>
+        @endif
+
+        @if (in_array($status, ['solved', 'rejected'], true))
+            <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">
+                @if ($rating->canAppeal())
+                    If you are not satisfied with this decision, sign in to TriFair and open My Complaints to file an appeal with the TFRB/superadmin.
+                @else
+                    This decision was made by the TFRB/superadmin and is final.
+                @endif
+            </p>
+        @endif
+
+        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">
             Thank you for helping keep our transport services safe and accountable.
         </p>
 

@@ -227,6 +227,23 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Human-friendly role shown next to a reviewer's name in emails and on
+     * complaint screens. Keeps TODA presidents distinguishable from TFRB
+     * officers and superadmins.
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        return match ($this->role) {
+            'superadmin' => 'Superadmin',
+            'tfrb_officer' => 'TFRB Officer',
+            'operator_president' => 'TODA President',
+            'operator' => 'Operator',
+            'passenger' => 'Passenger',
+            default => ucfirst(str_replace('_', ' ', (string) $this->role)),
+        };
+    }
+
+    /**
      * Every TODA this user presides over. Presidency now lives on the
      * operator_toda membership (so one account can preside over several TODAs
      * while merely being a member of others). Legacy presidents that predate
