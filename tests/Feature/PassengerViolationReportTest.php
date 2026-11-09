@@ -191,7 +191,7 @@ class PassengerViolationReportTest extends TestCase
         ]);
 
         $this->actingAs($passenger)
-            ->get('/passenger/dashboard')
+            ->get('/passenger/dashboard?tab=violations')
             ->assertOk()
             ->assertSee('My Violation Reports')
             ->assertSee('VR-')

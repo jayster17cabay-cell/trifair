@@ -52,7 +52,7 @@
         </div>
     </div>
 
-    <main class="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+    <main class="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
 
         @if (session('status'))
             <div class="tw-alert tw-alert-success mb-6">
@@ -79,14 +79,14 @@
         <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h1 class="text-xl font-extrabold text-slate-900 sm:text-2xl">My Complaints</h1>
-                <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">Your filed complaints only. Violation reports are kept in their own section below.</p>
+                <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">Your filed complaints only. Violation reports are kept in their own tab below.</p>
             </div>
             <a href="/" class="tw-btn tw-btn-sm tw-btn-navy shrink-0">
                 <i class="bi bi-qr-code-scan"></i> Scan a QR code
             </a>
         </div>
 
-        <nav class="mb-8 grid gap-2 sm:grid-cols-2" aria-label="Passenger dashboard sections">
+        <nav class="mb-6 grid gap-2 sm:grid-cols-2" aria-label="Passenger dashboard sections">
             <a href="#complaints" class="flex items-center justify-between rounded-xl border border-navy-200 bg-navy-50 px-4 py-3 text-sm font-bold text-navy-700 transition hover:border-navy-500 hover:shadow-sm">
                 <span class="flex items-center gap-2"><i class="bi bi-chat-square-text"></i> Complaints</span>
                 <span class="rounded-full bg-white px-2 py-0.5 text-xs font-extrabold text-navy-600">{{ $totalCount }}</span>
@@ -109,184 +109,120 @@
         </div>
 
         <section id="complaints" class="scroll-mt-6">
-        {{-- Status overview — each card doubles as a filter for the complaints list below. --}}
-        @php
-            $statusTabs = [
-                ['key' => null, 'label' => 'Total', 'count' => $totalCount, 'icon' => 'bi-list-ul', 'color' => 'violet'],
-                ['key' => 'open', 'label' => 'Open', 'count' => $openCount, 'icon' => 'bi-clock-history', 'color' => 'amber'],
-                ['key' => 'rejected', 'label' => 'Rejected', 'count' => $rejectedCount, 'icon' => 'bi-x-circle', 'color' => 'red'],
-                ['key' => 'solved', 'label' => 'Solved', 'count' => $solvedCount, 'icon' => 'bi-patch-check', 'color' => 'navy'],
-            ];
-        @endphp
-        <div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Complaint status filters">
-            @foreach ($statusTabs as $tab)
+            {{-- Tabs: Open / Rejected / Solved / Violation Reports --}}
+            <div class="mb-5 flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3" role="tablist" aria-label="Complaint sections">
                 @php
-                    $isActive = $tab['key'] === null ? $activeStatus === null : $activeStatus === $tab['key'];
-                    $tabHref = $tab['key'] === null
-                        ? route('passenger.dashboard')
-                        : route('passenger.dashboard', ['status' => $tab['key']]);
+                    $tabs = [
+                        ['key' => 'open', 'label' => 'Open', 'count' => $openCount, 'icon' => 'bi-clock-history'],
+                        ['key' => 'rejected', 'label' => 'Rejected', 'count' => $rejectedCount, 'icon' => 'bi-x-circle'],
+                        ['key' => 'solved', 'label' => 'Solved', 'count' => $solvedCount, 'icon' => 'bi-patch-check'],
+                        ['key' => 'violations', 'label' => 'Violation Reports', 'count' => $violations->count(), 'icon' => 'bi-flag'],
+                    ];
                 @endphp
-                <a href="{{ $tabHref }}"
-                   @if ($isActive) aria-current="page" @endif
-                   class="tw-stat block no-underline transition hover:-translate-y-0.5 hover:border-navy-500 hover:shadow-md {{ $isActive ? 'border-navy-600 bg-navy-50 ring-2 ring-navy-600' : '' }}">
-                    <div class="tw-stat-icon tw-stat-icon-{{ $tab['color'] }}"><i class="bi {{ $tab['icon'] }}"></i></div>
-                    <div class="tw-stat-num">{{ $tab['count'] }}</div>
-                    <div class="tw-stat-label">{{ $tab['label'] }}</div>
-                </a>
-            @endforeach
-        </div>
-
-        @if ($activeStatus !== null)
-            @php
-                $statusLabels = ['open' => 'Open', 'rejected' => 'Rejected', 'solved' => 'Solved'];
-                $activeStatusLabel = $statusLabels[$activeStatus] ?? ucfirst($activeStatus);
-            @endphp
-            <div class="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-navy-100 bg-navy-50 px-4 py-2.5 text-sm text-navy-700">
-                <i class="bi bi-funnel-fill" aria-hidden="true"></i>
-                <span>
-                    Showing only <strong>{{ $activeStatusLabel }}</strong> complaints
-                    ({{ $complaints->total() }} {{ $complaints->total() === 1 ? 'ticket' : 'tickets' }}).
-                </span>
-                <a href="{{ route('passenger.dashboard') }}" class="font-bold text-navy-600 underline hover:text-navy-800">Show all</a>
+                @foreach ($tabs as $t)
+                    @php
+                        $isActive = $tab === $t['key'];
+                        $tabHref = route('passenger.dashboard', ['tab' => $t['key']]);
+                    @endphp
+                    <a href="{{ $tabHref }}"
+                       role="tab" aria-selected="{{ $isActive ? 'true' : 'false' }}"
+                       class="inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-bold transition {{ $isActive ? 'border-navy-600 bg-navy-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-200 hover:bg-slate-50' }}">
+                        <i class="bi {{ $t['icon'] }}"></i>
+                        <span>{{ $t['label'] }}</span>
+                        <span class="rounded-full px-1.5 py-0.5 text-[10px] font-extrabold {{ $isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $t['count'] }}</span>
+                    </a>
+                @endforeach
             </div>
-        @endif
 
-        @if ($notifications->isNotEmpty())
-            <section class="mb-8">
-                <h2 class="mb-3 text-sm font-bold uppercase tracking-widest text-slate-400">
-                    <i class="bi bi-bell-fill mr-1"></i>Account updates
-                </h2>
-                <div class="space-y-2">
-                    @foreach ($notifications as $notification)
-                        <div class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-                            <i class="bi {{ $notification->rating && $notification->rating->is_solved ? 'bi-patch-check-fill text-navy-600' : 'bi-check-circle-fill text-emerald-500' }} mt-0.5"></i>
-                            <div class="min-w-0">
-                                <div class="text-sm font-semibold text-slate-800">
-                                    {{ $notification->title }}
-                                    @if ($notification->rating && $notification->rating->reference_number)
-                                        <span class="ml-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.7rem] font-semibold text-navy-600">{{ $notification->rating->reference_number }}</span>
-                                    @endif
+            @if ($notifications->isNotEmpty())
+                <section class="mb-6">
+                    <h2 class="mb-3 text-sm font-bold uppercase tracking-widest text-slate-400">
+                        <i class="bi bi-bell-fill mr-1"></i>Account updates
+                    </h2>
+                    <div class="space-y-2">
+                        @foreach ($notifications as $notification)
+                            <div class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+                                <i class="bi {{ $notification->rating && $notification->rating->is_solved ? 'bi-patch-check-fill text-navy-600' : 'bi-check-circle-fill text-emerald-500' }} mt-0.5"></i>
+                                <div class="min-w-0">
+                                    <div class="text-sm font-semibold text-slate-800">
+                                        {{ $notification->title }}
+                                        @if ($notification->rating && $notification->rating->reference_number)
+                                            <span class="ml-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.7rem] font-semibold text-navy-600">{{ $notification->rating->reference_number }}</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-slate-500">{{ $notification->message }}</p>
+                                    <div class="mt-1 text-[0.68rem] text-slate-400">{{ $notification->created_at->diffForHumans() }}</div>
                                 </div>
-                                <p class="text-xs text-slate-500">{{ $notification->message }}</p>
-                                <div class="mt-1 text-[0.68rem] text-slate-400">{{ $notification->created_at->diffForHumans() }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            @if ($tab === 'violations')
+                <h2 class="mb-4 text-xl font-extrabold text-slate-900">
+                    <i class="bi bi-flag-fill mr-1 text-amber-500"></i>My Violation Reports
+                </h2>
+                @if ($violations->isEmpty())
+                    <div class="tw-empty py-12">
+                        <div class="tw-empty-icon"><i class="bi bi-flag text-slate-300"></i></div>
+                        <h3 class="tw-card-title mb-1">No violation reports yet</h3>
+                        <p class="text-sm text-slate-500">When you scan the QR code of a suspended or franchise-lapsed operator and tap <strong>Report Operator</strong>, your report and its status will appear here.</p>
+                    </div>
+                @else
+                    <div class="space-y-3">
+                        @foreach ($violations as $violation)
+                            @include('passenger.partials.violation-card', ['violation' => $violation])
+                        @endforeach
+                    </div>
+                @endif
+            @else
+                @if ($complaints->isEmpty())
+                    @if ($totalCount === 0 && $tab === 'open')
+                        <div class="tw-empty py-16">
+                            <div class="tw-empty-icon"><i class="bi bi-inbox text-slate-300"></i></div>
+                            <h3 class="tw-card-title mb-1">No complaints yet</h3>
+                            <p class="text-sm text-slate-500">When you rate a ride with the QR code while signed in, your complaints and their status will appear here.</p>
+
+                            <div class="mx-auto mt-5 max-w-md rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3.5 text-left">
+                                <p class="text-xs leading-relaxed text-slate-500">
+                                    <strong class="font-bold text-slate-700">Is the list empty?</strong>
+                                    You may have used a different Google account when you complained. You are currently signed in as
+                                    <span class="font-semibold text-navy-700">{{ Auth::user()->email }}</span>
+                                    @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
+                                        — choose that account to see its complaints there.
+                                    @endif
+                                </p>
+                                @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
+                                    <a href="{{ route('login.google', ['intended' => 'passenger/dashboard']) }}"
+                                       class="group mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-navy-500 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-navy-600/15">
+                                        @include('partials.google-g', ['class' => 'h-4 w-4 transition-transform duration-200 group-hover:scale-110'])
+                                        Try a different Google account
+                                        <i class="bi bi-arrow-right-circle text-navy-500" aria-hidden="true"></i>
+                                    </a>
+                                @endif
                             </div>
                         </div>
-                    @endforeach
-                </div>
-            </section>
-        @endif
-
-        {{-- Complaints grouped into one section per status so the list never
-             mixes open tickets with closed ones. --}}
-        @php
-            $pageItems = collect($complaints->getCollection());
-            $sections = [
-                'open' => ['label' => 'Open', 'desc' => 'Filed and waiting for the office to act', 'count' => $openCount, 'dot' => 'bg-amber-400', 'border' => 'border-l-amber-400'],
-                'rejected' => ['label' => 'Rejected', 'desc' => 'Closed — the complaint was not upheld', 'count' => $rejectedCount, 'dot' => 'bg-red-400', 'border' => 'border-l-red-500'],
-                'solved' => ['label' => 'Solved', 'desc' => 'The case has been resolved by TFRB', 'count' => $solvedCount, 'dot' => 'bg-navy-600', 'border' => 'border-l-navy-600'],
-            ];
-            $buckets = ['open' => collect(), 'rejected' => collect(), 'solved' => collect()];
-            if ($activeStatus !== null) {
-                $buckets[$activeStatus] = $pageItems;
-            } else {
-                foreach ($pageItems as $rating) {
-                    if ($rating->is_solved) {
-                        $buckets['solved']->push($rating);
-                    } elseif ($rating->rejected_at) {
-                        $buckets['rejected']->push($rating);
-                    } else {
-                        $buckets['open']->push($rating);
-                    }
-                }
-            }
-        @endphp
-
-        @if ($complaints->isEmpty() && $activeStatus === null)
-            <div class="tw-empty py-16">
-                <div class="tw-empty-icon"><i class="bi bi-inbox text-slate-300"></i></div>
-                <h3 class="tw-card-title mb-1">No complaints yet</h3>
-                <p class="text-sm text-slate-500">When you rate a ride with the QR code while signed in, your complaints and their status will appear here.</p>
-
-                <div class="mx-auto mt-5 max-w-md rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3.5 text-left">
-                    <p class="text-xs leading-relaxed text-slate-500">
-                        <strong class="font-bold text-slate-700">Is the list empty?</strong>
-                        You may have used a different Google account when you complained. You are currently signed in as
-                        <span class="font-semibold text-navy-700">{{ Auth::user()->email }}</span>
-                        @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
-                            — choose that account to see its complaints there.
-                        @endif
-                    </p>
-                    @if (filled(config('services.google.client_id')) && filled(config('services.google.client_secret')))
-                        <a href="{{ route('login.google', ['intended' => 'passenger/dashboard']) }}"
-                           class="group mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-navy-500 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-navy-600/15">
-                            @include('partials.google-g', ['class' => 'h-4 w-4 transition-transform duration-200 group-hover:scale-110'])
-                            Try a different Google account
-                            <i class="bi bi-arrow-right-circle text-navy-500" aria-hidden="true"></i>
-                        </a>
-                    @endif
-                </div>
-            </div>
-        @elseif ($complaints->isEmpty())
-            <div class="tw-empty py-12">
-                <div class="tw-empty-icon"><i class="bi bi-check2-circle text-slate-300"></i></div>
-                <h3 class="tw-card-title mb-1">No {{ strtolower($activeStatusLabel) }} complaints</h3>
-                <p class="text-sm text-slate-500">There is nothing to show in this status right now.</p>
-                <a href="{{ route('passenger.dashboard') }}" class="tw-btn tw-btn-sm tw-btn-outline mt-4">
-                    <i class="bi bi-list-ul"></i> Show all complaints
-                </a>
-            </div>
-        @else
-            @foreach ($sections as $key => $section)
-                @if (($activeStatus === null || $activeStatus === $key) && $buckets[$key]->isNotEmpty())
-                    <section class="mb-6 last:mb-0">
-                        <div class="mb-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-slate-200 pb-2.5">
-                            <span class="h-2.5 w-2.5 shrink-0 rounded-full {{ $section['dot'] }}" aria-hidden="true"></span>
-                            <h3 class="text-sm font-extrabold uppercase tracking-widest text-slate-700">{{ $section['label'] }}</h3>
-                            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[0.68rem] font-bold text-slate-500">{{ $section['count'] }}</span>
-                            <span class="ml-auto hidden text-xs text-slate-400 sm:inline">{{ $section['desc'] }}</span>
+                    @else
+                        <div class="tw-empty py-12">
+                            <div class="tw-empty-icon"><i class="bi bi-check2-circle text-slate-300"></i></div>
+                            <h3 class="tw-card-title mb-1">No {{ $tab }} complaints</h3>
+                            <p class="text-sm text-slate-500">There is nothing to show in this tab right now.</p>
                         </div>
-                        @foreach ($buckets[$key] as $rating)
-                            @include('passenger.partials.complaint-card', ['statusBorder' => $section['border']])
+                    @endif
+                @else
+                    <div class="space-y-4">
+                        @foreach ($complaints as $rating)
+                            @include('passenger.partials.complaint-card', ['statusBorder' => 'border-l-slate-200'])
                         @endforeach
-                    </section>
+                    </div>
+
+                    @if ($complaints->hasPages())
+                        <div class="mt-4">
+                            {{ $complaints->links('pagination::tailwind') }}
+                        </div>
+                    @endif
                 @endif
-            @endforeach
-
-            @if ($complaints->hasPages())
-                <div class="mt-2">
-                    {{ $complaints->links('pagination::tailwind') }}
-                </div>
-            @endif
-        @endif
-
-        </section>
-
-        {{-- Violation reports filed by this passenger against suspended / lapsed
-             operators — intentionally kept separate from complaints. --}}
-        <section id="violation-reports" class="mt-8 scroll-mt-6 rounded-2xl border border-amber-200 bg-white p-5 shadow-sm sm:p-7">
-            <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-                <div>
-                    <h2 class="text-xl font-extrabold text-slate-900">
-                        <i class="bi bi-flag-fill mr-1 text-amber-500"></i>My Violation Reports
-                        <span class="ml-1 rounded-full bg-slate-100 px-2 py-0.5 align-middle text-sm font-bold text-slate-500">{{ $violations->count() }}</span>
-                    </h2>
-                    <p class="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">Separate from complaints: reports you filed from an operator's QR code. The TFRB reviews these and posts the outcome here.</p>
-                </div>
-                <a href="/" class="tw-btn tw-btn-sm tw-btn-navy shrink-0">
-                    <i class="bi bi-qr-code-scan"></i> Scan a QR code
-                </a>
-            </div>
-
-            @if ($violations->isEmpty())
-                <div class="tw-empty">
-                    <div class="tw-empty-icon"><i class="bi bi-flag text-slate-300"></i></div>
-                    <h3 class="tw-card-title mb-1">No violation reports yet</h3>
-                    <p class="text-sm text-slate-500">When you scan the QR code of a suspended or franchise-lapsed operator and tap <strong>Report Operator</strong>, your report and its status will appear here.</p>
-                </div>
-            @else
-                @foreach ($violations as $violation)
-                    @include('passenger.partials.violation-card', ['violation' => $violation])
-                @endforeach
             @endif
         </section>
 

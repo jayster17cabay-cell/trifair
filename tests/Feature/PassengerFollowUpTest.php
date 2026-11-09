@@ -98,7 +98,7 @@ class PassengerFollowUpTest extends TestCase
         // The thread reads back on their own complaints page, and the card plus
         // chat arrive already expanded so their own message is on screen.
         $this->actingAs($passenger)
-            ->get('/passenger/dashboard')
+            ->get('/passenger/dashboard?tab=open')
             ->assertOk()
             ->assertSee('Your follow-ups (1)')
             ->assertSee('What is the status of this complaint?')
@@ -141,7 +141,7 @@ class PassengerFollowUpTest extends TestCase
 
         // The form is withdrawn for a solved ticket — nothing left to chase.
         $this->actingAs($passenger)
-            ->get('/passenger/dashboard')
+            ->get('/passenger/dashboard?tab=solved')
             ->assertOk()
             ->assertDontSee('Follow up this complaint', false)
             ->assertSee('you can no longer follow up', false);

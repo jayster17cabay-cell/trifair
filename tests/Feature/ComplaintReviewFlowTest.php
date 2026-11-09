@@ -365,7 +365,7 @@ class ComplaintReviewFlowTest extends TestCase
         $fresh = $complaint->fresh();
         $this->assertSame('There is not enough evidence to prove the complaint.', $fresh->resolution_note);
 
-        $this->actingAs($passenger)->get('/passenger/dashboard')
+        $this->actingAs($passenger)->get('/passenger/dashboard?tab=rejected')
             ->assertOk()
             ->assertSee('Reason for rejection')
             ->assertSee('There is not enough evidence to prove the complaint.');
@@ -397,7 +397,7 @@ class ComplaintReviewFlowTest extends TestCase
             'original_name' => 'resolved.jpg',
         ]);
 
-        $this->actingAs($passenger)->get('/passenger/dashboard')
+        $this->actingAs($passenger)->get('/passenger/dashboard?tab=solved')
             ->assertOk()
             ->assertSee('Resolution details')
             ->assertSee('The driver was contacted and issued an apology.')

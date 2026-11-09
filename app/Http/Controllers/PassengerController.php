@@ -32,8 +32,15 @@ class PassengerController extends Controller
         $solvedCount = (int) $tally->solved_count;
 
         $statusFilters = ['open', 'rejected', 'solved'];
-        $activeStatus = $request->query('status');
-        $activeStatus = in_array($activeStatus, $statusFilters, true) ? $activeStatus : null;
+        $tab = $request->query('tab');
+        // Backward compat: ?status= maps to the matching tab.
+        if ($tab === null && $request->has('status')) {
+            $tab = $request->query('status');
+        }
+        $allowedTabs = ['open', 'rejected', 'solved', 'violations'];
+        $tab = in_array($tab, $allowedTabs, true) ? $tab : 'open';
+
+        $activeStatus = in_array($tab, $statusFilters, true) ? $tab : null;
 
         $query = (clone $base)
             ->with(['operator.user', 'response', 'proofs', 'resolutionProofs', 'reviewer', 'passengerFollowUps.user']);
@@ -44,6 +51,11 @@ class PassengerController extends Controller
             $query->whereNotNull('rejected_at');
         } elseif ($activeStatus === 'solved') {
             $query->where('is_solved', true);
+        }
+
+        // When viewing violations tab, no complaints are listed.
+        if ($tab === 'violations') {
+            $query->whereRaw('1 = 0');
         }
 
         // Group: open tickets above closed ones (rejected, then solved) —
@@ -83,7 +95,8 @@ class PassengerController extends Controller
             'solvedCount',
             'notifications',
             'activeStatus',
-            'violations'
+            'violations',
+            'tab',
         ));
     }
 
