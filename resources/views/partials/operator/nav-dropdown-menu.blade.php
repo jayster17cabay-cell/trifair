@@ -4,8 +4,8 @@
     Includes a divider + red Logout action.
 --}}
 <div class="relative">
-    <button type="button" data-op-menu-toggle class="op-menu-btn" aria-label="Open menu" aria-expanded="false" aria-haspopup="true">
-        <i class="bi bi-list text-2xl"></i>
+    <button type="button" data-op-menu-toggle class="op-menu-btn" aria-label="Open menu" aria-expanded="false" aria-haspopup="true" style="background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.4);">
+        <i class="bi bi-list text-2xl" style="color: #fff;"></i>
     </button>
 
     <div data-op-menu class="op-menu" role="menu" aria-hidden="true">
