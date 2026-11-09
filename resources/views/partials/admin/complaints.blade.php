@@ -61,7 +61,7 @@
         @endif
     </form>
     {{-- KPI strip --}}
-    <div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+    <div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
         @php
             $kpiItems = [
                 ['key' => 'all', 'label' => 'Total', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $monitoringTotalCount],
