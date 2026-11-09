@@ -293,6 +293,24 @@ class ComplaintRoutingTest extends TestCase
         $this->assertNull($complaint->fresh()->forwarded_at);
     }
 
+    public function test_president_cannot_forward_with_a_whitespace_only_reason()
+    {
+        $toda = $this->makeToda();
+        $president = $this->makePresident($toda);
+        $operator = $this->makeMemberOperator($toda);
+        $complaint = $this->makeComplaint($operator, $toda);
+        $complaint->update(['routed_to' => $president->id]);
+
+        $this->actingAs($president)
+            ->patch('/president/complaints/' . $complaint->id . '/forward', [
+                'forward_reason' => "   \n\t ",
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('forward_reason');
+
+        $this->assertNull($complaint->fresh()->forwarded_at);
+    }
+
     public function test_president_cannot_forward_solved_complaint_before_passenger_appeal()
     {
         $toda = $this->makeToda();

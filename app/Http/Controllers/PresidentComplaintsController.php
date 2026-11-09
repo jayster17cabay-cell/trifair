@@ -150,11 +150,15 @@ class PresidentComplaintsController extends Controller
         // re-review sees which follow-ups were deemed warranted. The reason is
         // mandatory: the receiving team must know why the TODA handed it off.
         $request->validate([
-            'forward_reason' => 'required|string|max:2000',
+            // `required` rejects null/empty, and `not_regex` rejects a value
+            // that is only spaces/newlines so a president cannot slip through
+            // an effectively blank reason.
+            'forward_reason' => ['required', 'string', 'max:2000', 'not_regex:/^\s*$/'],
             'escalation_checklist' => 'nullable|array',
             'escalation_checklist.*' => 'nullable|string|max:255',
         ], [
             'forward_reason.required' => 'Please explain why you are forwarding this complaint.',
+            'forward_reason.not_regex' => 'Please explain why you are forwarding this complaint.',
         ]);
 
         return app(RatingAdminService::class)->complaintsForward(

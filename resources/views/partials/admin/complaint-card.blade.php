@@ -457,7 +457,7 @@
                             <div class="mb-2 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-violet-700">
                                 <i class="bi bi-send"></i>Forward to TFRB/superadmin
                             </div>
-                            <form action="{{ route($routePrefix . '.complaints.forward', $rating) }}" method="POST" onsubmit="return confirm('Forward this complaint to the TFRB/superadmin? They will take over completely — you can no longer act on it. This cannot be undone.')">
+                            <form action="{{ route($routePrefix . '.complaints.forward', $rating) }}" method="POST" data-forward-form onsubmit="return confirm('Forward this complaint to the TFRB/superadmin? They will take over completely — you can no longer act on it. This cannot be undone.')">
                                 @csrf
                                 @method('PATCH')
                                 <label for="forwardReason{{ $rating->id }}" class="tw-label text-violet-900">
@@ -480,7 +480,7 @@
                                     @endforeach
                                 </div>
                                 <div class="mt-2.5 flex items-center justify-end">
-                                    <button type="submit" class="tw-btn tw-btn-sm border border-violet-300 bg-violet-50 font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-100" title="Forward to TFRB/superadmin (one-way)">
+                                    <button type="submit" data-forward-submit class="tw-btn tw-btn-sm border border-violet-300 bg-violet-50 font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50" title="Forward to TFRB/superadmin (one-way)">
                                         <i class="bi bi-send-fill"></i>Forward to TFRB
                                     </button>
                                 </div>
@@ -508,3 +508,25 @@
         </div>
     </div>
 </div>
+
+@once
+    {{-- A TODA president must never forward a complaint without a reason.
+         The server also enforces this; here we stop the click before it is
+         sent and disable the button until real (non-blank) text is typed. --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-forward-form]').forEach(function (form) {
+                var reason = form.querySelector('textarea[name="forward_reason"]');
+                var submit = form.querySelector('[data-forward-submit]');
+                if (!reason || !submit) return;
+
+                var sync = function () {
+                    submit.disabled = reason.value.trim() === '';
+                };
+
+                sync();
+                reason.addEventListener('input', sync);
+            });
+        });
+    </script>
+@endonce
