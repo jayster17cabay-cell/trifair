@@ -550,7 +550,7 @@
     }
     .op-app-main {
         @apply w-full flex-1 px-[18px] pb-10;
-        max-width: 480px;
+        max-width: 720px;
         margin-left: auto;
         margin-right: auto;
     }
@@ -563,7 +563,7 @@
     }
     .op-header-top {
         @apply flex items-center justify-between gap-3 px-[18px] pb-4 pt-4;
-        max-width: 480px;
+        max-width: 720px;
         margin-left: auto;
         margin-right: auto;
     }
@@ -616,7 +616,7 @@
     }
     .op-header-body {
         @apply px-[18px] pb-6;
-        max-width: 480px;
+        max-width: 720px;
         margin-left: auto;
         margin-right: auto;
     }

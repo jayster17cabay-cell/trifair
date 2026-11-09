@@ -362,7 +362,7 @@ $authorizeProofPath = static function (string $path): void {
 
     if ($rating) {
         $allowed = ($user->isPassenger() && (int) $rating->passenger_user_id === (int) $user->id)
-            || ($user->isOperator() && (int) optional($rating->operator)->user_id === (int) $user->id)
+            || (($user->isOperator() || $user->isOperatorPresident()) && (int) optional($rating->operator)->user_id === (int) $user->id)
             || ($user->isOperatorPresident() && $user->isPresidentOf($rating->toda_id));
 
         if (!$allowed) {
@@ -373,10 +373,19 @@ $authorizeProofPath = static function (string $path): void {
     }
 
     $violationProof = \App\Models\SuspensionViolationProof::where('file_path', $path)
-        ->with('violation')
+        ->with('violation.operator')
         ->first();
-    if ($violationProof && (int) optional($violationProof->violation)->reported_by !== (int) $user->id) {
-        abort(403);
+    if ($violationProof) {
+        $violation = $violationProof->violation;
+        $isSubject = (int) optional($violation?->operator)->user_id === (int) $user->id;
+        $allowed = $user->isTfrbOfficerOrSuperadmin()
+            || (int) optional($violation)->reported_by === (int) $user->id
+            || $isSubject
+            || ($user->isOperatorPresident() && $user->isPresidentOf($violation?->toda_id));
+        if (!$allowed) {
+            abort(403);
+        }
+        return;
     }
 };
 
