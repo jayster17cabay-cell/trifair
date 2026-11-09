@@ -61,11 +61,10 @@
         @endif
     </form>
     {{-- KPI strip --}}
-    <div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         @php
             $kpiItems = [
-                ['key' => 'all', 'label' => 'Total', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $monitoringTotalCount],
-                ['key' => 'open', 'label' => 'Nasa President', 'icon' => 'bi-hourglass-split', 'chip' => 'bg-amber-50 text-amber-600', 'num' => $monitoringOpenCount ?? 0],
+                ['key' => 'all', 'label' => 'All Complaints', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $monitoringTotalCount],
                 ['key' => 'solved', 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600', 'num' => $monitoringSolvedCount ?? 0],
                 ['key' => 'rejected', 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600', 'num' => $monitoringRejectedCount ?? 0],
             ];
