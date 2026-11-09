@@ -26,7 +26,7 @@
     $detailsOpen = $standalone || ($errors->has('message') && old('follow_up_rating_id') == $rating->id)
         || (int) session('open_follow_up') === (int) $rating->id;
 @endphp
-<div class="tw-card {{ $standalone ? 'shadow-lg' : 'mb-3.5' }} overflow-hidden border-l-4 {{ $status['border'] }}">
+<div class="tw-card {{ $standalone ? 'shadow-lg' : 'mb-4' }} overflow-hidden border-l-4 {{ $status['border'] }}">
     @if ($standalone)
         <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-5">
             <a href="{{ route('passenger.dashboard') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-navy-600 hover:text-navy-800">
@@ -73,7 +73,7 @@
         @endif
     </button>
 
-    <div data-complaint-details class="{{ ($standalone || $detailsOpen) ? '' : 'hidden' }} border-t border-slate-100 bg-slate-50/40 px-4 py-4 sm:px-5">
+    <div data-complaint-details class="{{ ($standalone || $detailsOpen) ? '' : 'hidden' }} border-t border-slate-100 bg-slate-50/40 px-4 py-5 sm:px-5">
         @if ($rating->complaint_details)
             <p class="text-sm italic leading-relaxed text-slate-500">"{{ $rating->complaint_details }}"</p>
         @endif
