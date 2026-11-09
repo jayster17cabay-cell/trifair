@@ -164,9 +164,18 @@ class PresidentQueryService
 
         $padded = Rating::paddedComplaintStats($stats);
 
+        // The headline total is the real complaint count (not just the sum of
+        // the known-type buckets) so custom complaint types are never dropped.
+        $total = (int) Rating::query()
+            ->whereIn('operator_id', $ratingIds)
+            ->where('toda_id', $toda->id)
+            ->isValid()
+            ->isComplaint()
+            ->count();
+
         return [
             'stats' => $padded,
-            'total' => (int) $padded->sum('total'),
+            'total' => $total,
         ];
     }
 
