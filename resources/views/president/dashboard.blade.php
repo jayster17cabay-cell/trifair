@@ -53,7 +53,7 @@
 </div>
 @endif
 {{-- KPI cards --}}
-<div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
+<div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.complaints', ['filter' => 'pending']), 'icon' => 'bi-flag-fill', 'value' => $summary['pendingComplaints'], 'label' => 'Pending Complaints', 'live' => 'pendingComplaints']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating', 'live' => 'ownAvg']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
