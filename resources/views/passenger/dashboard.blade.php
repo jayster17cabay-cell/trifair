@@ -238,7 +238,7 @@
         @else
             @foreach ($sections as $key => $section)
                 @if (($activeStatus === null || $activeStatus === $key) && $buckets[$key]->isNotEmpty())
-                    <section class="mb-9 last:mb-0">
+                    <section class="mb-6 last:mb-0">
                         <div class="mb-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-slate-200 pb-2.5">
                             <span class="h-2.5 w-2.5 shrink-0 rounded-full {{ $section['dot'] }}" aria-hidden="true"></span>
                             <h3 class="text-sm font-extrabold uppercase tracking-widest text-slate-700">{{ $section['label'] }}</h3>
@@ -263,7 +263,7 @@
 
         {{-- Violation reports filed by this passenger against suspended / lapsed
              operators — intentionally kept separate from complaints. --}}
-        <section id="violation-reports" class="mt-12 scroll-mt-6 rounded-2xl border border-amber-200 bg-white p-5 shadow-sm sm:p-7">
+        <section id="violation-reports" class="mt-8 scroll-mt-6 rounded-2xl border border-amber-200 bg-white p-5 shadow-sm sm:p-7">
             <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <div>
                     <h2 class="text-xl font-extrabold text-slate-900">
