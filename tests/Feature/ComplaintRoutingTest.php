@@ -247,13 +247,18 @@ class ComplaintRoutingTest extends TestCase
         $complaint = $this->makeComplaint($operator, $toda);
         $complaint->update(['routed_to' => $president->id]);
 
+        $reason = 'The operator is outside our TODA area and both parties refused mediation.';
+
         $this->actingAs($president)
-            ->patch('/president/complaints/' . $complaint->id . '/forward')
+            ->patch('/president/complaints/' . $complaint->id . '/forward', [
+                'forward_reason' => $reason,
+            ])
             ->assertRedirect();
 
         $fresh = $complaint->fresh();
         $this->assertNotNull($fresh->forwarded_at);
         $this->assertSame($president->id, $fresh->forwarded_by);
+        $this->assertSame($reason, $fresh->forward_reason);
 
         // TFRB/superadmin get notified so the case reaches their queue.
         $this->assertDatabaseHas('notifications', [
@@ -262,6 +267,30 @@ class ComplaintRoutingTest extends TestCase
             'type' => 'complaint',
             'title' => 'Complaint Forwarded by President',
         ]);
+
+        // The receiving team sees the president's reason on the complaint.
+        $admin = $this->makeUser('superadmin');
+        $this->actingAs($admin)
+            ->get('/superadmin/complaints?source=forwarded')
+            ->assertOk()
+            ->assertSee('Reason for forwarding', false)
+            ->assertSee($reason, false);
+    }
+
+    public function test_president_must_give_a_reason_to_forward()
+    {
+        $toda = $this->makeToda();
+        $president = $this->makePresident($toda);
+        $operator = $this->makeMemberOperator($toda);
+        $complaint = $this->makeComplaint($operator, $toda);
+        $complaint->update(['routed_to' => $president->id]);
+
+        $this->actingAs($president)
+            ->patch('/president/complaints/' . $complaint->id . '/forward')
+            ->assertRedirect()
+            ->assertSessionHasErrors('forward_reason');
+
+        $this->assertNull($complaint->fresh()->forwarded_at);
     }
 
     public function test_president_cannot_forward_solved_complaint_before_passenger_appeal()
@@ -279,7 +308,9 @@ class ComplaintRoutingTest extends TestCase
         ]);
 
         $this->actingAs($president)
-            ->patch('/president/complaints/' . $complaint->id . '/forward')
+            ->patch('/president/complaints/' . $complaint->id . '/forward', [
+                'forward_reason' => 'Attempting to bypass the passenger appeal.',
+            ])
             ->assertRedirect()
             ->assertSessionHasErrors('error');
 

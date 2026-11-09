@@ -182,6 +182,12 @@
                     Escalated by <strong>{{ $rating->forwardedBy?->name ?? 'a TODA president' }}</strong>.
                     The TODA president can no longer act on this complaint — the TFRB / superadmin now owns it.
                 </p>
+                @if ($rating->forward_reason)
+                    <div class="mt-2 rounded-lg border border-violet-100 bg-white px-3 py-2">
+                        <div class="text-[0.65rem] font-bold uppercase tracking-widest text-violet-700">Reason for forwarding</div>
+                        <p class="mb-0 mt-0.5 whitespace-pre-line text-xs leading-relaxed text-slate-700">{{ $rating->forward_reason }}</p>
+                    </div>
+                @endif
                 @if (!$isPresidentView)
                     <p class="mt-1 text-xs font-semibold leading-relaxed text-violet-800">
                         <i class="bi bi-arrow-right-circle mr-1"></i>Your next step: solve or reject this complaint.
@@ -449,11 +455,22 @@
                         <span class="mx-0.5 hidden h-5 w-px bg-slate-200 sm:block" aria-hidden="true"></span>
                         <div class="w-full rounded-lg border border-violet-200 bg-violet-50/60 px-3 py-3">
                             <div class="mb-2 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-violet-700">
-                                <i class="bi bi-list-check"></i>Panel follow-up questions (optional)
+                                <i class="bi bi-send"></i>Forward to TFRB/superadmin
                             </div>
                             <form action="{{ route($routePrefix . '.complaints.forward', $rating) }}" method="POST" onsubmit="return confirm('Forward this complaint to the TFRB/superadmin? They will take over completely — you can no longer act on it. This cannot be undone.')">
                                 @csrf
                                 @method('PATCH')
+                                <label for="forwardReason{{ $rating->id }}" class="tw-label text-violet-900">
+                                    Reason for forwarding <span class="text-red-600" aria-hidden="true">*</span>
+                                </label>
+                                <textarea id="forwardReason{{ $rating->id }}" name="forward_reason" rows="3" required maxlength="2000"
+                                    class="tw-textarea border-violet-200 focus:border-violet-400 focus:ring-violet-500/20"
+                                    placeholder="Explain why this complaint needs TFRB/superadmin review...">{{ old('forward_reason') }}</textarea>
+                                <p class="mt-1 text-[0.7rem] leading-snug text-violet-700">Required — the TFRB/superadmin will see this reason on the forwarded complaint.</p>
+
+                                <div class="mb-2 mt-3 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-violet-700">
+                                    <i class="bi bi-list-check"></i>Panel follow-up questions (optional)
+                                </div>
                                 <div class="grid gap-1 sm:grid-cols-2">
                                     @foreach (\App\Models\Rating::PANEL_ESCALATION_CHECKLIST as $checklistItem)
                                         <label class="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1 transition hover:bg-white">

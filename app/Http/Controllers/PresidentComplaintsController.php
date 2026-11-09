@@ -147,13 +147,21 @@ class PresidentComplaintsController extends Controller
     {
         // The panel follow-up checklist rides along on the forward (which is
         // the one-way escalation path for presidents) so the TFRB / superadmin
-        // re-review sees which follow-ups were deemed warranted.
+        // re-review sees which follow-ups were deemed warranted. The reason is
+        // mandatory: the receiving team must know why the TODA handed it off.
         $request->validate([
+            'forward_reason' => 'required|string|max:2000',
             'escalation_checklist' => 'nullable|array',
             'escalation_checklist.*' => 'nullable|string|max:255',
+        ], [
+            'forward_reason.required' => 'Please explain why you are forwarding this complaint.',
         ]);
 
-        return app(RatingAdminService::class)->complaintsForward($rating, $request->input('escalation_checklist'));
+        return app(RatingAdminService::class)->complaintsForward(
+            $rating,
+            $request->input('escalation_checklist'),
+            $request->input('forward_reason')
+        );
     }
 
     public function reply(Request $request, Rating $rating)

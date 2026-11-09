@@ -110,6 +110,7 @@ class Rating extends Model
         'routed_to',
         'forwarded_at',
         'forwarded_by',
+        'forward_reason',
         'start_location',
         'end_location',
         'escalation_checklist',

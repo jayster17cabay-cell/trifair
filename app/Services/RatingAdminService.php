@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Review-side rating operations shared by the Superadmin and TFRB Officer
@@ -389,12 +390,20 @@ class RatingAdminService
      * only the TFRB/superadmin review team can act on it. They are all
      * notified; the passenger gets an email and an in-app notice as well.
      */
-    public function complaintsForward(Rating $rating, ?array $checkedItems = null): RedirectResponse
+    public function complaintsForward(Rating $rating, ?array $checkedItems = null, ?string $reason = null): RedirectResponse
     {
         if (!$rating->complaint_type) {
             return back()->withErrors(['error' => 'Only complaints with a complaint type can be forwarded.']);
         }
         $this->assertCanActOnComplaint($rating, true);
+
+        // The president must explain the hand-off so TFRB/superadmin knows why
+        // the TODA could not resolve it. The controller validates this too;
+        // the service guard keeps other callers honest.
+        $reason = trim((string) $reason);
+        if ($reason === '') {
+            return back()->withErrors(['forward_reason' => 'Please explain why you are forwarding this complaint.']);
+        }
 
         // A solved complaint is closed. If the passenger is dissatisfied,
         // their appeal reopens it and routes it to TFRB/superadmin directly;
@@ -413,6 +422,7 @@ class RatingAdminService
         $rating->update([
             'forwarded_at' => now(),
             'forwarded_by' => Auth::id(),
+            'forward_reason' => $reason,
             // Forwarding is a new passenger-facing status. A previous solve or
             // reject marker must not suppress the forward notification.
             'complaint_status_email_sent_at' => null,
@@ -441,11 +451,16 @@ class RatingAdminService
 
         app(AdminDashboardService::class)->flush();
 
-        ActivityLogger::log('forward_complaint', "Forwarded complaint #{$rating->id} to TFRB/superadmin (operator: {$rating->operator_name})", $rating, 'review');
+        ActivityLogger::log(
+            'forward_complaint',
+            'Forwarded complaint #' . $rating->id . " to TFRB/superadmin (operator: {$rating->operator_name}) — reason: " . Str::limit($reason, 300),
+            $rating,
+            'review'
+        );
 
         $president = Auth::user();
         $presidentName = $president->name ?? 'TODA president';
-        $this->notifyAdminsOnForward($rating, "{$presidentName} forwarded complaint {$rating->reference_number} for {$rating->operator_name} to TFRB/superadmin.");
+        $this->notifyAdminsOnForward($rating, "{$presidentName} forwarded complaint {$rating->reference_number} for {$rating->operator_name} to TFRB/superadmin. Reason: " . Str::limit($reason, 300));
         $emailError = $this->notifyComplaintStatus($rating, 'forwarded');
         $this->notifyPassengerInApp($rating, 'Complaint Forwarded to TFRB', 'Your complaint has been forwarded to the TFRB/superadmin for further review. They will resolve it from here.');
 

@@ -315,7 +315,9 @@ class EmailNotificationDeliveryTest extends TestCase
         $this->markStatusEmailAlreadySent($complaint);
 
         $this->actingAs($president)
-            ->patch('/president/complaints/' . $complaint->id . '/forward')
+            ->patch('/president/complaints/' . $complaint->id . '/forward', [
+                'forward_reason' => 'Needs TFRB review.',
+            ])
             ->assertRedirect();
 
         // If the old marker had not been cleared, notifyComplaintStatus() would
