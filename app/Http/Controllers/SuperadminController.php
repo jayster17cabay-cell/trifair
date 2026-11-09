@@ -228,12 +228,17 @@ class SuperadminController extends Controller
         $data = app(AdminQueryService::class)->complaintsData($request);
         $data['activeOperators'] = app(AdminQueryService::class)->activeOperators();
 
-        // Monitoring view: all complaints (including those with the TODA
-        // president) so the TFRB/superadmin can oversee every case.
+        // Monitoring view: complaints routed to a TODA president (still with
+        // them or already forwarded/closed) so the TFRB/superadmin can oversee
+        // every president-handled case. Actionable complaints that never touch a
+        // president (against-president, unassigned) stay in the Action tab.
         $monitoringData = app(AdminQueryService::class)->complaintsData($request, null, 'mpage');
         $data['monitoringComplaints'] = $monitoringData['complaints'];
         $data['monitoringSourceCounts'] = $monitoringData['sourceCounts'];
         $data['monitoringTotalCount'] = $monitoringData['totalCount'];
+        $data['monitoringOpenCount'] = $monitoringData['openCount'];
+        $data['monitoringRejectedCount'] = $monitoringData['rejectedCount'];
+        $data['monitoringSolvedCount'] = $monitoringData['solvedCount'];
 
         return view('superadmin.complaints', $data);
     }

@@ -72,7 +72,7 @@ class AdminQueryService
         $base = (!$president && $pageName === 'mpage' && $search !== '')
             ? Rating::query()
             : ((!$president && $pageName === 'mpage')
-                ? Rating::isComplaint()
+                ? Rating::isComplaint()->whereNotNull('routed_to')
                 : Rating::isValid()->isComplaint());
         if ($president) {
             // Presidents only see complaints routed to them (including

@@ -64,12 +64,10 @@
     <div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
         @php
             $kpiItems = [
-                ['key' => 'all', 'label' => 'All', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $monitoringSourceCounts['all'] ?? $monitoringTotalCount],
-                ['key' => 'actionable', 'label' => 'Actionable', 'icon' => 'bi-lightning-charge-fill', 'chip' => 'bg-navy-50 text-navy-600', 'num' => $monitoringSourceCounts['actionable'] ?? 0],
-                ['key' => 'forwarded', 'label' => 'Forwarded', 'icon' => 'bi-send-fill', 'chip' => 'bg-violet-50 text-violet-600', 'num' => $monitoringSourceCounts['forwarded'] ?? 0],
-                ['key' => 'against_president', 'label' => 'vs President', 'icon' => 'bi-person-x', 'chip' => 'bg-red-50 text-red-600', 'num' => $monitoringSourceCounts['against_president'] ?? 0],
-                ['key' => 'unassigned', 'label' => 'Unassigned', 'icon' => 'bi-person-dash', 'chip' => 'bg-slate-100 text-slate-500', 'num' => $monitoringSourceCounts['unassigned'] ?? 0],
-                ['key' => 'awaiting', 'label' => 'Awaiting Pres.', 'icon' => 'bi-hourglass-split', 'chip' => 'bg-amber-50 text-amber-600', 'num' => $monitoringSourceCounts['awaiting'] ?? 0],
+                ['key' => 'all', 'label' => 'Total', 'icon' => 'bi-collection', 'chip' => 'bg-slate-100 text-slate-600', 'num' => $monitoringTotalCount],
+                ['key' => 'open', 'label' => 'Nasa President', 'icon' => 'bi-hourglass-split', 'chip' => 'bg-amber-50 text-amber-600', 'num' => $monitoringOpenCount ?? 0],
+                ['key' => 'solved', 'label' => 'Solved', 'icon' => 'bi-patch-check-fill', 'chip' => 'bg-violet-50 text-violet-600', 'num' => $monitoringSolvedCount ?? 0],
+                ['key' => 'rejected', 'label' => 'Rejected', 'icon' => 'bi-x-circle', 'chip' => 'bg-red-50 text-red-600', 'num' => $monitoringRejectedCount ?? 0],
             ];
         @endphp
         @foreach ($kpiItems as $kpi)

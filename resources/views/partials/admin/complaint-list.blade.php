@@ -40,7 +40,6 @@
         ['key' => 'forwarded', 'label' => 'Forwarded', 'short' => 'Forwarded', 'icon' => 'bi-send-fill', 'tone' => 'text-violet-600'],
         ['key' => 'against_president', 'label' => 'vs President', 'short' => 'vs Pres', 'icon' => 'bi-person-x', 'tone' => 'text-red-600'],
         ['key' => 'unassigned', 'label' => 'Unassigned', 'short' => 'Unassigned', 'icon' => 'bi-person-dash', 'tone' => 'text-slate-500'],
-        ['key' => 'awaiting', 'label' => 'Awaiting', 'short' => 'Awaiting', 'icon' => 'bi-hourglass-split', 'tone' => 'text-amber-600'],
         ['key' => 'all', 'label' => 'All', 'short' => 'All', 'icon' => 'bi-collection', 'tone' => 'text-slate-500'],
     ];
 
