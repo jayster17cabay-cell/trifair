@@ -1,47 +1,37 @@
 @php
     $statusLabel = match ($status) {
         'solved' => 'Solved',
-        'rejected' => 'Rejected',
+        'rejected' => 'Not upheld',
         'forwarded' => 'Forwarded to TFRB',
         'escalated' => 'Escalated for re-review',
         default => 'Reviewed',
     };
-    $heading = match ($status) {
-        'solved' => 'has been solved',
-        'rejected' => 'was not upheld after review',
-        'forwarded' => 'has been forwarded to the TFRB',
-        'escalated' => 'was escalated for a heavier re-review',
-        default => 'has been reviewed',
+    $statusMessage = match ($status) {
+        'solved' => 'The concerning parties have been notified and the matter has been resolved.',
+        'rejected' => 'The responsible office reviewed the available information and could not uphold this complaint as a violation, so it does not count against the operator\'s record. If you have additional evidence, you may file a new complaint.',
+        'forwarded' => 'Your complaint has been forwarded to the TFRB/superadmin for further action. They will review it from here and notify you once it is resolved.',
+        'escalated' => 'Your complaint was escalated for a heavier re-review. The TFRB/superadmin team will investigate further and follow up with you.',
+        default => 'After reviewing the evidence, your complaint has been upheld by the responsible office and is now counted against the reported operator\'s record.',
     };
 @endphp
-TriFair — Complaint Update
+TriFair complaint update
 
-Your complaint {{ $rating->reference_number }} {{ $heading }}.
+Hi {{ $rating->passenger_name ?: 'there' }},
 
-Good day{{ $rating->passenger_name ? ', ' . $rating->passenger_name : '' }}!
+This is an update about your TriFair complaint {{ $rating->reference_number }} against operator {{ $rating->operator->user->name ?? 'Unknown' }}{{ $rating->operator && $rating->operator->body_number ? ' (B#' . $rating->operator->body_number . ')' : '' }} for {{ $rating->complaint_type ?: 'Complaint' }}.
 
-This is an update on the complaint you filed against operator {{ $rating->operator->user->name ?? 'Unknown' }}{{ $rating->operator && $rating->operator->body_number ? ' (B#' . $rating->operator->body_number . ')' : '' }} for {{ $rating->complaint_type }}.
-
-Complaint reference: {{ $rating->reference_number }}
-Complaint type: {{ $rating->complaint_type ?: 'Complaint' }}
 Current status: {{ $statusLabel }}
+
+{{ $statusMessage }}
 
 @if ($rating->resolution_note)
 {{ $status === 'rejected' ? 'Reason' : 'Resolution details' }}: {{ $rating->resolution_note }}
 @endif
 
 @if ($status === 'solved')
-The concerning parties have been notified and the matter has been resolved. Thank you for helping us keep our transport services safe and accountable.
-@elseif ($status === 'rejected')
-Your complaint was reviewed by the responsible office. Based on the available information it could not be upheld as a violation, so it does not count against the operator's record. If you have additional evidence, you may file a new complaint.
-@elseif ($status === 'forwarded')
-Your complaint has been forwarded to the TFRB/superadmin by the TODA president for further action. They will review it from here and notify you once it is resolved.
-@elseif ($status === 'escalated')
-Your complaint was escalated for a heavier re-review after the previous resolution did not satisfy you. The TFRB/superadmin team will investigate further and follow up with you.
-@else
-After reviewing the evidence, your complaint has been upheld by the responsible office and is now counted against the reported operator's record.
+Sign in to TriFair and open My Complaints to view any photos attached to the resolution.
 @endif
 
-You can view the full complaint in your TriFair Passenger Dashboard.
+Thank you for helping keep our transport services safe and accountable.
 
-This is an automated email from the TriFair Passenger Feedback System. Please do not reply to this email.
+— The TriFair Team

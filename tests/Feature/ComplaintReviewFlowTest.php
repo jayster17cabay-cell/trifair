@@ -403,7 +403,7 @@ class ComplaintReviewFlowTest extends TestCase
             ->assertSee('resolved.jpg');
     }
 
-    public function test_solved_complaint_email_embeds_the_resolution_photo()
+    public function test_solved_complaint_email_has_no_remote_links_or_images()
     {
         $operator = $this->makeOperator();
         $complaint = $this->makeValidComplaint($operator, 1);
@@ -411,6 +411,7 @@ class ComplaintReviewFlowTest extends TestCase
             'is_reviewed' => true,
             'is_solved' => true,
             'solved_at' => now(),
+            'resolution_note' => 'The driver was warned.',
         ]);
 
         ResolutionProof::create([
@@ -422,12 +423,16 @@ class ComplaintReviewFlowTest extends TestCase
 
         $html = (new ComplaintStatus($complaint->fresh(), 'solved'))->render();
 
-        // The officer's photo is embedded directly through a signed URL so the
-        // passenger can view it straight from the email without signing in.
-        $this->assertStringContainsString('<img', $html);
-        $this->assertStringContainsString('file-storage/resolution-proofs', $html);
-        $this->assertStringContainsString('resolved.jpg', $html);
-        $this->assertStringNotContainsString('Sign in', $html);
+        // Remote images and signed links to the shared hosting domain are the
+        // strongest spam signals for this sender. The email stays link-free and
+        // points the passenger at the dashboard instead.
+        $this->assertStringNotContainsString('<img', $html);
+        $this->assertStringNotContainsString('file-storage', $html);
+        $this->assertStringNotContainsString('http://', $html);
+        $this->assertStringNotContainsString('https://', $html);
+        $this->assertStringNotContainsString('automated', strtolower($html));
+        $this->assertStringContainsString('Sign in to TriFair and open My Complaints', $html);
+        $this->assertStringContainsString('The driver was warned.', $html);
     }
 
     public function test_reset_and_reopen_clear_the_resolution_details()

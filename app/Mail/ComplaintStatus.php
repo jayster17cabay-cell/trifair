@@ -24,13 +24,13 @@ class ComplaintStatus extends TransactionalMailable
     public function build()
     {
         $subject = match ($this->status) {
-            'accepted' => "Your complaint {$this->rating->reference_number} has been reviewed",
-            'reviewed' => "Your complaint {$this->rating->reference_number} has been reviewed",
-            'rejected' => "Update on your complaint {$this->rating->reference_number}",
-            'solved' => "Your complaint {$this->rating->reference_number} has been solved",
-            'forwarded' => "Your complaint {$this->rating->reference_number} is now with the TFRB",
-            'escalated' => "Your complaint {$this->rating->reference_number} was escalated for a heavier re-review",
-            default => "Your complaint {$this->rating->reference_number} has been updated",
+            'accepted' => "TriFair complaint {$this->rating->reference_number} reviewed",
+            'reviewed' => "TriFair complaint {$this->rating->reference_number} reviewed",
+            'rejected' => "TriFair complaint {$this->rating->reference_number} not upheld",
+            'solved' => "TriFair complaint {$this->rating->reference_number} solved",
+            'forwarded' => "TriFair complaint {$this->rating->reference_number} forwarded to TFRB",
+            'escalated' => "TriFair complaint {$this->rating->reference_number} escalated",
+            default => "TriFair complaint {$this->rating->reference_number} update",
         };
 
         return $this
