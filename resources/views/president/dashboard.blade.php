@@ -67,11 +67,7 @@
 {{-- Section 1 — My Ratings (the president's own performance as an operator).
      Member-level ratings are intentionally omitted here; the president reviews
      them per member from the TODA members list below. --}}
-@if ($showRatings)
-<div id="ownRatings" class="mb-4 scroll-mt-24">
-    @include('partials.president.own-ratings', ['ownOperator' => $ownOperator, 'ownRecentRatings' => $ownRecentRatings])
-</div>
-@endif
+{{-- My Ratings section removed from dashboard per request; access via "My Ratings" page. --}}
 
 {{-- Join requests: operators asking to join this TODA. The president is the
      final approver — approving activates the membership immediately. --}}
