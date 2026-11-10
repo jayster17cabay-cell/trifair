@@ -17,11 +17,11 @@
 <div class="mb-5 flex flex-wrap items-center gap-2">
     <a href="{{ route($routePrefix . '.complaints', array_merge(request()->except('view', 'page', 'mpage'), ['view' => 'action'])) }}"
        class="inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-bold transition {{ $view === 'action' ? 'border-navy-600 bg-navy-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-navy-200 hover:bg-slate-50' }}">
-        <i class="bi bi-lightning-charge-fill"></i> Aksyon (TFRB / Superadmin)
+        <i class="bi bi-lightning-charge-fill"></i> Action (TFRB / Superadmin)
     </a>
     <a href="{{ route($routePrefix . '.complaints', array_merge(request()->except('view', 'page', 'mpage'), ['view' => 'monitor'])) }}"
        class="inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-bold transition {{ $view === 'monitor' ? 'border-slate-600 bg-slate-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50' }}">
-        <i class="bi bi-eye-fill"></i> Monitoring (Lahat ng Complaints)
+        <i class="bi bi-eye-fill"></i> Monitoring (All Complaints)
     </a>
 </div>
 @endif
@@ -32,7 +32,7 @@
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-600 text-white"><i class="bi bi-lightning-charge-fill"></i></span>
         <div>
             <h2 class="text-base font-bold text-slate-800">Aksyon (TFRB / Superadmin)</h2>
-            <p class="text-xs text-slate-500">Complaints na kaya mong i-solve o i-reject — forwarded, against president, unassigned.</p>
+            <p class="text-xs text-slate-500">Complaints you can solve or reject — forwarded, against president, unassigned.</p>
         </div>
     </div>
     @endif
@@ -41,8 +41,8 @@
     <div class="mb-3 flex items-center gap-2">
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-600 text-white"><i class="bi bi-eye-fill"></i></span>
         <div>
-            <h2 class="text-base font-bold text-slate-800">Monitoring (Lahat ng Complaints)</h2>
-            <p class="text-xs text-slate-500">Viewing lang — kasama ang nasa TODA president, para mamonitor ang kanilang actions. (Read-only)</p>
+            <h2 class="text-base font-bold text-slate-800">Monitoring (All Complaints)</h2>
+            <p class="text-xs text-slate-500">View only — includes cases with the TODA president so you can monitor their actions. (Read-only)</p>
         </div>
     </div>
     <form method="GET" action="{{ route($routePrefix . '.complaints') }}" class="mb-5 flex flex-wrap items-end gap-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
@@ -90,8 +90,8 @@
     @else
         <div class="tw-empty py-12">
             <div class="tw-empty-icon"><i class="bi bi-check-circle text-emerald-500"></i></div>
-            <h3 class="tw-card-title mb-1">Walang complaints</h3>
-            <p class="text-sm text-slate-500">Lahat ng complaints ay nasa actionable section o wala pang nai-file.</p>
+            <h3 class="tw-card-title mb-1">No complaints</h3>
+            <p class="text-sm text-slate-500">All complaints are in the actionable section, or none have been filed yet.</p>
         </div>
     @endif
 @endif
