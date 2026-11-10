@@ -441,4 +441,41 @@ class PresidentMemberManagementTest extends TestCase
         $this->assertStringContainsString('Gamma', $html);
         $this->assertStringNotContainsString('Alpha', $html);
     }
+
+    public function test_president_can_issue_a_franchise_to_own_member(): void
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+        $member = $this->makeOperator($toda);
+
+        $this->actingAs($pres['user'])
+            ->post(route('president.members.franchise.issue', $member), [
+                'franchise_no' => 'FR-PRES-M-1',
+                'issued_at' => '2026-01-01',
+                'valid_until' => '2027-01-01',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('franchise_terms', [
+            'operator_id' => $member->id,
+            'franchise_no' => 'FR-PRES-M-1',
+            'status' => FranchiseTerm::STATUS_ACTIVE,
+        ]);
+    }
+
+    public function test_president_cannot_issue_franchise_to_foreign_member(): void
+    {
+        $todaA = $this->makeToda();
+        $todaB = $this->makeToda();
+        $presA = $this->makePresident($todaA);
+        $foreignMember = $this->makeOperator($todaB);
+
+        $this->actingAs($presA['user'])
+            ->post(route('president.members.franchise.issue', $foreignMember), [
+                'franchise_no' => 'FR-FOREIGN',
+                'issued_at' => '2026-01-01',
+                'valid_until' => '2027-01-01',
+            ])
+            ->assertForbidden();
+    }
 }

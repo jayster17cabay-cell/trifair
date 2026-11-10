@@ -127,6 +127,7 @@
 </div>
 
 @include('partials.admin.operator-suspend-modal', ['suspendTitle' => 'Suspend Member'])
+@include('partials.admin.operator-franchise-modal')
 @include('partials.president.add-member-modal')
 
 <script>

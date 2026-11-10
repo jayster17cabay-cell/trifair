@@ -308,6 +308,10 @@ Route::middleware(['auth', 'role:operator_president', 'president.active', 'toda.
     // TODA-less operator).
     Route::post('/members', [PresidentController::class, 'storeMember'])->name('members.store');
     Route::get('/members/{member}', [PresidentController::class, 'memberDetail'])->name('members.detail');
+    // Franchise management for the president's own TODA members (issue / edit / renew).
+    Route::post('/members/{member}/franchise', [PresidentController::class, 'issueFranchise'])->name('members.franchise.issue');
+    Route::put('/members/{member}/franchise', [PresidentController::class, 'updateFranchise'])->name('members.franchise.update');
+    Route::post('/members/{member}/franchise/renew', [PresidentController::class, 'renewFranchise'])->name('members.franchise.renew');
     Route::post('/members/{member}/suspend', [PresidentController::class, 'suspendMember'])->name('members.suspend');
     Route::patch('/members/{member}/suspend/end', [PresidentController::class, 'endSuspension'])->name('members.suspend.end');
     Route::delete('/members/{member}/remove', [PresidentController::class, 'removeMember'])->name('members.remove');

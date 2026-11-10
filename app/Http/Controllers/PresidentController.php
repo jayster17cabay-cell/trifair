@@ -200,7 +200,7 @@ class PresidentController extends Controller
     {
         $toda = $this->authorizeMember($member);
 
-        $member->load('user', 'toda');
+        $member->load('user', 'toda', 'currentTerm');
 
         $ratings = $this->query->memberRatings($toda, $member);
         $stats = $this->query->memberStats($toda, $member);
@@ -223,6 +223,38 @@ class PresidentController extends Controller
         ])->render();
 
         return response()->json(['html' => $html]);
+    }
+
+    /**
+     * Issue a franchise term to one of the president's own TODA members.
+     * Delegates to the shared OperatorAdminService, but only after confirming
+     * the member actually belongs to the governed TODA.
+     */
+    public function issueFranchise(Request $request, Operator $member)
+    {
+        $this->authorizeMember($member);
+
+        return app(\App\Services\OperatorAdminService::class)->issueFranchise($request, $member, 'president.members');
+    }
+
+    /**
+     * Edit the current franchise term's details in place (no stats reset).
+     */
+    public function updateFranchise(Request $request, Operator $member)
+    {
+        $this->authorizeMember($member);
+
+        return app(\App\Services\OperatorAdminService::class)->updateFranchise($request, $member, 'president.members');
+    }
+
+    /**
+     * Renew the member's franchise (closes the current term and opens a new one).
+     */
+    public function renewFranchise(Request $request, Operator $member)
+    {
+        $this->authorizeMember($member);
+
+        return app(\App\Services\OperatorAdminService::class)->renewFranchise($request, $member, 'president.members');
     }
 
     /**

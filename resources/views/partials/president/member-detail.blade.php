@@ -23,6 +23,36 @@
         $activeSuspension = ($currentSuspension ?? null) && !$currentSuspension->isExpired() ? $currentSuspension : null;
         $suspendPayload = ['name' => $member->user->name, 'suspendUrl' => route('president.members.suspend', $member->id)];
 
+    // Franchise details for the shared franchise modal (issue / edit / renew).
+    $currentTerm = $member->currentTerm;
+    $franchiseNo = $currentTerm->franchise_no ?? null;
+    $franchiseStatus = $member->franchiseStatus();
+    $franchiseExpiringSoon = $member->isFranchiseExpiringSoon();
+    $canIssueFranchise = !$member->isArchived() && in_array($member->status, ['active', 'inactive'], true);
+    $franchiseViewData = [
+        'id' => $member->id,
+        'name' => $member->user->name ?? 'Unknown',
+        'email' => $member->user->email ?? '',
+        'toda' => $member->toda ? $member->toda->name : null,
+        'contact' => $member->contact_number,
+        'plate' => $member->plate_number,
+        'body' => $member->body_number,
+        'color' => $member->motorcycle_model,
+        'statusLabel' => ucfirst($member->status),
+        'franchiseNo' => $franchiseNo,
+        'franchiseIssued' => optional($currentTerm ? $currentTerm->issued_at : null)->format('M d, Y'),
+        'franchiseValidUntil' => ($currentTerm && $currentTerm->valid_until) ? $currentTerm->valid_until->format('M d, Y') : null,
+        'franchiseIssuedRaw' => ($currentTerm && $currentTerm->issued_at) ? $currentTerm->issued_at->toDateString() : null,
+        'franchiseValidUntilRaw' => ($currentTerm && $currentTerm->valid_until) ? $currentTerm->valid_until->toDateString() : null,
+        'franchiseStatus' => $franchiseStatus,
+        'franchiseExpiringSoon' => $franchiseExpiringSoon,
+        'hasTerm' => (bool) $currentTerm,
+        'canIssueFranchise' => $canIssueFranchise,
+        'issueUrl' => route('president.members.franchise.issue', $member),
+        'updateUrl' => route('president.members.franchise.update', $member),
+        'renewUrl' => route('president.members.franchise.renew', $member),
+    ];
+
         // Legend for the complaint actions
         $complaintActionLegend = [
             'resolve' => ['label' => 'Resolve', 'class' => 'tw-btn-gold'],
@@ -84,6 +114,60 @@
             {{ $ratings->links('pagination::tailwind') }}
         </div>
     @endif
+
+    {{-- Franchise term (issue / edit / renew) --}}
+    <div class="mt-4 border-t border-slate-100 pt-4">
+        <div class="mb-2 flex items-center justify-between">
+            <div class="text-xs font-bold uppercase tracking-wider text-navy-600">Franchise</div>
+            @if ($currentTerm)
+                <span class="tw-badge {{ $franchiseStatus === 'expired' ? 'tw-badge-red' : 'tw-badge-green' }}">
+                    <i class="bi {{ $franchiseStatus === 'expired' ? 'bi-x-circle' : 'bi-check-circle' }}"></i>
+                    {{ $franchiseStatus === 'expired' ? 'Expired' : 'Active' }}
+                </span>
+            @else
+                <span class="tw-badge tw-badge-gray"><i class="bi bi-dash-circle"></i> None</span>
+            @endif
+        </div>
+        <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            @if ($currentTerm)
+                <div class="flex flex-wrap gap-x-4 gap-y-1">
+                    @if ($franchiseNo)
+                        <span><span class="text-slate-400">No.</span> <span class="font-semibold text-slate-700">{{ $franchiseNo }}</span></span>
+                    @endif
+                    @if ($currentTerm->issued_at)
+                        <span><span class="text-slate-400">Issued:</span> {{ $currentTerm->issued_at->format('M d, Y') }}</span>
+                    @endif
+                    @if ($currentTerm->valid_until)
+                        <span><span class="text-slate-400">Valid until:</span> {{ $currentTerm->valid_until->format('M d, Y') }}</span>
+                    @else
+                        <span class="text-slate-400">No expiry</span>
+                    @endif
+                </div>
+                @if ($franchiseExpiringSoon)
+                    <p class="mt-1 text-xs font-semibold text-amber-600"><i class="bi bi-exclamation-triangle mr-1"></i>Expiring soon</p>
+                @endif
+            @else
+                <p class="text-sm text-slate-500">No franchise term issued yet.</p>
+            @endif
+        </div>
+        @if ($canIssueFranchise)
+            <div class="mt-3">
+                <button type="button" class="tw-btn tw-btn-sm tw-btn-outline-gold"
+                        data-franchise-open='@json($franchiseViewData)'
+                        data-franchise-mode="{{ $currentTerm ? 'edit' : 'issue' }}">
+                    <i class="bi {{ $currentTerm ? 'bi-pencil-square' : 'bi-patch-check' }}"></i>
+                    {{ $currentTerm ? 'Edit Franchise' : 'Issue Franchise' }}
+                </button>
+                @if ($currentTerm)
+                    <button type="button" class="tw-btn tw-btn-sm tw-btn-outline ml-2"
+                            data-franchise-open='@json($franchiseViewData)'
+                            data-franchise-mode="renew">
+                        <i class="bi bi-arrow-repeat"></i> Renew
+                    </button>
+                @endif
+            </div>
+        @endif
+    </div>
 
     {{-- Suspension status + controls (president-only, own TODA members) --}}
     <div class="mt-4 border-t border-slate-100 pt-4">
