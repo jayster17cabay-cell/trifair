@@ -205,20 +205,13 @@
             @endif
         </div>
         @if ($canIssueFranchise)
-            <div class="mt-3">
+            <div class="mt-3 flex flex-wrap items-center gap-2">
                 <button type="button" class="tw-btn tw-btn-sm tw-btn-outline-gold"
                         data-franchise-open='@json($franchiseViewData)'
                         data-franchise-mode="{{ $currentTerm ? 'edit' : 'issue' }}">
                     <i class="bi {{ $currentTerm ? 'bi-pencil-square' : 'bi-patch-check' }}"></i>
                     {{ $currentTerm ? 'Edit Franchise' : 'Issue Franchise' }}
                 </button>
-                @if ($currentTerm)
-                    <button type="button" class="tw-btn tw-btn-sm tw-btn-outline ml-2"
-                            data-franchise-open='@json($franchiseViewData)'
-                            data-franchise-mode="renew">
-                        <i class="bi bi-arrow-repeat"></i> Renew
-                    </button>
-                @endif
             </div>
         @endif
     </div>
