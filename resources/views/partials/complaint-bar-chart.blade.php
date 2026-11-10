@@ -13,9 +13,11 @@
     @if ($totalComplaints > 0)
         @php
             $complaintMax = $complaintStats->max('total');
-            $complaintVisible = $complaintStats->where('total', '>', 0);
+            // Keep the in-card chart compact: only the top 5 categories are
+            // shown here; the full breakdown (all categories) lives in the modal.
+            $complaintVisible = $complaintStats->where('total', '>', 0)->take(5);
         @endphp
-        <div id="complaintChartBody" class="max-h-[150px] space-y-1.5 overflow-y-auto px-4 py-2.5">
+        <div id="complaintChartBody" class="max-h-[120px] space-y-1.5 overflow-y-auto px-4 py-2.5">
             @foreach ($complaintVisible as $c)
                 <div>
                     <div class="mb-0.5 flex items-center justify-between gap-2 text-[10px]">

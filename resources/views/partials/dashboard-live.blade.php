@@ -57,9 +57,12 @@
         window.__lastComplaintStats = stats;
         // Zero-count categories are hidden (data-level filter so hidden rows
         // leave no empty scroll space).
-        var visible = window.showAllComplaintTypes === true
+        // Keep the in-card chart compact: only the top 5 categories are shown
+        // here; the full breakdown (all categories) lives in the modal.
+        var visible = (window.showAllComplaintTypes === true
             ? stats
-            : stats.filter(function (s) { return s.total > 0; });
+            : stats.filter(function (s) { return s.total > 0; }))
+            .slice(0, 5);
         var body = document.getElementById('complaintChartBody');
         if (body) {
             var max = 0;
@@ -69,10 +72,10 @@
                 var s = visible[i];
                 var pct = max > 0 ? Math.round((s.total / max) * 100) : 0;
                 html += '<div>' +
-                    '<div class="mb-1 flex items-center justify-between gap-2 text-[11px]">' +
+                    '<div class="mb-0.5 flex items-center justify-between gap-2 text-[10px]">' +
                     '<span class="truncate font-semibold text-slate-600">' + escHtml(s.complaint_type) + '</span>' +
                     '<span class="shrink-0 font-bold text-slate-900">' + s.total + '</span></div>' +
-                    '<div class="h-2.5 overflow-hidden rounded-full bg-slate-100">' +
+                    '<div class="h-1.5 overflow-hidden rounded-full bg-slate-100">' +
                     '<div class="h-full rounded-full" style="width:' + pct + '%;background:linear-gradient(90deg,#2e7dd1,#0A2A5E);"></div></div>' +
                     '</div>';
             }
