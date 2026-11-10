@@ -120,11 +120,6 @@
                 @if ($bodyNumber)
                     <span class="text-xs text-slate-400">B#{{ $bodyNumber }}</span>
                 @endif
-                @if ($standalone ?? false)
-                    <span class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600" title="Operator's TODA">
-                        <i class="bi bi-diagram-3"></i>{{ $rating->toda?->name ?? ($operator?->toda?->name ?? 'Unassigned') }}
-                    </span>
-                @endif
             </div>
             <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
                 <span class="inline-flex items-center gap-1.5"><i class="bi bi-calendar3 text-slate-400"></i>{{ $rating->created_at->format('M d, Y \a\t h:i A') }}</span>
