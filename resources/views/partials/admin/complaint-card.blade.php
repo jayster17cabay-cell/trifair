@@ -360,7 +360,7 @@
             </div>
         @endif
 
-        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-white/80 px-4 py-3 sm:px-5">
+        <div class="flex flex-wrap items-center justify-start gap-3 border-t border-slate-100 bg-white/80 px-4 py-3 sm:px-5">
             @if ($rating->response)
                 <span class="text-xs font-medium text-emerald-600"><i class="bi bi-check2-all mr-1"></i>Operator responded</span>
             @elseif (!$rating->is_solved && !$rating->rejected_at)
