@@ -52,7 +52,8 @@
     <strong>Expiring Soon:</strong> Your franchise expires in {{ $ownOperator->currentTerm?->daysUntilExpiry() }} days. Please contact the TFRB Office to renew it before it lapses.
 </div>
 @endif
-{{-- KPI cards --}}
+@if ($showAll)
+{{-- KPI cards (overview only) --}}
 <div class="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating', 'live' => 'ownAvg']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
@@ -70,10 +71,8 @@
 </div>
 
 @include('partials.complaint-breakdown-modal', ['complaintStats' => $summary['complaintsByType']['stats'], 'totalComplaints' => (int) ($summary['complaintsByType']['total'] ?? 0)])
+@endif
 
-{{-- Section 1 — My Ratings (the president's own performance as an operator).
-     Member-level ratings are intentionally omitted here; the president reviews
-     them per member from the TODA members list below. --}}
 {{-- My Ratings section removed from dashboard per request; access via "My Ratings" page. --}}
 
 {{-- Join requests: operators asking to join this TODA. The president is the
