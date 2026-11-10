@@ -379,7 +379,7 @@
                         @endif
                     </div>
                 @endif
-                <div class="flex shrink-0 flex-wrap items-center gap-2">
+                <div class="flex shrink-0 flex-wrap items-center justify-end gap-2 self-end">
                     @if (in_array($rating->status_label, ['Open'], true))
                         {{-- An incoming complaint only offers the two final
                              decisions. Solving also marks it reviewed (so it
