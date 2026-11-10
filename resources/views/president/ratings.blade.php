@@ -8,7 +8,6 @@
     $tabs = [
         'all' => ['label' => 'All Ratings', 'icon' => 'bi-star', 'count' => $counts['all']],
         'complaints' => ['label' => 'Complaints', 'icon' => 'bi-flag', 'count' => $counts['complaints']],
-        'needs_response' => ['label' => 'Needs Response', 'icon' => 'bi-exclamation-circle', 'count' => $counts['needs_response']],
     ];
 
     // Review state of a complaint, phrased for the person it was filed against.
@@ -42,7 +41,7 @@
 </div>
 
 {{-- Headline numbers — each card jumps to the matching filter --}}
-<div class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+<div class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3">
     @include('partials.dashboard-kpi', ['kpi' => [
         'href' => route('president.ratings'),
         'icon' => 'bi-star-fill',
@@ -60,12 +59,6 @@
         'icon' => 'bi-flag',
         'value' => $counts['complaints'],
         'label' => 'Complaints',
-    ]])
-    @include('partials.dashboard-kpi', ['kpi' => [
-        'href' => route('president.ratings', ['filter' => 'needs_response']),
-        'icon' => 'bi-exclamation-triangle',
-        'value' => $counts['needs_response'],
-        'label' => 'Needs Response',
     ]])
 </div>
 

@@ -111,7 +111,6 @@ class PresidentRatingsPageTest extends TestCase
             ->assertSee($toda->name)
             ->assertSee('Smooth trip, very professional.')
             ->assertSee('Avg Rating')
-            ->assertSee('Needs Response')
             ->assertSee('All Ratings');
     }
 
