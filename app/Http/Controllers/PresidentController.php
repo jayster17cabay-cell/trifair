@@ -296,7 +296,10 @@ class PresidentController extends Controller
         $request->merge(['email' => strtolower(trim((string) $request->input('email')))]);
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'nullable|string|max:100|required_without:name',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100|required_without:name',
+            'name' => 'nullable|string|max:255|required_without_all:first_name,last_name',
             'email' => 'required|string|email|max:255|unique:users',
             'contact_number' => 'required|string|max:20',
             'plate_number' => 'required|string|max:20|unique:operators,plate_number',
@@ -305,22 +308,26 @@ class PresidentController extends Controller
         ], [
             'plate_number.unique' => 'This plate number is already registered in the system.',
             'body_number.unique' => 'This body number is already registered in the system.',
+            'first_name.required_without' => 'Please enter the member\'s first name.',
+            'last_name.required_without' => 'Please enter the member\'s last name.',
         ]);
 
-        // Split the submitted whole name ("Juan Dela Cruz" -> first "Juan",
-        // middle "Dela", last "Cruz") so the president's add-member flow
-        // stores the same split-name shape the superadmin/TFRB operator create
-        // and edit flows already use.
-        $firstName = '';
-        $middleName = '';
-        $lastName = '';
-        foreach (User::splitLegacyName((string) ($data['name'] ?? '')) as $partKey => $partValue) {
-            if ($partKey === 'first') {
-                $firstName = trim((string) $partValue);
-            } elseif ($partKey === 'middle') {
-                $middleName = trim((string) $partValue);
-            } elseif ($partKey === 'last') {
-                $lastName = trim((string) $partValue);
+        // Resolve the name the same way the superadmin/TFRB operator create
+        // flow does: prefer the explicit first/middle/last fields, falling back
+        // to splitting a single whole-name string (kept for backwards compat).
+        $firstName = trim((string) $request->input('first_name', ''));
+        $middleName = trim((string) $request->input('middle_name', ''));
+        $lastName = trim((string) $request->input('last_name', ''));
+
+        if ($firstName === '' && $middleName === '' && $lastName === '') {
+            foreach (User::splitLegacyName((string) ($data['name'] ?? '')) as $partKey => $partValue) {
+                if ($partKey === 'first') {
+                    $firstName = trim((string) $partValue);
+                } elseif ($partKey === 'middle') {
+                    $middleName = trim((string) $partValue);
+                } elseif ($partKey === 'last') {
+                    $lastName = trim((string) $partValue);
+                }
             }
         }
         $fullName = User::composeName($firstName, $middleName, $lastName);

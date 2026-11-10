@@ -20,10 +20,22 @@
             @csrf
             <div class="tw-modal-body">
                 <div class="space-y-4">
-                    <div>
-                        <label for="addMemberName" class="tw-stat-label mb-1 block">Full name</label>
-                        <input type="text" id="addMemberName" name="name" value="{{ old('name') }}" required maxlength="255" class="tw-input" placeholder="Juan Dela Cruz">
-                        <p class="mt-1 text-[0.7rem] leading-snug text-slate-400">The whole name is split into lastname, firstname and middlename (e.g. Juan Dela Cruz).</p>
+                    <div class="grid gap-x-6 gap-y-4 sm:grid-cols-3">
+                        <div>
+                            <label for="addMemberLastName" class="tw-stat-label mb-1 block">Last Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="addMemberLastName" name="last_name" value="{{ old('last_name') }}" required maxlength="100" class="tw-input @error('last_name') is-invalid @enderror" placeholder="Dela Cruz" autocomplete="family-name">
+                            @error('last_name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
+                        </div>
+                        <div>
+                            <label for="addMemberFirstName" class="tw-stat-label mb-1 block">First Name <span class="text-red-500">*</span></label>
+                            <input type="text" id="addMemberFirstName" name="first_name" value="{{ old('first_name') }}" required maxlength="100" class="tw-input @error('first_name') is-invalid @enderror" placeholder="Juan" autocomplete="given-name">
+                            @error('first_name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
+                        </div>
+                        <div>
+                            <label for="addMemberMiddleName" class="tw-stat-label mb-1 block">Middle Name</label>
+                            <input type="text" id="addMemberMiddleName" name="middle_name" value="{{ old('middle_name') }}" maxlength="100" class="tw-input @error('middle_name') is-invalid @enderror" placeholder="Santos" autocomplete="additional-name">
+                            @error('middle_name') <div class="tw-error-text" role="alert">{{ $message }}</div> @enderror
+                        </div>
                     </div>
                     <div>
                         <label for="addMemberEmail" class="tw-stat-label mb-1 block">Email</label>

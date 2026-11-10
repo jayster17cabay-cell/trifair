@@ -143,6 +143,29 @@ class PresidentMemberManagementTest extends TestCase
         $this->assertSame('Cruz Juan Dela', User::composeName($user->first_name, $user->middle_name, $user->last_name));
     }
 
+    public function test_president_add_member_accepts_split_name_fields(): void
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makePresident($toda);
+
+        $this->actingAs($pres['user'])->post('/president/members', [
+            'last_name' => 'Reyes',
+            'first_name' => 'Maria',
+            'middle_name' => 'Santos',
+            'email' => 'mariareyes@example.com',
+            'contact_number' => '09171234567',
+            'plate_number' => 'MR-001',
+            'body_number' => 'MR-01',
+            'motorcycle_model' => 'Honda Beat',
+        ])->assertRedirect(route('president.members'));
+
+        $user = User::where('email', 'mariareyes@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertSame('Maria', $user->first_name);
+        $this->assertSame('Santos', $user->middle_name);
+        $this->assertSame('Reyes', $user->last_name);
+    }
+
     public function test_president_added_member_is_active_and_not_in_admin_pending_list()
     {
         $toda = $this->makeToda();
