@@ -82,24 +82,74 @@
         </div>
     </div>
 
-    {{-- Ratings list --}}
-    <div class="space-y-3">
+    {{-- Ratings list — compact, tap-through for complaints --}}
+    <div class="space-y-2.5">
         @forelse ($ratings as $rating)
-            <div class="rounded-xl border border-slate-100 p-3">
-                <div class="flex items-center gap-1.5">
-                    @for ($i = 1; $i <= 5; $i++)
-                        <i class="bi {{ $i <= $rating->rating ? 'bi-star-fill text-gold' : 'bi-star text-slate-300' }} text-sm"></i>
-                    @endfor
-                    @if (!empty($rating->complaint_type))
-                        <span class="tw-badge tw-badge-red ml-1"><i class="bi bi-exclamation-triangle-fill"></i> {{ $rating->complaint_type }}</span>
-                    @endif
-                    <span class="ml-auto text-[11px] text-slate-400">{{ $rating->created_at->format('M d, Y') }}</span>
+            @php
+                $r = (int) $rating->rating;
+                if ($r >= 4) { $mClass = 'bg-blue-50 text-navy-700'; }
+                elseif ($r <= 2) { $mClass = 'bg-amber-600 text-white'; }
+                else { $mClass = 'bg-gold-50 text-gold-700'; }
+                $preview = $rating->complaint_details ?: $rating->reason;
+                $isComplaint = (bool) $rating->complaint_type;
+                $detailUrl = $isComplaint ? route('president.complaints.show', $rating) : null;
+                $tag = $detailUrl ? 'a' : 'div';
+            @endphp
+            <{{ $tag }} @if ($detailUrl) href="{{ $detailUrl }}" @endif
+               class="group flex items-start gap-3 rounded-xl border border-slate-100 bg-white px-3.5 py-3 transition-colors hover:bg-slate-50 no-underline {{ $detailUrl ? 'cursor-pointer' : '' }}">
+                <div class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-sm font-extrabold {{ $mClass }}">
+                    {{ $rating->rating }}
                 </div>
-                <p class="mt-1.5 text-sm text-slate-600">{{ $rating->complaint_details ?? $rating->reason ?? $rating->start_location . ' → ' . $rating->end_location }}</p>
-                @if ($rating->response)
-                    <p class="mt-2 rounded-lg bg-navy-50/50 p-2 text-xs text-slate-500"><i class="bi bi-reply-fill mr-1"></i> {{ $rating->response->message }}</p>
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="flex gap-0.5" aria-label="{{ $r }} out of 5 stars">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <i class="bi {{ $i <= $r ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-300' }} text-xs"></i>
+                                @endfor
+                            </span>
+                            @if ($isComplaint)
+                                <span class="tw-badge tw-badge-red"><i class="bi bi-exclamation-triangle"></i>{{ $rating->complaint_type }}</span>
+                                @php
+                                    $st = $rating->status_label;
+                                    $stBadge = $st === 'Solved' ? 'tw-badge tw-badge-navy' : ($st === 'Rejected' ? 'tw-badge tw-badge-red' : 'tw-badge tw-badge-amber');
+                                    $stText = $st === 'Solved' ? 'Solved' : ($st === 'Rejected' ? 'Rejected' : 'Under review');
+                                @endphp
+                                <span class="{{ $stBadge }}">{{ $stText }}</span>
+                            @elseif ($rating->response)
+                                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                                    <i class="bi bi-check-circle-fill"></i> Responded
+                                </span>
+                            @elseif ($r <= 2)
+                                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600">
+                                    <i class="bi bi-exclamation-circle"></i> Needs response
+                                </span>
+                            @endif
+                        </div>
+                        <small class="whitespace-nowrap text-[11px] text-slate-400">{{ $rating->created_at->format('M d, Y') }}</small>
+                    </div>
+
+                    @if ($preview)
+                        <p class="mt-1 text-sm leading-snug text-slate-600 line-clamp-2">{{ $preview }}</p>
+                    @endif
+
+                    @if ($rating->response)
+                        <p class="mt-1.5 rounded-lg bg-navy-50/60 px-2.5 py-1.5 text-xs text-slate-500">
+                            <i class="bi bi-reply-fill mr-1"></i> {{ \Illuminate\Support\Str::limit($rating->response->message, 120) }}
+                        </p>
+                    @endif
+
+                    @if ($rating->start_location || $rating->end_location)
+                        <p class="mt-1 text-[11px] text-slate-400">
+                            <i class="bi bi-geo-alt mr-1"></i>{{ $rating->start_location ?: '—' }} <i class="bi bi-arrow-right mx-0.5"></i> {{ $rating->end_location ?: '—' }}
+                        </p>
+                    @endif
+                </div>
+
+                @if ($detailUrl)
+                    <i class="bi bi-chevron-right mt-1 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-navy-500" aria-hidden="true"></i>
                 @endif
-            </div>
+            </{{ $tag }}>
         @empty
             <div class="flex flex-col items-center justify-center py-8 text-center">
                 <div class="tw-empty-icon"><i class="bi bi-star"></i></div>
