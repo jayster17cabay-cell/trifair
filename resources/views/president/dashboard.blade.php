@@ -53,8 +53,7 @@
 </div>
 @endif
 {{-- KPI cards --}}
-<div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
-    @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.complaints', ['filter' => 'pending']), 'icon' => 'bi-flag-fill', 'value' => $summary['pendingComplaints'], 'label' => 'Pending Complaints', 'live' => 'pendingComplaints']])
+<div class="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'ratings']), 'icon' => 'bi-star-fill', 'value' => number_format($summary['ownAvg'], 1), 'label' => 'My Rating', 'live' => 'ownAvg']])
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-people', 'value' => $summary['totalMembers'], 'label' => 'Members']])
     {{-- Member-level averages and complaints are reviewed per member, so both
@@ -64,10 +63,9 @@
     @include('partials.dashboard-kpi', ['kpi' => ['href' => route('president.dashboard', ['section' => 'members']), 'icon' => 'bi-flag', 'value' => $summary['totalComplaints'], 'label' => 'Complaints', 'live' => 'totalComplaints']])
 </div>
 
-{{-- Complaints by type — the same breakdown the superadmin / TFRB officer
-     dashboards show, but scoped to the TODA this president governs, so they can
-     see which complaint categories their members actually run into. --}}
-<div class="mt-5 tw-card transition-shadow duration-200 hover:shadow-md">
+{{-- Complaints by type — compact breakdown of which complaint categories the
+     president's TODA members actually run into. --}}
+<div class="mb-4">
     @include('partials.complaint-bar-chart', ['complaintStats' => $summary['complaintsByType']['stats'], 'totalComplaints' => (int) ($summary['complaintsByType']['total'] ?? 0)])
 </div>
 
@@ -88,7 +86,7 @@
 
 {{-- Section 2 — Members --}}
 @if ($showMembers)
-<div id="membersSection" class="mb-5 scroll-mt-24 tw-card overflow-hidden">
+<div id="membersSection" class="mb-4 scroll-mt-24 tw-card overflow-hidden">
     <div class="flex flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between" style="background-image: linear-gradient(135deg, #071e42 0%, #0A2A5E 100%);">
         <div class="flex items-center">
             <button id="presidentMembersToggle" type="button" class="tw-btn tw-btn-gold px-3 py-1.5 text-sm" onclick="togglePresidentMembers()">
