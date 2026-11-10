@@ -92,7 +92,11 @@
                 else { $mClass = 'bg-gold-50 text-gold-700'; }
                 $preview = $rating->complaint_details ?: $rating->reason;
                 $isComplaint = (bool) $rating->complaint_type;
-                $detailUrl = $isComplaint ? route('president.complaints.show', $rating) : null;
+                // Only complaints still routed to this president's queue can be
+                // opened here — forwarded / TFRB-owned cases must not 403.
+                $detailUrl = ($isComplaint && (int) $rating->routed_to === (int) \Illuminate\Support\Facades\Auth::id())
+                    ? route('president.complaints.show', $rating)
+                    : null;
                 $tag = $detailUrl ? 'a' : 'div';
             @endphp
             <{{ $tag }} @if ($detailUrl) href="{{ $detailUrl }}" @endif
