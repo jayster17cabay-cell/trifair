@@ -154,11 +154,10 @@ class PresidentRatingsPageTest extends TestCase
             ->get('/president/ratings?filter=needs_response')
             ->assertOk()
             ->assertSee('Refused to stop for me')
-            ->assertSee('This rating needs your response')
+            ->assertSee('Needs your response')
             ->assertDontSee('Comfortable trip');
 
-        // Responding from the page clears it from the queue and shows back
-        // as the recorded response on the full list.
+        // Responding from the detail page clears it from the queue.
         $this->actingAs($pres)
             ->from('/president/ratings?filter=needs_response')
             ->post(route('president.ratings.respond', $low), [
@@ -174,13 +173,81 @@ class PresidentRatingsPageTest extends TestCase
         $this->actingAs($pres)
             ->get('/president/ratings?filter=needs_response')
             ->assertOk()
-            ->assertDontSee('This rating needs your response');
+            ->assertDontSee('Needs your response');
 
+        // The full conversation and the recorded response live on the detail
+        // page now (the list is a compact tap-through index).
         $this->actingAs($pres)
-            ->get('/president/ratings')
+            ->get(route('president.ratings.show', $low))
             ->assertOk()
             ->assertSee('Your Response')
             ->assertSee('I stopped at the next corner.');
+    }
+
+    public function test_rating_list_is_a_compact_tap_through_index(): void
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makeUser('operator_president');
+        $operator = $this->makePresident($pres, $toda);
+        $rating = $this->makeRating($operator, 2, 'Driver cut me off', 'Reckless Driving', 'Tailgated me the whole trip');
+
+        $html = $this->actingAs($pres)
+            ->get('/president/ratings')
+            ->assertOk()
+            ->getContent();
+
+        // Each row links to its own detail page instead of expanding inline.
+        $this->assertStringContainsString(route('president.ratings.show', $rating), $html);
+        $this->assertStringContainsString('Tap a rating to open its full details.', $html);
+    }
+
+    public function test_president_can_open_their_own_rating_detail(): void
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makeUser('operator_president');
+        $operator = $this->makePresident($pres, $toda);
+        $rating = $this->makeRating($operator, 2, 'Driver cut me off', 'Reckless Driving', 'Tailgated me the whole trip');
+
+        $this->actingAs($pres)
+            ->get(route('president.ratings.show', $rating))
+            ->assertOk()
+            ->assertSee('Rating Details')
+            ->assertSee('Reckless Driving')
+            ->assertSee('Tailgated me the whole trip')
+            ->assertSee('Under review')
+            ->assertSee('This rating needs your response')
+            ->assertSee($toda->name);
+    }
+
+    public function test_president_cannot_open_another_operators_rating_detail(): void
+    {
+        $toda = $this->makeToda();
+        $pres = $this->makeUser('operator_president');
+        $this->makePresident($pres, $toda);
+
+        $otherDriver = $this->makeUser('operator', 'Other Driver');
+        $otherOperator = $this->makeOperator($otherDriver, $toda);
+        $foreign = $this->makeRating($otherOperator, 1, 'Not my driver at all');
+
+        $this->actingAs($pres)
+            ->get(route('president.ratings.show', $foreign))
+            ->assertForbidden();
+    }
+
+    public function test_president_cannot_open_own_rating_from_another_toda(): void
+    {
+        $governed = $this->makeToda();
+        $other = $this->makeToda();
+        $pres = $this->makeUser('operator_president');
+        $operator = $this->makePresident($pres, $governed);
+
+        // A rating recorded under a TODA the president does not preside over
+        // must stay out of the president console.
+        $foreign = $this->makeRating($operator, 2, 'Rating from another TODA', 'Overcharging', 'Charged extra', $other->id);
+
+        $this->actingAs($pres)
+            ->get(route('president.ratings.show', $foreign))
+            ->assertForbidden();
     }
 
     public function test_president_cannot_respond_to_another_operators_rating(): void

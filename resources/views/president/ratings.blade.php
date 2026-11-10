@@ -22,6 +22,11 @@
         'Open' => 'Under review',
         'Rejected' => 'Rejected',
     ];
+    $statusIcon = [
+        'Solved' => 'bi-patch-check-fill',
+        'Open' => 'bi-clock-fill',
+        'Rejected' => 'bi-x-circle-fill',
+    ];
 @endphp
 
 {{-- Page header — who this page is for and which TODA the numbers come from --}}
@@ -81,129 +86,81 @@
 @if ($counts['needs_response'] > 0)
     <div class="tw-alert tw-alert-navy mb-4">
         <i class="bi bi-info-circle-fill mt-0.5"></i>
-        <span class="text-sm">Low ratings (1–2 stars) let you respond and explain your side to the passenger and the TFRB.</span>
+        <span class="text-sm">Low ratings (1–2 stars) let you respond and explain your side. Tap a rating to open its full details.</span>
     </div>
 @endif
 
-<div class="tw-card tw-card-accent-gold">
+<div class="tw-card tw-card-accent-gold overflow-hidden">
     <div class="divide-y divide-slate-100">
         @forelse ($ratings as $rating)
             @php
-                $r = $rating->rating;
+                $r = (int) $rating->rating;
                 if ($r >= 4) { $cClass = 'bg-blue-50 text-navy-700'; }
                 elseif ($r <= 2) { $cClass = 'bg-amber-600 text-white'; }
                 else { $cClass = 'bg-gold-50 text-gold-700'; }
+
+                $isComplaint = (bool) $rating->complaint_type;
+                $preview = $rating->complaint_details ?: $rating->reason;
             @endphp
-            <div class="p-4 sm:p-5">
-                <div class="flex items-start gap-3">
-                    <div class="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full text-lg font-extrabold {{ $cClass }}">
-                        {{ $rating->rating }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="mb-1 flex flex-wrap items-center justify-between gap-1">
-                            <div class="flex flex-wrap items-center gap-1.5">
-                                <div class="flex gap-0.5">
-                                    @for ($i = 1; $i <= 5; $i++)
-                                        <i class="bi {{ $i <= $rating->rating ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-300' }} text-base"></i>
-                                    @endfor
-                                </div>
-                                @if ($rating->complaint_type)
-                                    <span class="tw-badge tw-badge-red"><i class="bi bi-exclamation-triangle"></i>{{ $rating->complaint_type }}</span>
+            <a href="{{ route('president.ratings.show', array_filter([$rating, 'filter' => $filter !== 'all' ? $filter : null])) }}"
+               class="group flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:bg-slate-50 sm:px-5 no-underline"
+               aria-label="Open rating{{ $rating->reference_number ? ' ' . $rating->reference_number : '' }} details">
+                <div class="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full text-base font-extrabold {{ $cClass }}">
+                    {{ $rating->rating }}
+                </div>
+
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="flex gap-0.5" aria-label="{{ $r }} out of 5 stars">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <i class="bi {{ $i <= $r ? 'bi-star-fill text-amber-400' : 'bi-star text-slate-300' }} text-[0.95rem]"></i>
+                                @endfor
+                            </span>
+                            @if ($isComplaint)
+                                <span class="tw-badge tw-badge-red"><i class="bi bi-exclamation-triangle"></i>{{ $rating->complaint_type }}</span>
+                                @if (isset($statusText[$rating->status_label]))
+                                    <span class="{{ $statusTone[$rating->status_label] }}">
+                                        <i class="bi {{ $statusIcon[$rating->status_label] }}"></i>{{ $statusText[$rating->status_label] }}
+                                    </span>
                                 @endif
-                                @if ($rating->complaint_type && isset($statusText[$rating->status_label]))
-                                    <span class="{{ $statusTone[$rating->status_label] }}"><i class="bi bi-clipboard-check"></i>{{ $statusText[$rating->status_label] }}</span>
-                                @endif
-                            </div>
-                            <small class="text-xs text-slate-400">{{ $rating->created_at->format('M d, Y h:i A') }}</small>
+                            @elseif ($rating->response)
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                                    <i class="bi bi-check-circle-fill"></i> Responded
+                                </span>
+                            @elseif ($r <= 2)
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
+                                    <i class="bi bi-exclamation-circle"></i> Needs your response
+                                </span>
+                            @endif
                         </div>
+                        <small class="whitespace-nowrap text-xs text-slate-400">{{ $rating->created_at->format('M d, Y h:i A') }}</small>
+                    </div>
 
-                        @if ($rating->complaint_type && $rating->complaint_details)
-                            <p class="mb-2 rounded-lg border border-red-100 bg-red-50/60 p-2.5 text-sm leading-relaxed text-slate-700">"{{ $rating->complaint_details }}"</p>
+                    @if ($preview)
+                        <p class="mt-1 text-sm leading-snug text-slate-600 line-clamp-2">{{ $preview }}</p>
+                    @endif
+
+                    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+                        @if ($rating->reference_number)
+                            <span class="font-mono text-[10px] font-bold text-navy-600/80">{{ $rating->reference_number }}</span>
                         @endif
-
-                        @if ($rating->reason && $rating->reason !== $rating->complaint_details)
-                            <p class="mb-2 text-sm text-slate-600">{{ $rating->reason }}</p>
-                        @endif
-
                         @if ($rating->start_location || $rating->end_location)
-                            <p class="mb-2 text-xs text-slate-400">
-                                <i class="bi bi-geo-alt mr-1"></i>{{ $rating->start_location ?: '—' }} <i class="bi bi-arrow-right mx-0.5"></i> {{ $rating->end_location ?: '—' }}
-                            </p>
+                            <span class="inline-flex min-w-0 items-center gap-1">
+                                <i class="bi bi-geo-alt"></i>
+                                <span class="truncate">{{ $rating->start_location ?: '—' }} <i class="bi bi-arrow-right mx-0.5"></i> {{ $rating->end_location ?: '—' }}</span>
+                            </span>
                         @endif
-
                         @if ($rating->proofs->count() > 0)
-                            <div class="mb-2">
-                                <small class="text-xs text-slate-400">Attached proof ({{ $rating->proofs->count() }} file(s)):</small>
-                                <div class="mt-1 flex flex-wrap gap-2">
-                                    @foreach ($rating->proofs as $proof)
-                                        @if (str_starts_with($proof->file_type, 'image'))
-                                            <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}">
-                                                <img src="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
-                                                     alt="{{ $proof->original_name }}"
-                                                     class="h-16 w-16 rounded-lg border border-slate-200 object-cover">
-                                            </a>
-                                        @else
-                                            <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
-                                               class="tw-btn tw-btn-sm tw-btn-outline">
-                                                <i class="bi bi-file-earmark"></i> {{ $proof->original_name }}
-                                            </a>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-
-                        @if ($rating->response)
-                            <div class="mt-3 rounded-xl bg-navy-600/10 p-3">
-                                <small class="text-[0.7rem] font-bold uppercase tracking-widest text-navy-600">
-                                    <i class="bi bi-chat-dots mr-1"></i> Your Response
-                                </small>
-                                <p class="mb-0 mt-1 text-sm text-slate-700">{{ $rating->response->message }}</p>
-                                @if ($rating->operatorProofs->count() > 0)
-                                    <div class="mt-2 flex flex-wrap gap-2">
-                                        @foreach ($rating->operatorProofs as $proof)
-                                            @if (str_starts_with($proof->file_type, 'image'))
-                                                <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}">
-                                                    <img src="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}"
-                                                         alt="{{ $proof->original_name }}"
-                                                         class="h-14 w-14 rounded-lg border border-slate-200 object-cover">
-                                                </a>
-                                            @else
-                                                <a href="{{ URL::signedRoute('storage.serve', ['path' => $proof->file_path]) }}" class="tw-btn tw-btn-sm tw-btn-outline">
-                                                    <i class="bi bi-file-earmark"></i> {{ $proof->original_name }}
-                                                </a>
-                                            @endif
-                                        @endforeach
-                                    </div>
-                                @endif
-                                <small class="mt-1 block text-xs text-slate-400">{{ $rating->response->created_at->diffForHumans() }}</small>
-                            </div>
-                        @elseif ($rating->rating <= 2)
-                            <div class="mt-3 rounded-xl bg-amber-50 p-3">
-                                <small class="text-[0.7rem] font-bold uppercase tracking-widest text-amber-600">
-                                    <i class="bi bi-exclamation-triangle mr-1"></i> This rating needs your response
-                                </small>
-                                <p class="my-1 text-[0.8rem] text-slate-500">Explain your side to the passenger and TFRB Officer. You may attach proof (images or PDF).</p>
-                                <form action="{{ route('president.ratings.respond', $rating) }}" method="POST" enctype="multipart/form-data" data-submit-loading>
-                                    @csrf
-                                    <textarea class="tw-textarea text-sm @error('message') is-invalid @enderror"
-                                              name="message" rows="2" aria-label="Your explanation" placeholder="Write your explanation here..."></textarea>
-                                    @error('message') <span class="tw-error-text" role="alert">{{ $message }}</span> @enderror
-                                    <label class="mt-2 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-semibold text-slate-500 transition hover:border-navy-500 hover:text-navy-600">
-                                        <i class="bi bi-paperclip"></i> Attach proof (jpg, png, pdf — max 5 files)
-                                        <input type="file" name="files[]" multiple accept="image/*,.pdf" class="sr-only" data-proof-input>
-                                    </label>
-                                    <div class="mt-1 text-[0.7rem] text-slate-400" data-proof-files></div>
-                                    @error('files') <span class="tw-error-text" role="alert">{{ $message }}</span> @enderror
-                                    <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold mt-2">
-                                        <i class="bi bi-send"></i> Submit Response
-                                    </button>
-                                </form>
-                            </div>
+                            <span class="inline-flex items-center gap-1"><i class="bi bi-paperclip"></i> {{ $rating->proofs->count() }} file(s)</span>
                         @endif
                     </div>
                 </div>
-            </div>
+
+                <div class="flex shrink-0 flex-col items-center gap-1.5 pt-0.5">
+                    <i class="bi bi-chevron-right text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-navy-500" aria-hidden="true"></i>
+                </div>
+            </a>
         @empty
             <div class="tw-empty py-10">
                 <div class="tw-empty-icon"><i class="bi {{ $filter === 'complaints' ? 'bi-flag' : ($filter === 'needs_response' ? 'bi-check2-all' : 'bi-star') }}"></i></div>
@@ -231,16 +188,3 @@
     @endif
 </div>
 @endsection
-
-@push('scripts')
-<script>
-    document.querySelectorAll('form[data-submit-loading]').forEach(function (form) {
-        form.addEventListener('submit', function () {
-            var button = form.querySelector('button[type="submit"]');
-            if (!button) return;
-            button.disabled = true;
-            button.innerHTML = '<i class="bi bi-arrow-repeat animate-spin" aria-hidden="true"></i> Sending...';
-        });
-    });
-</script>
-@endpush

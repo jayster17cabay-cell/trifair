@@ -299,6 +299,8 @@ Route::middleware(['auth', 'role:operator_president', 'president.active', 'toda.
     // The president's own ratings and complaints (as an operator), listed like
     // the operator ratings page but scoped to the TODA they govern.
     Route::get('/ratings', [PresidentController::class, 'ratings'])->name('ratings');
+    // Tap-through detail for one of the president's own ratings.
+    Route::get('/ratings/{rating}', [PresidentController::class, 'ratingShow'])->whereNumber('rating')->name('ratings.show');
     Route::post('/ratings/{rating}/respond', [OperatorController::class, 'respond'])->name('ratings.respond');
     Route::get('/members', [PresidentController::class, 'members'])->name('members');
     // President can onboard a new member (active immediately — the president

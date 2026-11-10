@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Operator;
 use App\Models\OperatorToda;
+use App\Models\Rating;
 use App\Models\Toda;
 use App\Models\User;
 use App\Services\PresidentQueryService;
@@ -126,6 +127,33 @@ class PresidentController extends Controller
             'ratings',
             'filter'
         ));
+    }
+
+    /**
+     * Full detail page for one of the president's own ratings/complaints —
+     * the president console mirror of the operator rating detail. The compact
+     * list only carries a preview; everything (complaint text, evidence,
+     * response form, resolution details) lives here.
+     */
+    public function ratingShow(Rating $rating)
+    {
+        $toda = $this->toda();
+        $ownOperator = $this->query->presidentOperator(Auth::user());
+
+        // Only the president's own valid ratings inside the TODA they govern
+        // may be opened — a crafted URL must never expose another operator's
+        // feedback or a record from a TODA they do not preside over.
+        if (!$ownOperator
+            || (int) $rating->operator_id !== (int) $ownOperator->id
+            || (int) $rating->toda_id !== (int) $toda->id
+            || !$rating->is_valid
+        ) {
+            abort(403);
+        }
+
+        $rating->load(['proofs', 'response', 'operatorProofs', 'resolutionProofs', 'reviewer']);
+
+        return view('president.rating', compact('toda', 'rating'));
     }
 
     public function members(Request $request)
