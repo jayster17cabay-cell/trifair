@@ -48,6 +48,9 @@ class RouteController extends Controller
         $route = $this->lookup($slat, $slng, $elat, $elng);
 
         if ($route === null) {
+            \Illuminate\Support\Facades\Log::warning('Route unavailable', [
+                'slat' => $slat, 'slng' => $slng, 'elat' => $elat, 'elng' => $elng,
+            ]);
             return response()->json(['error' => 'route unavailable'], 502);
         }
 
@@ -86,7 +89,7 @@ class RouteController extends Controller
         // snap-to-road + retry pass. 7.5s was too tight and timed out before
         // the snapped route could be computed, leaving the straight-line
         // fallback on screen.
-        $deadline = microtime(true) + 12.0;
+        $deadline = microtime(true) + 15.0;
 
         $route = $this->routeBetween($slat, $slng, $elat, $elng, $deadline);
         if ($route !== null) {
@@ -127,7 +130,7 @@ class RouteController extends Controller
                 break;
             }
             try {
-                $resp = Http::timeout(3)->withHeaders(['User-Agent' => 'TriFair/1.0 (passenger trip rating)'])->get($url);
+                $resp = Http::timeout(5)->withHeaders(['User-Agent' => 'TriFair/1.0 (passenger trip rating)'])->get($url);
                 if ($resp->ok()) {
                     $data = $resp->json();
                     if (($data['code'] ?? '') === 'Ok' && !empty($data['routes'][0])) {
