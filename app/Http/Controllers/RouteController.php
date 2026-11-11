@@ -91,26 +91,35 @@ class RouteController extends Controller
         // fallback on screen.
         $deadline = microtime(true) + 15.0;
 
-        $route = $this->routeBetween($slat, $slng, $elat, $elng, $deadline);
-        if ($route !== null) {
-            return $route;
-        }
-
-        if (microtime(true) > $deadline) {
-            return null;
-        }
-
+        // Snap off-road points (e.g. the report form's Solano-centre fallback
+        // start) to the nearest road FIRST, so the route lookup always runs
+        // against on-road coordinates. This mirrors how Google Maps handles the
+        // blue dot and avoids the NoRoute failures that left a straight line on
+        // screen. The raw lookup is still attempted first as a fast path for
+        // already on-road points (the common rating case).
         $start = $this->snap($slat, $slng, $deadline);
-        if (microtime(true) > $deadline) {
-            return null;
-        }
-        $end = $this->snap($elat, $elng, $deadline);
-
-        if ($start === null || $end === null || microtime(true) > $deadline) {
-            return null;
+        $end = null;
+        if ($start !== null && microtime(true) <= $deadline) {
+            $end = $this->snap($elat, $elng, $deadline);
         }
 
-        return $this->routeBetween($start[0], $start[1], $end[0], $end[1], $deadline);
+        if ($start !== null && $end !== null && microtime(true) <= $deadline) {
+            $route = $this->routeBetween($start[0], $start[1], $end[0], $end[1], $deadline);
+            if ($route !== null) {
+                return $route;
+            }
+        }
+
+        // Fast path: try the raw coordinates directly (on-road points route
+        // without needing a snap).
+        if (microtime(true) <= $deadline) {
+            $route = $this->routeBetween($slat, $slng, $elat, $elng, $deadline);
+            if ($route !== null) {
+                return $route;
+            }
+        }
+
+        return null;
     }
 
     /**
