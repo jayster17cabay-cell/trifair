@@ -545,7 +545,7 @@
                 if (!searchArea || searchArea.contains(latlng)) inside.push({ item: item, latlng: latlng });
             });
             if (inside.length === 0) {
-                searchResults.innerHTML = '<div class="search-item search-empty">No matching place found near Solano.</div>';
+                searchResults.innerHTML = '<div class="search-item search-empty">No matching place found. Try a different keyword or tap the map to set your destination.</div>';
                 return;
             }
             inside.slice(0, 5).forEach(function (e) {
