@@ -145,12 +145,15 @@
             </select>
         </div>
         <div class="flex w-full flex-wrap items-end gap-2 sm:ml-auto sm:w-auto">
-            <div class="tw-input-group rounded-xl border border-slate-200 bg-white shadow-sm transition focus-within:border-navy-500 focus-within:ring-2 focus-within:ring-navy-600/10">
+            <div class="tw-input-group flex-1 rounded-xl border border-slate-200 bg-white shadow-sm transition focus-within:border-navy-500 focus-within:ring-2 focus-within:ring-navy-600/10">
                 <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
                 <input type="text" name="search" value="{{ $search }}" placeholder="Search by reference #"
                        class="tw-input w-full py-2.5 sm:w-64" aria-label="Search complaint by reference number"
                        data-complaint-live-search>
             </div>
+            <button type="submit" class="tw-btn tw-btn-sm tw-btn-navy" aria-label="Search complaints">
+                <i class="bi bi-search"></i><span class="hidden sm:inline">Search</span>
+            </button>
             @if ($search !== '')
                 <a href="{{ route($routePrefix . '.complaints', array_filter(['source' => $presidentMode ? null : $source, 'filter' => $filter, 'rating' => $ratingFilter], fn ($v) => $v !== null && $v !== '')) }}"
                    class="tw-btn tw-btn-sm tw-btn-ghost" title="Clear search">

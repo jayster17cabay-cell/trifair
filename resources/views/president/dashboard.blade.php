@@ -96,8 +96,19 @@
         </div>
         <div class="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             <form id="presidentMemberFilter" class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center" method="GET" action="{{ route('president.dashboard') }}">
-                <input type="text" id="presidentMemberSearch" name="search" value="{{ request('search') }}" placeholder="Search name, body #, plate…" aria-label="Search members by name, body number, or plate"
-                        class="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm placeholder-slate-400 transition focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/20 sm:w-64">
+                <div class="tw-input-group flex-1 rounded-xl border border-slate-200 bg-white shadow-sm transition focus-within:border-gold focus-within:ring-2 focus-within:ring-gold/20 sm:w-64">
+                    <span class="tw-input-group-icon"><i class="bi bi-search"></i></span>
+                    <input type="text" id="presidentMemberSearch" name="search" value="{{ request('search') }}" placeholder="Search name, body #, plate…"
+                           class="tw-input w-full py-2.5" aria-label="Search members by name, body number, or plate">
+                    @if (request('search'))
+                        <a href="{{ route('president.dashboard', ['section' => 'members']) }}" class="inline-flex shrink-0 items-center bg-slate-100 px-3 text-slate-500 transition hover:text-slate-700" aria-label="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    @endif
+                </div>
+                <button type="submit" class="tw-btn tw-btn-sm tw-btn-gold" aria-label="Search members">
+                    <i class="bi bi-search"></i><span class="hidden sm:inline">Search</span>
+                </button>
                 <select id="presidentMemberStatus" name="status" aria-label="Filter members by status" class="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold">
                     <option value="">All status</option>
                     @foreach (['active' => 'Active', 'inactive' => 'Inactive', 'suspended' => 'Suspended', 'rejected' => 'Rejected'] as $val => $label)
