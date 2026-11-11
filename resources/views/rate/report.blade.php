@@ -411,7 +411,17 @@
         // lookup), never overwrite it with the straight-line approximation — a
         // later re-route (GPS update, retry) failing must not wipe a good route.
         if (hasRoadRoute) {
-            showNote('Route update failed — showing the previous route.');
+            // A previous road route is already on screen, so keep it instead of
+            // replacing it with a misleading straight line. Show a brief, soft
+            // info note so the user knows the latest change didn't re-route.
+            var noteEl = document.getElementById('reportMapNote');
+            if (noteEl) {
+                noteEl.classList.remove('error');
+                noteEl.classList.add('info');
+                showNote('Route kept as-is — the latest change could not be re-routed.');
+                clearTimeout(showNote.__hideTimer);
+                showNote.__hideTimer = setTimeout(function () { hideNote(); }, 3500);
+            }
             return;
         }
         // Retry once — Render cold starts / OSRM slow upstreams can fail the

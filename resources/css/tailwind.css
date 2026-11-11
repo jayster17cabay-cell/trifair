@@ -1195,7 +1195,12 @@
         background: #fef2f2;
         border-color: rgba(220, 38, 38, 0.2);
     }
-    .map-note[hidden] {
+    .map-note.info {
+         color: #1d4ed8;
+         background: #eff6ff;
+         border-color: rgba(29, 78, 216, 0.2);
+     }
+.map-note[hidden] {
         display: none;
     }
 
