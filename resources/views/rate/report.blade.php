@@ -283,6 +283,7 @@
     var endLatLng = null;
     var lastFromGeocodeLatLng = null;
     var lastFromGeocodeTime = 0;
+    var hasRoadRoute = false;
 
     function mapNotAvailable() {
         var el = document.getElementById('reportMap');
@@ -360,6 +361,9 @@
 
     function applyDestination(latlng) {
         onRouteError.__retried = false;
+        // A new destination starts a fresh routing attempt; the previous road
+        // route (if any) is cleared so a failure shows an honest fallback.
+        hasRoadRoute = false;
         setEndMarker(latlng);
         setTimeout(fitBothMarkers, 150);
     }
@@ -394,6 +398,7 @@
 
     function onRouteSelected(route) {
         if (!route || !route.coordinates || route.coordinates.length < 2) return;
+        hasRoadRoute = true;
         var distMeters = route.summary ? route.summary.totalDistance : 0;
         var durSeconds = route.summary ? route.summary.totalTime : 0;
         updateSummary(fmtDistance(distMeters) + ' · ' + fmtDuration(durSeconds));
@@ -402,6 +407,13 @@
 
     function onRouteError() {
         if (!startMarker || !endMarker) return;
+        // If a road route is already on screen (e.g. from an earlier successful
+        // lookup), never overwrite it with the straight-line approximation — a
+        // later re-route (GPS update, retry) failing must not wipe a good route.
+        if (hasRoadRoute) {
+            showNote('Route update failed — showing the previous route.');
+            return;
+        }
         // Retry once — Render cold starts / OSRM slow upstreams can fail the
         // first attempt even when a road route exists. Only fall back to the
         // approximate (straight) line if the retry also fails.
