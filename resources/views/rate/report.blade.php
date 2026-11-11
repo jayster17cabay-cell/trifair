@@ -359,6 +359,7 @@
     }
 
     function applyDestination(latlng) {
+        onRouteError.__retried = false;
         setEndMarker(latlng);
         setTimeout(fitBothMarkers, 150);
     }
@@ -401,6 +402,18 @@
 
     function onRouteError() {
         if (!startMarker || !endMarker) return;
+        // Retry once — Render cold starts / OSRM slow upstreams can fail the
+        // first attempt even when a road route exists. Only fall back to the
+        // approximate (straight) line if the retry also fails.
+        if (!onRouteError.__retried) {
+            onRouteError.__retried = true;
+            setTimeout(function () {
+                if (!startMarker || !endMarker) return;
+                drawRoute();
+            }, 1200);
+            return;
+        }
+        onRouteError.__retried = false;
         drawApproximateRoute(startMarker.getLatLng(), endMarker.getLatLng());
     }
 
