@@ -81,7 +81,12 @@ class RouteController extends Controller
      */
     private function lookup(float $slat, float $slng, float $elat, float $elng): ?array
     {
-        $deadline = microtime(true) + 7.5;
+        // The report flow often starts from an off-road fallback point (the
+        // Solano centre), so the raw lookup fails and we need room for the
+        // snap-to-road + retry pass. 7.5s was too tight and timed out before
+        // the snapped route could be computed, leaving the straight-line
+        // fallback on screen.
+        $deadline = microtime(true) + 12.0;
 
         $route = $this->routeBetween($slat, $slng, $elat, $elng, $deadline);
         if ($route !== null) {
@@ -161,7 +166,7 @@ class RouteController extends Controller
                 break;
             }
             try {
-                $resp = Http::timeout(2)->withHeaders(['User-Agent' => 'TriFair/1.0 (passenger trip rating)'])->get($url);
+                $resp = Http::timeout(1.5)->withHeaders(['User-Agent' => 'TriFair/1.0 (passenger trip rating)'])->get($url);
                 if ($resp->ok()) {
                     $data = $resp->json();
                     if (($data['code'] ?? '') === 'Ok' && !empty($data['waypoints'][0]['location'])) {
