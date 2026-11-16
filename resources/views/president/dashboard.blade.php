@@ -70,7 +70,7 @@
     @include('partials.complaint-bar-chart', ['complaintStats' => $summary['complaintsByType']['stats'], 'totalComplaints' => (int) ($summary['complaintsByType']['total'] ?? 0)])
 </div>
 
-@include('partials.complaint-breakdown-modal', ['complaintStats' => $summary['complaintsByType']['stats'], 'totalComplaints' => (int) ($summary['complaintsByType']['total'] ?? 0)])
+@include('partials.complaint-breakdown-modal', ['complaintStats' => $summary['complaintsByType']['stats'], 'totalComplaints' => (int) ($summary['complaintsByType']['total'] ?? 0), 'compact' => true])
 @endif
 
 {{-- My Ratings section removed from dashboard per request; access via "My Ratings" page. --}}

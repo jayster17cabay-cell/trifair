@@ -13,10 +13,11 @@ document.addEventListener('keydown', function(e) {
 });
 </script>
 
+@php $compact = $compact ?? false; @endphp
 <div id="complaintModal" class="tw-modal-backdrop hidden" onclick="if(event.target===this)closeComplaintModal()">
     <div class="tw-modal" role="dialog" aria-modal="true" aria-labelledby="complaintModalTitle">
-        <div class="tw-modal-head">
-            <h4 id="complaintModalTitle" class="text-base font-bold text-slate-900"><i class="bi bi-flag-fill mr-2 text-gold"></i> Complaints by Type</h4>
+        <div class="tw-modal-head {{ $compact ? 'py-2' : 'py-3' }}">
+            <h4 id="complaintModalTitle" class="{{ $compact ? 'text-sm' : 'text-base' }} font-bold text-slate-900"><i class="bi bi-flag-fill mr-2 text-gold"></i> Complaints by Type</h4>
             <button type="button" class="tw-modal-close" onclick="closeComplaintModal()" aria-label="Close">
                 <i class="bi bi-x-lg"></i>
             </button>
@@ -25,12 +26,12 @@ document.addEventListener('keydown', function(e) {
             @php $complaintTotal = $complaintStats->sum('total'); @endphp
             @foreach ($complaintStats->where('total', '>', 0) as $c)
                 @php $pct = $complaintTotal > 0 ? round(($c->total / $complaintTotal) * 100) : 0; @endphp
-                <div class="mb-3">
-                    <div class="mb-1 flex items-center justify-between text-sm text-slate-700">
-                        <span>{{ $c->complaint_type }}</span>
-                        <strong>{{ $c->total }}</strong>
+                <div class="{{ $compact ? 'mb-1.5' : 'mb-3' }}">
+                    <div class="mb-0.5 flex items-center justify-between {{ $compact ? 'text-xs' : 'text-sm' }} text-slate-700">
+                        <span class="truncate font-semibold">{{ $c->complaint_type }}</span>
+                        <strong class="shrink-0">{{ $c->total }}</strong>
                     </div>
-                    <div class="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div class="{{ $compact ? 'h-1.5' : 'h-2' }} overflow-hidden rounded-full bg-slate-100">
                         <div class="h-full rounded-full bg-blue-600" style="width: {{ $pct }}%;"></div>
                     </div>
                 </div>
