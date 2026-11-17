@@ -749,6 +749,20 @@
 
     function onRouteError() {
         if (!startMarker || !endMarker) return;
+        // If a road route is already on screen, keep it instead of replacing
+        // it with a misleading straight line (e.g. on a GPS re-route failure).
+        if (routeCoords && routeCoords.length >= 2) {
+            var note = document.getElementById('rateMapNote');
+            if (note) {
+                note.classList.remove('error');
+                note.classList.add('info');
+                note.hidden = false;
+                note.textContent = 'Route kept as-is — the latest change could not be re-routed.';
+                clearTimeout(onRouteError.__hideTimer);
+                onRouteError.__hideTimer = setTimeout(function () { note.hidden = true; }, 3500);
+            }
+            return;
+        }
         drawApproximateRoute(startMarker.getLatLng(), endMarker.getLatLng());
     }
 

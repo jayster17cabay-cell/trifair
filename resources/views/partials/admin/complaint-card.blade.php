@@ -60,7 +60,9 @@
         && empty($rating->forwarded_at);
     $isForwarded = !empty($rating->forwarded_at);
     $isForwardedByPresident = !empty($rating->forwarded_by);
-    $appeals = $rating->passengerFollowUps->filter(fn ($followUp) => (bool) $followUp->is_appeal);
+    // Appeals are no longer supported; keep an empty collection for the
+    // (now dead) escalation affordance so the rest of the card is unaffected.
+    $appeals = collect();
     // Escalation is a response to a passenger appeal, not a second action
     // that should appear on every already-solved complaint. Keep the manual
     // escalation form hidden until the passenger actually asks for a heavier

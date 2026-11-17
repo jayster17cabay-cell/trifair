@@ -145,7 +145,6 @@ class PassengerController extends Controller
             'user_id' => $user->id,
             'message' => $data['message'],
             'sender_role' => 'passenger',
-            'is_appeal' => false,
         ]);
 
         return redirect()->route('passenger.dashboard')
