@@ -568,8 +568,8 @@ class ComplaintRoutingTest extends TestCase
             ->assertDontSee($direct->reference_number, false)
             ->assertDontSee($awaiting->reference_number, false)
             ->assertSee('Forwarded by President')
-            ->assertSee('Escalated by')
-            ->assertSee($president->name);
+            ->assertSee('Forwarded by the')
+            ->assertSee($forwarded->toda->name);
     }
 
     public function test_staff_awaiting_tab_lists_cases_still_with_president()

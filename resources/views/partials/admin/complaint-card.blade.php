@@ -79,9 +79,7 @@
             'short' => $isPresidentView ? 'Forwarded' : 'Forwarded',
             'icon' => 'bi-send-fill',
             'class' => 'border-violet-200 bg-violet-50 text-violet-700',
-            'title' => $rating->forwardedBy?->name
-                ? 'Forwarded by ' . $rating->forwardedBy->name
-                : 'Forwarded to the TFRB',
+            'title' => 'Forwarded by the ' . ($rating->toda?->name ?? ($rating->operator?->toda?->name ?? 'TODA')) . ' TODA President',
         ];
     } elseif (!$isPresidentView && $rating->routed_to === null) {
         $isAgainstPresident = ($rating->operator?->user?->role ?? null) === 'operator_president';
@@ -179,7 +177,7 @@
                     <span class="ml-auto text-xs text-slate-500">{{ $rating->forwarded_at->format('M j, Y g:i A') }}</span>
                 </div>
                 <p class="mb-0 mt-1 text-xs leading-relaxed text-slate-600">
-                    Escalated by <strong>{{ $rating->forwardedBy?->name ?? 'a TODA president' }}</strong>.
+                    Forwarded by the <strong>{{ $rating->toda?->name ?? ($rating->operator?->toda?->name ?? 'TODA') }}</strong> TODA President.
                     The TODA president can no longer act on this complaint — the TFRB / superadmin now owns it.
                 </p>
                 @if ($rating->forward_reason)
