@@ -39,6 +39,37 @@
     </div>
 </div>
 
+{{-- Auto-forward stale complaints: complaints that a TODA president did not
+     resolve within this many days are automatically forwarded to the
+     TFRB / superadmin so they never stall in a president's queue. --}}
+<div class="tw-card mb-5 overflow-hidden">
+    <div class="tw-card-pad border-b border-slate-100">
+        <h5 class="tw-card-title"><i class="bi bi-send-fill mr-2 text-navy-600"></i>Complaint Auto-Forward (TODA President SLA)</h5>
+        <p class="text-xs leading-relaxed text-slate-500">
+            When a complaint routed to a TODA president is not solved within this window, it is automatically forwarded to the TFRB / superadmin for further review. Set to 0 to disable auto-forward.
+        </p>
+    </div>
+    <div class="tw-card-pad">
+        <form action="{{ route('superadmin.settings.complaintAutoForward') }}" method="POST">
+            @csrf
+            @method('PUT')
+            <div class="mb-4 max-w-xs">
+                <label for="auto_forward_days" class="tw-label">Auto-forward after (days)</label>
+                <input type="number" name="auto_forward_days" id="auto_forward_days" min="0" max="365" value="{{ old('auto_forward_days', \App\Models\Setting::getValue('complaint_auto_forward_days', 15)) }}" class="tw-input" required>
+            </div>
+            <button type="submit" class="tw-btn tw-btn-navy">
+                <i class="bi bi-check-lg"></i> Save Auto-Forward
+            </button>
+            @if ($errors->any())
+                <span class="tw-error-text" role="alert">{{ $errors->first('auto_forward_days') }}</span>
+            @endif
+        </form>
+        @if (session('success'))
+            <p class="mt-3 text-sm font-semibold text-emerald-600"><i class="bi bi-check2-circle mr-1"></i>{{ session('success') }}</p>
+        @endif
+    </div>
+</div>
+
 @include('partials.admin.account-settings', [
     'routePrefix' => 'superadmin',
     'roleLabel' => 'Superadmin',

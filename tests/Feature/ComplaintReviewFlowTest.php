@@ -836,4 +836,66 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertEqualsWithDelta(4.5, (float) $stats['average'], 0.001);
         $this->assertSame(2, $stats['total']);
     }
+
+    public function test_auto_forward_stale_command_forwards_unresolved_president_complaints()
+    {
+        Http::fake();
+
+        $toda = $this->makeToda();
+        $operator = $this->makeOperator('active', $toda);
+
+        // A president who owns the TODA.
+        $presidentUser = $this->makeUser('operator_president');
+        $presidentUser->forceFill(['toda_id' => $toda->id])->save();
+        $presidentOperator = Operator::create([
+            'user_id' => $presidentUser->id,
+            'toda_id' => $toda->id,
+            'qr_code' => Str::random(32),
+            'status' => 'active',
+            'contact_number' => '09171234567',
+            'plate_number' => 'PRES-' . Str::random(6),
+            'body_number' => 'P-' . Str::random(6),
+        ]);
+        $presidentOperator->joinToda($toda->id);
+        $presidentOperator->setTodaPresidency($toda->id, true);
+
+        // An old unresolved complaint routed to the president.
+        $old = $this->makeValidComplaint($operator, 1);
+        $old->forceFill([
+            'toda_id' => $toda->id,
+            'routed_to' => $presidentUser->id,
+            'created_at' => now()->subDays(20),
+        ])->save();
+
+        // A fresh unresolved complaint — must NOT be forwarded yet.
+        $fresh = $this->makeValidComplaint($operator, 1);
+        $fresh->update([
+            'toda_id' => $toda->id,
+            'routed_to' => $presidentUser->id,
+        ]);
+
+        // A solved complaint with the president — must NOT be forwarded
+        // (already resolved).
+        $solved = $this->makeValidComplaint($operator, 1);
+        $solved->update([
+            'toda_id' => $toda->id,
+            'routed_to' => $presidentUser->id,
+            'is_solved' => true,
+            'solved_at' => now()->subDays(20),
+            'resolution_note' => 'Done.',
+        ]);
+
+        $this->artisan('complaints:auto-forward-stale', ['--days' => 15])
+            ->assertExitCode(0);
+
+        $this->assertNotNull($old->fresh()->forwarded_at);
+        $this->assertNull($fresh->fresh()->forwarded_at);
+        $this->assertNull($solved->fresh()->forwarded_at);
+    }
+
+    public function test_auto_forward_stale_disabled_when_days_zero()
+    {
+        $this->artisan('complaints:auto-forward-stale', ['--days' => 0])
+            ->assertExitCode(0);
+    }
 }

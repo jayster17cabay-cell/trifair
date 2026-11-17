@@ -27,6 +27,11 @@ class Kernel extends ConsoleKernel
         // SLA window are auto-escalated back into the TFRB/superadmin
         // actionable queue for a heavier re-review.
         $schedule->command('complaints:auto-escalate')->dailyAt('00:07');
+
+        // Complaints that a TODA president did not resolve within the
+        // auto-forward window are forwarded to the TFRB / superadmin so they
+        // never stall in a president's queue.
+        $schedule->command('complaints:auto-forward-stale')->dailyAt('00:08');
     }
 
     /**

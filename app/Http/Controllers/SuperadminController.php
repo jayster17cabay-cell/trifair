@@ -200,6 +200,30 @@ class SuperadminController extends Controller
         return back()->with('success', 'Complaint escalation SLA updated successfully.');
     }
 
+    /**
+     * Update the auto-forward window (days) for complaints that a TODA
+     * president did not resolve. Drives the complaints:auto-forward-stale
+     * scheduler.
+     */
+    public function updateComplaintAutoForward(Request $request)
+    {
+        $data = $request->validate([
+            'auto_forward_days' => 'required|integer|min:0|max:365',
+        ]);
+
+        Setting::setValue('complaint_auto_forward_days', (int) $data['auto_forward_days']);
+
+        ActivityLogger::log(
+            'update_complaint_auto_forward',
+            "Updated complaint auto-forward window to {$data['auto_forward_days']} day(s)",
+            null,
+            'review'
+        );
+        app(AdminDashboardService::class)->flush();
+
+        return back()->with('success', 'Complaint auto-forward window updated successfully.');
+    }
+
     public function updatePassword(Request $request)
     {
         $data = $request->validate([

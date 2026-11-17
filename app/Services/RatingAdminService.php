@@ -471,6 +471,74 @@ class RatingAdminService
     }
 
     /**
+     * Auto-forward complaints that have sat unresolved with a TODA president
+     * for longer than $days. System-level (no authenticated actor): sets
+     * forwarded_at/forwarded_by=null, records a reason, notifies the review
+     * team and the passenger, and flushes the dashboards.
+     *
+     * @return array{forwarded: int, skipped: int}
+     */
+    public function autoForwardStaleComplaints(int $days = 15): array
+    {
+        if ($days <= 0) {
+            return ['forwarded' => 0, 'skipped' => 0];
+        }
+        $days = max(1, $days);
+        $cutoff = now()->subDays($days);
+
+        $candidates = Rating::isValid()
+            ->isComplaint()
+            ->where('is_solved', false)
+            ->whereNull('rejected_at')
+            ->whereNull('forwarded_at')
+            ->whereNotNull('routed_to')
+            ->where('created_at', '<', $cutoff)
+            ->with(['operator.user', 'toda'])
+            ->get();
+
+        $forwarded = 0;
+        $skipped = 0;
+
+        foreach ($candidates as $rating) {
+            // Skip if the president already forwarded or solved it between
+            // candidate fetch and now (race guard).
+            $fresh = $rating->fresh();
+            if (!$fresh || $fresh->is_solved || $fresh->rejected_at || $fresh->forwarded_at) {
+                $skipped++;
+                continue;
+            }
+
+            $reason = "Auto-escalated: the TODA president did not resolve this complaint within {$days} day(s). Forwarded automatically to the TFRB / superadmin for further review.";
+
+            $fresh->update([
+                'forwarded_at' => now(),
+                'forwarded_by' => null,
+                'forward_reason' => $reason,
+                // Forwarding is a new passenger-facing status; clear the old
+                // delivery marker so the forward notification is not suppressed.
+                'complaint_status_email_sent_at' => null,
+            ]);
+
+            app(AdminDashboardService::class)->flush();
+
+            ActivityLogger::log(
+                'auto_forward_complaint',
+                "Auto-forwarded complaint #{$fresh->id} to TFRB/superadmin (operator: {$fresh->operator_name}) — unresolved for {$days} day(s)",
+                $fresh,
+                'review'
+            );
+
+            $this->notifyAdminsOnForward($fresh, "Complaint {$fresh->reference_number} for {$fresh->operator_name} was auto-forwarded to TFRB/superadmin after {$days} day(s) unresolved with the TODA president. Reason: " . Str::limit($reason, 300));
+            $emailError = $this->notifyComplaintStatus($fresh, 'forwarded');
+            $this->notifyPassengerInApp($fresh, 'Complaint Forwarded to TFRB', 'Your complaint has been forwarded to the TFRB/superadmin for further review after the TODA president did not resolve it in time. They will resolve it from here.');
+
+            $forwarded++;
+        }
+
+        return ['forwarded' => $forwarded, 'skipped' => $skipped];
+    }
+
+    /**
      * Notify the entire review team (officers + superadmins) that a
      * president has escalated a complaint to them.
      */
