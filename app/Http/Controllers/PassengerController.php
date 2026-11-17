@@ -123,66 +123,33 @@ class PassengerController extends Controller
         $user = $request->user();
 
         // Only the passenger who filed it may follow up, and only while it is
-        // still open — a solved ticket has nothing left to chase.
+        // still open — a solved/rejected ticket has nothing left to chase.
         abort_unless((int) $rating->passenger_user_id === (int) $user->id, 403);
         abort_unless($rating->complaint_type !== null, 404);
 
-        $isAppeal = $request->boolean('appeal');
-
-        if ($isAppeal && !$rating->canAppeal()) {
+        if ($rating->is_solved || $rating->rejected_at) {
             return back()->withErrors([
-                'follow_up' => 'This complaint was decided by the TFRB/superadmin and can no longer be appealed.',
-            ]);
-        }
-
-        if (($rating->is_solved || $rating->rejected_at) && !$isAppeal) {
-            return back()->withErrors([
-                'follow_up' => 'This complaint is closed. Use the appeal form if you are not satisfied with the decision.',
+                'follow_up' => 'This complaint is closed and no longer accepts follow-ups.',
             ]);
         }
 
         $data = $request->validate([
             'message' => 'required|string|min:3|max:1000',
-            'appeal' => 'nullable|boolean',
         ], [
             'message.required' => 'Enter your follow-up message before submitting.',
             'message.min' => 'Enter at least 3 characters.',
             'message.max' => 'The follow-up message must not exceed 1,000 characters.',
         ]);
 
-        if ($isAppeal) {
-            // An appeal reopens the case and sends ownership back to the
-            // TFRB/superadmin queue, even when a TODA president already solved
-            // or rejected it. This makes it actionable, not just a message
-            // hidden in a closed thread.
-            $rating->update([
-                'is_solved' => false,
-                'is_reviewed' => false,
-                'rejected_at' => null,
-                'routed_to' => null,
-                'forwarded_at' => null,
-                'forwarded_by' => null,
-                'solved_at' => null,
-                'reviewed_by' => null,
-                'resolution_note' => null,
-                // The appeal gives the TFRB/superadmin a fresh decision cycle;
-                // clearing the marker guarantees the next resolution emails
-                // the passenger again.
-                'complaint_status_email_sent_at' => null,
-            ]);
-        }
-
         $rating->passengerFollowUps()->create([
             'user_id' => $user->id,
             'message' => $data['message'],
             'sender_role' => 'passenger',
-            'is_appeal' => $isAppeal,
+            'is_appeal' => false,
         ]);
 
-        return redirect()->route($isAppeal ? 'passenger.complaints.show' : 'passenger.dashboard', $isAppeal ? [$rating] : [])
-            ->with('status', $isAppeal
-                ? 'Your appeal has been sent to the TFRB/superadmin for review.'
-                : 'Your follow-up has been sent. It will be shown to the TFRB/superadmin for your complaint.')
+        return redirect()->route('passenger.dashboard')
+            ->with('status', 'Your follow-up has been sent. It will be shown to the TFRB/superadmin for your complaint.')
             ->with('open_follow_up', $rating->id);
     }
 

@@ -174,17 +174,10 @@
         {{-- Chat with the TFRB/superadmin on this complaint — the thread stays
              readable after solving, but the composer is withdrawn. --}}
         @if (($rating->is_solved || $rating->rejected_at) && $rating->passengerFollowUps->isEmpty() && !$standalone)
-            @if ($rating->canAppeal())
-                <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
-                    <i class="bi bi-info-circle text-amber-500"></i>
-                    This complaint was resolved by the TODA president. Open it if you want to appeal.
-                </p>
-            @else
-                <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
-                    <i class="bi bi-check2-all text-emerald-500"></i>
-                    This complaint has been resolved — you can no longer follow up.
-                </p>
-            @endif
+            <p class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
+                <i class="bi bi-check2-all text-emerald-500"></i>
+                This complaint has been resolved — you can no longer follow up.
+            </p>
         @else
             @include('partials.complaint-chat', [
                 'rating' => $rating,

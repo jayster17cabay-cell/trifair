@@ -71,11 +71,7 @@
 
         @if (in_array($status, ['solved', 'rejected'], true))
             <p style="margin:0 0 18px;font-size:15px;line-height:1.6;">
-                @if ($rating->canAppeal())
-                    If you are not satisfied with this decision, sign in to TriFair and open My Complaints to file an appeal with the TFRB/superadmin.
-                @else
-                    This decision was made by the TFRB/superadmin and is final.
-                @endif
+                This decision is final.
             </p>
         @endif
 

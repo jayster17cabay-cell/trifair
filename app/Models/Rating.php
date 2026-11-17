@@ -305,13 +305,14 @@ class Rating extends Model
      * decision is final and the appeal option is withdrawn. This mirrors the
      * business rule used by the passenger UI and is enforced server-side too.
      */
+    /**
+     * Appeals are no longer supported — every decision is final once the
+     * complaint is solved or rejected. Kept for backwards compatibility with
+     * older callers/tests; always returns false.
+     */
     public function canAppeal(): bool
     {
-        if (!$this->is_solved && !$this->rejected_at) {
-            return true;
-        }
-
-        return $this->reviewer?->role === 'operator_president';
+        return false;
     }
 
     /**

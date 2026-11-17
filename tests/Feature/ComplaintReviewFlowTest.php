@@ -507,7 +507,7 @@ class ComplaintReviewFlowTest extends TestCase
         $this->assertStringContainsString('Solved by', $html);
         $this->assertStringContainsString($operator->toda->name . ' President', $html);
         $this->assertStringNotContainsString($president->name, $html);
-        $this->assertStringContainsString('file an appeal', $html);
+        $this->assertStringContainsString('This decision is final.', $html);
 
         $officer = $this->makeUser('tfrb_officer');
         $complaint->update(['reviewed_by' => $officer->id]);
@@ -515,8 +515,7 @@ class ComplaintReviewFlowTest extends TestCase
         $html = (new ComplaintStatus($complaint->fresh(), 'solved'))->render();
         $this->assertStringContainsString('TFRB Officer', $html);
         $this->assertStringNotContainsString($officer->name, $html);
-        $this->assertStringContainsString('decision was made by the TFRB/superadmin and is final', $html);
-        $this->assertStringNotContainsString('file an appeal', $html);
+        $this->assertStringContainsString('This decision is final.', $html);
     }
 
     public function test_reset_and_reopen_clear_the_resolution_details()

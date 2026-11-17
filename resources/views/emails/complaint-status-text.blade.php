@@ -37,11 +37,7 @@ Current status: {{ $statusLabel }}
 @endif
 
 @if (in_array($status, ['solved', 'rejected'], true))
-@if ($rating->canAppeal())
-If you are not satisfied with this decision, sign in to TriFair and open My Complaints to file an appeal with the TFRB/superadmin.
-@else
-This decision was made by the TFRB/superadmin and is final.
-@endif
+This decision is final.
 @endif
 
 Thank you for helping keep our transport services safe and accountable.
