@@ -198,12 +198,28 @@
 
                     <div style="margin-top: 0.9rem;">
                         <label for="violation_type" class="rate-label"><i class="bi bi-list-check" style="color:#dc2626;"></i> Violation type</label>
+                        @php
+                            // Auto-detect the violation type from the reason the
+                            // operator is being reported (expired franchise,
+                            // suspended, inactive) so the passenger does not have
+                            // to pick it manually.
+                            $autoViolationType = match ($reason ?? '') {
+                                'suspended' => 'Operating while suspended',
+                                'franchise' => 'Operating with expired franchise',
+                                'inactive'   => 'Operating while inactive',
+                                default      => null,
+                            };
+                            $selectedViolationType = old('violation_type', $autoViolationType);
+                        @endphp
                         <select name="violation_type" id="violation_type" required class="rate-field">
                             <option value="">Select violation type...</option>
                             @foreach ($violationTypes as $type)
-                                <option value="{{ $type }}" {{ old('violation_type') === $type ? 'selected' : '' }}>{{ $type }}</option>
+                                <option value="{{ $type }}" {{ $selectedViolationType === $type ? 'selected' : '' }}>{{ $type }}</option>
                             @endforeach
                         </select>
+                        @if ($autoViolationType)
+                            <p class="mt-1 text-xs text-slate-500"><i class="bi bi-info-circle mr-1"></i>Auto-detected from the operator's current status. You may change it if needed.</p>
+                        @endif
                     </div>
 
                     {{-- Only shown when "Others" is chosen — say what kind of violation it is --}}
